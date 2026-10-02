@@ -28,12 +28,12 @@ Parquet 是事实来源，Manifest 可重建；分批历史、断点续传、失
 | 01.4 Critical Historical | manifest.py、history；两次分批下载及恢复续传已验证 | 全部可获得历史范围及缺口修复 |
 | 01.5 Critical Validation | validate.py；最新理论池 5,559 只，三类行情覆盖率 100% | 历史覆盖持续验证、远程失败演练 |
 | 01.6 Financial Data | explicit financial schemas、版本测试 | 财务接口字段、公告过滤、修订可获得性 |
-| 01.7 Industry & Index | audit、discover_metadata、index_universe | 历史稳定性，确定行业主体系 |
+| 01.7 Industry & Index | audit、discover_metadata、11 个主要指数；成员 Y/N 历史已实测落库 | 完整行业/指数历史，确定行业主体系 |
 | 01.8 Market State Raw | suspend_d、stk_limit、namechange、stock_st、stk_premarket、dividend | 各 Required 接口和历史覆盖 |
 | 01.9 Optional Whitelist | capability + registry + Gap | 白名单接口权限和分页 |
-| 01.10 Incremental | current windows、cursor、repair、monthly_audit；MAINTENANCE 两次成功 | 连续真实交易日运行及修订 |
-| 01.11 GitHub Actions | 单 Workflow；UTC 12:00；Secret 已生效；两次真实发布/检查点恢复通过 | 无人干预定时运行的持续证据 |
-| 01.12 Automated Acceptance | validate CLI、非零阻断；两份正式 Artifact 独立总验收通过 | 完整历史库验收和远程故障演练 |
+| 01.10 Incremental | current windows、cursor、repair、monthly_audit；MAINTENANCE 五次成功；真实 DAILY_UPDATE 隔离回放通过 | 连续当日交易运行及修订 |
+| 01.11 GitHub Actions | 单 Workflow；UTC 12:00；Secret 已生效；五次真实发布/检查点恢复通过 | 无人干预定时运行的持续证据 |
+| 01.12 Automated Acceptance | validate CLI、非零阻断；四份产物独立复验；Runner 真实 Parquet 的覆盖失败/指针中断/修补演练通过 | 完整历史库验收及实际网络/远程上传故障 |
 | 01.13 Google Drive | [Phase 2 发布合同](drive-phase2.md) | Phase 1 稳定后实施；当前未接通 |
 
 实现代码和离线测试完成只代表开发交付，不能代表真实 Task 01 已最终验收。最终验收需要 Critical 实际可用、历史推进/补抓/修订经过实测、Actions 无人运行、失败保持旧版本，Drive 接通后 Production 只含已验收数据。
