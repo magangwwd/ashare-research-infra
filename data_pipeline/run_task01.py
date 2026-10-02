@@ -345,7 +345,7 @@ class Pipeline:
         elif spec.strategy == "industry_history":
             # Membership spans listing cohorts and requires both provider views;
             # a default query only returns current members (is_new=Y).
-            for code in self.master["ts_code"]:
+            for code in self.master.sort_values(["list_date", "ts_code"], kind="stable")["ts_code"]:
                 for state in ("Y", "N"):
                     yield name, {"ts_code": code, "is_new": state}
         elif spec.strategy == "security_snapshot":

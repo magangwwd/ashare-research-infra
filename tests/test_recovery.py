@@ -293,7 +293,12 @@ def test_industry_history_includes_later_listings_and_exited_members(tmp_path, c
     config["download"]["history_start"] = "19900101"
     pipeline = Pipeline(tmp_path, config, client, as_of)
     pipeline.bootstrap()
+    # Source order puts new listings first; historical membership should start
+    # with an older listing while still including every later cohort.
+    from datetime import date
+    pipeline.master.loc[pipeline.master.ts_code.eq(provider.stocks.iloc[-1].ts_code), 'list_date'] = date(1990, 1, 1)
     requests = list(pipeline.history_requests("index_member_all"))
+    assert requests[0][1]['ts_code'] == provider.stocks.iloc[-1].ts_code
     assert {p['ts_code'] for _, p in requests} == set(provider.stocks['ts_code'])
     assert len(requests) == len(provider.stocks) * 2
     for name, params in requests:
@@ -303,7 +308,7 @@ def test_industry_history_includes_later_listings_and_exited_members(tmp_path, c
     assert set(saved['is_new']) == {'Y', 'N'}
     assert set(saved.loc[saved.is_new.eq('N'), 'ts_code']) == set(provider.stocks.ts_code)
     recent = [p for n, p in pipeline.recent_requests('required') if n == 'index_member_all']
-    assert recent == [p for _, p in requests]
+    assert {(p['ts_code'], p['is_new']) for p in recent} == {(p['ts_code'], p['is_new']) for _, p in requests}
 
 
 def test_dividend_requests_do_not_repeat_unsupported_year_filters(tmp_path, config, client, provider, as_of):

@@ -108,7 +108,7 @@ Clean 仅包含 `clean.py::SCHEMAS` 显式声明的字段；未知源字段不�
 - 财务：轮转检查最近约 400 天公告，抓取后覆盖 Clean 最新版本，Raw 保留实际获取版本。
 - 扩展数据有独立预算和持久游标，避免几千只股票的财报查询阻塞核心当天更新。
 - 历史默认从 1990 年开始；日历分年、行情按交易日有界请求/按月落库、财务按证券/年、指数按月。依赖由声明自动排序，多数据集轮转推进，交易日默认最多 40 个历史工作单元，非交易日最多 240 个（`maintenance_history_requests_per_run`）；当天核心更新仍先完成。`history.json` 记录实际模式与预算，失败后不重跑完整库。
-- 行业成员按每只证券请求 `is_new=Y` 和 `is_new=N`，包括下载起始年之后上市的证券，保存当前与退出成员原记录。分红接口不支持日期范围，按证券请求全历史、轮转刷新，避免按年重复同一全历史响应。
+- 行业成员按每只证券请求 `is_new=Y` 和 `is_new=N`，包括下载起始年之后上市的证券，保存当前与退出成员原记录；历史按上市日期从早到晚推进，近期刷新保持独立轮转。分红接口不支持日期范围，按证券请求全历史、轮转刷新，避免按年重复同一全历史响应。
 - Critical 历史起点由完整股票池、各交易所实际日历和 95% 覆盖率探测，不把一次非空响应当作完整历史。起点之前的来源缺口明确记录，未达标数据不会进入正式 Clean。探测假设起点后的完整覆盖基本连续，快照记录该假设；区间内部空洞仍会失败并补抓，每月重新观察边界。
 - 每次扫描全库的文件结构；每月重新抓取一段轮转的旧行情来发现修订。预算默认为 10 个工作单元，是滚动审计，**不是每月重新下载全部历史**。
 
@@ -130,9 +130,10 @@ API 自动重试、限速、分页。分页重复或超过上限直接失败，�
 
 在仓库 **Settings → Secrets and variables → Actions** 添加唯一业务 Secret `TUSHARE_TOKEN`。Workflow 使用 GitHub 自动提供的 `github.token` 读取同仓库 Artifact，它不是额外的业务凭据。
 
-每次运行：安装 → Unit Tests → 恢复最新 checkpoint → 真实 Smoke → 自动模式 → 正式版本验收 → 真实 Parquet 恢复演练 → 发布 validated Artifact。恢复演练在隔离暂存目录中故意降低行情覆盖率、模拟指针切换中断，再修复续传；检查旧正式文件校验和不变，记录 `metadata/recovery_drill.json`，不修改源正式数据。任何 Critical/Smoke 验收失败，后续发布步骤不会运行，Workflow 保持 FAILED。
+每次运行：安装 → Unit Tests → 恢复最新 checkpoint → 真实 Smoke → 自动模式 → 正式版本验收 → 真实交易日回放/Parquet 恢复演练 → 发布 validated Artifact。回放用最新已结束的真实交易日，在隔离目录重新向 Tushare 请求 Critical 数据并验收 DAILY_UPDATE 分支，记录 `metadata/trading_day_replay.json`；它不等于当日定时运行证据。恢复演练在隔离暂存目录中故意降低行情覆盖率、模拟指针切换中断，再修复续传；检查旧正式文件校验和不变，记录 `metadata/recovery_drill.json`，不修改源正式数据。任何 Critical/Smoke 验收失败，后续发布步骤不会运行，Workflow 保持 FAILED。
 
 - `task01-validated-data`：只有成功时上传，包含经验证的正式数据、Manifest、Schema、能力/验收资料、核心数据说明，以及带已发现 index_universe 的 effective_config.json。
+- `task01-validation-report`：独立的小型验收证据包，包含验收、交易日回放、恢复演练、历史进度、能力快照及文件 Manifest，便于检查大规模数据产物的发布结果。
 - `task01-checkpoint`：成功或失败都保存，包含最后正式版本及未完成暂存、Manifest、Gap；**不是正式数据发布产物**。下次 Runner 从最新未过期 checkpoint 恢复。
 - 未成功恢复旧检查点时禁止保存部分恢复状态。取消/强制终止可能来不及保存新 checkpoint，下次使用上一个已上传的完整检查点。
 - Phase 1 Artifact 有 GitHub 存储配额和保留期限（正式 30 天、恢复 90 天）；不是永久存储。大规模历史库应在 Phase 1 实测稳定后进入 Drive Phase 2。超过保留期且没有备份时，无法恢复已过期的 Runner 本地状态。

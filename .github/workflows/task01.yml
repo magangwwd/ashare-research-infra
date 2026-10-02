@@ -57,7 +57,7 @@ jobs:
         run: python -m data_pipeline.run_task01 --mode auto
       - name: Production acceptance
         run: python -m data_pipeline.validate
-      - name: Recovery drill with real production Parquet
+      - name: Live trading-day replay and production recovery drill
         env:
           TASK01_RECOVERY_ROOT: .
         run: python -m pytest -q tests/test_live_recovery.py
@@ -72,6 +72,22 @@ jobs:
           retention-days: 30
           if-no-files-found: error
           compression-level: 0
+      - name: Publish acceptance evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: task01-validation-report
+          path: |
+            metadata/acceptance.json
+            metadata/recovery_drill.json
+            metadata/trading_day_replay.json
+            metadata/effective_config.json
+            metadata/manifest/history.json
+            metadata/manifest/partitions.json
+            metadata/capabilities/latest.json
+            metadata/capabilities/history_ranges.json
+            data/current/acceptance.json
+          retention-days: 30
+          if-no-files-found: error
       - name: Package recovery state, including unfinished work
         if: always() && steps.restore.outcome == 'success'
         shell: bash
