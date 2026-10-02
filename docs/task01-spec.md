@@ -23,17 +23,17 @@ Parquet 是事实来源，Manifest 可重建；分批历史、断点续传、失
 | 子任务 | 实现入口/证据 | 仍需真实验收 |
 | --- | --- | --- |
 | 01.1 Repository Bootstrap | README、requirements、config、gitignore、package | 已验证仓库推送和 Runner 安装/单元测试 |
-| 01.2 Tushare Bootstrap | download.py；重试、分页、限流、Capability Audit | 五个 Critical 权限与网络调用 |
-| 01.3 Security Master & Calendar | clean.py、bootstrap；UUID5 和 market 元数据 | L/D/P 完整性、交易所/板块口径 |
-| 01.4 Critical Historical | manifest.py、history；按依赖和预算推进 | 各接口实际历史起点及全部可获得范围 |
-| 01.5 Critical Validation | validate.py、daily；95% 边界与补抓测试 | 实际理论池和停牌数据权限 |
+| 01.2 Tushare Bootstrap | download.py；五个 Critical 实际审计和 Smoke 已通过 | 持续观察权限与稳定性 |
+| 01.3 Security Master & Calendar | clean.py、bootstrap；5,911 条证券与 26,128 条日历已验收 | 历史状态完整性和后续变化 |
+| 01.4 Critical Historical | manifest.py、history；两次分批下载及恢复续传已验证 | 全部可获得历史范围及缺口修复 |
+| 01.5 Critical Validation | validate.py；最新理论池 5,559 只，三类行情覆盖率 100% | 历史覆盖持续验证、远程失败演练 |
 | 01.6 Financial Data | explicit financial schemas、版本测试 | 财务接口字段、公告过滤、修订可获得性 |
 | 01.7 Industry & Index | audit、discover_metadata、index_universe | 历史稳定性，确定行业主体系 |
 | 01.8 Market State Raw | suspend_d、stk_limit、namechange、stock_st、stk_premarket、dividend | 各 Required 接口和历史覆盖 |
 | 01.9 Optional Whitelist | capability + registry + Gap | 白名单接口权限和分页 |
-| 01.10 Incremental | current windows、cursor、repair、monthly_audit | 连续真实交易日/非交易日运行 |
-| 01.11 GitHub Actions | 单 Workflow；UTC 12:00；恢复 Artifact；首次手动运行已验证失败阻断 | Secrets 配置、定时运行及真实数据成功验收 |
-| 01.12 Automated Acceptance | validate CLI、工作流非零阻断、恢复测试 | 正式数据全量验收和故障演练 |
+| 01.10 Incremental | current windows、cursor、repair、monthly_audit；MAINTENANCE 两次成功 | 连续真实交易日运行及修订 |
+| 01.11 GitHub Actions | 单 Workflow；UTC 12:00；Secret 已生效；两次真实发布/检查点恢复通过 | 无人干预定时运行的持续证据 |
+| 01.12 Automated Acceptance | validate CLI、非零阻断；两份正式 Artifact 独立总验收通过 | 完整历史库验收和远程故障演练 |
 | 01.13 Google Drive | [Phase 2 发布合同](drive-phase2.md) | Phase 1 稳定后实施；当前未接通 |
 
 实现代码和离线测试完成只代表开发交付，不能代表真实 Task 01 已最终验收。最终验收需要 Critical 实际可用、历史推进/补抓/修订经过实测、Actions 无人运行、失败保持旧版本，Drive 接通后 Production 只含已验收数据。

@@ -8,9 +8,11 @@ Task 01 只建设 **稳定、可恢复、可自动更新的 A 股研究数据底
 
 ## 当前状态
 
-Phase 1 实现已推送到 GitHub 私有仓库，20 项离线测试通过。2026-10-02 已执行[首次 Actions](https://github.com/magangwwd/ashare-research-infra/actions/runs/36984398679)：Runner 安装和单元测试通过，真实 Smoke 因 `TUSHARE_TOKEN` 未注入而失败；Workflow 正确显示 FAILED，跳过正式数据发布。详见[验收记录](docs/acceptance-record.md)。
+Phase 1 实现已推送到 GitHub 私有仓库，32 项单元及离线集成测试通过。`TUSHARE_TOKEN` 已在 Actions 生效；2026-10-02 连续两次真实运行成功：[首次完整发布](https://github.com/magangwwd/ashare-research-infra/actions/runs/36992443218)、[恢复后续传](https://github.com/magangwwd/ashare-research-infra/actions/runs/36993652567)。Capability Audit、真实 Smoke、MAINTENANCE、Critical 总验收和正式 Artifact 发布均通过。详见[验收记录](docs/acceptance-record.md)。
 
-**真实 Tushare capability audit、live smoke、全量历史下载及正式数据验收尚未完成**。先在仓库 Actions Secrets 配置 `TUSHARE_TOKEN`，再手动运行 Workflow。代码和离线测试通过不等于真实数据验收通过；历史任务分批推进，不承诺一次运行完成整个历史库。
+最近交易日 2026-09-30 的 daily、adj_factor、daily_basic 理论池为 5,559 只，覆盖率均为 100%。第二次正式产物的 262 个 Parquet 文件大小与 SHA256 已独立核对，脱离 Runner 重新总验收通过。检查点恢复后跳过已有完整请求，并继续获取 40 个历史请求。
+
+**历史全量仍在分批推进，Task 01 最终验收尚未完成**。早期数据源覆盖不足、扩展接口权限不足均有显式 Gap；实际探测历史边界不代表之后所有日期已下载。还需持续观察真实交易日和定时运行，补齐可获得历史并验证修订；行业主体系仍待历史完整性和稳定性证据。正式数据 Artifact 保留 30 天，恢复检查点保留 90 天，Phase 1 不作为永久远程存储。
 
 Phase 2 Google Drive 尚未启用，必须等 Phase 1 真实验收稳定后实施，见 [Drive 发布规格](docs/drive-phase2.md)。没有 Drive 凭据、远程 Production 或伪造的成功报告。
 
