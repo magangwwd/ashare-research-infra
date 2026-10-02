@@ -26,7 +26,7 @@ def validate_frame(dataset: str, frame: pd.DataFrame) -> None:
     expected = {f.name for f in clean.SCHEMAS[dataset]} | {"schema_version"}
     if set(frame.columns) != expected:
         raise ValidationError(f"{dataset}: fixed schema columns do not match")
-    if frame["schema_version"].isna().any() or not frame["schema_version"].eq(clean.SCHEMA_VERSION).all():
+    if frame["schema_version"].isna().any() or not frame["schema_version"].eq(clean.schema_version(dataset)).all():
         raise ValidationError(f"{dataset}: unsupported schema version")
     if frame.duplicated(clean.KEYS[dataset]).any():
         raise ValidationError(f"{dataset}: duplicate primary key")

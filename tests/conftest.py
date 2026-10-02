@@ -40,6 +40,8 @@ class FakeTushare:
             frame = self.stocks.loc[self.stocks["list_status"] == params.get("list_status", "L")]
             if "ts_code" in params:
                 frame = frame.loc[frame["ts_code"] == params["ts_code"]]
+            if "fields" not in params:
+                frame = frame.drop(columns=["exchange", "list_status"])
         elif endpoint == "trade_cal":
             start, end = pd.Timestamp(params["start_date"]), pd.Timestamp(params["end_date"])
             frame = pd.DataFrame([{"exchange": params.get("exchange", "SSE"), "cal_date": d.strftime("%Y%m%d"),

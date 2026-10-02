@@ -9,6 +9,11 @@ import pandas as pd
 import pyarrow as pa
 
 SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSIONS = {"index_basic": "2.0.0"}
+
+
+def schema_version(dataset: str) -> str:
+    return SCHEMA_VERSIONS.get(dataset, SCHEMA_VERSION)
 
 
 @dataclass(frozen=True)
@@ -59,7 +64,9 @@ SCHEMAS: dict[str, list[Field]] = {
     "suspend_d": TRADE + fields("suspend_timing suspend_type", "string"),
     "stk_limit": TRADE + fields("pre_close up_limit down_limit"),
     "stk_premarket": TRADE + fields("total_share float_share pre_close up_limit down_limit"),
-    "index_basic": fields("ts_code name fullname market publisher index_type category base_date list_date", "string") + fields("base_point"),
+    "index_basic": fields("ts_code name fullname market publisher index_type category", "string")
+        + [Field("base_date", "base_date", "date", "指数基日"), Field("list_date", "list_date", "date", "指数发布日期")]
+        + fields("base_point"),
     "index_daily": fields("ts_code", "string") + [Field("trade_date", "trade_date", "date", "交易日期")] + fields("open high low close pre_close change pct_chg vol amount"),
     "index_weight": fields("index_code con_code", "string") + [Field("trade_date", "trade_date", "date", "成分观测日期")] + fields("weight"),
     "index_classify": fields("index_code industry_name level industry_code src is_pub parent_code", "string"),
@@ -155,7 +162,7 @@ def normalize(dataset: str, raw: pd.DataFrame) -> pd.DataFrame:
         else:
             values = pd.to_numeric(values, errors="raise").astype("Int64" if f.dtype == "int64" else "Float64")
         output[f.name] = values
-    output["schema_version"] = SCHEMA_VERSION
+    output["schema_version"] = schema_version(dataset)
     return output.drop_duplicates(KEYS[dataset], keep="last").reset_index(drop=True)
 
 

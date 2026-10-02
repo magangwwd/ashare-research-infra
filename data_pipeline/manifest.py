@@ -220,6 +220,12 @@ class Store:
                     entry.update(status="failed", validation_status="failed", reason=str(exc))
                 manifest.append(entry)
         atomic_json(self.metadata / "partitions.json", manifest)
+        repaired = {(e["dataset"], e["partition"], e["layer"]) for e in manifest if e["validation_status"] == "passed"}
+        for key, gap in list(self.gaps.items()):
+            params = gap["params"]
+            if "partition" in params and (gap["dataset"], params["partition"], params.get("layer", "clean")) in repaired:
+                self.gaps.pop(key)
+        atomic_json(self.metadata / "gaps.json", self.gaps)
         return manifest
 
     def retain_raw(self, reference: datetime) -> None:

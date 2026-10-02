@@ -48,3 +48,12 @@ def test_partition_generation_and_financial_revisions(tmp_path, config):
     # An older announcement arriving later must not replace the latest revision.
     store.save("fina_indicator", rows.iloc[:1])
     assert read_dataset(stage, "clean", "fina_indicator").iloc[0]["roe"] == 12
+
+
+def test_index_metadata_dates_are_typed_without_changing_critical_versions():
+    raw = pd.DataFrame([{"ts_code": "000300.SH", "base_date": "20041231", "list_date": "20050408", "base_point": 1000}])
+    result = clean.normalize("index_basic", raw)
+    assert result.iloc[0]["base_date"] == date(2004,12,31)
+    assert clean.arrow_schema("index_basic").field("list_date").type == pa.date32()
+    assert result.iloc[0]["schema_version"] == "2.0.0"
+    assert clean.schema_version("daily") == "1.0.0"

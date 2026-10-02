@@ -221,3 +221,24 @@ def test_calendar_interior_gap_still_blocks(tmp_path, config, client, provider, 
     with pytest.raises(ValidationError, match="interior calendar gap"):
         Pipeline(tmp_path, config, client, as_of).run()
     assert not (tmp_path / "data/current").exists()
+
+
+def test_stock_metadata_repair_requests_essential_source_fields(tmp_path, config, client, provider, as_of):
+    retired = provider.stocks.iloc[:1].copy()
+    retired["ts_code"], retired["symbol"] = "T600018.SH", "T600018"
+    retired["market"], retired["list_status"], retired["delist_date"] = None, "D", "20061020"
+    provider.stocks = pd.concat([provider.stocks, retired], ignore_index=True)
+    config["download"]["repair_requests_per_run"] = 15
+    assert Pipeline(tmp_path, config, client, as_of).run()["passed"]
+    repairs = [p for n,p in provider.calls if n == "stock_basic" and p.get("ts_code") == "T600018.SH"]
+    assert repairs and all("list_status" in p["fields"] for p in repairs)
+
+
+def test_rebuilt_partition_removes_resolved_gap(tmp_path, config, provider):
+    store = Store(tmp_path, config)
+    store.begin()
+    store.save("stock_basic", provider.stocks)
+    params = {"partition": "snapshot=current", "layer": "clean"}
+    store.gap("stock_basic", params, "corrupt partition was rebuilt")
+    store.scan()
+    assert request_id("stock_basic", params) not in store.gaps

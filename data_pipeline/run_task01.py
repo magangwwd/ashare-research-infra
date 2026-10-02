@@ -14,7 +14,7 @@ import pandas as pd
 import yaml
 
 from . import clean
-from .download import CRITICAL, DATASETS, DownloadError, TushareClient, dependency_order
+from .download import CRITICAL, DATASETS, STOCK_BASIC_FIELDS, DownloadError, TushareClient, dependency_order
 from .manifest import Store, atomic_json, read_dataset, read_session, read_json, request_id, utcnow
 from .validate import ValidationError, suspension_codes, validate_frame, validate_session, validate_task01
 
@@ -80,7 +80,7 @@ class Pipeline:
         entries = self.store.scan()
         for entry in entries:
             if entry["validation_status"] == "failed":
-                self.store.gap(entry["dataset"], {"partition": entry["partition"]}, entry.get("reason", "corrupt partition"))
+                self.store.gap(entry["dataset"], {"partition": entry["partition"], "layer": entry["layer"]}, entry.get("reason", "corrupt partition"))
                 # Failed staged files cannot be inputs to merge; publication is untouched.
                 import shutil
                 shutil.rmtree(self.stage / entry["layer"] / entry["dataset"] / entry["partition"])
@@ -89,7 +89,7 @@ class Pipeline:
         basics = []
         for status in ("L", "D", "P"):
             params = {"list_status": status,
-                      "fields": "ts_code,symbol,name,area,industry,market,exchange,list_status,list_date,delist_date"}
+                      "fields": STOCK_BASIC_FIELDS}
             basics.append(self.client.fetch("stock_basic", **params))
         raw = pd.concat(basics, ignore_index=True)
         if raw.empty or basics[0].empty:
@@ -489,7 +489,7 @@ def round_robin(streams):
 def schema_docs(root: Path) -> None:
     for dataset, schema in clean.SCHEMAS.items():
         atomic_json(root / f"metadata/schemas/{dataset}.json", {
-            "dataset": dataset, "source": "Tushare", "schema_version": clean.SCHEMA_VERSION,
+            "dataset": dataset, "source": "Tushare", "schema_version": clean.schema_version(dataset),
             "primary_key": clean.KEYS[dataset], "fields": [{"source_field": f.source, "clean_field": f.name,
                                                            "dtype": f.dtype, "description": f.description} for f in schema],
             "clean_rules": "explicit schema; keep last primary key; financial latest announcement/revision",

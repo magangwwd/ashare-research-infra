@@ -65,7 +65,7 @@ Smoke 结果绑定当前 Python 代码指纹；修改代码后必须重新执行
 
 Raw 保留原字段及原日期格式，包括 Tushare 新字段。只额外增加 `_fetched_at`，不更改源字段含义。财务 Raw 保留每次获得的公告/修订版本，无法获得的历史版本不伪造。
 
-Clean 仅包含 `clean.py::SCHEMAS` 显式声明的字段；未知源字段不会自动进入 Clean。Schema 当前为 `1.0.0`，每行带 `schema_version`。运行时在 `metadata/schemas/` 导出 `source_field`、`clean_field`、dtype、description、主键和规则。新增字段优先兼容升级，重大结构变化才升级主版本。
+Clean 仅包含 `clean.py::SCHEMAS` 显式声明的字段；未知源字段不会自动进入 Clean。各数据集独立带 `schema_version`，核心为 `1.0.0`；`index_basic` 日期字段由字符串修正为 Date，因此单独升级为 `2.0.0`，不改变核心版本。运行时在 `metadata/schemas/` 导出 `source_field`、`clean_field`、dtype、description、主键和规则。新增字段优先兼容升级，重大结构变化才升级主版本。
 
 日期使用 Arrow `date32`，更新时间使用 UTC timestamp；Raw 日期仍为原格式。财务映射 `end_date → report_period`，保留 `ann_date / actual_ann_date`；预留 `available_date`，Task 01 不擅自推定可用时点。
 

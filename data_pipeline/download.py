@@ -14,6 +14,7 @@ import pandas as pd
 from .manifest import atomic_json
 
 CRITICAL = ("stock_basic", "trade_cal", "daily", "adj_factor", "daily_basic")
+STOCK_BASIC_FIELDS = "ts_code,symbol,name,area,industry,market,exchange,list_status,list_date,delist_date"
 
 
 @dataclass(frozen=True)
@@ -109,6 +110,8 @@ class TushareClient:
 
     def fetch(self, endpoint: str, **params: Any) -> pd.DataFrame:
         """Offset pagination, fail closed on ignored offsets or runaway results."""
+        if endpoint == "stock_basic":
+            params.setdefault("fields", STOCK_BASIC_FIELDS)
         pages, fingerprints, offset = [], set(), 0
         limit = min(self.config["page_size"], 1000) if endpoint == "stock_st" else self.config["page_size"]
         for _ in range(self.config["max_pages"]):
