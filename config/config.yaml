@@ -17,6 +17,7 @@ download:
   max_pages: 1000
   history_start: '19900101'
   history_requests_per_run: 40
+  maintenance_history_requests_per_run: 240
   repair_requests_per_run: 15
   audit_requests_per_run: 10
   required_recent_requests_per_run: 25

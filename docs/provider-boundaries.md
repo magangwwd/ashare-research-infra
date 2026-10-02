@@ -8,5 +8,7 @@
 - ST 原资料的正确接口为 [`stock_st`](https://tushare.pro/document/2?doc_id=397)，3000 积分起、单次最多 1000 行，文档起点 2000-01-01。保存提供者原记录，不展开全股票每日 is_st。
 - 股本盘前快照为 [`stk_premarket`](https://tushare.pro/document/2?doc_id=329)，独立开通权限、文档起点 2024-05-01。无权限时记 Required Gap，仍长期保存 daily_basic 原股本字段。不在 Task 01 计算股本变化因子。
 - SW2021 和 SW2014 分类审计可用；CITICS 分类探测返回空，不能当作已获得主行业体系。sw_daily、ci_daily、ci_index_member、stk_surv 的本次权限不足，不影响 Critical。后续权限开通后重新审计。
+- [`index_member_all`](https://tushare.pro/document/2?doc_id=335) 和 [`ci_index_member`](https://tushare.pro/document/2?doc_id=373) 默认 `is_new=Y`，因此必须分别请求 Y/N 才能保存当前和退出成员；历史证券请求不能限制在历史下载起始年已上市的证券。
+- [`dividend`](https://tushare.pro/document/2?doc_id=103) 支持证券与公告日等单日参数，没有 start_date/end_date 范围参数。程序按证券一次请求其历史，再轮转刷新；财务 Raw/Clean 分区规则保持不变。财务指标 [`fina_indicator`](https://tushare.pro/document/2?doc_id=79) 的范围参数按报告期，不能将其请求日期范围当作公告日期承诺；Raw 保留实际公告日期并按公告年月落库。
 
 以上范围来自真实响应或明确接口文档，不是声称历史全量已完成。

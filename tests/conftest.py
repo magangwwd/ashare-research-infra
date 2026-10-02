@@ -12,7 +12,7 @@ from data_pipeline.run_task01 import load_config
 @pytest.fixture
 def config():
     result = deepcopy(load_config(Path(__file__).parents[1] / "config/config.yaml"))
-    result["download"].update(history_start="20260901", history_requests_per_run=0,
+    result["download"].update(history_start="20260901", history_requests_per_run=0, maintenance_history_requests_per_run=0,
                               repair_requests_per_run=0, audit_requests_per_run=0,
                               lookback_trading_days=2, daily_basic_lookback_trading_days=3,
                               required_recent_requests_per_run=0, optional_recent_requests_per_run=0)

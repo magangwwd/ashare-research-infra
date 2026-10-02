@@ -57,6 +57,10 @@ jobs:
         run: python -m data_pipeline.run_task01 --mode auto
       - name: Production acceptance
         run: python -m data_pipeline.validate
+      - name: Recovery drill with real production Parquet
+        env:
+          TASK01_RECOVERY_ROOT: .
+        run: python -m pytest -q tests/test_live_recovery.py
       - name: Package validated production
         run: |
           tar -czhf task01-validated.tar.gz data/raw data/clean data/current/acceptance.json metadata docs/datasets

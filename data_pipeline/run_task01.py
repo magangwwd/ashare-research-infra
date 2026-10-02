@@ -32,6 +32,10 @@ def load_config(path: Path) -> dict:
     for name in ("retries", "requests_per_minute", "page_size", "max_pages"):
         if config["download"][name] <= 0:
             raise ValueError(f"download.{name} must be positive")
+    for name in ("history_requests_per_run", "maintenance_history_requests_per_run"):
+        value = config["download"].get(name, config["download"]["history_requests_per_run"])
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            raise ValueError(f"download.{name} must be a nonnegative integer")
     return config
 
 
@@ -271,6 +275,9 @@ class Pipeline:
             elif spec.strategy == "index_history":
                 streams.append(iter([(name, {"index_code" if name == "index_weight" else "ts_code": code,
                                              "start_date": start, "end_date": day}) for code in self.config["index_universe"]]))
+            elif spec.strategy == "industry_history":
+                streams.append(iter([(name, {"ts_code": code, "is_new": state})
+                                     for code in self.master["ts_code"] for state in ("Y", "N")]))
             else:
                 streams.append(iter([(name, {"ts_code": code, **({"start_date": start, "end_date": day} if spec.strategy in ("financial", "security_history") else {})}) for code in self.master["ts_code"]]))
         yield from round_robin(streams)
@@ -335,16 +342,22 @@ class Pipeline:
                 if not clean.expected_pool(self.master, day, open_exchanges=self.open_exchanges(day)):
                     continue
                 yield name, {"trade_date": day.strftime("%Y%m%d")}
-        elif spec.strategy in ("financial", "security_history", "industry_history"):
+        elif spec.strategy == "industry_history":
+            # Membership spans listing cohorts and requires both provider views;
+            # a default query only returns current members (is_new=Y).
+            for code in self.master["ts_code"]:
+                for state in ("Y", "N"):
+                    yield name, {"ts_code": code, "is_new": state}
+        elif spec.strategy == "security_snapshot":
+            for code in self.master["ts_code"]:
+                yield name, {"ts_code": code}
+        elif spec.strategy in ("financial", "security_history"):
             for year in range(int(start[:4]), self.as_of.year + 1):
                 for row in self.master.itertuples():
                     if pd.notna(row.list_date) and row.list_date.year > year:
                         continue
                     params = {"ts_code": row.ts_code}
-                    if spec.strategy != "industry_history":
-                        params.update(start_date=max(start, f"{year}0101"), end_date=min(self.as_of.strftime("%Y%m%d"), f"{year}1231"))
-                    elif year != int(start[:4]):
-                        continue  # Membership request already returns raw membership history.
+                    params.update(start_date=max(start, f"{year}0101"), end_date=min(self.as_of.strftime("%Y%m%d"), f"{year}1231"))
                     yield name, params
         elif spec.strategy == "index_history":
             for month in pd.period_range(pd.Timestamp(start), self.as_of, freq="M"):
@@ -441,7 +454,9 @@ class Pipeline:
                 self.get_save(name, params, critical=DATASETS[name].tier == "critical")
 
     def history(self) -> None:
-        if self.config["download"]["history_requests_per_run"] > 0:
+        budget_key = "maintenance_history_requests_per_run" if self.mode == "MAINTENANCE" else "history_requests_per_run"
+        budget = self.config["download"].get(budget_key, self.config["download"]["history_requests_per_run"])
+        if budget > 0:
             self.discover_history_ranges()
         names = [n for n, s in DATASETS.items() if self.available(n) and s.strategy not in ("snapshot", "calendar", "derived", "index_metadata", "industry_metadata")
                  and (s.tier == "critical" or (s.tier == "required" and self.config["datasets"]["required"])
@@ -458,7 +473,7 @@ class Pipeline:
             if self.complete(name, params):
                 completed += 1
                 continue
-            if fetched >= self.config["download"]["history_requests_per_run"]:
+            if fetched >= budget:
                 exhausted = False
                 break
             if name in ("daily", "adj_factor", "daily_basic"):
@@ -468,6 +483,7 @@ class Pipeline:
             fetched += 1
         atomic_json(state_path, {"cursor": cursor + fetched, "history_start": self.config["download"]["history_start"],
                                  "as_of": str(self.as_of), "fetched_this_run": fetched, "existing_complete_requests": completed,
+                                 "mode": self.mode, "request_budget": budget,
                                  "all_enabled_requests_examined": exhausted, "updated_at": utcnow()})
 
     def monthly_audit(self) -> None:

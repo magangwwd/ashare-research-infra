@@ -82,6 +82,7 @@ def test_old_rows_cannot_mask_new_incomplete_response(tmp_path, config, client, 
 
 def test_history_resume_does_not_redownload_complete_dates(tmp_path, config, client, provider, as_of):
     config["download"]["history_requests_per_run"] = 3
+    config["download"]["maintenance_history_requests_per_run"] = 3
     pipeline = Pipeline(tmp_path, config, client, as_of)
     pipeline.bootstrap()
     pipeline.history()
@@ -274,3 +275,63 @@ def test_bad_historical_coverage_blocks_acceptance_even_if_latest_is_good(tmp_pa
     assert not report["passed"]
     assert any("2026-09-01" in e for e in report["errors"])
     assert any(e["dataset"] == "daily" and e["validation_status"] == "failed" for e in store.scan())
+
+
+def test_industry_history_includes_later_listings_and_exited_members(tmp_path, config, client, provider, as_of):
+    from data_pipeline.manifest import read_dataset
+    original = provider.query
+
+    def query(endpoint, **params):
+        if endpoint == "index_member_all":
+            state = params.get("is_new", "Y")
+            return pd.DataFrame([{"ts_code": params["ts_code"], "l3_code": "850001.SI", "is_new": state,
+                                  "in_date": "20000101" if state == "Y" else "19990101",
+                                  "out_date": None if state == "Y" else "20000101"}])
+        return original(endpoint, **params)
+
+    provider.query = query
+    config["download"]["history_start"] = "19900101"
+    pipeline = Pipeline(tmp_path, config, client, as_of)
+    pipeline.bootstrap()
+    requests = list(pipeline.history_requests("index_member_all"))
+    assert {p['ts_code'] for _, p in requests} == set(provider.stocks['ts_code'])
+    assert len(requests) == len(provider.stocks) * 2
+    for name, params in requests:
+        pipeline.get_save(name, params)
+    saved = read_dataset(pipeline.stage, "clean", "index_member_all")
+    assert len(saved) == len(provider.stocks) * 2
+    assert set(saved['is_new']) == {'Y', 'N'}
+    assert set(saved.loc[saved.is_new.eq('N'), 'ts_code']) == set(provider.stocks.ts_code)
+    recent = [p for n, p in pipeline.recent_requests('required') if n == 'index_member_all']
+    assert recent == [p for _, p in requests]
+
+
+def test_dividend_requests_do_not_repeat_unsupported_year_filters(tmp_path, config, client, provider, as_of):
+    pipeline = Pipeline(tmp_path, config, client, as_of)
+    pipeline.master = clean.normalize("security_master", clean.security_master(provider.stocks, "2026-10-02T12:00:00Z"))
+    pipeline.sessions = [as_of]
+    config['download']['history_start'] = '19900101'
+    requests = list(pipeline.history_requests('dividend'))
+    assert len(requests) == len(provider.stocks)
+    assert all(set(p) == {'ts_code'} for _, p in requests)
+    recent = [p for n, p in pipeline.recent_requests('required') if n == 'dividend']
+    assert recent == [p for _, p in requests]
+
+
+@pytest.mark.parametrize('holiday,expected_budget', [(False, 2), (True, 5)])
+def test_history_budget_follows_actual_calendar_mode(tmp_path, config, client, provider, as_of, holiday, expected_budget):
+    from datetime import timedelta
+    config['download'].update(history_requests_per_run=2, maintenance_history_requests_per_run=5)
+    pipeline = Pipeline(tmp_path, config, client, as_of + timedelta(days=int(holiday)))
+    pipeline.bootstrap()
+    pipeline.history()
+    state = read_json(tmp_path / 'metadata/manifest/history.json')
+    assert state['mode'] == ('MAINTENANCE' if holiday else 'DAILY_UPDATE')
+    assert state['request_budget'] == expected_budget
+    assert state['fetched_this_run'] == expected_budget
+    resumed = Pipeline(tmp_path, config, client, pipeline.as_of)
+    resumed.bootstrap()
+    resumed.history()
+    state = read_json(tmp_path / 'metadata/manifest/history.json')
+    assert state['fetched_this_run'] == expected_budget
+    assert state['existing_complete_requests'] >= expected_budget

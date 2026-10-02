@@ -32,7 +32,9 @@ DATASETS = {
     "trade_cal": Dataset("trade_cal", "critical", "calendar", dependencies=()),
     "security_master": Dataset("security_master", "required", "derived", dependencies=("stock_basic",)),
     **{n: Dataset(n, "critical", "trade", "trade_date") for n in ("daily", "adj_factor", "daily_basic")},
-    **{n: Dataset(n, "required", "financial", "ann_date") for n in ("income", "balancesheet", "cashflow", "fina_indicator", "forecast", "express", "dividend")},
+    **{n: Dataset(n, "required", "financial", "ann_date") for n in ("income", "balancesheet", "cashflow", "fina_indicator", "forecast", "express")},
+    # Dividend does not accept start_date/end_date; one security returns its history.
+    "dividend": Dataset("dividend", "required", "security_snapshot", "ann_date"),
     "namechange": Dataset("namechange", "required", "security_history", "start_date"),
     "stock_st": Dataset("stock_st", "required", "trade", "trade_date", available_from="20000101"),
     "stk_premarket": Dataset("stk_premarket", "required", "trade", "trade_date", available_from="20240501"),
@@ -147,7 +149,7 @@ class TushareClient:
             if spec.strategy == "derived":
                 continue
             params = probes.get(name, {"trade_date": probe_day})
-            if spec.strategy in ("financial", "security_history"):
+            if spec.strategy in ("financial", "security_history", "security_snapshot"):
                 params = {"ts_code": "000001.SZ"}
             elif spec.strategy == "index_metadata":
                 params = {"market": "SSE"}
@@ -157,7 +159,7 @@ class TushareClient:
             elif spec.strategy == "industry_metadata":
                 continue
             elif spec.strategy == "industry_history":
-                params = {"ts_code": "000001.SZ"}
+                params = {"ts_code": "000001.SZ", "is_new": "Y"}
             try:
                 frame = self.query(name, **params, limit=10, offset=0)
                 if name in CRITICAL and frame.empty:
