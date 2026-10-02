@@ -22,7 +22,7 @@ Parquet 是事实来源，Manifest 可重建；分批历史、断点续传、失
 
 | 子任务 | 实现入口/证据 | 仍需真实验收 |
 | --- | --- | --- |
-| 01.1 Repository Bootstrap | README、requirements、config、gitignore、package | GitHub repo 推送和 Runner 安装 |
+| 01.1 Repository Bootstrap | README、requirements、config、gitignore、package | 已验证仓库推送和 Runner 安装/单元测试 |
 | 01.2 Tushare Bootstrap | download.py；重试、分页、限流、Capability Audit | 五个 Critical 权限与网络调用 |
 | 01.3 Security Master & Calendar | clean.py、bootstrap；UUID5 和 market 元数据 | L/D/P 完整性、交易所/板块口径 |
 | 01.4 Critical Historical | manifest.py、history；按依赖和预算推进 | 各接口实际历史起点及全部可获得范围 |
@@ -32,7 +32,7 @@ Parquet 是事实来源，Manifest 可重建；分批历史、断点续传、失
 | 01.8 Market State Raw | suspend_d、stk_limit、namechange、stk_st、stk_share、dividend | 各 Required 接口和历史覆盖 |
 | 01.9 Optional Whitelist | capability + registry + Gap | 白名单接口权限和分页 |
 | 01.10 Incremental | current windows、cursor、repair、monthly_audit | 连续真实交易日/非交易日运行 |
-| 01.11 GitHub Actions | 单 Workflow；UTC 12:00；恢复 Artifact | Secrets 配置、手动/定时真实运行 |
+| 01.11 GitHub Actions | 单 Workflow；UTC 12:00；恢复 Artifact；首次手动运行已验证失败阻断 | Secrets 配置、定时运行及真实数据成功验收 |
 | 01.12 Automated Acceptance | validate CLI、工作流非零阻断、恢复测试 | 正式数据全量验收和故障演练 |
 | 01.13 Google Drive | [Phase 2 发布合同](drive-phase2.md) | Phase 1 稳定后实施；当前未接通 |
 

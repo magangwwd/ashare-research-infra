@@ -8,7 +8,9 @@ Task 01 只建设 **稳定、可恢复、可自动更新的 A 股研究数据底
 
 ## 当前状态
 
-Phase 1 实现和离线测试已落地。**尚未执行真实 Tushare capability audit、live smoke、全量历史下载或线上 Actions 验收**；这些必须使用用户的 `TUSHARE_TOKEN` 完成。离线测试通过不等于真实数据验收通过。历史任务分批推进，不承诺一次运行完成整个历史库。
+Phase 1 实现已推送到 GitHub 私有仓库，20 项离线测试通过。2026-10-02 已执行[首次 Actions](https://github.com/magangwwd/ashare-research-infra/actions/runs/36984398679)：Runner 安装和单元测试通过，真实 Smoke 因 `TUSHARE_TOKEN` 未注入而失败；Workflow 正确显示 FAILED，跳过正式数据发布。详见[验收记录](docs/acceptance-record.md)。
+
+**真实 Tushare capability audit、live smoke、全量历史下载及正式数据验收尚未完成**。先在仓库 Actions Secrets 配置 `TUSHARE_TOKEN`，再手动运行 Workflow。代码和离线测试通过不等于真实数据验收通过；历史任务分批推进，不承诺一次运行完成整个历史库。
 
 Phase 2 Google Drive 尚未启用，必须等 Phase 1 真实验收稳定后实施，见 [Drive 发布规格](docs/drive-phase2.md)。没有 Drive 凭据、远程 Production 或伪造的成功报告。
 
