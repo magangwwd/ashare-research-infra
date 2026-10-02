@@ -86,12 +86,16 @@ def test_history_resume_does_not_redownload_complete_dates(tmp_path, config, cli
     pipeline = Pipeline(tmp_path, config, client, as_of)
     pipeline.bootstrap()
     pipeline.history()
-    earliest = "20260901"
-    before = sum(n in ("daily", "adj_factor", "daily_basic") and p.get("trade_date") == earliest for n, p in provider.calls)
+    units = {(r['dataset'], r['params']['trade_date']) for r in pipeline.store.receipts.values()
+             if r['dataset'] in ('daily', 'adj_factor', 'daily_basic') and 'ts_code' not in r['params']}
+    assert len(units) == 3
+    before = {(name, day): sum(n == name and p.get('trade_date') == day for n, p in provider.calls)
+              for name, day in units}
     resumed = Pipeline(tmp_path, config, client, as_of)
     resumed.capabilities, resumed.master, resumed.sessions = pipeline.capabilities, pipeline.master, pipeline.sessions
     resumed.history()
-    after = sum(n in ("daily", "adj_factor", "daily_basic") and p.get("trade_date") == earliest for n, p in provider.calls)
+    after = {(name, day): sum(n == name and p.get('trade_date') == day for n, p in provider.calls)
+             for name, day in units}
     assert before == after
     assert read_json(tmp_path / "metadata/manifest/history.json")["fetched_this_run"] == 3
 
@@ -340,3 +344,20 @@ def test_history_budget_follows_actual_calendar_mode(tmp_path, config, client, p
     state = read_json(tmp_path / 'metadata/manifest/history.json')
     assert state['fetched_this_run'] == expected_budget
     assert state['existing_complete_requests'] >= expected_budget
+
+
+def test_history_prioritizes_recent_ranges_without_losing_oldest_requests(tmp_path, config, client, provider, as_of):
+    from datetime import date
+    pipeline = Pipeline(tmp_path, config, client, as_of)
+    pipeline.master = clean.normalize('security_master', clean.security_master(provider.stocks, '2026-10-02T12:00:00Z'))
+    pipeline.sessions = [date(2020, 1, 2), date(2026, 9, 30)]
+    config['download']['history_start'] = '20200101'
+    config['index_universe'] = ['000300.SH']
+    daily = list(pipeline.history_requests('daily'))
+    assert [p['trade_date'] for _, p in daily] == ['20260930', '20200102']
+    financial = list(pipeline.history_requests('income'))
+    assert financial[0][1]['start_date'] == '20260101'
+    assert financial[-1][1]['start_date'] == '20200101'
+    indexes = list(pipeline.history_requests('index_daily'))
+    assert indexes[0][1]['start_date'] == '20261001'
+    assert indexes[-1][1]['start_date'] == '20200101'

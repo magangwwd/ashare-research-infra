@@ -336,7 +336,7 @@ class Pipeline:
         if spec.strategy == "trade":
             floor = max(start, spec.available_from or start,
                         read_json(self.root / "metadata/capabilities/history_ranges.json").get(name, {}).get("first_observed_date", start))
-            for day in self.sessions:
+            for day in reversed(self.sessions):
                 if day.strftime("%Y%m%d") < floor:
                     continue
                 if not clean.expected_pool(self.master, day, open_exchanges=self.open_exchanges(day)):
@@ -352,7 +352,7 @@ class Pipeline:
             for code in self.master["ts_code"]:
                 yield name, {"ts_code": code}
         elif spec.strategy in ("financial", "security_history"):
-            for year in range(int(start[:4]), self.as_of.year + 1):
+            for year in range(self.as_of.year, int(start[:4]) - 1, -1):
                 for row in self.master.itertuples():
                     if pd.notna(row.list_date) and row.list_date.year > year:
                         continue
@@ -360,7 +360,7 @@ class Pipeline:
                     params.update(start_date=max(start, f"{year}0101"), end_date=min(self.as_of.strftime("%Y%m%d"), f"{year}1231"))
                     yield name, params
         elif spec.strategy == "index_history":
-            for month in pd.period_range(pd.Timestamp(start), self.as_of, freq="M"):
+            for month in reversed(pd.period_range(pd.Timestamp(start), self.as_of, freq="M")):
                 for code in self.config["index_universe"]:
                     yield name, {"index_code" if name == "index_weight" else "ts_code": code,
                                  "start_date": max(start, month.start_time.strftime("%Y%m%d")),
