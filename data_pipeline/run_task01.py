@@ -101,6 +101,12 @@ class Pipeline:
                 raise ValidationError("smoke: insufficient mainboard sample")
             raw = raw.loc[raw["ts_code"].isin(selected)]
         self.store.save("stock_basic", raw)
+        # Some retired provider identifiers have no market metadata. Keep them and
+        # an explicit gap; never guess their board from numeric code prefixes.
+        for row in raw.loc[raw["market"].isna() | raw["market"].eq("")].itertuples():
+            self.store.gap("stock_basic", {"ts_code": row.ts_code, "list_status": row.list_status,
+                                          "metadata_field": "market"},
+                           "historical market metadata missing; preserved with UNKNOWN board")
         self.store.save_clean("security_master", clean.normalize("security_master", clean.security_master(raw, utcnow())))
         self.master = read_dataset(self.stage, "clean", "security_master")
         start = self.config["download"]["history_start"]
@@ -336,7 +342,16 @@ class Pipeline:
             name, params = gap["dataset"], gap["params"]
             if "partition" in params:
                 continue  # File scan + history scheduler rebuild damaged partitions.
-            if name in ("daily", "adj_factor", "daily_basic"):
+            if "metadata_field" in params:
+                field = params["metadata_field"]
+                query = {k: v for k, v in params.items() if k != "metadata_field"}
+                frame = self.get_save(name, query, critical=DATASETS[name].tier == "critical")
+                if field in frame and frame[field].notna().all() and not frame[field].eq("").any():
+                    self.store.gaps.pop(request_id(name, params), None)
+                    atomic_json(self.store.metadata / "gaps.json", self.store.gaps)
+                else:
+                    self.store.gap(name, params, gap["reason"])
+            elif name in ("daily", "adj_factor", "daily_basic"):
                 unit = (name, params["trade_date"])
                 if unit in repaired:
                     continue

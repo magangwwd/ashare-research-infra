@@ -39,7 +39,7 @@ def validate_frame(dataset: str, frame: pd.DataFrame) -> None:
             raise ValidationError(f"{dataset}.{f.name}: must be Date")
         if f.dtype in ("float64", "int64") and not pd.api.types.is_numeric_dtype(frame[f.name]):
             raise ValidationError(f"{dataset}.{f.name}: must be numeric")
-    required = {"stock_basic": ["ts_code", "symbol", "name", "market", "list_date", "list_status"],
+    required = {"stock_basic": ["ts_code", "symbol", "name", "list_date", "list_status"],
                 "trade_cal": ["exchange", "calendar_date", "is_open"],
                 "security_master": ["ts_code", "exchange", "board", "security_type", "list_date"],
                 "daily": ["open", "high", "low", "close", "vol"],
@@ -48,6 +48,8 @@ def validate_frame(dataset: str, frame: pd.DataFrame) -> None:
     identity = [c for c in required.get(dataset, []) if c in {"ts_code", "symbol", "name", "market", "list_date", "list_status", "exchange", "board", "security_type", "calendar_date", "is_open"}]
     if identity and frame[identity].isna().any().any():
         raise ValidationError(f"{dataset}: missing essential identity/calendar fields")
+    if dataset == "stock_basic" and frame.loc[frame["list_status"] == "L", "market"].isna().any():
+        raise ValidationError("stock_basic: listed securities have missing market metadata")
 
 
 def validate_session(dataset: str, frame: pd.DataFrame, master: pd.DataFrame, day: date,

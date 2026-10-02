@@ -37,7 +37,9 @@ class FakeTushare:
         if endpoint in self.fail:
             raise RuntimeError("permission denied")
         if endpoint == "stock_basic":
-            frame = self.stocks if params.get("list_status", "L") == "L" else self.stocks.iloc[:0]
+            frame = self.stocks.loc[self.stocks["list_status"] == params.get("list_status", "L")]
+            if "ts_code" in params:
+                frame = frame.loc[frame["ts_code"] == params["ts_code"]]
         elif endpoint == "trade_cal":
             start, end = pd.Timestamp(params["start_date"]), pd.Timestamp(params["end_date"])
             frame = pd.DataFrame([{"exchange": params.get("exchange", "SSE"), "cal_date": d.strftime("%Y%m%d"),

@@ -166,3 +166,23 @@ def test_monthly_audit_respects_actual_api_history_floor(tmp_path, config, clien
     pipeline.monthly_audit()
     assert ("daily_basic", date(2001,1,2)) not in fetched
     assert ("daily_basic", date(2005,1,3)) in fetched
+
+
+def test_retired_stock_missing_market_is_preserved_and_recorded(tmp_path, config, client, provider, as_of):
+    from data_pipeline.manifest import read_dataset
+    retired = provider.stocks.iloc[:1].copy()
+    retired["ts_code"], retired["symbol"] = "T600018.SH", "T600018"
+    retired["market"], retired["list_status"], retired["delist_date"] = None, "D", "20061020"
+    provider.stocks = pd.concat([provider.stocks, retired], ignore_index=True)
+    report = Pipeline(tmp_path, config, client, as_of).run()
+    assert report["passed"]
+    master = read_dataset(tmp_path / "data/current", "clean", "security_master")
+    assert master.loc[master["ts_code"] == "T600018.SH", "board"].iloc[0] == "UNKNOWN"
+    assert any(g["params"].get("metadata_field") == "market" for g in read_json(tmp_path / "metadata/manifest/gaps.json").values())
+
+
+def test_listed_stock_missing_market_still_blocks_publication(tmp_path, config, client, provider, as_of):
+    provider.stocks.loc[0, "market"] = None
+    with pytest.raises(ValidationError, match="listed securities have missing market"):
+        Pipeline(tmp_path, config, client, as_of).run()
+    assert not (tmp_path / "data/current").exists()
