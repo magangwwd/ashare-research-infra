@@ -23,6 +23,7 @@ class Dataset:
     strategy: str
     date_field: str | None = None
     dependencies: tuple[str, ...] = ("stock_basic", "trade_cal")
+    available_from: str | None = None
 
 
 DATASETS = {
@@ -32,8 +33,9 @@ DATASETS = {
     **{n: Dataset(n, "critical", "trade", "trade_date") for n in ("daily", "adj_factor", "daily_basic")},
     **{n: Dataset(n, "required", "financial", "ann_date") for n in ("income", "balancesheet", "cashflow", "fina_indicator", "forecast", "express", "dividend")},
     "namechange": Dataset("namechange", "required", "security_history", "start_date"),
-    "stk_share": Dataset("stk_share", "required", "security_history", "ann_date"),
-    **{n: Dataset(n, "required", "trade", "trade_date") for n in ("stk_st", "suspend_d", "stk_limit", "sw_daily", "ci_daily")},
+    "stock_st": Dataset("stock_st", "required", "trade", "trade_date", available_from="20000101"),
+    "stk_premarket": Dataset("stk_premarket", "required", "trade", "trade_date", available_from="20240501"),
+    **{n: Dataset(n, "required", "trade", "trade_date") for n in ("suspend_d", "stk_limit", "sw_daily", "ci_daily")},
     "index_basic": Dataset("index_basic", "required", "index_metadata"),
     "index_daily": Dataset("index_daily", "required", "index_history", "trade_date", ("index_basic", "trade_cal")),
     "index_weight": Dataset("index_weight", "required", "index_history", "trade_date", ("index_basic", "trade_cal")),
@@ -108,7 +110,7 @@ class TushareClient:
     def fetch(self, endpoint: str, **params: Any) -> pd.DataFrame:
         """Offset pagination, fail closed on ignored offsets or runaway results."""
         pages, fingerprints, offset = [], set(), 0
-        limit = self.config["page_size"]
+        limit = min(self.config["page_size"], 1000) if endpoint == "stock_st" else self.config["page_size"]
         for _ in range(self.config["max_pages"]):
             page = self.query(endpoint, **params, limit=limit, offset=offset)
             fingerprint = hashlib.sha256(page.to_json().encode()).hexdigest()

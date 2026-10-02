@@ -186,3 +186,38 @@ def test_listed_stock_missing_market_still_blocks_publication(tmp_path, config, 
     with pytest.raises(ValidationError, match="listed securities have missing market"):
         Pipeline(tmp_path, config, client, as_of).run()
     assert not (tmp_path / "data/current").exists()
+
+
+def test_calendar_leading_empty_history_is_an_observed_boundary(tmp_path, config, client, provider, as_of):
+    config["download"]["history_start"] = "20240101"
+    original = provider.query
+
+    def query(endpoint, **params):
+        frame = original(endpoint, **params)
+        if endpoint == "trade_cal" and params.get("exchange") == "SZSE" and params.get("start_date") == "20240101":
+            return frame.iloc[:0]
+        return frame
+
+    provider.query = query
+    pipeline = Pipeline(tmp_path, config, client, as_of)
+    pipeline.bootstrap()
+    ranges = read_json(tmp_path / "metadata/capabilities/calendar_ranges.json")
+    assert ranges["SZSE"]["first_observed_date"] == "2025-01-01"
+    assert ranges["SZSE"]["empty_leading_years"] == [2024]
+    assert not any(g["dataset"] == "trade_cal" for g in pipeline.store.gaps.values())
+
+
+def test_calendar_interior_gap_still_blocks(tmp_path, config, client, provider, as_of):
+    config["download"]["history_start"] = "20230101"
+    original = provider.query
+
+    def query(endpoint, **params):
+        frame = original(endpoint, **params)
+        if endpoint == "trade_cal" and params.get("exchange") == "SZSE" and params.get("start_date") == "20240101":
+            return frame.iloc[:0]
+        return frame
+
+    provider.query = query
+    with pytest.raises(ValidationError, match="interior calendar gap"):
+        Pipeline(tmp_path, config, client, as_of).run()
+    assert not (tmp_path / "data/current").exists()

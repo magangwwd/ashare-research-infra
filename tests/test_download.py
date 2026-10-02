@@ -46,3 +46,14 @@ def test_live_token_required(config, monkeypatch):
     monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
     with pytest.raises(DownloadError, match="TUSHARE_TOKEN"):
         TushareClient(config)
+
+
+def test_stock_st_server_page_cap_is_respected(config):
+    class Capped:
+        def query(self, *args, **params):
+            rows = pd.DataFrame({"ts_code": [f"{i:06d}.SZ" for i in range(2301)]})
+            offset, limit = params.get("offset", 0), min(params["limit"], 1000)
+            return rows.iloc[offset:offset+limit].reset_index(drop=True)
+
+    client = TushareClient(config, Capped(), sleeper=lambda _: None)
+    assert len(client.fetch("stock_st", trade_date="20261002")) == 2301

@@ -78,7 +78,7 @@ Clean 仅包含 `clean.py::SCHEMAS` 显式声明的字段；未知源字段不�
 | daily_basic | security_id + trade_date | year/month | 原估值、市值、股本等字段，不计算因子 |
 | adj_factor | security_id + trade_date | year/month | 原复权因子，保留最后一条 |
 
-`security_id` 由 Tushare 证券标识生成稳定 UUID5，不随公司名称变化。主板依据 `stock_basic.market == 主板` 和明确的交易所元数据识别，不依据数字代码前缀。`mainboard_pool()` 只提供基础主板池；严格研究股票池属于 Task 02。ST 原资料保存名称变化和可用 `stk_st`，不展开每日状态。
+`security_id` 由 Tushare 证券标识生成稳定 UUID5，不随公司名称变化。主板依据 `stock_basic.market == 主板` 和明确的交易所元数据识别，不依据数字代码前缀。历史退市记录缺少 market 时保留 UNKNOWN 板块并记 Gap；当前上市记录缺少 market 仍阻止发布。`mainboard_pool()` 只提供基础主板池；严格研究股票池属于 Task 02。ST 原资料保存名称变化和可用 `stock_st`，不展开全股票每日状态。股本原资料使用 `daily_basic` 和权限可用的 `stk_premarket`。
 
 财务 Raw 分区 `ann_year/ann_month`；Clean 分区 `report_year/report_period`，按公告日、实际公告日及 update_flag 选择当前最新版本。报表还按 `report_type / comp_type` 区分口径。Raw 供以后重建 PIT，Clean 不是严格 PIT 数据。
 

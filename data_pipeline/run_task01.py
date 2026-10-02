@@ -112,11 +112,7 @@ class Pipeline:
         start = self.config["download"]["history_start"]
         if sample:
             start = (self.as_of - timedelta(days=self.config["download"]["smoke_lookback_days"])).strftime("%Y%m%d")
-        for exchange in ("SSE", "SZSE"):
-            # Calendar is small, but requests are bounded by year, including future dates.
-            for year in range(int(start[:4]), self.as_of.year + 1):
-                self.get_save("trade_cal", {"exchange": exchange, "start_date": max(start, f"{year}0101"),
-                                          "end_date": f"{year}1231"}, critical=True)
+        self.calendar(start)
         calendar = read_dataset(self.stage, "clean", "trade_cal")
         self.sessions = sorted(set(calendar.loc[(calendar["exchange"] == "SSE") & (calendar["is_open"] == 1)
                                                 & (calendar["calendar_date"] <= self.as_of), "calendar_date"]))
@@ -126,6 +122,47 @@ class Pipeline:
         if current.empty:
             raise ValidationError("today is absent from calendar")
         self.mode = "DAILY_UPDATE" if current.iloc[-1]["is_open"] == 1 else "MAINTENANCE"
+
+    def calendar(self, start: str) -> None:
+        # Refresh both current calendars before bounded history requests.
+        for exchange in ("SSE", "SZSE"):
+            self.get_save("trade_cal", {"exchange": exchange,
+                                       "start_date": max(start, f"{self.as_of.year}0101"),
+                                       "end_date": f"{self.as_of.year}1231"}, critical=True)
+        existing = read_dataset(self.stage, "clean", "trade_cal")
+        ranges = {}
+        for exchange in ("SSE", "SZSE"):
+            seen_history = False
+            leading_empty = []
+            for year in range(int(start[:4]), self.as_of.year):
+                params = {"exchange": exchange, "start_date": max(start, f"{year}0101"), "end_date": f"{year}1231"}
+                stored = existing.loc[(existing["exchange"] == exchange)
+                                      & (existing["calendar_date"] >= datetime.strptime(params["start_date"], "%Y%m%d").date())
+                                      & (existing["calendar_date"] <= date(year, 12, 31))]
+                receipt = self.store.receipts.get(request_id("trade_cal", params), {})
+                expected_count = (date(year, 12, 31) - datetime.strptime(params["start_date"], "%Y%m%d").date()).days + 1
+                if len(stored) and (len(stored) == expected_count or (receipt.get("status") == "complete" and receipt.get("rows") == len(stored))):
+                    seen_history = True
+                    continue
+                try:
+                    raw = self.client.fetch("trade_cal", **params)
+                    if raw.empty:
+                        if seen_history:
+                            raise ValidationError(f"trade_cal: interior calendar gap for {exchange} {year}")
+                        leading_empty.append(year)
+                        self.store.receipt("trade_cal", params, 0)
+                        continue
+                    seen_history = True
+                    self.store.save("trade_cal", raw)
+                    self.store.receipt("trade_cal", params, len(raw), raw)
+                except Exception as exc:
+                    self.store.gap("trade_cal", params, self.client.redact(exc))
+                    raise
+            available = read_dataset(self.stage, "clean", "trade_cal")
+            available = available.loc[available["exchange"] == exchange]
+            ranges[exchange] = {"first_observed_date": str(available["calendar_date"].min()),
+                                "empty_leading_years": leading_empty, "detected_at": utcnow()}
+        atomic_json(self.root / "metadata/capabilities/calendar_ranges.json", ranges)
 
     def daily(self, dataset: str, day: date, sample: bool = False) -> None:
         params = {"trade_date": day.strftime("%Y%m%d")}
@@ -280,7 +317,8 @@ class Pipeline:
         spec = DATASETS[name]
         start = self.config["download"]["history_start"]
         if spec.strategy == "trade":
-            floor = read_json(self.root / "metadata/capabilities/history_ranges.json").get(name, {}).get("first_observed_date", start)
+            floor = max(start, spec.available_from or start,
+                        read_json(self.root / "metadata/capabilities/history_ranges.json").get(name, {}).get("first_observed_date", start))
             for day in self.sessions:
                 if day.strftime("%Y%m%d") < floor:
                     continue

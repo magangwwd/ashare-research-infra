@@ -29,7 +29,7 @@ Parquet 是事实来源，Manifest 可重建；分批历史、断点续传、失
 | 01.5 Critical Validation | validate.py、daily；95% 边界与补抓测试 | 实际理论池和停牌数据权限 |
 | 01.6 Financial Data | explicit financial schemas、版本测试 | 财务接口字段、公告过滤、修订可获得性 |
 | 01.7 Industry & Index | audit、discover_metadata、index_universe | 历史稳定性，确定行业主体系 |
-| 01.8 Market State Raw | suspend_d、stk_limit、namechange、stk_st、stk_share、dividend | 各 Required 接口和历史覆盖 |
+| 01.8 Market State Raw | suspend_d、stk_limit、namechange、stock_st、stk_premarket、dividend | 各 Required 接口和历史覆盖 |
 | 01.9 Optional Whitelist | capability + registry + Gap | 白名单接口权限和分页 |
 | 01.10 Incremental | current windows、cursor、repair、monthly_audit | 连续真实交易日/非交易日运行 |
 | 01.11 GitHub Actions | 单 Workflow；UTC 12:00；恢复 Artifact；首次手动运行已验证失败阻断 | Secrets 配置、定时运行及真实数据成功验收 |
