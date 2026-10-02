@@ -172,10 +172,14 @@ def arrow_schema(dataset: str) -> pa.Schema:
     return pa.schema([(f.name, types[f.dtype]) for f in SCHEMAS[dataset]] + [("schema_version", pa.string())])
 
 
-def expected_pool(master: pd.DataFrame, day: date, suspended: set[str] | None = None) -> set[str]:
+def expected_pool(master: pd.DataFrame, day: date, suspended: set[str] | None = None,
+                  open_exchanges: set[str] | None = None) -> set[str]:
     # Coverage covers all listed A shares, including boards beyond the Task 02 pool.
     live = (master["list_date"].notna() & (master["list_date"] <= day)
             & (master["delist_date"].isna() | (master["delist_date"] > day)))
+    if open_exchanges is not None:
+        live &= (master["exchange"].isin(open_exchanges)
+                 | (~master["exchange"].isin(["SSE", "SZSE"]) & bool(open_exchanges)))
     return set(master.loc[live, "ts_code"]) - (suspended or set())
 
 

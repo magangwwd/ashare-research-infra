@@ -242,3 +242,35 @@ def test_rebuilt_partition_removes_resolved_gap(tmp_path, config, provider):
     store.gap("stock_basic", params, "corrupt partition was rebuilt")
     store.scan()
     assert request_id("stock_basic", params) not in store.gaps
+
+
+def test_history_boundary_requires_coverage_not_just_nonempty(tmp_path, config, client, provider, as_of):
+    original = provider.query
+
+    def query(endpoint, **params):
+        frame = original(endpoint, **params)
+        if endpoint == "daily" and params.get("trade_date", "99999999") < "20260910":
+            return frame.loc[frame["ts_code"] == "600000.SH"]
+        return frame
+
+    provider.query = query
+    pipeline = Pipeline(tmp_path, config, client, as_of)
+    pipeline.bootstrap()
+    pipeline.discover_history_ranges()
+    ranges = read_json(tmp_path / "metadata/capabilities/history_ranges.json")
+    assert ranges["daily"]["first_observed_date"] == "20260910"
+    assert ranges["daily"]["coverage_checked"]
+    assert any(g["params"].get("coverage_boundary") for g in pipeline.store.gaps.values())
+
+
+def test_bad_historical_coverage_blocks_acceptance_even_if_latest_is_good(tmp_path, config, client, provider, as_of):
+    from datetime import date
+    Pipeline(tmp_path, config, client, as_of).run()
+    store = Store(tmp_path, config)
+    stage = store.begin()
+    raw = provider.query("daily", trade_date="20260901").iloc[:1]
+    store.save("daily", raw, replace_dates={date(2026,9,1)})
+    report = validate_task01(stage, config, as_of)
+    assert not report["passed"]
+    assert any("2026-09-01" in e for e in report["errors"])
+    assert any(e["dataset"] == "daily" and e["validation_status"] == "failed" for e in store.scan())

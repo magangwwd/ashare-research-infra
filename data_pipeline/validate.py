@@ -53,12 +53,12 @@ def validate_frame(dataset: str, frame: pd.DataFrame) -> None:
 
 
 def validate_session(dataset: str, frame: pd.DataFrame, master: pd.DataFrame, day: date,
-                     config: dict, suspended: set[str] | None = None) -> dict:
+                     config: dict, suspended: set[str] | None = None, open_exchanges: set[str] | None = None) -> dict:
     session = frame.loc[frame["trade_date"] == day] if "trade_date" in frame else pd.DataFrame()
     if session.empty:
         raise ValidationError(f"{dataset}: missing trade_date {day}")
     validate_frame(dataset, session)
-    pool = clean.expected_pool(master, day, suspended)
+    pool = clean.expected_pool(master, day, suspended, open_exchanges)
     if not pool:
         raise ValidationError(f"{dataset}: theoretical security pool is empty")
     missing = sorted(pool - set(session["ts_code"]))
@@ -119,7 +119,7 @@ def validate_task01(location: Path, config: dict, as_of: date, dates: list[date]
         for exchange in ("SSE", "SZSE"):
             if calendar.loc[(calendar["exchange"] == exchange) & (calendar["calendar_date"] == as_of)].empty:
                 report["errors"].append(f"trade_cal: missing {exchange} calendar date {as_of}")
-        opened = calendar.loc[(calendar["exchange"] == "SSE") & (calendar["is_open"] == 1)
+        opened = calendar.loc[(calendar["exchange"].isin(["SSE", "SZSE"])) & (calendar["is_open"] == 1)
                               & (calendar["calendar_date"] <= as_of), "calendar_date"]
         if opened.empty:
             report["errors"].append("trade_cal: no latest open session")
@@ -131,13 +131,32 @@ def validate_task01(location: Path, config: dict, as_of: date, dates: list[date]
                 for day in sessions:
                     try:
                         details = validate_session(dataset, read_session(location, dataset, day), frames["security_master"], day, config,
-                                                   suspension_codes(location, day))
+                                                   suspension_codes(location, day),
+                                                   set(calendar.loc[(calendar["calendar_date"] == day) & (calendar["is_open"] == 1), "exchange"]))
                         report["datasets"][dataset].setdefault("sessions", {})[str(day)] = details
                     except Exception as exc:
                         report["datasets"][dataset]["passed"] = False
                         report["errors"].append(str(exc))
     if "security_master" in frames and clean.mainboard_pool(frames["security_master"]).empty:
         report["errors"].append("security_master: no explicitly identified listed SSE/SZSE mainboard A shares")
+    if "security_master" in frames and "trade_cal" in frames:
+        calendar = frames["trade_cal"]
+        for dataset in ("daily", "adj_factor", "daily_basic"):
+            checked = 0
+            files = list((location / "clean" / dataset).rglob("*.parquet"))
+            for directory in {p.parent for p in files}:
+                frame = pd.concat([read_parquet(p) for p in sorted(directory.glob("*.parquet"))], ignore_index=True)
+                if "trade_date" not in frame:
+                    continue
+                for day, rows in frame.groupby("trade_date"):
+                    try:
+                        opened = set(calendar.loc[(calendar["calendar_date"] == day) & (calendar["is_open"] == 1), "exchange"])
+                        validate_session(dataset, rows, frames["security_master"], day, config, suspension_codes(location, day), opened)
+                        checked += 1
+                    except Exception as exc:
+                        report["errors"].append(str(exc))
+                        report["datasets"][dataset]["passed"] = False
+            report["datasets"][dataset]["historical_sessions_checked"] = checked
     if report["errors"]:
         report["passed"] = False
     return report

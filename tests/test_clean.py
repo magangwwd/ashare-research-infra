@@ -57,3 +57,20 @@ def test_index_metadata_dates_are_typed_without_changing_critical_versions():
     assert clean.arrow_schema("index_basic").field("list_date").type == pa.date32()
     assert result.iloc[0]["schema_version"] == "2.0.0"
     assert clean.schema_version("daily") == "1.0.0"
+
+
+def test_theoretical_pool_respects_actual_exchange_calendar(provider):
+    rows = provider.stocks.copy()
+    rows.loc[rows.index[:5], "exchange"] = "SZSE"
+    master = clean.normalize("security_master", clean.security_master(rows, "2026-10-02T12:00:00Z"))
+    assert len(clean.expected_pool(master, date(2026,10,2), open_exchanges={"SSE"})) == 15
+    assert len(clean.expected_pool(master, date(2026,10,2), open_exchanges={"SSE","SZSE"})) == 20
+
+
+def test_newly_fetched_old_market_raw_is_retained(tmp_path, config):
+    from datetime import datetime
+    store = Store(tmp_path, config)
+    stage = store.begin()
+    store.save("daily", pd.DataFrame([{"ts_code": "600000.SH", "trade_date": "19901219", "close": 10}]))
+    store.retain_raw(datetime.now())
+    assert len(read_dataset(stage, "raw", "daily")) == 1

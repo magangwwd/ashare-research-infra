@@ -52,6 +52,7 @@ class Pipeline:
         self.checked_sessions: set[date] = set()
         self.suspension_probed: set[date] = set()
         self.coverage_cache: dict[tuple, dict] = {}
+        self.calendar_cache: dict | None = None
         self.mode = "MAINTENANCE"
 
     def available(self, dataset: str) -> bool:
@@ -114,14 +115,23 @@ class Pipeline:
             start = (self.as_of - timedelta(days=self.config["download"]["smoke_lookback_days"])).strftime("%Y%m%d")
         self.calendar(start)
         calendar = read_dataset(self.stage, "clean", "trade_cal")
-        self.sessions = sorted(set(calendar.loc[(calendar["exchange"] == "SSE") & (calendar["is_open"] == 1)
+        self.sessions = sorted(set(calendar.loc[(calendar["exchange"].isin(["SSE", "SZSE"])) & (calendar["is_open"] == 1)
                                                 & (calendar["calendar_date"] <= self.as_of), "calendar_date"]))
         if not self.sessions:
             raise ValidationError("no open sessions in trade_cal")
-        current = calendar.loc[(calendar["exchange"] == "SSE") & (calendar["calendar_date"] == self.as_of)]
+        current = calendar.loc[calendar["exchange"].isin(["SSE", "SZSE"]) & (calendar["calendar_date"] == self.as_of)]
         if current.empty:
             raise ValidationError("today is absent from calendar")
-        self.mode = "DAILY_UPDATE" if current.iloc[-1]["is_open"] == 1 else "MAINTENANCE"
+        self.mode = "DAILY_UPDATE" if current["is_open"].eq(1).any() else "MAINTENANCE"
+
+    def open_exchanges(self, day: date) -> set[str] | None:
+        if self.calendar_cache is None:
+            calendar = read_dataset(self.stage, "clean", "trade_cal")
+            if calendar.empty:
+                return None
+            self.calendar_cache = {d: set(g.loc[g["is_open"] == 1, "exchange"])
+                                   for d, g in calendar.groupby("calendar_date")}
+        return self.calendar_cache.get(day, set())
 
     def calendar(self, start: str) -> None:
         # Refresh both current calendars before bounded history requests.
@@ -181,7 +191,7 @@ class Pipeline:
             self.get_save("suspend_d", params)
             self.suspension_probed.add(day)
         suspended = suspension_codes(self.stage, day)
-        missing = sorted(clean.expected_pool(self.master, day, suspended) - set(raw["ts_code"]))
+        missing = sorted(clean.expected_pool(self.master, day, suspended, self.open_exchanges(day)) - set(raw["ts_code"]))
         # Missing securities are retried individually before the coverage gate.
         for code in missing:
             retry_params = {"ts_code": code, **params}
@@ -197,7 +207,7 @@ class Pipeline:
         self.coverage_cache.pop((dataset, day.year, day.month), None)
         frame = clean.normalize(dataset, raw)
         try:
-            result = validate_session(dataset, frame, self.master, day, self.config, suspended)
+            result = validate_session(dataset, frame, self.master, day, self.config, suspended, self.open_exchanges(day))
         except Exception as exc:
             self.store.gap(dataset, params, str(exc), missing)
             raise
@@ -299,7 +309,7 @@ class Pipeline:
                 if not frame.empty:
                     for stored_day in frame["trade_date"].unique():
                         try:
-                            validate_session(name, frame, self.master, stored_day, self.config, suspension_codes(self.stage, stored_day))
+                            validate_session(name, frame, self.master, stored_day, self.config, suspension_codes(self.stage, stored_day), self.open_exchanges(stored_day))
                             results[stored_day] = True
                         except Exception:
                             results[stored_day] = False
@@ -322,7 +332,7 @@ class Pipeline:
             for day in self.sessions:
                 if day.strftime("%Y%m%d") < floor:
                     continue
-                if not clean.expected_pool(self.master, day):
+                if not clean.expected_pool(self.master, day, open_exchanges=self.open_exchanges(day)):
                     continue
                 yield name, {"trade_date": day.strftime("%Y%m%d")}
         elif spec.strategy in ("financial", "security_history", "industry_history"):
@@ -344,36 +354,65 @@ class Pipeline:
                                  "end_date": min(self.as_of.strftime("%Y%m%d"), month.end_time.strftime("%Y%m%d"))}
 
     def discover_history_ranges(self) -> None:
-        """Observe provider availability rather than hardcoding different API inception dates.
+        """Observe validated coverage rather than hardcoding API inception dates.
 
-        Binary-search open sessions for the first nonempty response. The assumption of
+        Binary-search open sessions for the first response meeting the coverage gate. The assumption of
         contiguous availability is recorded; monthly file audits still find later gaps.
         """
         path = self.root / "metadata/capabilities/history_ranges.json"
         ranges = read_json(path)
-        eligible = [d for d in self.sessions if clean.expected_pool(self.master, d)]
+        eligible = [d for d in self.sessions if clean.expected_pool(self.master, d, open_exchanges=self.open_exchanges(d))]
         if not eligible:
             return
         for name in ("daily", "adj_factor", "daily_basic"):
             if (name in ranges and ranges[name].get("probed_month") == self.as_of.strftime("%Y-%m")
-                    and ranges[name].get("requested_start") == self.config["download"]["history_start"]):
+                    and ranges[name].get("requested_start") == self.config["download"]["history_start"]
+                    and ranges[name].get("coverage_checked") is True):
                 continue
             lo, hi = 0, len(eligible) - 1
             while lo < hi:
                 middle = (lo + hi) // 2
-                frame = self.client.query(name, trade_date=eligible[middle].strftime("%Y%m%d"), limit=1, offset=0)
-                if frame.empty:
+                probe_day = eligible[middle]
+                params = {"trade_date": probe_day.strftime("%Y%m%d")}
+                if probe_day not in self.suspension_probed and self.available("suspend_d"):
+                    self.get_save("suspend_d", params)
+                    self.suspension_probed.add(probe_day)
+                frame = self.client.fetch(name, **params)
+                suspended = suspension_codes(self.stage, probe_day)
+                pool = clean.expected_pool(self.master, probe_day, suspended, self.open_exchanges(probe_day))
+                missing = sorted(pool - (set(frame["ts_code"]) if "ts_code" in frame else set()))
+                # Small boundary holes are retried rather than misclassified as
+                # inaccessible history. Bulk periods with widespread holes remain probes.
+                if 0 < len(missing) <= 20:
+                    for code in missing:
+                        retry = self.client.fetch(name, ts_code=code, **params)
+                        if not retry.empty:
+                            frame = pd.concat([frame, retry], ignore_index=True)
+                try:
+                    normalized = clean.normalize(name, frame) if not frame.empty else frame
+                    validate_session(name, normalized, self.master, probe_day, self.config,
+                                     suspended, self.open_exchanges(probe_day))
+                    valid = True
+                except ValidationError:
+                    valid = False
+                if not valid:
                     lo = middle + 1
                 else:
                     hi = middle
             ranges[name] = {"first_observed_date": eligible[lo].strftime("%Y%m%d"), "probed_at": utcnow(),
+                            "coverage_checked": True, "min_coverage": self.config["validation"]["min_coverage"],
                             "probed_month": self.as_of.strftime("%Y-%m"), "requested_start": self.config["download"]["history_start"],
-                            "assumption": "nonempty availability is contiguous over open sessions; later gaps are retried"}
+                            "assumption": "validated coverage is contiguous after the observed boundary; later gaps still fail and are retried"}
+            if lo > 0:
+                self.store.gap(name, {"start_date": eligible[0].strftime("%Y%m%d"),
+                                      "end_date": eligible[lo-1].strftime("%Y%m%d"), "coverage_boundary": True},
+                               "historical source prefix does not meet the 95% coverage gate; not published to Clean")
             atomic_json(path, ranges)
 
     def repair(self) -> None:
         budget = self.config["download"]["repair_requests_per_run"]
-        candidates = [g for g in self.store.gaps.values() if "partition" not in g["params"] and self.available(g["dataset"])]
+        candidates = [g for g in self.store.gaps.values() if "partition" not in g["params"]
+                      and not g["params"].get("coverage_boundary") and self.available(g["dataset"])]
         candidates.sort(key=lambda g: (DATASETS[g["dataset"]].tier != "critical", g["updated_at"]))
         repaired: set[tuple] = set()
         for gap in candidates[:budget]:
@@ -390,6 +429,9 @@ class Pipeline:
                 else:
                     self.store.gap(name, params, gap["reason"])
             elif name in ("daily", "adj_factor", "daily_basic"):
+                floor = read_json(self.root / "metadata/capabilities/history_ranges.json").get(name, {}).get("first_observed_date")
+                if floor and params["trade_date"] < floor:
+                    continue  # Explicit historical prefix gap, revisited by monthly capability audit.
                 unit = (name, params["trade_date"])
                 if unit in repaired:
                     continue
@@ -437,7 +479,7 @@ class Pipeline:
         # Re-fetch a rolling slice even if its existing coverage passes, capturing revisions.
         ranges = read_json(self.root / "metadata/capabilities/history_ranges.json")
         eligible = [(name, day) for day in self.sessions[:-15] for name in ("daily", "adj_factor", "daily_basic")
-                    if clean.expected_pool(self.master, day)
+                    if clean.expected_pool(self.master, day, open_exchanges=self.open_exchanges(day))
                     and day.strftime("%Y%m%d") >= ranges.get(name, {}).get("first_observed_date", self.config["download"]["history_start"])]
         cursor = state.get("cursor", 0)
         count = min(self.config["download"]["audit_requests_per_run"], len(eligible))
@@ -452,10 +494,12 @@ class Pipeline:
         self.critical_recent(sample)
         if not sample:
             self.extensions()
+            self.discover_history_ranges()
             self.repair()
             self.history()
             self.monthly_audit()
         self.store.retain_raw(datetime.combine(self.as_of, datetime.min.time()))
+        atomic_json(self.root / "metadata/effective_config.json", self.config)
         entries = self.store.scan()
         critical_bad = [e for e in entries if e["layer"] == "clean" and e["dataset"] in CRITICAL and e["validation_status"] != "passed"]
         # Each fetched historical session must pass all three Critical datasets only
@@ -487,6 +531,8 @@ def round_robin(streams):
 
 
 def schema_docs(root: Path) -> None:
+    for obsolete in ("stk_st", "stk_share"):
+        (root / f"metadata/schemas/{obsolete}.json").unlink(missing_ok=True)
     for dataset, schema in clean.SCHEMAS.items():
         atomic_json(root / f"metadata/schemas/{dataset}.json", {
             "dataset": dataset, "source": "Tushare", "schema_version": clean.schema_version(dataset),
@@ -531,6 +577,7 @@ def main() -> int:
             if not gate.get("passed") or not gate.get("live_tushare") or gate.get("code_fingerprint") != code_fingerprint():
                 raise ValidationError("Run a live --mode smoke successfully for this code before history or production")
             Pipeline(root, config, client, as_of, config_path).run()
+        atomic_json(root / "metadata/last_run.json", {"status": "SUCCESS", "mode": args.mode, "updated_at": utcnow()})
         print("SUCCESS")
         return 0
     except Exception as exc:

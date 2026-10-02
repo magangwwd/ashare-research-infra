@@ -59,7 +59,7 @@ jobs:
         run: python -m data_pipeline.validate
       - name: Package validated production
         run: |
-          tar -czhf task01-validated.tar.gz data/raw data/clean data/current/acceptance.json metadata/schemas metadata/capabilities metadata/acceptance.json
+          tar -czhf task01-validated.tar.gz data/raw data/clean data/current/acceptance.json metadata docs/datasets
       - name: Publish validated artifact
         uses: actions/upload-artifact@v4
         with:

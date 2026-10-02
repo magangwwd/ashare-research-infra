@@ -190,9 +190,11 @@ class Store:
         atomic_json(self.metadata / "gaps.json", self.gaps)
 
     def scan(self, location: Path | None = None) -> list[dict]:
-        from .validate import validate_frame
+        from .validate import validate_frame, validate_session, suspension_codes
         location = location or self.stage
         assert location is not None
+        master = read_dataset(location, "clean", "security_master")
+        calendar = read_dataset(location, "clean", "trade_cal")
         manifest = []
         for layer in ("raw", "clean"):
             base = location / layer
@@ -209,6 +211,10 @@ class Store:
                     entry["rows"] = len(frame)
                     if layer == "clean":
                         validate_frame(dataset, frame)
+                        if dataset in ("daily", "adj_factor", "daily_basic") and not master.empty and not calendar.empty:
+                            for day, rows in frame.groupby("trade_date"):
+                                opened = set(calendar.loc[(calendar["calendar_date"] == day) & (calendar["is_open"] == 1), "exchange"])
+                                validate_session(dataset, rows, master, day, self.config, suspension_codes(location, day), opened)
                     col = next((c for c in ("trade_date", "calendar_date", "cal_date", "report_period", "ann_date") if c in frame), None)
                     if col and frame[col].notna().any():
                         dates = pd.to_datetime(frame[col], format="mixed", errors="raise")
@@ -230,14 +236,22 @@ class Store:
 
     def retain_raw(self, reference: datetime) -> None:
         assert self.stage is not None
-        cutoff = reference.date() - timedelta(days=self.config["storage"]["market_raw_retention_days"])
+        cutoff = pd.Timestamp(reference, tz="UTC") - pd.Timedelta(days=self.config["storage"]["market_raw_retention_days"])
         for dataset in ("daily", "daily_basic", "adj_factor"):
             for year_path in (self.stage / "raw" / dataset).glob("year=*"):
                 for month_path in year_path.glob("month=*"):
-                    year, month = int(year_path.name.split("=")[1]), int(month_path.name.split("=")[1])
-                    last = (pd.Timestamp(year, month, 1) + pd.offsets.MonthEnd()).date()
-                    if last < cutoff:
+                    files = sorted(month_path.glob("*.parquet"))
+                    if not files:
+                        continue
+                    raw = pd.concat([read_parquet(p) for p in files], ignore_index=True)
+                    if "_fetched_at" not in raw:
+                        continue
+                    fetched = pd.to_datetime(raw["_fetched_at"], utc=True, errors="raise")
+                    retained = raw.loc[fetched.isna() | (fetched >= cutoff)]
+                    if retained.empty:
                         shutil.rmtree(month_path)
+                    elif len(retained) != len(raw):
+                        write_compacted(month_path, retained, dataset, "raw", self.config["storage"]["compact_target_mb"])
 
     def publish(self, report: dict) -> None:
         if not report.get("passed"):
