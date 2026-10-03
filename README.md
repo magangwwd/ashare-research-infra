@@ -8,11 +8,11 @@ Task 01 只建设 **稳定、可恢复、可自动更新的 A 股研究数据底
 
 ## 当前状态
 
-Phase 1 实现已推送到 GitHub 私有仓库，37 项单元及离线集成测试通过，发布前另有 2 项真实交易日回放/恢复演练通过。`TUSHARE_TOKEN` 已在 Actions 生效；2026-10-02 连续五次真实运行成功：[最新批次](https://github.com/magangwwd/ashare-research-infra/actions/runs/36999912593)。Capability Audit、真实 Smoke、MAINTENANCE、Critical 总验收和正式 Artifact 发布均通过。详见[验收记录](docs/acceptance-record.md)。
+Phase 1 实现已推送到 GitHub 私有仓库，53 项单元及离线集成测试通过；最新完整数据任务 [run #14](https://github.com/magangwwd/ashare-research-infra/actions/runs/37128661702) 于北京时间 2026-10-03 22:09—22:27 成功。Capability Audit、真实 Smoke、MAINTENANCE、Critical 总验收、2 项真实交易日回放/恢复演练及正式 Artifact 发布通过。Drive 授权检查 #12/#13 是单独任务，不能计为数据更新。详见[验收记录](docs/acceptance-record.md)。
 
-最近交易日 2026-09-30 的 daily、adj_factor、daily_basic 理论池为 5,559 只，覆盖率均为 100%。本轮完成三个 240 请求的维护批次，复用检查点/完整请求。由近到远补齐后，daily 和 adj_factor 的近期分区已扩展至 2026-09-11—2026-09-30，daily_basic 至 2026-09-09—2026-09-30。行业已保存退出成员记录，完整行业覆盖仍待推进。
+最近交易日 2026-09-30 的 daily、adj_factor、daily_basic 理论池为 5,559 只，覆盖率均为 100%。本次维护批次完成 240 个历史请求、跳过 424 个已完成请求；三类已存交易日验收计数为 54 / 54 / 53。按日历、基础证券池及提供者观察边界，对应应存 8,385 / 8,736 / 8,385 日，尚缺 8,331 / 8,682 / 8,332 日。daily 与 daily_basic 另有边界前 351 个交易日单独记录，不混入待下载数量。
 
-前四份正式产物分别有 256/262/275/332 个 Parquet 文件，已独立核对大小/SHA256 并在本地总验收通过。最新产物有 340 个 Parquet 文件，经 Runner 总验收、真实交易日回放和恢复演练通过，证据单独发布为 `task01-validation-report`；最新大数据包尚未做本地整包复验。
+前四份正式产物分别有 256/262/275/332 个 Parquet 文件，已独立核对大小/SHA256 并在本地总验收通过。最新产物有 380 个 Parquet 文件，经 Runner 总验收、真实交易日回放和恢复演练通过。小型 `task01-validation-report` 已下载核对，包含可读历史进度和 Gap；最新约 72.9 MB 正式整包尚未做本地整包复验。STORED 只表示已有文件，扩展财务/行业全量覆盖仍未验收。
 
 **历史全量仍在分批推进，Task 01 最终验收尚未完成**。早期数据源覆盖不足、扩展接口权限不足均有显式 Gap；实际探测历史边界不代表之后所有日期已下载。还需持续观察真实交易日和定时运行，补齐可获得历史并验证修订；行业主体系仍待历史完整性和稳定性证据。正式数据 Artifact 保留 30 天，恢复检查点保留 90 天，Phase 1 不作为永久远程存储。
 

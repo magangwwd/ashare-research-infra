@@ -1,5 +1,29 @@
 # Task 01 验收记录
 
+## 2026-10-03：实际历史进度报告与第 14 次完整任务
+
+代码 `fe6126be74ad54c7de4d5924f472e67ecd31176c` 的 [run #14 / 37128661702](https://github.com/magangwwd/ashare-research-infra/actions/runs/37128661702) 于北京时间 22:09—22:27 成功，数据 job 用时 18 分 7 秒，Drive 授权 job 跳过。没有上传 Drive 文件。
+
+- 本地 53 项普通测试通过、2 项 opt-in 真实演练跳过；Runner 的普通测试步骤成功，发布前 2 项真实演练报告均为 passed。
+- 恢复既有检查点，MAINTENANCE 下载 240 个历史请求，跳过完整请求 424 个；all_enabled_requests_examined 为 false。
+- 最近交易日 2026-09-30 的理论池 5,559，三类核心行情覆盖率均为 100%，missing_ts_codes 为空。
+- 三类行情总行数为 daily 161,654、adj_factor 161,576、daily_basic 156,113；已存历史交易日检查数分别为 54、54、53。
+- 实际文件扫描生成 history_progress.json / history_progress.md。日历 SSE 自 1990-12-19、SZSE 自 1991-07-03 至检查日没有内部缺失日期；文件扫描无错误。
+
+| 核心数据集 | 观察目标起点 | 目标交易日 | 已存目标日 | 尚缺交易日 | 边界前交易日 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| daily | 1992-05-08 | 8,385 | 54 | 8,331 | 351 |
+| adj_factor | 1990-12-19 | 8,736 | 54 | 8,682 | 0 |
+| daily_basic | 1992-05-08 | 8,385 | 53 | 8,332 | 351 |
+
+起止日期、回执或游标不能证明区间完整。报告从实际 Parquet 日期识别缺口，core_observed_range_complete 和 full_requested_core_range_complete 均为 false；扩展全量为 null（尚未验证）。该报告保持分阶段下载模式，不因尚未下载的远期历史阻止最新完整版本发布。
+
+Required 当前不可用：stock_st、stk_premarket、sw_daily、ci_daily、ci_index_member；Optional 当前不可用：stk_surv。原因及每个数据集 Gap 已随报告保存；已有财务/行业记录不能表述成全证券全报告期完整覆盖。
+
+正式 Artifact `11276830363` 约 72.9 MB，380 个 Parquet 文件；Runner 验收及真实恢复演练通过。小型证据 Artifact `11276650786` 已下载核对，包括验收、进度、Gap、Manifest、能力和演练。没有下载最新正式整包做独立本地全文件复验。检查点 Artifact `11276905178` 已保存。
+
+仍待：完整可用历史分批补齐，扩展数据覆盖、连续当日交易/定时运行和历史修订的持续证据；Drive staging、远程完整性验证及正式切换。Task 01 最终验收尚未完成。
+
 ## 2026-10-03：Runner Drive 授权验证通过
 
 用户报告 Google Cloud 应用已转为 In production，并重新授权、替换 GDRIVE_OAUTH_JSON。应用发布状态来自用户确认；没有读取或导出任何 Secret。已独立核对 [run #13 / 37127560205](https://github.com/magangwwd/ashare-research-infra/actions/runs/37127560205)，代码为 `ea1e78bd9237bb460d8f735e95b93cad8cdee00a`。
