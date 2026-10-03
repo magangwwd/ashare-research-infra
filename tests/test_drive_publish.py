@@ -16,9 +16,13 @@ class MemoryDrive:
                       "old-version": {"id": "old-version", "name": "old", "mimeType": dp.FOLDER},
                       "old-data": {"id": "old-data", "name": "data.parquet", "parents": ["old-version"],
                                    "mimeType": "application/octet-stream", "size": "3", "body": b"old"},
+                      "old-manifest": {"id": "old-manifest", "name": "production_manifest.json",
+                                       "parents": ["old-version"], "mimeType": "application/json",
+                                       "body": b'{"version":"old","validated":true}'},
                       "pointer": {"id": "pointer", "name": "current.json", "parents": ["root"],
                                   "mimeType": "application/json", "body": dp.json_bytes({
-                                      "version": "old", "validated": True, "version_folder_id": "old-version"})}}
+                                      "version": "old", "validated": True, "version_folder_id": "old-version",
+                                      "manifest_file_id": "old-manifest"})}}
         self.fault = fault
         self.upload_count = 0
 
@@ -83,7 +87,7 @@ def test_failed_publish_preserves_entire_old_production(tmp_path, fault):
     old = copy.deepcopy(drive.files)
     with pytest.raises(dp.PublishError):
         dp.publish(drive, "root", snapshot(tmp_path), {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path)
-    for ident in ("pointer", "old-version", "old-data"):
+    for ident in ("pointer", "old-version", "old-data", "old-manifest"):
         assert drive.files[ident] == old[ident]
 
 
@@ -103,6 +107,7 @@ def test_success_pointer_references_only_verified_immutable_files(tmp_path):
         assert drive.remote_digest(item["file_id"]) == (item["bytes"], item["sha256"])
         assert "local_path" not in item
     assert drive.files["old-data"] == old["old-data"]
+    assert drive.files["old-manifest"] == old["old-manifest"]
     staging = drive.folder("root", "staging")
     assert not drive.children(staging)
     assert drive.files[pointer["version_folder_id"]]["parents"] == [drive.folder("root", "versions")]

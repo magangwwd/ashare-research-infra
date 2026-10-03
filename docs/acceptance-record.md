@@ -1,5 +1,23 @@
 # Task 01 验收记录
 
+## 2026-10-04（北京时间）：首次真实 Drive 快照发布成功
+
+用户要求上传当前数据后，新增手动 `publish_drive_snapshot` 入口；默认定时任务继续原数据流程。[run #18 / 37160747646](https://github.com/magangwwd/ashare-research-infra/actions/runs/37160747646) 对应代码 `5614132964eadbbc18dc31a9ac1f2ee25ff1b7ec`，北京时间 07:07:44—07:25:53，全部发布步骤 success，普通数据任务和授权检查任务 skipped。
+
+- 本地 77 项普通测试通过、2 项需真实数据的测试跳过；包含上传中断、漏文件、同尺寸内容损坏、远程读取失败、指针更新失败时旧数据/Manifest/指针不变，以及丢失指针写入响应的回读确认。Runner 安装/测试步骤通过。HTTP 错误提示随后调整为不假定指针状态，16 项发布测试再次通过。
+- 恢复第 15 次数据任务检查点，仅使用 `data/current` 已验收版本，未发起 Tushare 新下载；按原快照 `as_of=2026-10-03` 重新执行 Critical 总验收。没有把失败暂存版本、OAuth JSON 或 Token 上传。
+- 上传 480 个数据/元信息文件，共 106,368,751 字节，包含 398 个 ZSTD Parquet；Raw Parquet 66,252,639 字节，Clean Parquet 38,829,878 字节。发布清单和根目录指针另计。
+- 全部远程路径、ID、大小和逐文件下载 SHA256 验证通过；生产 Manifest 上传/回读通过后将版本移入 versions，最后写入/回读 `current.json`。根目录指针指向 [正式快照](https://drive.google.com/drive/folders/1xuu9_7Kuc325Wz4IeMImgMnswd2xgxSP)，staging 独立检查为空。
+- 独立通过 Drive 连接读取原快照和重新验收报告、历史进度、Current Pointer 及 production_manifest.json；Manifest SHA256 `9e0b221c96dc479ebc9949eaaf1a5ffec8feb72a565d3332e773ab39b0251017` 与指针相符，480 路径唯一、计数和总字节数一致。
+- 独立抽样下载 `data/clean/daily/year=2026/month=09/part-000.parquet`：4,459,708 字节、116,588 行，SHA256 `29a7733cd59d396b49f79cb737ef5ba6f0f9cf15072eb83aaa6cf30ce08cdf52` 与 Manifest 相符；Date/Schema、ZSTD、非空和主键检查通过。没有将此抽样表述为本地全库再次验收。
+- GitHub 保存 `task01-drive-publication-report`，Actions 的 Drive publication notice 包含相同安全发布结果。上传前 Google 账号总配额 429,496,729,600 字节（400 GiB），可用 422,966,836,744 字节；配额与其他 Google 服务共享，数值是上传前快照。
+
+源数据来自定时 [run #15 / 37133945515](https://github.com/magangwwd/ashare-research-infra/actions/runs/37133945515)，北京时间 2026-10-03 23:38—23:57，代码 `fe6126be74ad54c7de4d5924f472e67ecd31176c`，SUCCESS；实际启动比 20:00 cron 晚约 3 小时 38 分。该批次 MAINTENANCE 完成 240 个历史请求，跳过 674 个完整请求。
+
+最新交易日仍为 2026-09-30，三类核心理论池 5,559、覆盖率均 100%；daily / adj_factor / daily_basic 行数分别为 222,570 / 222,690 / 222,570，均有 65 个已存交易日通过逐日检查。实际目标日尚缺 8,320 / 8,671 / 8,320；daily/basic 边界前 351 个交易日另列。正式指针中 `critical_history_complete=false`、`full_requested_core_range_complete=false`、`extensions_history_complete=null`。
+
+本次验证了首次真实上传与正式切换，没有在真实 Drive 中故意破坏用户 Production。失败保护来自离线故障测试；下一版本替换旧指针尚待实际更新验证。每日自动上传、远程下载恢复、远程增量上传/断点续传、自动版本保留和 GitHub Artifact 清理尚未实现；现有 Runner/Artifact 恢复机制保留。Task 01 全量历史和最终验收仍未完成。
+
 ## 2026-10-03：实际历史进度报告与第 14 次完整任务
 
 代码 `fe6126be74ad54c7de4d5924f472e67ecd31176c` 的 [run #14 / 37128661702](https://github.com/magangwwd/ashare-research-infra/actions/runs/37128661702) 于北京时间 22:09—22:27 成功，数据 job 用时 18 分 7 秒，Drive 授权 job 跳过。没有上传 Drive 文件。

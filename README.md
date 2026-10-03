@@ -8,15 +8,15 @@ Task 01 只建设 **稳定、可恢复、可自动更新的 A 股研究数据底
 
 ## 当前状态
 
-Phase 1 实现已推送到 GitHub 私有仓库，53 项单元及离线集成测试通过；最新完整数据任务 [run #14](https://github.com/magangwwd/ashare-research-infra/actions/runs/37128661702) 于北京时间 2026-10-03 22:09—22:27 成功。Capability Audit、真实 Smoke、MAINTENANCE、Critical 总验收、2 项真实交易日回放/恢复演练及正式 Artifact 发布通过。Drive 授权检查 #12/#13 是单独任务，不能计为数据更新。详见[验收记录](docs/acceptance-record.md)。
+Phase 1 和手动 Drive 快照发布实现已推送到 GitHub 私有仓库，77 项单元及离线集成测试通过；最新完整数据任务 [run #15](https://github.com/magangwwd/ashare-research-infra/actions/runs/37133945515) 于北京时间 2026-10-03 23:38—23:57 定时触发成功。Capability Audit、真实 Smoke、MAINTENANCE、Critical 总验收、真实交易日回放/恢复演练及正式 Artifact 发布通过。该次 GitHub 调度明显晚于配置的 20:00，不能承诺准点开始。详见[验收记录](docs/acceptance-record.md)。
 
-最近交易日 2026-09-30 的 daily、adj_factor、daily_basic 理论池为 5,559 只，覆盖率均为 100%。本次维护批次完成 240 个历史请求、跳过 424 个已完成请求；三类已存交易日验收计数为 54 / 54 / 53。按日历、基础证券池及提供者观察边界，对应应存 8,385 / 8,736 / 8,385 日，尚缺 8,331 / 8,682 / 8,332 日。daily 与 daily_basic 另有边界前 351 个交易日单独记录，不混入待下载数量。
+最近交易日 2026-09-30 的 daily、adj_factor、daily_basic 理论池为 5,559 只，覆盖率均为 100%。第 15 次维护批次完成 240 个历史请求、跳过 674 个已完成请求；三类已存交易日验收计数均为 65。按日历、基础证券池及提供者观察边界，对应应存 8,385 / 8,736 / 8,385 日，尚缺 8,320 / 8,671 / 8,320 日。daily 与 daily_basic 另有边界前 351 个交易日单独记录，不混入待下载数量。
 
-前四份正式产物分别有 256/262/275/332 个 Parquet 文件，已独立核对大小/SHA256 并在本地总验收通过。最新产物有 380 个 Parquet 文件，经 Runner 总验收、真实交易日回放和恢复演练通过。小型 `task01-validation-report` 已下载核对，包含可读历史进度和 Gap；最新约 72.9 MB 正式整包尚未做本地整包复验。STORED 只表示已有文件，扩展财务/行业全量覆盖仍未验收。
+前四份正式产物分别有 256/262/275/332 个 Parquet 文件，已独立核对大小/SHA256 并在本地总验收通过。当前正式快照有 398 个 Parquet 文件；第 18 次任务恢复检查点并重新执行 Critical 验收，将这些文件及元数据上传 Drive，再逐文件下载核对 SHA256。已独立从 Drive 回读正式指针、发布清单、验收和历史进度报告，校验 Manifest SHA256；抽样下载 2026-09 daily 分区，大小、SHA256、Schema、ZSTD 和主键检查通过。不是本地全库再次复验。STORED 只表示已有文件，扩展财务/行业全量覆盖仍未验收。
 
 **历史全量仍在分批推进，Task 01 最终验收尚未完成**。早期数据源覆盖不足、扩展接口权限不足均有显式 Gap；实际探测历史边界不代表之后所有日期已下载。还需持续观察真实交易日和定时运行，补齐可获得历史并验证修订；行业主体系仍待历史完整性和稳定性证据。正式数据 Artifact 保留 30 天，恢复检查点保留 90 天，Phase 1 不作为永久远程存储。
 
-Google Drive 提供手动已验收快照发布入口，见 [Drive 发布说明](docs/drive-phase2.md)；每日定时上传暂不启用，真实发布以 Actions 记录和 Drive `current.json` 为准。[Runner OAuth 授权](docs/drive-auth.md) 已完成；应用为 In production，重新授权后的 [run #13](https://github.com/magangwwd/ashare-research-infra/actions/runs/37127560205) 刷新与目标目录添加文件权限通过。该次仅检查授权，没有上传数据。
+首次真实 Drive 发布 [run #18](https://github.com/magangwwd/ashare-research-infra/actions/runs/37160747646) 已成功，快照 `as_of=2026-10-03`，480 个数据/元信息文件共 106,368,751 字节，另有发布清单和根目录 `current.json`。[正式快照目录](https://drive.google.com/drive/folders/1xuu9_7Kuc325Wz4IeMImgMnswd2xgxSP) 中可访问 `data/raw`、`data/clean`、Schema 和核心说明；成功后 staging 为空。`current.json` 保留历史未完成标记。手动操作见 [Drive 发布说明](docs/drive-phase2.md)；每日定时上传、远程恢复和版本保留策略暂未启用。Runner OAuth 已配置，不需再次提供凭据。
 
 ## 范围
 

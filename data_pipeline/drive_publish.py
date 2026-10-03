@@ -58,7 +58,8 @@ class Drive:
                 return response
             retryable = response is None or response.status_code in (429, 500, 502, 503, 504)
             if method not in ("GET", "PUT", "PATCH") or not retryable or attempt == 2:
-                raise PublishError("Drive request failed; production pointer has not been committed.") from None
+                status = response.status_code if response is not None else "network"
+                raise PublishError(f"Drive request failed ({status}); inspect the current pointer before retrying.") from None
             time.sleep(2 ** attempt)
         raise PublishError("Drive request failed.")
 
