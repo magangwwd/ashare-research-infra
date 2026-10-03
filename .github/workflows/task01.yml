@@ -99,6 +99,9 @@ jobs:
           name: task01-validation-report
           path: |
             metadata/acceptance.json
+            metadata/history_progress.json
+            metadata/history_progress.md
+            metadata/manifest/gaps.json
             metadata/recovery_drill.json
             metadata/trading_day_replay.json
             metadata/effective_config.json

@@ -145,6 +145,8 @@ Phase 1 数据任务在仓库 **Settings → Secrets and variables → Actions**
 
 ## 后续 Codex 的接续点
 
+每次正式验收还生成 `metadata/history_progress.json` 和可读的 `metadata/history_progress.md`，随 `task01-validation-report` 发布。报告扫描实际生产 Parquet 的 Raw/Clean 行数与日期范围，以实际交易日历和基础证券池列出三类核心行情的目标日数、已存日数、缺失区间、提供者观察边界前范围，并列出扩展接口权限、空请求和 Gap 原因。日历缺少中间日期时不得标记观察范围完整。回执、起止日期、游标及 `all_enabled_requests_examined` 均不能代替完整性证据；`extensions_history_complete: null` 表示扩展全量尚未验收。该报告不会将分阶段历史补齐作为最新数据发布的前提，也不宣告整个 Task 01 完成。
+
 1. Token 和真实 Smoke/Capability Audit 已验证；继续复核接口字段、分页、权限和历史边界。
 2. 运行每日与非交易日模式，确认 Actions 的恢复、故障保留和正式 Artifact。
 3. 分批完成可获取的历史范围，消化 Critical Gap，按真实数据检查财务/行业历史，确定行业主体系。
