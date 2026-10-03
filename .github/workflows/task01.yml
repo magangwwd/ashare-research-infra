@@ -34,7 +34,14 @@ jobs:
       - name: Verify offline OAuth and target folder access
         env:
           GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
-        run: python -m data_pipeline.drive_auth verify
+        run: python -m data_pipeline.drive_auth verify --report metadata/drive_auth.json
+      - name: Publish safe authorization and capacity evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: task01-drive-auth-report
+          path: metadata/drive_auth.json
+          retention-days: 30
+          if-no-files-found: error
   task01:
     if: github.event_name != 'workflow_dispatch' || !inputs.verify_drive_auth
     runs-on: ubuntu-latest

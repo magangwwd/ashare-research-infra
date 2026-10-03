@@ -59,4 +59,6 @@ python -m data_pipeline.drive_auth authorize --client-secrets "/完整路径/cli
 
 只读验证还报告 `storage_quota` 和 `runtime_disk`，分别为 Google 账号存储配额及本次 Runner 可用磁盘。账号容量与 Gmail/Photos 等服务共享；剩余空间按 limit 减 usage，不能只减 Drive 用量。若 API 未提供容量上限或查询失败，剩余空间为 null/unknown，不把它当成零或足够。此检查不上传文件、不清理用户现有内容。
 
+成功检查将安全的结果保存为 `task01-drive-auth-report` Artifact，内容仅为目录验证、容量与 Runner 磁盘元数据，不包含 OAuth JSON、access token 或 refresh token。该产物不是数据发布或 Critical 总验收报告。
+
 默认不勾选，schedule 和手动运行仍按原数据流程执行；不会因为准备了 Drive Secret 而自动上传。后续 Phase 2 必须实现 staging、上传完整性验证、失败保留旧版本和 Current Pointer，见 [发布合同](drive-phase2.md)。

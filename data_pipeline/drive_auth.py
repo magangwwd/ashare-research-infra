@@ -65,8 +65,11 @@ def verify_folder(session, target: str) -> dict:
 
 def storage_quota(session) -> dict:
     """Google-account quota includes Gmail/Photos; absent limits stay unknown."""
-    response = session.get("https://www.googleapis.com/drive/v3/about",
-                           params={"fields": "storageQuota"}, timeout=30)
+    try:
+        response = session.get("https://www.googleapis.com/drive/v3/about",
+                               params={"fields": "storageQuota"}, timeout=30)
+    except Exception:
+        return {"available": False}
     if response.status_code != 200:
         return {"available": False}
     try:
@@ -144,7 +147,8 @@ def main(argv=None) -> int:
     auth = commands.add_parser("authorize", help="Run on your computer; browser consent then GitHub Secret")
     auth.add_argument("--client-secrets", type=Path, required=True)
     auth.add_argument("--repo", default="magangwwd/ashare-research-infra")
-    commands.add_parser("verify", help="Read OAuth credentials from environment; no Drive writes")
+    verify = commands.add_parser("verify", help="Read OAuth credentials from environment; no Drive writes")
+    verify.add_argument("--report", type=Path, help="Write only safe verification/capacity metadata")
     args = parser.parse_args(argv)
     try:
         target = folder_id(args.config)
@@ -157,6 +161,9 @@ def main(argv=None) -> int:
             report = refresh_and_verify(parse_credentials(secret), target)
             disk = shutil.disk_usage(ROOT)
             report["runtime_disk"] = {"total_bytes": disk.total, "free_bytes": disk.free}
+            if args.report:
+                args.report.parent.mkdir(parents=True, exist_ok=True)
+                args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         print("SUCCESS " + json.dumps(report, ensure_ascii=False))
         return 0
     except SetupError as error:

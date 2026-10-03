@@ -111,3 +111,30 @@ def test_missing_quota_limit_is_not_reported_as_zero_free_space():
 def test_unreadable_storage_is_unknown_without_breaking_folder_auth(status, quota):
     session = SimpleNamespace(get=lambda *a, **k: SimpleNamespace(status_code=status, json=lambda: {"storageQuota": quota}))
     assert auth.storage_quota(session) == {"available": False}
+
+
+def test_quota_transport_failure_remains_unknown():
+    def fail(*args, **kwargs):
+        raise RuntimeError("private-refresh-token")
+    assert auth.storage_quota(SimpleNamespace(get=fail)) == {"available": False}
+
+
+def test_capacity_artifact_excludes_environment_credentials(monkeypatch, tmp_path):
+    monkeypatch.setenv(auth.SECRET_NAME, secret())
+    safe = {"passed": True, "folder_id": "folder", "storage_quota": {"remaining_bytes": 100}}
+    monkeypatch.setattr(auth, "refresh_and_verify", lambda *a: safe.copy())
+    path = tmp_path / "metadata/drive_auth.json"
+    assert auth.main(["verify", "--report", str(path)]) == 0
+    content = path.read_text()
+    assert json.loads(content)["storage_quota"]["remaining_bytes"] == 100
+    assert "private-refresh-token" not in content and "private-client-secret" not in content
+
+
+def test_failed_verification_cannot_publish_capacity_report(monkeypatch, tmp_path):
+    monkeypatch.setenv(auth.SECRET_NAME, secret())
+    def fail(*args):
+        raise auth.SetupError("目标目录不可用。")
+    monkeypatch.setattr(auth, "refresh_and_verify", fail)
+    path = tmp_path / "drive_auth.json"
+    assert auth.main(["verify", "--report", str(path)]) == 1
+    assert not path.exists()
