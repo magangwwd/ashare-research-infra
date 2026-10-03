@@ -10,6 +10,10 @@ on:
         description: 'Only verify Drive OAuth; no downloads or Drive uploads'
         type: boolean
         default: false
+      publish_drive_snapshot:
+        description: 'Upload latest accepted checkpoint to Drive; no new Tushare downloads'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -21,7 +25,7 @@ concurrency:
 
 jobs:
   drive-auth:
-    if: github.event_name == 'workflow_dispatch' && inputs.verify_drive_auth
+    if: github.event_name == 'workflow_dispatch' && inputs.verify_drive_auth && !inputs.publish_drive_snapshot
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -43,7 +47,7 @@ jobs:
           retention-days: 30
           if-no-files-found: error
   task01:
-    if: github.event_name != 'workflow_dispatch' || !inputs.verify_drive_auth
+    if: github.event_name != 'workflow_dispatch' || (!inputs.verify_drive_auth && !inputs.publish_drive_snapshot)
     runs-on: ubuntu-latest
     timeout-minutes: 240
     env:
@@ -140,3 +144,48 @@ jobs:
           retention-days: 90
           if-no-files-found: ignore
           compression-level: 0
+  drive-publish:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_drive_snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install and test publication failure protection
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pytest -q
+      - name: Restore published data from latest checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method GET "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100&name=task01-checkpoint" > /tmp/task01-artifacts.json
+          artifact_id=$(python - <<'PY'
+          import json
+          artifacts = json.load(open('/tmp/task01-artifacts.json'))['artifacts']
+          available = sorted((a for a in artifacts if not a['expired']), key=lambda a: a['created_at'], reverse=True)
+          if not available:
+              raise SystemExit('No resumable checkpoint exists; upload blocked')
+          print(available[0]['id'])
+          PY
+          )
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > /tmp/task01-checkpoint.zip
+          unzip -p /tmp/task01-checkpoint.zip task01-state.tar.gz > /tmp/task01-state.tar.gz
+          tar -xzf /tmp/task01-state.tar.gz
+      - name: Revalidate, stage, verify remote bytes, and commit production pointer
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        run: python -m data_pipeline.drive_publish
+      - name: Save credential-free publication evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: task01-drive-publication-report
+          path: metadata/drive_publish.json
+          retention-days: 30
+          if-no-files-found: error

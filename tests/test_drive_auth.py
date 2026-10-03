@@ -119,8 +119,9 @@ def test_quota_transport_failure_remains_unknown():
     assert auth.storage_quota(SimpleNamespace(get=fail)) == {"available": False}
 
 
-def test_capacity_artifact_excludes_environment_credentials(monkeypatch, tmp_path):
+def test_capacity_artifact_excludes_environment_credentials(monkeypatch, tmp_path, capsys):
     monkeypatch.setenv(auth.SECRET_NAME, secret())
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
     safe = {"passed": True, "folder_id": "folder", "storage_quota": {"remaining_bytes": 100}}
     monkeypatch.setattr(auth, "refresh_and_verify", lambda *a: safe.copy())
     path = tmp_path / "metadata/drive_auth.json"
@@ -128,6 +129,9 @@ def test_capacity_artifact_excludes_environment_credentials(monkeypatch, tmp_pat
     content = path.read_text()
     assert json.loads(content)["storage_quota"]["remaining_bytes"] == 100
     assert "private-refresh-token" not in content and "private-client-secret" not in content
+    output = capsys.readouterr().out
+    assert "::notice title=Storage capacity::" in output
+    assert "private-refresh-token" not in output and "private-client-secret" not in output
 
 
 def test_failed_verification_cannot_publish_capacity_report(monkeypatch, tmp_path):

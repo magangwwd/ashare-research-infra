@@ -61,4 +61,6 @@ python -m data_pipeline.drive_auth authorize --client-secrets "/完整路径/cli
 
 成功检查将安全的结果保存为 `task01-drive-auth-report` Artifact，内容仅为目录验证、容量与 Runner 磁盘元数据，不包含 OAuth JSON、access token 或 refresh token。该产物不是数据发布或 Critical 总验收报告。
 
-默认不勾选，schedule 和手动运行仍按原数据流程执行；不会因为准备了 Drive Secret 而自动上传。后续 Phase 2 必须实现 staging、上传完整性验证、失败保留旧版本和 Current Pointer，见 [发布合同](drive-phase2.md)。
+同样的安全容量数据还写入 Actions 的 Storage capacity notice，可从检查注释读取；日志或 Artifact 下载服务不可用时仍可核对数值。
+
+两项都不勾选时，schedule 和手动运行仍按原数据流程执行；不会因为准备了 Drive Secret 而自动上传。需上传已验收快照时单独勾选 `publish_drive_snapshot`，发布规则及目录见 [Drive 发布说明](drive-phase2.md)。

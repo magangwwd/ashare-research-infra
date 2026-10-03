@@ -164,6 +164,10 @@ def main(argv=None) -> int:
             if args.report:
                 args.report.parent.mkdir(parents=True, exist_ok=True)
                 args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+            if os.environ.get("GITHUB_ACTIONS") == "true":
+                capacity = {"storage_quota": report.get("storage_quota", {"available": False}),
+                            "runtime_disk": report["runtime_disk"]}
+                print("::notice title=Storage capacity::" + json.dumps(capacity))
         print("SUCCESS " + json.dumps(report, ensure_ascii=False))
         return 0
     except SetupError as error:
