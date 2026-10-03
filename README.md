@@ -16,7 +16,7 @@ Phase 1 实现已推送到 GitHub 私有仓库，37 项单元及离线集成测�
 
 **历史全量仍在分批推进，Task 01 最终验收尚未完成**。早期数据源覆盖不足、扩展接口权限不足均有显式 Gap；实际探测历史边界不代表之后所有日期已下载。还需持续观察真实交易日和定时运行，补齐可获得历史并验证修订；行业主体系仍待历史完整性和稳定性证据。正式数据 Artifact 保留 30 天，恢复检查点保留 90 天，Phase 1 不作为永久远程存储。
 
-Phase 2 Google Drive 数据发布尚未启用，必须等 Phase 1 真实验收稳定后实施，见 [Drive 发布规格](docs/drive-phase2.md)。按用户后续请求已准备 [Runner OAuth 授权工具](docs/drive-auth.md)，需用户在自己的电脑完成授权；当前没有已验证的 Runner Drive 凭据或远程 Production。
+Phase 2 Google Drive 数据发布尚未启用，必须等 Phase 1 真实验收稳定后实施，见 [Drive 发布规格](docs/drive-phase2.md)。[Runner OAuth 授权](docs/drive-auth.md) 已完成；用户确认应用为 In production，重新授权后的 [run #13](https://github.com/magangwwd/ashare-research-infra/actions/runs/37127560205) 已独立核对，刷新与目标目录添加文件权限通过。该次数据任务跳过，未上传文件，当前没有远程 Production。
 
 ## 范围
 

@@ -1,5 +1,17 @@
 # Task 01 验收记录
 
+## 2026-10-03：Runner Drive 授权验证通过
+
+用户报告 Google Cloud 应用已转为 In production，并重新授权、替换 GDRIVE_OAUTH_JSON。应用发布状态来自用户确认；没有读取或导出任何 Secret。已独立核对 [run #13 / 37127560205](https://github.com/magangwwd/ashare-research-infra/actions/runs/37127560205)，代码为 `ea1e78bd9237bb460d8f735e95b93cad8cdee00a`。
+
+- 北京时间 2026-10-03 21:50:39—21:51:00，`drive-auth` 用时 21 秒，所有步骤成功。
+- Runner 使用 Secret 刷新访问 token，目标目录 `1rkC99Ymgp8mjvAcJNRPJMlOGLdI9_bue` 验证通过，`can_add_children: true`。
+- 默认 `task01` 数据 job 为 skipped；本次是授权检查，不能计为核心数据更新或总验收。
+- 检查输出 `file_upload_tested: false`、`production_publish_enabled: false`。没有测试实际上传，没有启用 Drive 数据发布。
+- 授权准备与真实 Runner 验证已完成；取消 Testing 的 7 天规则不代表 refresh token 永不失效，不将本次验证描述为永久凭据保证。
+
+接续事项仍是 Phase 1 历史和稳定性验收，以及之后的 staging、远程完整性校验、Current Pointer 和失败保护实现；此时无需再次授权。
+
 ## 2026-10-03：准备 Runner Drive 授权（尚未授权）
 
 用户明确要求协助完成 GitHub Actions 独立授权，因此先准备凭据工具；不是提前宣告 Phase 2 数据发布完成。

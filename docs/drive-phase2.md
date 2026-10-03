@@ -1,6 +1,6 @@
 # Google Drive Phase 2 发布合同（待 Phase 1 稳定后实现）
 
-用户后续明确要求协助准备 GitHub Actions 独立授权；现已提供 [OAuth 授权及只读验证工具](drive-auth.md)。真实 Google 授权仍须用户本人完成，当前没有 Drive 数据上传或 Production 发布。Task 01.1–01.12 稳定后再实施完整 01.13。
+用户后续明确要求协助准备 GitHub Actions 独立授权；现已提供 [OAuth 授权及只读验证工具](drive-auth.md)。用户已完成授权，重新授权后的 run #13 已核对，Runner 刷新和目标目录权限通过，见 [验收记录](acceptance-record.md)。当前没有 Drive 数据上传或 Production 发布；Task 01.1–01.12 稳定后再实施完整 01.13。
 
 目标目录：
 
