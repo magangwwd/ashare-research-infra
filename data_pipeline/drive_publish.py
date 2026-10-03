@@ -241,6 +241,27 @@ def remote_inventory(drive, root_id, prefix=""):
     return result
 
 
+def verify_previous_snapshot(drive, pointer: dict, expected_manifest: bytes | None = None) -> bytes:
+    """Verify that the version referenced by an existing production pointer remains recoverable."""
+    version_id = pointer.get("version_folder_id")
+    manifest_id = pointer.get("manifest_file_id")
+    if not version_id or not manifest_id or not pointer.get("version"):
+        raise PublishError("Existing production pointer is missing recovery metadata.")
+    info = drive.metadata(version_id)
+    if info.get("mimeType") != FOLDER or info.get("trashed"):
+        raise PublishError("Previous production version folder is not recoverable.")
+    manifest_bytes = drive.read(manifest_id)
+    if expected_manifest is not None and manifest_bytes != expected_manifest:
+        raise PublishError("Previous production manifest changed during publication.")
+    try:
+        manifest = json.loads(manifest_bytes)
+    except (ValueError, TypeError):
+        raise PublishError("Previous production manifest is not valid JSON.") from None
+    if not manifest.get("validated") or manifest.get("version") != pointer.get("version"):
+        raise PublishError("Previous production manifest does not match the current pointer.")
+    return manifest_bytes
+
+
 def publish(drive, target, items, acceptance, progress, prepared, quota=None):
     if not acceptance.get("passed"):
         raise PublishError("Acceptance is required before publication.")
@@ -253,6 +274,8 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None):
         raise PublishError("Ambiguous current pointer; publication blocked.")
     old_id = pointers[0]["id"] if pointers else None
     old_bytes = drive.read(old_id) if old_id else None
+    old_pointer = None
+    old_manifest_bytes = None
     if old_bytes is not None:
         try:
             old_pointer = json.loads(old_bytes)
@@ -260,6 +283,8 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None):
                 raise ValueError
         except (ValueError, TypeError, AttributeError):
             raise PublishError("Existing current pointer is not an accepted snapshot pointer.") from None
+        # A second or later publication must start from a genuinely recoverable old production.
+        old_manifest_bytes = verify_previous_snapshot(drive, old_pointer)
     staging = drive.folder(target, "staging")
     versions = drive.folder(target, "versions")
     version = utcnow().replace(":", "").replace("+", "_") + "-" + uuid.uuid4().hex[:8]
@@ -313,11 +338,22 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None):
                                       "source_run_id", "file_count", "total_bytes", "critical_history_complete",
                                       "full_requested_core_range_complete", "extensions_history_complete")}
     pointer.update(version_folder_id=stage, manifest_file_id=manifest_id,
-                   manifest_sha256=digest(manifest_path)[1], previous_version=json.loads(old_bytes).get("version") if old_bytes else None)
+                   manifest_sha256=digest(manifest_path)[1], previous_version=old_pointer.get("version") if old_pointer else None)
     pointer_path = prepared / "current.json"
     atomic_json(pointer_path, pointer)
     pointer_id = drive.commit_pointer(target, old_id, old_bytes, pointer_path)
+    previous_recovery_verified = None
+    if old_pointer is not None:
+        try:
+            verify_previous_snapshot(drive, old_pointer, old_manifest_bytes)
+            previous_recovery_verified = True
+        except PublishError:
+            # The new pointer has already been atomically committed. Report a failed
+            # recovery check instead of attempting a dangerous automatic rollback.
+            previous_recovery_verified = False
+            print("WARNING previous Drive production could not be reverified after pointer switch")
     report = {**pointer, "passed": True, "pointer_file_id": pointer_id, "folder_id": target,
+              "previous_version_recovery_verified": previous_recovery_verified,
               "remote_validation": "all file paths, byte sizes and downloaded SHA256 verified", "storage_quota": quota}
     return report
 
