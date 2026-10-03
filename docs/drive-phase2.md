@@ -1,6 +1,6 @@
 # Google Drive Phase 2 发布合同（待 Phase 1 稳定后实现）
 
-当前代码不包含 Drive 认证或上传。用户规格明确要求先完成并稳定 Task 01.1–01.12，后实施 01.13；没有真实 Token 和 Phase 1 验收前不得提前接入。
+用户后续明确要求协助准备 GitHub Actions 独立授权；现已提供 [OAuth 授权及只读验证工具](drive-auth.md)。真实 Google 授权仍须用户本人完成，当前没有 Drive 数据上传或 Production 发布。Task 01.1–01.12 稳定后再实施完整 01.13。
 
 目标目录：
 

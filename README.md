@@ -16,7 +16,7 @@ Phase 1 实现已推送到 GitHub 私有仓库，37 项单元及离线集成测�
 
 **历史全量仍在分批推进，Task 01 最终验收尚未完成**。早期数据源覆盖不足、扩展接口权限不足均有显式 Gap；实际探测历史边界不代表之后所有日期已下载。还需持续观察真实交易日和定时运行，补齐可获得历史并验证修订；行业主体系仍待历史完整性和稳定性证据。正式数据 Artifact 保留 30 天，恢复检查点保留 90 天，Phase 1 不作为永久远程存储。
 
-Phase 2 Google Drive 尚未启用，必须等 Phase 1 真实验收稳定后实施，见 [Drive 发布规格](docs/drive-phase2.md)。没有 Drive 凭据、远程 Production 或伪造的成功报告。
+Phase 2 Google Drive 数据发布尚未启用，必须等 Phase 1 真实验收稳定后实施，见 [Drive 发布规格](docs/drive-phase2.md)。按用户后续请求已准备 [Runner OAuth 授权工具](docs/drive-auth.md)，需用户在自己的电脑完成授权；当前没有已验证的 Runner Drive 凭据或远程 Production。
 
 ## 范围
 
@@ -131,7 +131,7 @@ API 自动重试、限速、分页。分页重复或超过上限直接失败，�
 
 唯一 Workflow：`.github/workflows/task01.yml`。`schedule` 为 `0 12 * * *`，即北京时间约 20:00；GitHub 可能延迟启动。另有无参数 `workflow_dispatch` 手动触发。
 
-在仓库 **Settings → Secrets and variables → Actions** 添加唯一业务 Secret `TUSHARE_TOKEN`。Workflow 使用 GitHub 自动提供的 `github.token` 读取同仓库 Artifact，它不是额外的业务凭据。
+Phase 1 数据任务在仓库 **Settings → Secrets and variables → Actions** 配置 `TUSHARE_TOKEN`。用户选择准备 Drive 授权时，由本机 OAuth 工具另写入 `GDRIVE_OAUTH_JSON`，只用于手动勾选的 Drive 授权检查；默认任务无需它。Workflow 使用 GitHub 自动提供的 `github.token` 读取同仓库 Artifact，它不是额外的业务凭据。
 
 每次运行：安装 → Unit Tests → 恢复最新 checkpoint → 真实 Smoke → 自动模式 → 正式版本验收 → 真实交易日回放/Parquet 恢复演练 → 发布 validated Artifact。回放用最新已结束的真实交易日，在隔离目录重新向 Tushare 请求 Critical 数据并验收 DAILY_UPDATE 分支，记录 `metadata/trading_day_replay.json`；它不等于当日定时运行证据。恢复演练在隔离暂存目录中故意降低行情覆盖率、模拟指针切换中断，再修复续传；检查旧正式文件校验和不变，记录 `metadata/recovery_drill.json`，不修改源正式数据。任何 Critical/Smoke 验收失败，后续发布步骤不会运行，Workflow 保持 FAILED。
 

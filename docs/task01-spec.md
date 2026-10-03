@@ -34,7 +34,7 @@ Parquet 是事实来源，Manifest 可重建；分批历史、断点续传、失
 | 01.10 Incremental | current windows、cursor、repair、monthly_audit；MAINTENANCE 五次成功；真实 DAILY_UPDATE 隔离回放通过 | 连续当日交易运行及修订 |
 | 01.11 GitHub Actions | 单 Workflow；UTC 12:00；Secret 已生效；五次真实发布/检查点恢复通过 | 无人干预定时运行的持续证据 |
 | 01.12 Automated Acceptance | validate CLI、非零阻断；四份产物独立复验；Runner 真实 Parquet 的覆盖失败/指针中断/修补演练通过 | 完整历史库验收及实际网络/远程上传故障 |
-| 01.13 Google Drive | [Phase 2 发布合同](drive-phase2.md) | Phase 1 稳定后实施；当前未接通 |
+| 01.13 Google Drive | [Phase 2 发布合同](drive-phase2.md)；用户后续要求的 [OAuth 授权工具](drive-auth.md) 已准备 | 用户本人授权和 Runner 验证未完成；数据上传/正式发布仍未接通 |
 
 实现代码和离线测试完成只代表开发交付，不能代表真实 Task 01 已最终验收。最终验收需要 Critical 实际可用、历史推进/补抓/修订经过实测、Actions 无人运行、失败保持旧版本，Drive 接通后 Production 只含已验收数据。
 

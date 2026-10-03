@@ -1,5 +1,16 @@
 # Task 01 验收记录
 
+## 2026-10-03：准备 Runner Drive 授权（尚未授权）
+
+用户明确要求协助完成 GitHub Actions 独立授权，因此先准备凭据工具；不是提前宣告 Phase 2 数据发布完成。
+
+- 已读取用户创建的 Ashare_Quant 文件夹，ID 为 `1rkC99Ymgp8mjvAcJNRPJMlOGLdI9_bue`，检查时为空。
+- 提供本机 Desktop OAuth + PKCE 工具，刷新/验证目录后通过 gh CLI stdin 写入 GDRIVE_OAUTH_JSON，不将凭据写入代码、日志、配置或 Artifact。
+- 10 项授权/凭据保护测试通过，普通测试合计 47 项通过、2 项需真实数据的演练在本地跳过。
+- 同一个 Workflow 增加手动勾选的只读 `drive-auth` 验证。未勾选时按原数据流程运行，不自动上传。
+- 当前连接没有设置仓库 Secrets 的权限；需用户在自己的电脑登录 Google 和有仓库管理权限的 GitHub 账号。Google OAuth 授权、Secret 写入和真实 Runner 验证尚未完成，不计为通过。
+- `storage.drive.enabled` 为 false；尚无 staging 上传、远程校验或 Production 切换。
+
 ## 2026-10-02：近期共同窗口补齐与第五次成功发布
 
 最新运行 [36999912593](https://github.com/magangwwd/ashare-research-infra/actions/runs/36999912593) 对应代码 `7135823fd22db831c02111bddec05af3cd405ca5`，全部步骤 SUCCESS。

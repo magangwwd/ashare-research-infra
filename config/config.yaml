@@ -3,6 +3,9 @@ storage:
   parquet_compression: zstd
   compact_target_mb: 192
   market_raw_retention_days: 180
+  drive:
+    enabled: false
+    folder_id: '1rkC99Ymgp8mjvAcJNRPJMlOGLdI9_bue'
 validation:
   min_coverage: 0.95
   min_daily_rows: 1000
