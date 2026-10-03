@@ -29,6 +29,9 @@ class MemoryDrive:
     def children(self, parent):
         return [dict(v) for v in self.files.values() if parent in v.get("parents", [])]
 
+    def metadata(self, ident):
+        return dict(self.files[ident])
+
     def create_folder(self, parent, name):
         ident = f"f{len(self.files)}"
         self.files[ident] = {"id": ident, "name": name, "mimeType": dp.FOLDER, "parents": [parent]}
@@ -100,6 +103,7 @@ def test_success_pointer_references_only_verified_immutable_files(tmp_path):
     pointer = json.loads(drive.read("pointer"))
     manifest = json.loads(drive.read(pointer["manifest_file_id"]))
     assert report["passed"] and pointer["validated"]
+    assert report["previous_version_recovery_verified"] is True
     assert pointer["previous_version"] == "old" and pointer["critical_history_complete"] is False
     assert pointer["extensions_history_complete"] is None
     assert manifest["file_count"] == len(items)
