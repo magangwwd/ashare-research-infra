@@ -57,4 +57,6 @@ python -m data_pipeline.drive_auth authorize --client-secrets "/完整路径/cli
 
 本次仅运行 `drive-auth` job，默认数据 job 跳过。Runner 从 GDRIVE_OAUTH_JSON 刷新访问 token，并只读检查目标目录及添加文件权限；任何缺失凭据、刷新失败或目录权限失败都会返回 FAILED。勾选只验证时的绿色结果不是 Critical 数据总验收证据。
 
+只读验证还报告 `storage_quota` 和 `runtime_disk`，分别为 Google 账号存储配额及本次 Runner 可用磁盘。账号容量与 Gmail/Photos 等服务共享；剩余空间按 limit 减 usage，不能只减 Drive 用量。若 API 未提供容量上限或查询失败，剩余空间为 null/unknown，不把它当成零或足够。此检查不上传文件、不清理用户现有内容。
+
 默认不勾选，schedule 和手动运行仍按原数据流程执行；不会因为准备了 Drive Secret 而自动上传。后续 Phase 2 必须实现 staging、上传完整性验证、失败保留旧版本和 Current Pointer，见 [发布合同](drive-phase2.md)。

@@ -90,3 +90,24 @@ def test_authorize_does_not_save_secret_before_folder_validation(monkeypatch, tm
 def test_client_json_inside_repository_is_rejected():
     with pytest.raises(auth.SetupError):
         auth.authorize(auth.ROOT / "client_secret.json", "owner/repository", "folder")
+
+
+def test_remaining_storage_uses_all_services_not_only_drive():
+    session = SimpleNamespace(get=lambda *a, **k: SimpleNamespace(status_code=200, json=lambda: {
+        "storageQuota": {"limit": "1000", "usage": "900", "usageInDrive": "100", "usageInDriveTrash": "20"}}))
+    report = auth.storage_quota(session)
+    assert report["remaining_bytes"] == 100
+    assert report["drive_used_bytes"] == 100
+
+
+def test_missing_quota_limit_is_not_reported_as_zero_free_space():
+    session = SimpleNamespace(get=lambda *a, **k: SimpleNamespace(status_code=200, json=lambda: {
+        "storageQuota": {"usage": "100"}}))
+    report = auth.storage_quota(session)
+    assert report["available"] and report["remaining_bytes"] is None
+
+
+@pytest.mark.parametrize("status,quota", [(403, {}), (200, {"limit": "invalid"}), (200, {"usage": "-10"})])
+def test_unreadable_storage_is_unknown_without_breaking_folder_auth(status, quota):
+    session = SimpleNamespace(get=lambda *a, **k: SimpleNamespace(status_code=status, json=lambda: {"storageQuota": quota}))
+    assert auth.storage_quota(session) == {"available": False}

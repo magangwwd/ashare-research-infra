@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 
 from google.auth.transport.requests import AuthorizedSession, Request
@@ -62,13 +63,36 @@ def verify_folder(session, target: str) -> dict:
             "file_upload_tested": False, "production_publish_enabled": False}
 
 
+def storage_quota(session) -> dict:
+    """Google-account quota includes Gmail/Photos; absent limits stay unknown."""
+    response = session.get("https://www.googleapis.com/drive/v3/about",
+                           params={"fields": "storageQuota"}, timeout=30)
+    if response.status_code != 200:
+        return {"available": False}
+    try:
+        quota = response.json()["storageQuota"]
+        sizes = {k: int(quota[k]) if k in quota else None
+                 for k in ("limit", "usage", "usageInDrive", "usageInDriveTrash")}
+        if any(v is not None and v < 0 for v in sizes.values()):
+            raise ValueError
+    except (KeyError, TypeError, ValueError):
+        return {"available": False}
+    remaining = max(0, sizes["limit"] - sizes["usage"]) if sizes["limit"] is not None and sizes["usage"] is not None else None
+    return {"available": True, "limit_bytes": sizes["limit"], "used_bytes": sizes["usage"],
+            "remaining_bytes": remaining, "drive_used_bytes": sizes["usageInDrive"],
+            "drive_trash_bytes": sizes["usageInDriveTrash"],
+            "scope": "Google account storage; shared with other Google services"}
+
+
 def refresh_and_verify(credentials: Credentials, target: str) -> dict:
     try:
         credentials.refresh(Request())
     except Exception:
         raise SetupError("OAuth 刷新失败：请检查凭据有效期、应用发布状态，必要时重新授权。") from None
     with AuthorizedSession(credentials) as session:
-        return verify_folder(session, target)
+        report = verify_folder(session, target)
+        report["storage_quota"] = storage_quota(session)
+        return report
 
 
 def save_github_secret(repo: str, info: dict) -> None:
@@ -131,6 +155,8 @@ def main(argv=None) -> int:
             if not secret:
                 raise SetupError("环境变量 GDRIVE_OAUTH_JSON 未配置。")
             report = refresh_and_verify(parse_credentials(secret), target)
+            disk = shutil.disk_usage(ROOT)
+            report["runtime_disk"] = {"total_bytes": disk.total, "free_bytes": disk.free}
         print("SUCCESS " + json.dumps(report, ensure_ascii=False))
         return 0
     except SetupError as error:
