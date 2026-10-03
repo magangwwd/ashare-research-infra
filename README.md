@@ -6,6 +6,8 @@ Task 01 只建设 **稳定、可恢复、可自动更新的 A 股研究数据底
 
 冻结需求、实现对应关系和未完成的外部验收见 [docs/task01-spec.md](docs/task01-spec.md)。后续 Codex 请先阅读本文件，再修改代码。可靠性、恢复能力和数据完整性优先；保持少量清晰模块。
 
+已完成内容、当前运行流程、存储位置与接续顺序见 [Task 01 路线图](docs/roadmap.md)。
+
 ## 当前状态
 
 Phase 1 和手动 Drive 快照发布实现已推送到 GitHub 私有仓库，77 项单元及离线集成测试通过；最新完整数据任务 [run #15](https://github.com/magangwwd/ashare-research-infra/actions/runs/37133945515) 于北京时间 2026-10-03 23:38—23:57 定时触发成功。Capability Audit、真实 Smoke、MAINTENANCE、Critical 总验收、真实交易日回放/恢复演练及正式 Artifact 发布通过。该次 GitHub 调度明显晚于配置的 20:00，不能承诺准点开始。详见[验收记录](docs/acceptance-record.md)。
