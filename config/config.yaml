@@ -21,6 +21,10 @@ download:
   history_start: '19900101'
   history_requests_per_run: 40
   maintenance_history_requests_per_run: 240
+  # Until the newest 750 sessions are complete for daily/adj_factor/daily_basic,
+  # reserve 75% of bounded history requests for that backtest-ready window.
+  core_history_target_sessions: 750
+  core_history_budget_fraction: 0.75
   repair_requests_per_run: 15
   audit_requests_per_run: 10
   required_recent_requests_per_run: 25
