@@ -495,6 +495,8 @@ class Pipeline:
         target = self.config["download"].get("core_history_target_sessions", 0)
         fraction = float(self.config["download"].get("core_history_budget_fraction", 0.0))
         core_budget = min(budget, int(budget * fraction)) if target and core_names else 0
+        if core_names and not other_names:
+            core_budget = budget
 
         core_completed = core_fetched = 0
         core_exhausted = True
