@@ -201,6 +201,19 @@ jobs:
           path: metadata/backtest_readiness.json
           retention-days: 30
           if-no-files-found: error
+      - name: Run Task 02 engineering smoke (non-blocking)
+        id: task02_smoke
+        if: steps.task02_readiness.outcome == 'success'
+        continue-on-error: true
+        run: python -m research_engine.run_engineering_demo --factor momentum_20d --top-n 10 > metadata/task02_engineering_smoke.json
+      - name: Publish Task 02 engineering smoke
+        if: steps.task02_smoke.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: task02-engineering-smoke
+          path: metadata/task02_engineering_smoke.json
+          retention-days: 30
+          if-no-files-found: error
   drive-publish:
     if: github.event_name == 'workflow_dispatch' && inputs.publish_drive_snapshot
     runs-on: ubuntu-latest
