@@ -14,6 +14,10 @@ on:
         description: 'Upload latest accepted checkpoint to Drive; no new Tushare downloads'
         type: boolean
         default: false
+      force_drive_restore:
+        description: 'Disaster-recovery drill: ignore GitHub checkpoint and restore current Drive production'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -67,8 +71,15 @@ jobs:
       - name: Restore the latest resumable checkpoint
         id: restore
         shell: bash
+        env:
+          FORCE_DRIVE_RESTORE: ${{ github.event_name == 'workflow_dispatch' && inputs.force_drive_restore }}
         run: |
           set -euo pipefail
+          if [ "$FORCE_DRIVE_RESTORE" = "true" ]; then
+            echo "checkpoint_found=false" >> "$GITHUB_OUTPUT"
+            echo "SUCCESS forced Drive recovery drill; GitHub checkpoint intentionally ignored"
+            exit 0
+          fi
           gh api --method GET "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100&name=task01-checkpoint" > /tmp/task01-artifacts.json
           artifact_id=$(python - <<'PY'
           import json
@@ -82,7 +93,16 @@ jobs:
             gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > /tmp/task01-checkpoint.zip
             unzip -p /tmp/task01-checkpoint.zip task01-state.tar.gz > /tmp/task01-state.tar.gz
             tar -xzf /tmp/task01-state.tar.gz
+            echo "checkpoint_found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "checkpoint_found=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: Restore current production from Google Drive when checkpoint is unavailable
+        id: drive_restore
+        if: steps.restore.outputs.checkpoint_found != 'true'
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        run: python -m data_pipeline.drive_restore
       - name: Live Tushare smoke gate
         run: python -m data_pipeline.run_task01 --mode smoke
       - name: Daily update or maintenance
@@ -115,6 +135,7 @@ jobs:
             metadata/manifest/gaps.json
             metadata/recovery_drill.json
             metadata/trading_day_replay.json
+            metadata/drive_restore.json
             metadata/effective_config.json
             metadata/manifest/history.json
             metadata/manifest/partitions.json
