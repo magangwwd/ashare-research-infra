@@ -80,7 +80,7 @@ Critical 下载或质量验收失败必须让数据任务失败。Required/Optio
 2. **验收后自动上传：真实任务已通过，定时持续运行待观察。** 第 19 次常规 task01 job 在恢复、更新和验收后自动上传，远程校验、正式指针切换及 checkpoint 保存均通过。本次为手动触发的恢复演练，带新发布逻辑的每日定时运行还需持续验证。
 3. **Drive 恢复链：真实强制恢复已通过。** 第 19 次任务主动忽略 GitHub checkpoint，从 Drive 恢复 482 个文件、109,617,924 字节；远程清单、逐文件 SHA256、本地 Critical 验收均通过，之后更新及自动发布成功。恢复报告 source=google_drive_current，已独立下载核对。checkpoint 缺失/损坏时自动回退的代码保留，实际失败自动回退继续观察。
 4. **制定并实现保留策略。** 明确 Drive 版本数、行情 Raw 保留、财务 Raw 长期保留和 Artifact 配额；恢复链验证成功后再清理冗余产物。当前发布每次上传完整快照，远程增量/续传尚未实现，随历史增长再优化。
-5. **持续补齐与审计历史。** Critical 当天优先，Required/Optional 按权限更新，再修复历史缺口；核对实际 Parquet、财务修订、行业/指数覆盖，确定主行业体系。无法获得的范围保留明确原因，不用完成标签掩盖缺口。
+5. **持续补齐与审计历史：Core Backfill 快车道已接入，待真实运行验收。** 最新数据、最近窗口、Required/Optional 刷新和修复优先级不变；进入历史阶段后，在最近 750 个交易日的 daily / adj_factor / daily_basic 尚未补齐前，将 75% 的历史预算保留给三类核心行情，另外 25% 继续给财务、行业、指数和 Optional 历史，避免扩展数据饿死。维护模式 240 个历史预算单位对应约 180 Core + 60 其他；交易日模式 40 对应约 30 + 10。达到 750 日目标后自动回到全数据 round-robin，不永久偏向行情。所有 Core 文件仍必须通过原有覆盖率、Gap、Schema、主键和 Critical 验收后才计为完成。下一次正常 task01 运行需核对 metadata/manifest/history.json 中 core_fetched_this_run / other_fetched_this_run 和核心交易日实际增长，才能把快车道标记为运行验收通过。
 6. **执行 Task 01 最终验收。** 联合检查历史范围、Critical 质量、连续交易日和维护运行、历史修订、断点恢复、Drive 发布及失败保护，形成完整验收记录。
 7. **进入 Task 02。** 从经验证的 Clean 开始，再建立 curated/factors，处理严格股票池、每日状态、动态复权和因子研究。Task 01 不提前实现这些功能。
 
