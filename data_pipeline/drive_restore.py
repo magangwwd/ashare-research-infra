@@ -172,10 +172,8 @@ def restore_snapshot(drive: Drive, target: str, root: Path, config: dict) -> dic
     versions = root / "data/.versions"
     versions.mkdir(parents=True, exist_ok=True)
     safe_version = re.sub(r"[^A-Za-z0-9_.-]+", "-", pointer["version"])
-    local_name = "drive-" + safe_version
+    local_name = "drive-" + safe_version + "-" + uuid.uuid4().hex[:8]
     final_version = versions / local_name
-    if final_version.exists():
-        raise RecoveryError("The selected Drive production version is already materialized locally.")
 
     work = root / (".drive-restore-" + uuid.uuid4().hex[:8])
     version_temp = work / "version"
