@@ -15,7 +15,7 @@
 | 核心下载与验收 | 历史分批、最近窗口回补、缺失股票补抓、主键/非空/覆盖率验收 | 已存数据通过；历史全量仍未补齐 |
 | 扩展数据 | 财务、行业、指数、市场状态、Optional 白名单的获取和落库 | 部分接口和数据已可用；完整历史、主行业体系仍待验收 |
 | Actions | 单一 Workflow、20:00 北京时间 cron、手动触发、恢复 checkpoint、Smoke、验收和 Artifact | 定时维护和真实交易日回放通过；连续交易日运行待观察，GitHub 可能延迟调度 |
-| Drive | OAuth、独立 staging、远程 SHA256、发布 Manifest、最后切换 current.json | 两次真实发布与新旧版本切换已通过；自动发布代码已接通但待正常数据任务实测，远程恢复和版本保留仍待完成 |
+| Drive | OAuth、独立 staging、远程 SHA256、发布 Manifest、最后切换 current.json、Drive→Runner 恢复回退 | 两次真实发布与新旧版本切换已通过；自动发布代码已接通但待正常数据任务实测；远程恢复代码已接入 Workflow，待强制灾难恢复实测；版本保留仍待完成 |
 
 本地 77 项普通测试通过，另有真实数据回放和恢复演练证据。真实首次 Drive 发布已成功；上传中断、漏文件、checksum 错误、远程读取及指针切换失败保护由离线故障测试验证。
 
@@ -78,7 +78,7 @@ Critical 下载或质量验收失败必须让数据任务失败。Required/Optio
 
 1. **第二次正式发布：已完成。** 第二次真实发布已验证 staging 期间旧指针不变、远程校验后才切换；新版本可读、previous_version 正确，首次版本目录和 Manifest 仍可恢复，staging 最终为空。
 2. **每日验收后自动上传：代码已接通，待真实运行验收。** 常规 `task01` job 已衔接本地验收与 Drive 发布；远程验证成功才提交指针，上传失败会标红任务而 `always()` checkpoint 仍保存。下一次正常数据任务需确认该链无人干预成功。
-3. **建立 Drive 恢复链。** Runner 能从经验证的远程版本恢复数据和必要下载状态；实测 GitHub checkpoint 不可用时仍可继续，不重新下载完整历史。当前 Drive 快照上传不等于已具备此恢复能力。
+3. **建立 Drive 恢复链：代码已完成，待真实灾难恢复演练。** 新增 `data_pipeline.drive_restore`：读取 Drive 根目录唯一 `current.json`，校验指针与 production_manifest SHA256/版本/文件数/总字节数，核对远端版本目录清单，再把每个文件下载到隔离临时目录并逐文件验证大小和 SHA256；恢复后的 Raw/Clean 会再次通过本地 Critical 验收，最后才原子建立 `data/current`。Workflow 仍优先 GitHub checkpoint；checkpoint 缺失或损坏时自动回退 Drive。手动 `force_drive_restore` 可故意忽略 checkpoint 做灾难恢复演练。本阶段尚缺一次真实 Runner 强制恢复 SUCCESS 证据。
 4. **制定并实现保留策略。** 明确 Drive 版本数、行情 Raw 保留、财务 Raw 长期保留和 Artifact 配额；恢复链验证成功后再清理冗余产物。当前发布每次上传完整快照，远程增量/续传尚未实现，随历史增长再优化。
 5. **持续补齐与审计历史。** Critical 当天优先，Required/Optional 按权限更新，再修复历史缺口；核对实际 Parquet、财务修订、行业/指数覆盖，确定主行业体系。无法获得的范围保留明确原因，不用完成标签掩盖缺口。
 6. **执行 Task 01 最终验收。** 联合检查历史范围、Critical 质量、连续交易日和维护运行、历史修订、断点恢复、Drive 发布及失败保护，形成完整验收记录。
