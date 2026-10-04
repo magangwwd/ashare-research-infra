@@ -119,6 +119,8 @@ jobs:
         run: python -m data_pipeline.run_task01 --mode auto
       - name: Production acceptance
         run: python -m data_pipeline.validate
+      - name: Generate backtest readiness
+        run: python -m research_engine.readiness --write
       - name: Live trading-day replay and production recovery drill
         env:
           TASK01_RECOVERY_ROOT: .
@@ -142,6 +144,7 @@ jobs:
             metadata/acceptance.json
             metadata/history_progress.json
             metadata/history_progress.md
+            metadata/backtest_readiness.json
             metadata/manifest/gaps.json
             metadata/recovery_drill.json
             metadata/trading_day_replay.json
