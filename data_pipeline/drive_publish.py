@@ -147,6 +147,28 @@ class Drive:
     def read(self, file_id):
         return self.request("GET", f"{API}/{file_id}", params={"alt": "media", "supportsAllDrives": "true"}).content
 
+    def download(self, file_id, path):
+        """Stream a Drive file to disk and return its byte count and SHA256."""
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_name(path.name + ".download-" + uuid.uuid4().hex[:8])
+        response = self.request("GET", f"{API}/{file_id}",
+                                params={"alt": "media", "supportsAllDrives": "true"}, stream=True)
+        sha, size = hashlib.sha256(), 0
+        try:
+            with temporary.open("wb") as output:
+                for block in response.iter_content(1024 * 1024):
+                    if not block:
+                        continue
+                    output.write(block)
+                    sha.update(block)
+                    size += len(block)
+            os.replace(temporary, path)
+        finally:
+            response.close()
+            temporary.unlink(missing_ok=True)
+        return size, sha.hexdigest()
+
     def move(self, file_id, source, target):
         self.request("PATCH", f"{API}/{file_id}", params={"addParents": target, "removeParents": source,
                                                           "supportsAllDrives": "true"}, json={})
