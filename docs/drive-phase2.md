@@ -2,7 +2,7 @@
 
 用户已完成 [Runner OAuth 授权](drive-auth.md)。`drive_publish.py` 提供手动快照发布：恢复最新 checkpoint 中最后一个已验收正式版本，按该版本的 `as_of` 重新执行 Critical 总验收，再上传。不会把未完成的暂存数据上传为正式数据，不发起新的 Tushare 下载，也不宣称全量历史完成。实际发布结果以 Actions 成功记录和 Drive `current.json` 为准。
 
-仓库 Actions → Task 01 data infrastructure → Run workflow：仅勾选 `publish_drive_snapshot`，保留 `verify_drive_auth` 为 false。`GDRIVE_OAUTH_JSON` 已在 Secrets 配置，不再需要交出凭据。两个选项同时勾选时只执行发布任务；未勾选仍执行原数据任务。每日定时任务暂不自动上传 Drive。
+仓库 Actions → Task 01 data infrastructure → Run workflow：三个选项都不勾选执行常规数据更新，验收后自动上传 Drive；仅勾选 publish_drive_snapshot 发布现有已验收快照；仅勾选 verify_drive_auth 检查授权；仅勾选 force_drive_restore 忽略 GitHub checkpoint，从 Drive 恢复后继续更新及发布。GDRIVE_OAUTH_JSON 已配置，无需再次提供凭据。第 19 次强制恢复、恢复后更新和自动发布已全部 SUCCESS；带新逻辑的定时持续运行及实际失败自动回退仍需观察，见验收记录。
 
 目标目录：
 
@@ -32,7 +32,7 @@ Task 02 先读取 `current.json`，验证 `validated: true`，再按 `manifest_f
 
 `production_manifest.json` 是本次实际正式文件的清单，包含路径、大小、SHA256 和 Drive ID；checkpoint 内原 `metadata/manifest` 仍是下载工作状态，可能包含失败暂存的 Gap/请求，不能代替正式文件清单。`critical_history_complete`、`full_requested_core_range_complete` 和 `extensions_history_complete` 保留真实状态，`false/null` 不影响已存数据通过质量验收后发布。
 
-当前每次发布上传完整快照，无去重、远程增量恢复或版本自动删除；可恢复下载继续依赖原 GitHub checkpoint。Drive 老版本、Runner 本地恢复状态和 GitHub Artifact 都不会被此任务主动删除。GitHub 托管 Runner 在任务结束后自动销毁；上传 Drive 不会自动释放 Artifact 占用。先完成实际首次发布验证，再决定自动上传和保留策略。
+当前每次发布/Drive 恢复均传输完整快照，无远程增量传输或版本自动删除。优先恢复 GitHub checkpoint，缺失或下载/解包失败时回退 Drive；强制 Drive 恢复已实测成功。Drive 老版本、Runner 恢复状态和 GitHub Artifact 不会被发布任务主动删除。GitHub 托管 Runner 在任务结束后自动销毁；上传 Drive 不会自动释放 Artifact 占用，保留策略尚未实现。
 
 凭据只从环境变量读取，不写入代码或 YAML。核心数据集随版本上传 README 和 Schema；来源、主键、字段、分区、频率、清洗规则和注意事项见 `docs/datasets/` 和 `metadata/schemas/`。
 

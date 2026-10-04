@@ -10,15 +10,17 @@ Task 01 只建设 **稳定、可恢复、可自动更新的 A 股研究数据底
 
 ## 当前状态
 
-Phase 1 和手动 Drive 快照发布实现已推送到 GitHub 私有仓库，77 项单元及离线集成测试通过；最新完整数据任务 [run #15](https://github.com/magangwwd/ashare-research-infra/actions/runs/37133945515) 于北京时间 2026-10-03 23:38—23:57 定时触发成功。Capability Audit、真实 Smoke、MAINTENANCE、Critical 总验收、真实交易日回放/恢复演练及正式 Artifact 发布通过。该次 GitHub 调度明显晚于配置的 20:00，不能承诺准点开始。详见[验收记录](docs/acceptance-record.md)。
+**最新核验：强制 Drive 恢复与自动发布已通过。** [run #19](https://github.com/magangwwd/ashare-research-infra/actions/runs/37182687552) 于北京时间 2026-10-04 14:24—15:07 全部 SUCCESS：主动跳过 GitHub checkpoint，实际从 Drive 恢复 482 个文件（109,617,924 字节），远程清单、逐文件 SHA256、本地 Critical 验收均通过；随后真实 Smoke、维护更新、总验收、交易日回放/恢复演练、自动 Drive 发布与新 checkpoint 全部成功。
 
-最近交易日 2026-09-30 的 daily、adj_factor、daily_basic 理论池为 5,559 只，覆盖率均为 100%。第 15 次维护批次完成 240 个历史请求、跳过 674 个已完成请求；三类已存交易日验收计数均为 65。按日历、基础证券池及提供者观察边界，对应应存 8,385 / 8,736 / 8,385 日，尚缺 8,320 / 8,671 / 8,320 日。daily 与 daily_basic 另有边界前 351 个交易日单独记录，不混入待下载数量。
+本轮完成 240 个历史请求、跳过 736 个完整请求。三类核心已存交易日均为 67，最新交易日 2026-09-30 覆盖率均为 100%；尚缺目标日 8,318 / 8,669 / 8,318。当前正式快照有 417 个 Parquet、503 个数据/元信息文件、117,020,735 字节，目录为 [Drive 当前正式版本](https://drive.google.com/drive/folders/1TCiNBRU0fqNqTluwEpO5TRxwgmGagVtY)。已独立下载本轮小型验收证据，详见 [验收记录](docs/acceptance-record.md)。历史全量仍未完成。
 
-前四份正式产物分别有 256/262/275/332 个 Parquet 文件，已独立核对大小/SHA256 并在本地总验收通过。当前正式快照有 398 个 Parquet 文件；第 18 次任务恢复检查点并重新执行 Critical 验收，将这些文件及元数据上传 Drive，再逐文件下载核对 SHA256。已独立从 Drive 回读正式指针、发布清单、验收和历史进度报告，校验 Manifest SHA256；抽样下载 2026-09 daily 分区，大小、SHA256、Schema、ZSTD 和主键检查通过。不是本地全库再次复验。STORED 只表示已有文件，扩展财务/行业全量覆盖仍未验收。
+Drive 发布已接入常规数据 job；恢复优先用 checkpoint，缺失或下载/解包失败时回退 Drive，force_drive_restore 用于强制演练。自动衔接和强制恢复已取得真实证据；新逻辑的定时持续运行、实际失败自动回退及版本保留策略仍待验证。以下第 15/18 次结果为早期验收记录，当前状态以上述第 19 次结果为准。
+
+此前真实数据链、定时维护及多次手动 Drive 发布均已通过，对应版本的本地复验及抽样证据见验收记录。当前大数据整包未在本地再次下载复验。
 
 **历史全量仍在分批推进，Task 01 最终验收尚未完成**。早期数据源覆盖不足、扩展接口权限不足均有显式 Gap；实际探测历史边界不代表之后所有日期已下载。还需持续观察真实交易日和定时运行，补齐可获得历史并验证修订；行业主体系仍待历史完整性和稳定性证据。正式数据 Artifact 保留 30 天，恢复检查点保留 90 天，Phase 1 不作为永久远程存储。
 
-首次真实 Drive 发布 [run #18](https://github.com/magangwwd/ashare-research-infra/actions/runs/37160747646) 已成功，快照 `as_of=2026-10-03`，480 个数据/元信息文件共 106,368,751 字节，另有发布清单和根目录 `current.json`。[正式快照目录](https://drive.google.com/drive/folders/1xuu9_7Kuc325Wz4IeMImgMnswd2xgxSP) 中可访问 `data/raw`、`data/clean`、Schema 和核心说明；成功后 staging 为空。`current.json` 保留历史未完成标记。手动操作见 [Drive 发布说明](docs/drive-phase2.md)；每日定时上传、远程恢复和版本保留策略暂未启用。Runner OAuth 已配置，不需再次提供凭据。
+首次真实 Drive 发布 [run #18](https://github.com/magangwwd/ashare-research-infra/actions/runs/37160747646) 已成功，快照 as_of=2026-10-03，480 个数据/元信息文件共 106,368,751 字节；[首次版本目录](https://drive.google.com/drive/folders/1xuu9_7Kuc325Wz4IeMImgMnswd2xgxSP) 保留，但已不是当前正式版本。正式读取以根目录 current.json 为入口，历史未完成标记保留。Runner OAuth 已配置，无需重新提供凭据。
 
 ## 范围
 
@@ -66,6 +68,7 @@ Smoke 结果绑定当前 Python 代码指纹；修改代码后必须重新执行
 | `run_task01.py` | Smoke、当天优先、分类回补、扩展更新、修复、历史预算和月度审计 |
 | `drive_auth.py` | 本机 OAuth 授权、Runner 只读验证和账户容量检查 |
 | `drive_publish.py` | 已验收正式快照、独立 staging、远程 SHA256、Manifest 和 Current Pointer |
+| `drive_restore.py` | Drive 正式快照下载校验、本地 Critical 复验、原子建立恢复版本 |
 
 普通参数在 `config/config.yaml`，敏感参数只读环境变量。
 
@@ -135,7 +138,7 @@ API 自动重试、限速、分页。分页重复或超过上限直接失败，�
 
 唯一 Workflow：`.github/workflows/task01.yml`。`schedule` 为 `0 12 * * *`，即北京时间约 20:00；GitHub 可能延迟启动。`workflow_dispatch` 默认运行数据任务，另可勾选只验证 Drive 授权或发布已验收 Drive 快照。
 
-Phase 1 数据任务在仓库 **Settings → Secrets and variables → Actions** 配置 `TUSHARE_TOKEN`。本机 OAuth 工具另写入 `GDRIVE_OAUTH_JSON`，用于手动 Drive 授权检查及快照发布；默认数据任务无需它。Workflow 使用 GitHub 自动提供的 `github.token` 读取同仓库 Artifact，它不是额外的业务凭据。
+数据任务在仓库 **Settings → Secrets and variables → Actions** 配置 TUSHARE_TOKEN 和 GDRIVE_OAUTH_JSON，分别用于 Tushare 下载、Drive 恢复/发布；二者均已配置。Workflow 使用 GitHub 自动提供的 github.token 读取同仓库 Artifact，它不是额外的业务凭据。
 
 每次运行：安装 → Unit Tests → 恢复最新 checkpoint → 真实 Smoke → 自动模式 → 正式版本验收 → 真实交易日回放/Parquet 恢复演练 → 发布 validated Artifact。回放用最新已结束的真实交易日，在隔离目录重新向 Tushare 请求 Critical 数据并验收 DAILY_UPDATE 分支，记录 `metadata/trading_day_replay.json`；它不等于当日定时运行证据。恢复演练在隔离暂存目录中故意降低行情覆盖率、模拟指针切换中断，再修复续传；检查旧正式文件校验和不变，记录 `metadata/recovery_drill.json`，不修改源正式数据。任何 Critical/Smoke 验收失败，后续发布步骤不会运行，Workflow 保持 FAILED。
 
@@ -154,7 +157,7 @@ Phase 1 数据任务在仓库 **Settings → Secrets and variables → Actions**
 1. Token 和真实 Smoke/Capability Audit 已验证；继续复核接口字段、分页、权限和历史边界。
 2. 运行每日与非交易日模式，确认 Actions 的恢复、故障保留和正式 Artifact。
 3. 分批完成可获取的历史范围，消化 Critical Gap，按真实数据检查财务/行业历史，确定行业主体系。
-4. 验证手动 Drive 快照发布；之后再安排自动发布、远程恢复及版本保留策略，保持上传失败时旧 Production 可读。
+4. 继续观察自动 Drive 发布及 checkpoint 优先/Drive 回退的恢复链；强制恢复已通过，再验证实际失败自动回退、连续定时运行和版本保留策略。
 5. Task 02 只读 `data/clean/` 或经验证的正式 Artifact，从 `data/curated/` 与 `factors/` 开始，实现严格股票池、每日状态、上市天数、动态复权及第一批因子。
 
 这些接续工作必须基于真实验收记录，不得把离线测试或已编写代码标记成全量数据已验收。

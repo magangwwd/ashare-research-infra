@@ -1,5 +1,19 @@
 # Task 01 验收记录
 
+## 2026-10-04（北京时间）：强制 Drive 恢复及恢复后自动发布成功
+
+[run #19 / 37182687552](https://github.com/magangwwd/ashare-research-infra/actions/runs/37182687552) 使用代码 `433799f03785543e6b91427f47431fba6715a9c3`，手动参数 force_drive_restore=true，其他两个选项为 false。任务主动忽略 GitHub checkpoint，进入真实 Drive 恢复路径。数据 job 北京时间 14:24:02—15:07:06，全部步骤 SUCCESS，整次 Workflow SUCCESS。
+
+已下载并核对验收 Artifact `11296216470`。metadata/drive_restore.json 与 Actions 的 Drive recovery notice 一致：passed=true、source=google_drive_current；恢复版本 `2026-10-04T000708.613594_0000-6a756985`，snapshot_as_of=2026-10-04；共 482 个文件、109,617,924 字节。版本、目录/Manifest ID、计数和总字节数均与演练开始前独立读取的正式指针一致，源 Manifest 独立下载 SHA256 与指针相符。remote_inventory_verified、download_sha256_verified、local_critical_validation_passed 均为 true。恢复步骤北京时间 14:24:59—14:29:38，随后才进入 Smoke 和更新。
+
+恢复后真实 Tushare Smoke、MAINTENANCE、Critical 总验收、交易日回放、真实 Parquet 恢复演练和 Artifact 发布全部通过。历史完成 240 个请求、跳过 736 个完整请求，继续使用已有数据和请求状态。daily/adj_factor/daily_basic 总行数为 233,628 / 233,789 / 233,628，均有 67 个已存交易日通过逐日验收；最新交易日 2026-09-30 的理论池仍为 5,559、覆盖率均为 100%。恢复演练检查 417 个源 Parquet，坏覆盖率阻断、旧文件不变、指针故障保护及修补续传均通过。
+
+常规 task01 job 的自动 Drive 发布也成功：passed=true、validated=true，版本 `2026-10-04T064504.411707_0000-c940805d`，[正式目录](https://drive.google.com/drive/folders/1TCiNBRU0fqNqTluwEpO5TRxwgmGagVtY)，503 个数据/元信息文件、117,020,735 字节。previous_version 指向本次恢复源，previous_version_recovery_verified=true。发布器验证远程清单、大小和全部文件 SHA256 后提交并回读正式指针。Manifest ID `18GJ3tZVpm4NUPBdL9PwyqO5yqd-4R2CL`，SHA256 `e811734aea0296e2d805b72f56ffb01b544852d74fdb24c2ed174910aca218c3`。新发布结果依据 Runner 成功步骤、发布报告和安全 notice 核对，未额外把新 Drive 指针/整库下载到本地复验。
+
+正式 Artifact `11296251419`、验收 Artifact `11296216470`、Drive 发布证据 `11296876111`、恢复检查点 `11297055686` 均已保存，步骤全部 SUCCESS；大数据/检查点整包未在本地下载复验。
+
+结论：真实 Runner 强制 Drive 恢复及恢复→更新→自动 Drive 发布→保存检查点的整条链已验证。本次为手动触发常规数据 job；带新发布逻辑的定时运行、连续交易日和实际失败自动回退仍需观察。历史全量尚未完成，三类核心尚缺 8,318 / 8,669 / 8,318 个目标交易日，扩展历史仍未全面验收；本次不宣告 Task 01 最终完成。
+
 ## 2026-10-04（北京时间）：Drive→Runner 灾难恢复链代码已接入，待真实 Runner 强制恢复验收
 
 已新增 `data_pipeline/drive_restore.py` 并接入常规 `task01` Workflow。恢复策略为 GitHub checkpoint 优先；当 checkpoint 不存在或下载/解包失败时，自动回退到 Google Drive 当前正式版本。另新增手动参数 `force_drive_restore`，可在真实 Runner 中故意忽略 GitHub checkpoint，用于灾难恢复演练。
