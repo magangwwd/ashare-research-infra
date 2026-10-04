@@ -119,8 +119,6 @@ jobs:
         run: python -m data_pipeline.run_task01 --mode auto
       - name: Production acceptance
         run: python -m data_pipeline.validate
-      - name: Generate backtest readiness
-        run: python -m research_engine.readiness --write
       - name: Live trading-day replay and production recovery drill
         env:
           TASK01_RECOVERY_ROOT: .
@@ -144,7 +142,6 @@ jobs:
             metadata/acceptance.json
             metadata/history_progress.json
             metadata/history_progress.md
-            metadata/backtest_readiness.json
             metadata/manifest/gaps.json
             metadata/recovery_drill.json
             metadata/trading_day_replay.json
@@ -191,6 +188,19 @@ jobs:
           retention-days: 90
           if-no-files-found: ignore
           compression-level: 0
+      - name: Generate Task 02 readiness (non-blocking)
+        id: task02_readiness
+        if: success()
+        continue-on-error: true
+        run: python -m research_engine.readiness --write
+      - name: Publish Task 02 readiness
+        if: steps.task02_readiness.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: task02-backtest-readiness
+          path: metadata/backtest_readiness.json
+          retention-days: 30
+          if-no-files-found: error
   drive-publish:
     if: github.event_name == 'workflow_dispatch' && inputs.publish_drive_snapshot
     runs-on: ubuntu-latest
