@@ -1,5 +1,23 @@
 # Task 01 验收记录
 
+
+## 2026-10-04（北京时间）：第二次真实 Drive 发布与版本切换验收通过
+
+为验证首次发布之后的真实替换路径，重新执行第 15 次数据任务的 checkpoint 续传（run `37133945515` attempt 2）。恢复最新状态后，Tushare Smoke、历史补齐、Production acceptance、真实交易日回放/恢复演练、正式 Artifact 和 checkpoint 全部 SUCCESS；新 checkpoint Artifact 为 `11288019885`。本轮正式验收 `as_of=2026-10-04`，Critical 总验收仍通过。
+
+随后重新执行 Drive 发布 run `37160747646` attempt 2。发布期间直接从 Google Drive 检查到新版本先位于 staging，而根目录 `current.json` 仍保持首次正式版本不变；上传完整后完成远程路径、大小和逐文件 SHA256 校验，才移动到 versions 并最后切换指针。发布 job 和发布证据 Artifact `11289650328` 全部 SUCCESS。
+
+- 新正式版本：`2026-10-04T000708.613594_0000-6a756985`，版本目录 ID `1O6t2EE1V1rmRCQYgzdbpiD-TosgHfsN0`。
+- 新 `current.json`：`validated=true`、`snapshot_as_of=2026-10-04`、`file_count=482`、`total_bytes=109,617,924`。
+- 新 Manifest ID `1iwWFc93o3TE_klP6B9KT6VGCXM7cgegF`；下载后的 SHA256 为 `ac75ae922160723e5436785d823886298c4f018e584afebaadfdd94249f3948c`，与 `current.json.manifest_sha256` 完全一致；Manifest 的版本、validated、文件数和总字节数也与指针一致。
+- `current.json.previous_version` 正确指向首次版本 `2026-10-03T230917.199630_0000-e9d5288a`。
+- Drive `versions/` 独立列出两个正式版本；首次版本目录 `1xuu9_7Kuc325Wz4IeMImgMnswd2xgxSP` 及旧 `production_manifest.json` 仍存在且可读取。第二次发布结束后 `staging/` 为空。
+- 因此“新指针切换、新版本可读、旧版本仍可恢复”这一里程碑已有真实 Drive 证据，不再只依赖离线故障测试。
+- 当前历史仍未完成：`critical_history_complete=false`、`full_requested_core_range_complete=false`、`extensions_history_complete=null`。第二次发布成功不代表 Task 01 总验收完成。
+
+在上述真实替换验证后，commit `a208de341b587bab03b194389c752e423763d62e` 已把 Drive 发布接入常规 `task01` job：本地验收和验收 Artifact 成功后自动执行 `data_pipeline.drive_publish`；Drive 发布失败会使数据 job 失败，但后续 `always()` recovery checkpoint 仍会保存。手动 `publish_drive_snapshot` 入口继续保留作重发/恢复。该自动衔接代码已提交，仍需下一次正常数据任务提供真实运行证据后，才能把“每日自动上传”标为运行验收完成。
+
+
 ## 2026-10-04（北京时间）：首次真实 Drive 快照发布成功
 
 用户要求上传当前数据后，新增手动 `publish_drive_snapshot` 入口；默认定时任务继续原数据流程。[run #18 / 37160747646](https://github.com/magangwwd/ashare-research-infra/actions/runs/37160747646) 对应代码 `5614132964eadbbc18dc31a9ac1f2ee25ff1b7ec`，北京时间 07:07:44—07:25:53，全部发布步骤 success，普通数据任务和授权检查任务 skipped。
