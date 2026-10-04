@@ -90,10 +90,20 @@ jobs:
           PY
           )
           if [ -n "$artifact_id" ]; then
-            gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > /tmp/task01-checkpoint.zip
-            unzip -p /tmp/task01-checkpoint.zip task01-state.tar.gz > /tmp/task01-state.tar.gz
-            tar -xzf /tmp/task01-state.tar.gz
-            echo "checkpoint_found=true" >> "$GITHUB_OUTPUT"
+            rm -rf /tmp/task01-checkpoint-restore
+            mkdir -p /tmp/task01-checkpoint-restore
+            if gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > /tmp/task01-checkpoint.zip \
+              && unzip -p /tmp/task01-checkpoint.zip task01-state.tar.gz > /tmp/task01-state.tar.gz \
+              && tar -xzf /tmp/task01-state.tar.gz -C /tmp/task01-checkpoint-restore; then
+              rm -rf data metadata
+              [ ! -d /tmp/task01-checkpoint-restore/data ] || cp -a /tmp/task01-checkpoint-restore/data .
+              [ ! -d /tmp/task01-checkpoint-restore/metadata ] || cp -a /tmp/task01-checkpoint-restore/metadata .
+              echo "checkpoint_found=true" >> "$GITHUB_OUTPUT"
+            else
+              rm -rf data metadata /tmp/task01-checkpoint-restore
+              echo "checkpoint_found=false" >> "$GITHUB_OUTPUT"
+              echo "WARNING checkpoint unavailable or corrupt; falling back to Google Drive production"
+            fi
           else
             echo "checkpoint_found=false" >> "$GITHUB_OUTPUT"
           fi
