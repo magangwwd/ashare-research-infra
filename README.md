@@ -1,8 +1,10 @@
 # ashare-research-infra
 
-Task 01 只建设 **稳定、可恢复、可自动更新的 A 股研究数据底座**：
+Task 01 建设 **稳定、可恢复、可自动更新的 A 股研究数据底座**：
 
 `Tushare → Raw → Clean → Parquet → Validate → GitHub Artifact / Google Drive`
+
+Task 02 现已进入**工程阶段**：独立的 `research_engine/` 只读 Task 01 已验收的 `data/current/clean`，用于构造历史股票池、动态复权、工程因子、次日开盘执行、成本/NAV、Walk-forward 和 Backtest Readiness。当前短历史只用于验证回测机器正确性，不用于宣称策略或因子有效。详见 [Task 02 工程说明](docs/task02-engineering.md)。
 
 冻结需求、实现对应关系和未完成的外部验收见 [docs/task01-spec.md](docs/task01-spec.md)。后续 Codex 请先阅读本文件，再修改代码。可靠性、恢复能力和数据完整性优先；保持少量清晰模块。
 
@@ -29,7 +31,7 @@ Drive 发布已接入常规数据 job；恢复优先用 checkpoint，缺失或�
 - Optional 白名单：融资融券、大宗交易、龙虎榜、股东人数、股东增减持、机构调研、限售解禁。权限和接口可用才下载，失败不阻止核心发布。
 - Candidate：质押、回购等仅登记，不下载。
 
-Task 01 不实现因子、技术指标、选股、主升标签、ML/Ranking、回测、Walk-forward、交易、15 分钟数据、新闻/NLP、AI Agent、DuckDB、完整 Lineage、复杂日志、严格 Point-in-Time 或高级质量平台。不展开每日 ST、停牌和指数成员状态，不计算上市天数、QFQ/HFQ 或 Market Regime。不建立 `curated/factors/models/backtest` 空目录。
+Task 01 自身仍不实现因子、技术指标、选股、主升标签、ML/Ranking、回测、Walk-forward、交易、15 分钟数据、新闻/NLP、AI Agent、DuckDB、完整 Lineage、复杂日志、严格 Point-in-Time 或高级质量平台。不展开每日 ST、停牌和指数成员状态，不计算上市天数、QFQ/HFQ 或 Market Regime。Task 02 的工程代码独立放在 `research_engine/`，不改变 Task 01 的数据发布和验收边界。
 
 ## 安装与入口
 
@@ -69,6 +71,7 @@ Smoke 结果绑定当前 Python 代码指纹；修改代码后必须重新执行
 | `drive_auth.py` | 本机 OAuth 授权、Runner 只读验证和账户容量检查 |
 | `drive_publish.py` | 已验收正式快照、独立 staging、远程 SHA256、Manifest 和 Current Pointer |
 | `drive_restore.py` | Drive 正式快照下载校验、本地 Critical 复验、原子建立恢复版本 |
+| `research_engine/` | Task 02 工程回测：正式 Clean 读取、历史股票池、复权、因子、信号、T+1 执行、指标、Walk-forward、Readiness |
 
 普通参数在 `config/config.yaml`，敏感参数只读环境变量。
 
