@@ -6,6 +6,7 @@ import copy
 import hashlib
 import os
 import tempfile
+from itertools import islice
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -36,6 +37,12 @@ def load_config(path: Path) -> dict:
         value = config["download"].get(name, config["download"]["history_requests_per_run"])
         if not isinstance(value, int) or isinstance(value, bool) or value < 0:
             raise ValueError(f"download.{name} must be a nonnegative integer")
+    fraction = config["download"].get("core_history_budget_fraction", 0.0)
+    if not isinstance(fraction, (int, float)) or isinstance(fraction, bool) or not 0 <= fraction <= 1:
+        raise ValueError("download.core_history_budget_fraction must be between 0 and 1")
+    target = config["download"].get("core_history_target_sessions", 0)
+    if not isinstance(target, int) or isinstance(target, bool) or target < 0:
+        raise ValueError("download.core_history_target_sessions must be a nonnegative integer")
     return config
 
 
@@ -453,20 +460,8 @@ class Pipeline:
             else:
                 self.get_save(name, params, critical=DATASETS[name].tier == "critical")
 
-    def history(self) -> None:
-        budget_key = "maintenance_history_requests_per_run" if self.mode == "MAINTENANCE" else "history_requests_per_run"
-        budget = self.config["download"].get(budget_key, self.config["download"]["history_requests_per_run"])
-        if budget > 0:
-            self.discover_history_ranges()
-        names = [n for n, s in DATASETS.items() if self.available(n) and s.strategy not in ("snapshot", "calendar", "derived", "index_metadata", "industry_metadata")
-                 and (s.tier == "critical" or (s.tier == "required" and self.config["datasets"]["required"])
-                      or (s.tier == "optional" and self.config["datasets"]["optional"] and n in self.config["optional_whitelist"]))]
-        names = dependency_order(names)
-        state_path = self.store.metadata / "history.json"
-        state = read_json(state_path)
-        cursor = state.get("cursor", 0) % max(len(names), 1)
-        names = names[cursor:] + names[:cursor]
-        streams = [self.history_requests(n) for n in names]
+    def _run_history_streams(self, streams, budget: int) -> tuple[int, int, bool]:
+        """Run bounded history requests; completion is proved by existing files/coverage."""
         completed, fetched = 0, 0
         exhausted = True
         for name, params in round_robin(streams):
@@ -481,10 +476,72 @@ class Pipeline:
             else:
                 self.get_save(name, params)
             fetched += 1
-        atomic_json(state_path, {"cursor": cursor + fetched, "history_start": self.config["download"]["history_start"],
-                                 "as_of": str(self.as_of), "fetched_this_run": fetched, "existing_complete_requests": completed,
-                                 "mode": self.mode, "request_budget": budget,
-                                 "all_enabled_requests_examined": exhausted, "updated_at": utcnow()})
+        return completed, fetched, exhausted
+
+    def history(self) -> None:
+        budget_key = "maintenance_history_requests_per_run" if self.mode == "MAINTENANCE" else "history_requests_per_run"
+        budget = self.config["download"].get(budget_key, self.config["download"]["history_requests_per_run"])
+        if budget > 0:
+            self.discover_history_ranges()
+        names = [n for n, s in DATASETS.items() if self.available(n) and s.strategy not in ("snapshot", "calendar", "derived", "index_metadata", "industry_metadata")
+                 and (s.tier == "critical" or (s.tier == "required" and self.config["datasets"]["required"])
+                      or (s.tier == "optional" and self.config["datasets"]["optional"] and n in self.config["optional_whitelist"]))]
+        names = dependency_order(names)
+        state_path = self.store.metadata / "history.json"
+        state = read_json(state_path)
+
+        core_names = [n for n in ("daily", "adj_factor", "daily_basic") if n in names]
+        other_names = [n for n in names if n not in core_names]
+        target = self.config["download"].get("core_history_target_sessions", 0)
+        fraction = float(self.config["download"].get("core_history_budget_fraction", 0.0))
+        core_budget = min(budget, int(budget * fraction)) if target and core_names else 0
+
+        core_completed = core_fetched = 0
+        core_exhausted = True
+        if core_budget:
+            # Only the newest target sessions are accelerated. Existing complete
+            # sessions are skipped by complete(); every new session still passes
+            # the same per-dataset coverage gate before it is stored.
+            core_streams = [islice(self.history_requests(name), target) for name in core_names]
+            core_completed, core_fetched, core_exhausted = self._run_history_streams(core_streams, core_budget)
+
+        # While the target window is incomplete, reserve the remaining budget for
+        # non-core history so financial/industry/index data can never be starved.
+        # Once the target window is complete, return to the original all-dataset
+        # round-robin and use any unused fast-lane budget there too.
+        remaining = budget - core_fetched
+        phase2_names = names if core_exhausted else other_names
+        cursor_base = state.get("other_cursor", state.get("cursor", 0))
+        cursor = cursor_base % max(len(phase2_names), 1)
+        rotated = phase2_names[cursor:] + phase2_names[:cursor]
+        other_completed = other_fetched = 0
+        other_exhausted = True
+        if remaining and rotated:
+            other_completed, other_fetched, other_exhausted = self._run_history_streams(
+                [self.history_requests(n) for n in rotated], remaining)
+
+        fetched = core_fetched + other_fetched
+        completed = core_completed + other_completed
+        exhausted = core_exhausted and other_exhausted
+        next_cursor = cursor + other_fetched
+        atomic_json(state_path, {
+            "cursor": next_cursor,
+            "other_cursor": next_cursor,
+            "history_start": self.config["download"]["history_start"],
+            "as_of": str(self.as_of),
+            "fetched_this_run": fetched,
+            "existing_complete_requests": completed,
+            "mode": self.mode,
+            "request_budget": budget,
+            "core_history_target_sessions": target,
+            "core_history_budget_fraction": fraction,
+            "core_fast_lane_active": bool(core_budget and not core_exhausted),
+            "core_request_budget": core_budget,
+            "core_fetched_this_run": core_fetched,
+            "other_fetched_this_run": other_fetched,
+            "all_enabled_requests_examined": exhausted,
+            "updated_at": utcnow(),
+        })
 
     def monthly_audit(self) -> None:
         path = self.store.metadata / "audit.json"
