@@ -100,6 +100,100 @@ def test_history_resume_does_not_redownload_complete_dates(tmp_path, config, cli
     assert read_json(tmp_path / "metadata/manifest/history.json")["fetched_this_run"] == 3
 
 
+
+def test_core_history_fast_lane_reserves_budget_without_starving_other_history(tmp_path, config, client, monkeypatch):
+    from datetime import date
+
+    config["datasets"].update(required=True, optional=False)
+    config["download"].update(
+        history_requests_per_run=8,
+        maintenance_history_requests_per_run=8,
+        core_history_target_sessions=100,
+        core_history_budget_fraction=0.75,
+    )
+    pipeline = Pipeline(tmp_path, config, client, date(2026, 10, 4))
+    pipeline.mode = "MAINTENANCE"
+    pipeline.capabilities = {"interfaces": {
+        "daily": {"status": "AVAILABLE"},
+        "adj_factor": {"status": "AVAILABLE"},
+        "daily_basic": {"status": "AVAILABLE"},
+        "income": {"status": "AVAILABLE"},
+    }}
+    monkeypatch.setattr(pipeline, "discover_history_ranges", lambda: None)
+    monkeypatch.setattr(pipeline, "complete", lambda name, params: False)
+
+    def requests(name):
+        if name in ("daily", "adj_factor", "daily_basic"):
+            return iter((name, {"trade_date": f"202609{30-i:02d}"}) for i in range(20))
+        return iter((name, {"ts_code": f"{600000+i:06d}.SH", "start_date": "20260101", "end_date": "20261231"})
+                    for i in range(20))
+
+    fetched = []
+    monkeypatch.setattr(pipeline, "history_requests", requests)
+    monkeypatch.setattr(pipeline, "daily", lambda name, day: fetched.append(("core", name, str(day))))
+    monkeypatch.setattr(pipeline, "get_save", lambda name, params, critical=False: fetched.append(("other", name, params)))
+
+    pipeline.history()
+    state = read_json(tmp_path / "metadata/manifest/history.json")
+
+    assert state["request_budget"] == 8
+    assert state["core_request_budget"] == 6
+    assert state["core_fetched_this_run"] == 6
+    assert state["other_fetched_this_run"] == 2
+    assert state["fetched_this_run"] == 8
+    assert state["core_fast_lane_active"] is True
+    assert sum(item[0] == "core" for item in fetched) == 6
+    assert sum(item[0] == "other" for item in fetched) == 2
+
+
+def test_core_fast_lane_returns_full_budget_after_target_window_is_complete(tmp_path, config, client, monkeypatch):
+    from datetime import date
+
+    config["datasets"].update(required=True, optional=False)
+    config["download"].update(
+        history_requests_per_run=8,
+        maintenance_history_requests_per_run=8,
+        core_history_target_sessions=2,
+        core_history_budget_fraction=0.75,
+    )
+    pipeline = Pipeline(tmp_path, config, client, date(2026, 10, 4))
+    pipeline.mode = "MAINTENANCE"
+    pipeline.capabilities = {"interfaces": {
+        "daily": {"status": "AVAILABLE"},
+        "adj_factor": {"status": "AVAILABLE"},
+        "daily_basic": {"status": "AVAILABLE"},
+        "income": {"status": "AVAILABLE"},
+    }}
+    monkeypatch.setattr(pipeline, "discover_history_ranges", lambda: None)
+
+    def requests(name):
+        if name in ("daily", "adj_factor", "daily_basic"):
+            return iter([
+                (name, {"trade_date": "20260930"}),
+                (name, {"trade_date": "20260929"}),
+            ])
+        return iter((name, {"ts_code": f"{600000+i:06d}.SH", "start_date": "20260101", "end_date": "20261231"})
+                    for i in range(20))
+
+    monkeypatch.setattr(pipeline, "history_requests", requests)
+    monkeypatch.setattr(
+        pipeline,
+        "complete",
+        lambda name, params: name in ("daily", "adj_factor", "daily_basic"),
+    )
+    fetched = []
+    monkeypatch.setattr(pipeline, "daily", lambda name, day: fetched.append(("core", name, str(day))))
+    monkeypatch.setattr(pipeline, "get_save", lambda name, params, critical=False: fetched.append(("other", name, params)))
+
+    pipeline.history()
+    state = read_json(tmp_path / "metadata/manifest/history.json")
+
+    assert state["core_fetched_this_run"] == 0
+    assert state["other_fetched_this_run"] == 8
+    assert state["fetched_this_run"] == 8
+    assert state["core_fast_lane_active"] is False
+    assert all(item[0] == "other" for item in fetched)
+
 def test_maintenance_and_smoke_are_real_complete_paths(tmp_path, config, client, as_of):
     from datetime import timedelta
     report = Pipeline(tmp_path, config, client, as_of + timedelta(days=1)).run(sample=True)
