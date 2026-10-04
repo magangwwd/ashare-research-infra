@@ -123,6 +123,19 @@ jobs:
             data/current/acceptance.json
           retention-days: 30
           if-no-files-found: error
+      - name: Publish accepted snapshot to Drive
+        id: drive_publish
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        run: python -m data_pipeline.drive_publish
+      - name: Publish Drive publication evidence
+        if: always() && steps.drive_publish.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: task01-drive-publication-report
+          path: metadata/drive_publish.json
+          retention-days: 30
+          if-no-files-found: error
       - name: Package recovery state, including unfinished work
         if: always() && steps.restore.outcome == 'success'
         shell: bash
