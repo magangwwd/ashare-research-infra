@@ -1,5 +1,15 @@
 # Task 01 验收记录
 
+## 2026-10-04（北京时间）：Drive→Runner 灾难恢复链代码已接入，待真实 Runner 强制恢复验收
+
+已新增 `data_pipeline/drive_restore.py` 并接入常规 `task01` Workflow。恢复策略为 GitHub checkpoint 优先；当 checkpoint 不存在或下载/解包失败时，自动回退到 Google Drive 当前正式版本。另新增手动参数 `force_drive_restore`，可在真实 Runner 中故意忽略 GitHub checkpoint，用于灾难恢复演练。
+
+恢复过程不会直接覆盖本地生产：先读取唯一 `current.json`，验证其 accepted/validated 状态、版本目录、Manifest ID、Manifest SHA256、文件数和总字节数；再校验正式版本目录实际清单与 Manifest 一致；之后逐文件下载到隔离临时目录，逐文件验证大小与 SHA256。Raw/Clean、acceptance 和必要 metadata 恢复完成后，再用现有 Critical 验收器重新验证恢复快照。只有所有校验通过，才原子建立本地 `data/current` 指针。任何校验失败都不得切换本地 current；如果本地已有 `data/current`，Drive fallback 会拒绝覆盖。
+
+新增单元测试覆盖：成功恢复并切换、下载内容损坏阻断、Manifest checksum 错误阻断、路径穿越/白名单外路径拒绝、已有本地 current 时拒绝覆盖。Workflow 的 checkpoint 解包也改为先在临时目录恢复，Artifact 损坏时清理局部状态后再进入 Drive fallback，避免半恢复状态污染。
+
+当前状态：**恢复链代码完成，但尚未取得一次真实 GitHub Runner 的 `force_drive_restore=true` 成功证据。** 在该真实演练通过前，不能把“Drive 灾难恢复”标为最终验收完成。
+
 
 ## 2026-10-04（北京时间）：第二次真实 Drive 发布与版本切换验收通过
 
