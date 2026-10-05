@@ -237,7 +237,7 @@ class Store:
     def retain_raw(self, reference: datetime) -> None:
         assert self.stage is not None
         cutoff = pd.Timestamp(reference, tz="UTC") - pd.Timedelta(days=self.config["storage"]["market_raw_retention_days"])
-        for dataset in ("daily", "daily_basic", "adj_factor"):
+        for dataset in ("daily", "daily_basic", "adj_factor", "stk_mins"):
             for year_path in (self.stage / "raw" / dataset).glob("year=*"):
                 for month_path in year_path.glob("month=*"):
                     files = sorted(month_path.glob("*.parquet"))
