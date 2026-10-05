@@ -198,12 +198,13 @@ class TushareClient:
                 params = {"ts_code": "000001.SZ", "is_new": "Y"}
             try:
                 if name == "stk_mins":
+                    minute_day = datetime.strptime(probe_day, "%Y%m%d").date().isoformat()
                     frame = self.fetch(
                         name,
                         ts_code="000001.SZ",
                         freq="15min",
-                        start_date=f"{probe_day} 09:00:00",
-                        end_date=f"{probe_day} 16:00:00",
+                        start_date=f"{minute_day} 09:00:00",
+                        end_date=f"{minute_day} 16:00:00",
                     )
                 else:
                     frame = self.query(name, **params, limit=10, offset=0)
