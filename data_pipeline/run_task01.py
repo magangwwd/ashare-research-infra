@@ -243,6 +243,215 @@ class Pipeline:
             self.store.receipt(dataset, params, len(raw), raw)
         self.checked_sessions.add(day)
 
+    def intraday_state(self) -> dict:
+        return read_json(self.store.metadata / "intraday.json")
+
+    def intraday_active(self) -> bool:
+        return bool(self.intraday_state().get("activated"))
+
+    def minute_params(self, code: str, day: date) -> dict:
+        start, end = minute_window(day)
+        return {"ts_code": code, "freq": self.config["intraday"]["freq"],
+                "start_date": start, "end_date": end}
+
+    def fetch_minutes(self, params: dict, expected_day: date | None = None) -> int:
+        try:
+            raw = self.client.fetch("stk_mins", **params)
+            if raw.empty:
+                self.store.receipt("stk_mins", params, 0)
+                return 0
+            validate_bars(raw, expected_day=expected_day)
+            self.store.save("stk_mins", raw)
+            self.store.receipt("stk_mins", params, len(raw), raw)
+            return len(raw)
+        except Exception as exc:
+            self.store.gap("stk_mins", params, self.client.redact(exc))
+            raise
+
+    def validate_derived_daily_sample(self, day: date, derived: pd.DataFrame) -> dict:
+        sample_size = self.config["intraday"].get("daily_validation_sample", 0)
+        report = {"trade_date": str(day), "sample_size": 0, "matched": 0,
+                  "mismatched": 0, "mismatched_ts_codes": [], "checked_at": utcnow()}
+        if sample_size <= 0 or derived.empty:
+            atomic_json(self.store.metadata / "intraday_daily_validation.json", report)
+            return report
+        codes = sorted(derived["ts_code"].dropna().unique().tolist())[:sample_size]
+        try:
+            reference = self.client.fetch("daily", ts_code=",".join(codes), trade_date=day.strftime("%Y%m%d"))
+            if reference.empty:
+                report["reason"] = "daily validation sample returned no rows"
+            else:
+                columns = ["ts_code", "open", "high", "low", "close"]
+                merged = derived[columns].merge(reference[columns], on="ts_code", suffixes=("_mins", "_daily"))
+                mismatched = []
+                for row in merged.itertuples():
+                    ok = all(abs(float(getattr(row, f"{name}_mins")) - float(getattr(row, f"{name}_daily"))) <= 1e-6
+                             for name in ("open", "high", "low", "close"))
+                    if not ok:
+                        mismatched.append(row.ts_code)
+                report.update(sample_size=len(merged), matched=len(merged) - len(mismatched),
+                              mismatched=len(mismatched), mismatched_ts_codes=mismatched)
+        except Exception as exc:
+            # Tushare daily is a QA reference after activation, not the primary
+            # price source; inability to sample it must not silently change source.
+            report["reason"] = self.client.redact(exc)
+        atomic_json(self.store.metadata / "intraday_daily_validation.json", report)
+        return report
+
+    def derive_daily_from_minutes(self, day: date) -> dict:
+        minute_clean = read_session(self.stage, "stk_mins", day)
+        if day not in self.suspension_probed and self.available("suspend_d"):
+            self.get_save("suspend_d", {"trade_date": day.strftime("%Y%m%d")})
+            self.suspension_probed.add(day)
+        suspended = suspension_codes(self.stage, day)
+        expected = clean.expected_pool(self.master, day, suspended, self.open_exchanges(day))
+        if not expected:
+            raise ValidationError(f"stk_mins: theoretical security pool is empty for {day}")
+        covered = covered_codes(minute_clean, day) & expected
+        coverage = len(covered) / len(expected)
+        threshold = self.config["intraday"]["min_security_coverage"]
+        if coverage < threshold:
+            raise ValidationError(
+                f"stk_mins {day}: security coverage={coverage:.2%}, expected={len(expected)}, covered={len(covered)}")
+        raw_daily = aggregate_daily(minute_clean, day)
+        raw_daily = raw_daily.loc[raw_daily["ts_code"].isin(expected)].reset_index(drop=True)
+        self.store.save("daily", raw_daily, replace_dates={day})
+        self.coverage_cache.pop(("daily", day.year, day.month), None)
+        normalized = clean.normalize("daily", raw_daily)
+        details = validate_session(
+            "daily", normalized, self.master, day, self.config,
+            suspended, self.open_exchanges(day))
+        self.store.receipt("daily", {"trade_date": day.strftime("%Y%m%d")}, len(raw_daily), raw_daily)
+        qa = self.validate_derived_daily_sample(day, raw_daily)
+        details.update(source="stk_mins_15min", qa_sample=qa)
+        return details
+
+    def intraday_recent(self) -> None:
+        settings = self.config.get("intraday", {})
+        if not settings.get("enabled"):
+            return
+        state_path = self.store.metadata / "intraday.json"
+        previous = read_json(state_path)
+        if not self.available("stk_mins"):
+            status = {**previous, "enabled": True, "available": False,
+                      "updated_at": utcnow(), "reason": "stk_mins capability unavailable"}
+            atomic_json(state_path, status)
+            if previous.get("activated"):
+                raise ValidationError("stk_mins became unavailable after daily-from-minutes activation")
+            return
+
+        day = self.sessions[-1]
+        if day not in self.suspension_probed and self.available("suspend_d"):
+            self.get_save("suspend_d", {"trade_date": day.strftime("%Y%m%d")})
+            self.suspension_probed.add(day)
+        expected = sorted(clean.expected_pool(
+            self.master, day, suspension_codes(self.stage, day), self.open_exchanges(day)))
+        budget = settings["recent_requests_per_run"]
+        fetched = bars = 0
+        errors = []
+        for code in expected:
+            params = self.minute_params(code, day)
+            if self.complete("stk_mins", params):
+                continue
+            if fetched >= budget:
+                break
+            try:
+                bars += self.fetch_minutes(params, expected_day=day)
+            except Exception as exc:
+                errors.append(self.client.redact(exc))
+            fetched += 1
+
+        minute_clean = read_session(self.stage, "stk_mins", day)
+        covered = covered_codes(minute_clean, day) & set(expected)
+        coverage = len(covered) / len(expected) if expected else 0.0
+        activated = bool(previous.get("activated"))
+        derived = None
+        if coverage >= settings["min_security_coverage"]:
+            derived = self.derive_daily_from_minutes(day)
+            if settings.get("activate_daily_from_minutes"):
+                activated = True
+        elif activated:
+            raise ValidationError(
+                f"stk_mins {day}: activated source incomplete, coverage={coverage:.2%}")
+
+        state = {
+            **previous,
+            "enabled": True,
+            "available": True,
+            "freq": settings["freq"],
+            "history_start": settings["history_start"],
+            "latest_session": str(day),
+            "expected_securities": len(expected),
+            "covered_securities": len(covered),
+            "coverage": coverage,
+            "recent_requests_fetched": fetched,
+            "recent_bars_fetched": bars,
+            "request_errors": len(errors),
+            "activated": activated,
+            "activation_date": previous.get("activation_date") or (str(day) if activated else None),
+            "daily_source": "stk_mins_15min" if activated else "tushare_daily_until_minute_gate_passes",
+            "derived_daily": derived,
+            "updated_at": utcnow(),
+        }
+        atomic_json(state_path, state)
+
+    def intraday_history_requests(self):
+        settings = self.config["intraday"]
+        start = datetime.strptime(settings["history_start"], "%Y%m%d").date()
+        end = self.as_of
+        rows = self.master.sort_values(["list_date", "ts_code"], kind="stable")
+        for year in range(end.year, start.year - 1, -1):
+            year_start, year_end = date(year, 1, 1), date(year, 12, 31)
+            for row in rows.itertuples():
+                if pd.notna(row.list_date) and row.list_date > year_end:
+                    continue
+                if pd.notna(row.delist_date) and row.delist_date < year_start:
+                    continue
+                left, right = history_window(year, start, end)
+                if left > right:
+                    continue
+                yield {
+                    "ts_code": row.ts_code,
+                    "freq": settings["freq"],
+                    "start_date": left,
+                    "end_date": right,
+                }
+
+    def intraday_history(self) -> None:
+        settings = self.config.get("intraday", {})
+        if not settings.get("enabled") or not self.available("stk_mins"):
+            return
+        budget = settings.get("history_requests_per_run", 0)
+        if budget <= 0:
+            return
+        requests = list(self.intraday_history_requests())
+        if not requests:
+            return
+        state_path = self.store.metadata / "intraday.json"
+        state = read_json(state_path)
+        cursor = state.get("history_cursor", 0) % len(requests)
+        fetched = bars = examined = 0
+        while examined < len(requests) and fetched < budget:
+            params = requests[(cursor + examined) % len(requests)]
+            examined += 1
+            if self.complete("stk_mins", params):
+                continue
+            try:
+                bars += self.fetch_minutes(params)
+            except Exception:
+                pass
+            fetched += 1
+        state.update({
+            "history_cursor": (cursor + examined) % len(requests),
+            "history_requests_fetched": fetched,
+            "history_bars_fetched": bars,
+            "history_requests_examined": examined,
+            "history_request_universe": len(requests),
+            "history_start": settings["history_start"],
+            "updated_at": utcnow(),
+        })
+        atomic_json(state_path, state)
+
     def critical_recent(self, sample: bool = False) -> None:
         errors = []
         names = dependency_order(["daily", "adj_factor", "daily_basic"])
