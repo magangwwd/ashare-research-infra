@@ -1,0 +1,57 @@
+name: Task 01 watchdog alert
+run-name: Watchdog alert for run ${{ inputs.failed_run_id }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      failed_run_id:
+        description: 'Failed Task 01 workflow run id'
+        required: true
+        type: string
+      conclusion:
+        description: 'Final conclusion after retry'
+        required: true
+        type: string
+      attempt:
+        description: 'Final run attempt'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      FAILED_RUN_ID: ${{ inputs.failed_run_id }}
+      CONCLUSION: ${{ inputs.conclusion }}
+      ATTEMPT: ${{ inputs.attempt }}
+    steps:
+      - name: Create one deduplicated watchdog issue
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="[Watchdog] Task 01 failed twice — run $FAILED_RUN_ID"
+          existing=$(gh issue list             --repo "$GITHUB_REPOSITORY"             --state open             --search "\"$title\" in:title"             --json number,title             --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Watchdog issue #$existing already exists; no duplicate created."
+            exit 0
+          fi
+
+          run_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$FAILED_RUN_ID"
+          body=$(cat <<EOF
+Task 01 did not recover after the automatic retry.
+
+- Run ID: $FAILED_RUN_ID
+- Attempt: $ATTEMPT
+- Conclusion: $CONCLUSION
+- Run: $run_url
+
+The external watchdog will not start a third automatic retry. Check the failed step before manually re-running.
+EOF
+          )
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
