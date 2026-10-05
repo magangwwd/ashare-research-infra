@@ -456,13 +456,20 @@ class Pipeline:
         errors = []
         names = dependency_order(["daily", "adj_factor", "daily_basic"])
         counts = {n: 2 if sample else self.config["download"]["daily_basic_lookback_trading_days" if n == "daily_basic" else "lookback_trading_days"] for n in names}
+        minute_daily = self.intraday_active() and not sample
         # Complete the newest session for all Critical datasets before older sessions.
         for day in reversed(self.sessions[-max(counts.values()):]):
             for dataset in names:
                 if day not in self.sessions[-counts[dataset]:]:
                     continue
                 try:
-                    self.daily(dataset, day, sample)
+                    if dataset == "daily" and minute_daily:
+                        params = {"trade_date": day.strftime("%Y%m%d")}
+                        if self.complete("daily", params):
+                            continue
+                        self.derive_daily_from_minutes(day)
+                    else:
+                        self.daily(dataset, day, sample)
                 except Exception as exc:
                     errors.append(self.client.redact(exc))
         if errors:
@@ -494,7 +501,7 @@ class Pipeline:
     def recent_requests(self, tier: str):
         day = self.sessions[-1].strftime("%Y%m%d")
         start = (self.as_of - timedelta(days=self.config["download"]["financial_lookback_days"])).strftime("%Y%m%d")
-        names = [n for n, s in DATASETS.items() if s.tier == tier and s.strategy not in ("derived", "index_metadata", "industry_metadata")
+        names = [n for n, s in DATASETS.items() if s.tier == tier and s.strategy not in ("derived", "index_metadata", "industry_metadata", "intraday")
                  and (tier != "optional" or n in self.config["optional_whitelist"])]
         # Interleave security requests so large financial datasets cannot starve others.
         streams = []
@@ -706,7 +713,7 @@ class Pipeline:
         budget = self.config["download"].get(budget_key, self.config["download"]["history_requests_per_run"])
         if budget > 0:
             self.discover_history_ranges()
-        names = [n for n, s in DATASETS.items() if self.available(n) and s.strategy not in ("snapshot", "calendar", "derived", "index_metadata", "industry_metadata")
+        names = [n for n, s in DATASETS.items() if self.available(n) and s.strategy not in ("snapshot", "calendar", "derived", "index_metadata", "industry_metadata", "intraday")
                  and (s.tier == "critical" or (s.tier == "required" and self.config["datasets"]["required"])
                       or (s.tier == "optional" and self.config["datasets"]["optional"] and n in self.config["optional_whitelist"]))]
         names = dependency_order(names)
@@ -789,12 +796,18 @@ class Pipeline:
 
     def run(self, sample: bool = False) -> dict:
         self.bootstrap(sample=2 if sample else None)
+        if not sample:
+            # Minute onboarding happens before Critical freshness. Once the
+            # coverage gate activates, daily freshness is derived from 15-minute
+            # bars and the full-market Tushare daily endpoint is no longer used.
+            self.intraday_recent()
         self.critical_recent(sample)
         if not sample:
             self.extensions()
             self.discover_history_ranges()
             self.repair()
             self.history()
+            self.intraday_history()
             self.monthly_audit()
         self.store.retain_raw(datetime.combine(self.as_of, datetime.min.time()))
         atomic_json(self.root / "metadata/effective_config.json", self.config)
