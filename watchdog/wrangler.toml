@@ -1,0 +1,11 @@
+name = "ashare-task01-watchdog"
+main = "worker.mjs"
+compatibility_date = "2026-10-01"
+
+[triggers]
+# 20:40, 21:40 and 22:40 Asia/Shanghai / Singapore.
+# Repeated checks are safe because the watchdog is idempotent.
+crons = ["40 12 * * *", "40 13 * * *", "40 14 * * *"]
+
+[secrets]
+required = ["GITHUB_TOKEN"]
