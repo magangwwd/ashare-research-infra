@@ -64,7 +64,7 @@ def partitions(dataset: str, frame: pd.DataFrame, layer: str) -> list[tuple[str,
     if dataset in clean.FINANCIAL:
         column = "ann_date" if layer == "raw" else "report_period"
     else:
-        column = next((c for c in ("trade_date", "calendar_date", "cal_date", "ann_date", "change_date", "start_date", "surv_date", "in_date") if c in frame), None)
+        column = next((c for c in ("trade_date", "trade_time", "calendar_date", "cal_date", "ann_date", "change_date", "start_date", "surv_date", "in_date") if c in frame), None)
     if column is None:
         return [("snapshot=current", frame)]
     dates = pd.to_datetime(frame[column], format="mixed", errors="coerce")
