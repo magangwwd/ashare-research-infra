@@ -2,8 +2,9 @@ name: Task 01 data infrastructure
 
 on:
   schedule:
-    # 12:00 UTC = 20:00 Asia/Shanghai; GitHub may delay scheduled starts.
-    - cron: '0 12 * * *'
+    # 12:17 UTC = 20:17 Asia/Shanghai. Avoid the top of the hour, where GitHub
+    # documents higher schedule load and possible delay/drop risk.
+    - cron: '17 12 * * *'
   workflow_dispatch:
     inputs:
       verify_drive_auth:
