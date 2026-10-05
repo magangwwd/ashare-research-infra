@@ -32,6 +32,7 @@ DATASETS = {
     "trade_cal": Dataset("trade_cal", "critical", "calendar", dependencies=()),
     "security_master": Dataset("security_master", "required", "derived", dependencies=("stock_basic",)),
     **{n: Dataset(n, "critical", "trade", "trade_date") for n in ("daily", "adj_factor", "daily_basic")},
+    "stk_mins": Dataset("stk_mins", "required", "intraday", "trade_time", available_from="20200101"),
     **{n: Dataset(n, "required", "financial", "ann_date") for n in ("income", "balancesheet", "cashflow", "fina_indicator", "forecast", "express")},
     # Dividend does not accept start_date/end_date; one security returns its history.
     "dividend": Dataset("dividend", "required", "security_snapshot", "ann_date"),
@@ -78,7 +79,7 @@ class DownloadError(RuntimeError):
 
 
 class TushareClient:
-    def __init__(self, config: dict, client: Any = None, sleeper=time.sleep):
+    def __init__(self, config: dict, client: Any = None, sleeper=time.sleep, bar_fetcher=None):
         self.config = config["download"]
         self.sleeper = sleeper
         self.last_call = 0.0
@@ -87,8 +88,11 @@ class TushareClient:
             if not self.token:
                 raise DownloadError("TUSHARE_TOKEN is required in the environment")
             import tushare as ts
+            ts.set_token(self.token)
             client = ts.pro_api(self.token)
+            bar_fetcher = ts.pro_bar
         self.client = client
+        self.bar_fetcher = bar_fetcher or getattr(client, "pro_bar", None)
 
     def redact(self, exc: Exception) -> str:
         message = str(exc)
@@ -111,7 +115,39 @@ class TushareClient:
         raise DownloadError(endpoint)
 
     def fetch(self, endpoint: str, **params: Any) -> pd.DataFrame:
-        """Offset pagination, fail closed on ignored offsets or runaway results."""
+        """Fetch one dataset with explicit safety bounds."""
+        if endpoint == "stk_mins":
+            if self.bar_fetcher is None:
+                raise DownloadError("stk_mins: Tushare pro_bar SDK fetcher is unavailable")
+            required = ("ts_code", "start_date", "end_date")
+            if any(not params.get(name) for name in required):
+                raise DownloadError("stk_mins: ts_code/start_date/end_date are required")
+            # Historical stock minute data is an SDK-level pro_bar interface. The
+            # caller uses bounded windows so the documented 8,000-row cap cannot
+            # silently truncate history.
+            for attempt in range(self.config["retries"]):
+                spacing = 60 / self.config["requests_per_minute"]
+                self.sleeper(max(0, spacing - (time.monotonic() - self.last_call)))
+                self.last_call = time.monotonic()
+                try:
+                    result = self.bar_fetcher(
+                        ts_code=params["ts_code"],
+                        start_date=params["start_date"],
+                        end_date=params["end_date"],
+                        freq=params.get("freq", "15min"),
+                        asset="E",
+                        adj=None,
+                    )
+                    if not isinstance(result, pd.DataFrame):
+                        raise DownloadError("stk_mins: API returned a non-DataFrame response")
+                    if len(result) >= 8000:
+                        raise DownloadError("stk_mins: result reached the 8000-row safety cap; split the time range")
+                    return result.reset_index(drop=True)
+                except Exception as exc:
+                    if attempt + 1 == self.config["retries"]:
+                        raise DownloadError(f"stk_mins: {self.redact(exc)}") from None
+                    self.sleeper(self.config["retry_seconds"] * 2 ** attempt)
+            raise DownloadError("stk_mins")
         if endpoint == "stock_basic":
             params.setdefault("fields", STOCK_BASIC_FIELDS)
         pages, fingerprints, offset = [], set(), 0
@@ -161,7 +197,16 @@ class TushareClient:
             elif spec.strategy == "industry_history":
                 params = {"ts_code": "000001.SZ", "is_new": "Y"}
             try:
-                frame = self.query(name, **params, limit=10, offset=0)
+                if name == "stk_mins":
+                    frame = self.fetch(
+                        name,
+                        ts_code="000001.SZ",
+                        freq="15min",
+                        start_date=f"{probe_day} 09:00:00",
+                        end_date=f"{probe_day} 16:00:00",
+                    )
+                else:
+                    frame = self.query(name, **params, limit=10, offset=0)
                 if name in CRITICAL and frame.empty:
                     raise DownloadError("critical probe returned no rows")
                 results["interfaces"][name] = {"status": "AVAILABLE", "tier": spec.tier,
