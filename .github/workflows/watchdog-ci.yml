@@ -1,0 +1,41 @@
+name: Watchdog CI
+
+on:
+  push:
+    paths:
+      - 'watchdog/**'
+      - '.github/workflows/task01.yml'
+      - '.github/workflows/watchdog-alert.yml'
+      - '.github/workflows/watchdog-ci.yml'
+  pull_request:
+    paths:
+      - 'watchdog/**'
+      - '.github/workflows/task01.yml'
+      - '.github/workflows/watchdog-alert.yml'
+      - '.github/workflows/watchdog-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test watchdog state machine
+        run: node --test watchdog/decision.test.mjs
+      - name: Validate workflow YAML parses
+        run: |
+          python - <<'PY'
+          import pathlib
+          import yaml
+          for path in (
+              ".github/workflows/task01.yml",
+              ".github/workflows/watchdog-alert.yml",
+              ".github/workflows/watchdog-ci.yml",
+          ):
+              yaml.safe_load(pathlib.Path(path).read_text(encoding="utf-8"))
+              print("OK", path)
+          PY
