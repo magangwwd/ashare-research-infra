@@ -48,6 +48,8 @@ SCHEMAS: dict[str, list[Field]] = {
         Field("is_open", "is_open", "int64", "是否交易日"),
         Field("pretrade_date", "previous_trade_date", "date", "上一交易日期")],
     "daily": TRADE + fields("open high low close pre_close change pct_chg vol amount"),
+    "stk_mins": TRADE + [Field("trade_time", "trade_time", "string", "A股15分钟K线结束时间，Asia/Shanghai本地时间"),
+        Field("freq", "freq", "string", "固定为15min")] + fields("open high low close vol amount"),
     "adj_factor": TRADE + fields("adj_factor"),
     "daily_basic": TRADE + fields("close turnover_rate turnover_rate_f volume_ratio pe pe_ttm pb ps ps_ttm dv_ratio dv_ttm total_share float_share free_share total_mv circ_mv"),
     "income": FIN + fields("basic_eps diluted_eps total_revenue revenue int_income prem_earned comm_income n_income n_income_attr_p total_profit income_tax operate_profit total_cogs oper_cost sell_exp admin_exp fin_exp rd_exp"),
@@ -92,6 +94,7 @@ KEYS = {
     "stock_basic": ["security_id"], "security_master": ["security_id"],
     "trade_cal": ["exchange", "calendar_date"],
     **{n: ["security_id", "trade_date"] for n in ("daily", "adj_factor", "daily_basic", "stk_premarket", "stk_limit", "margin_detail")},
+    "stk_mins": ["security_id", "trade_time"],
     "stock_st": ["security_id", "trade_date", "type"],
     **{n: ["security_id", "report_period", "report_type", "comp_type"] for n in ("income", "balancesheet", "cashflow")},
     **{n: ["security_id", "report_period"] for n in ("fina_indicator", "express", "stk_holdernumber")},
@@ -144,6 +147,12 @@ def security_master(raw: pd.DataFrame, now: str) -> pd.DataFrame:
 
 def normalize(dataset: str, raw: pd.DataFrame) -> pd.DataFrame:
     source = raw.copy()
+    if dataset == "stk_mins":
+        if "trade_time" not in source:
+            raise ValueError("stk_mins.trade_time is required")
+        parsed = pd.to_datetime(source["trade_time"].astype("string"), errors="raise")
+        source["trade_date"] = parsed.dt.strftime("%Y%m%d")
+        source["freq"] = source.get("freq", pd.Series("15min", index=source.index)).fillna("15min")
     if "security_id" in {f.name for f in SCHEMAS[dataset]}:
         source["security_id"] = source["ts_code"].map(lambda x: security_id(x) if pd.notna(x) else pd.NA)
     if dataset in FINANCIAL:
