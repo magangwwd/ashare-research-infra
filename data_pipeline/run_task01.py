@@ -17,6 +17,7 @@ import yaml
 from . import clean
 from .download import CRITICAL, DATASETS, STOCK_BASIC_FIELDS, DownloadError, TushareClient, dependency_order
 from .manifest import Store, atomic_json, read_dataset, read_session, read_json, request_id, utcnow
+from .intraday import aggregate_daily, covered_codes, history_window, minute_window, validate_bars
 from .validate import ValidationError, suspension_codes, validate_frame, validate_session, validate_task01
 
 
@@ -43,6 +44,19 @@ def load_config(path: Path) -> dict:
     target = config["download"].get("core_history_target_sessions", 0)
     if not isinstance(target, int) or isinstance(target, bool) or target < 0:
         raise ValueError("download.core_history_target_sessions must be a nonnegative integer")
+    intraday = config.get("intraday", {})
+    if intraday.get("enabled"):
+        if intraday.get("dataset") != "stk_mins" or intraday.get("freq") != "15min":
+            raise ValueError("Task 01 intraday source is fixed to Tushare stk_mins 15min")
+        if str(intraday.get("history_start", "")) < "20200101":
+            raise ValueError("intraday.history_start cannot be earlier than 20200101")
+        for name in ("recent_requests_per_run", "history_requests_per_run", "daily_validation_sample"):
+            value = intraday.get(name, 0)
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+                raise ValueError(f"intraday.{name} must be a nonnegative integer")
+        coverage = intraday.get("min_security_coverage", 0)
+        if not isinstance(coverage, (int, float)) or isinstance(coverage, bool) or not 0.95 <= coverage <= 1:
+            raise ValueError("intraday.min_security_coverage must be between 0.95 and 1")
     return config
 
 
