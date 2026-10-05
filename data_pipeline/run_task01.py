@@ -456,14 +456,17 @@ class Pipeline:
         errors = []
         names = dependency_order(["daily", "adj_factor", "daily_basic"])
         counts = {n: 2 if sample else self.config["download"]["daily_basic_lookback_trading_days" if n == "daily_basic" else "lookback_trading_days"] for n in names}
-        minute_daily = self.intraday_active() and not sample
+        intraday_state = self.intraday_state()
+        minute_daily = bool(intraday_state.get("activated")) and not sample
+        activation_date = (date.fromisoformat(intraday_state["activation_date"])
+                           if minute_daily and intraday_state.get("activation_date") else None)
         # Complete the newest session for all Critical datasets before older sessions.
         for day in reversed(self.sessions[-max(counts.values()):]):
             for dataset in names:
                 if day not in self.sessions[-counts[dataset]:]:
                     continue
                 try:
-                    if dataset == "daily" and minute_daily:
+                    if dataset == "daily" and minute_daily and activation_date and day >= activation_date:
                         params = {"trade_date": day.strftime("%Y%m%d")}
                         if self.complete("daily", params):
                             continue
