@@ -1,4 +1,5 @@
 name: Task 01 data infrastructure
+run-name: ${{ github.event_name == 'schedule' && 'Task 01 scheduled' || (inputs.watchdog_trigger && 'Task 01 watchdog' || 'Task 01 manual') }}
 
 on:
   schedule:
@@ -19,6 +20,10 @@ on:
         description: 'Disaster-recovery drill: ignore GitHub checkpoint and restore current Drive production'
         type: boolean
         default: false
+      watchdog_trigger:
+        description: 'External watchdog trigger; enables daily duplicate guard'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -29,6 +34,59 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  daily-guard:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.watchdog_trigger)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_run: ${{ steps.guard.outputs.should_run }}
+    steps:
+      - name: Skip a delayed duplicate after another accepted data run today
+        id: guard
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/task01.yml/runs?per_page=50" > /tmp/task01-runs.json
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          current = int(os.environ["GITHUB_RUN_ID"])
+          today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+          runs = json.load(open("/tmp/task01-runs.json", encoding="utf-8"))["workflow_runs"]
+          duplicate = None
+
+          for run in runs:
+              if int(run["id"]) == current or run.get("conclusion") != "success":
+                  continue
+              created = datetime.fromisoformat(run["created_at"].replace("Z", "+00:00")).astimezone(ZoneInfo("Asia/Shanghai"))
+              if created.date() != today:
+                  continue
+              # A successful data run publishes this artifact. Drive-only/auth-only
+              # dispatches do not, so they cannot suppress the daily data task.
+              raw = subprocess.check_output([
+                  "gh", "api", f"repos/{repo}/actions/runs/{run['id']}/artifacts?per_page=100"
+              ], text=True)
+              artifacts = json.loads(raw).get("artifacts", [])
+              if any(a.get("name") == "task01-validation-report" and not a.get("expired") for a in artifacts):
+                  duplicate = run
+                  break
+
+          should_run = duplicate is None
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"should_run={'true' if should_run else 'false'}\n")
+          if duplicate:
+              print(f"SUCCESS daily duplicate guard: accepted run {duplicate['id']} already exists for {today}; skipping")
+          else:
+              print(f"SUCCESS daily duplicate guard: no accepted data run exists for {today}; proceeding")
+          PY
+
   drive-auth:
     if: github.event_name == 'workflow_dispatch' && inputs.verify_drive_auth && !inputs.publish_drive_snapshot
     runs-on: ubuntu-latest
@@ -52,7 +110,11 @@ jobs:
           retention-days: 30
           if-no-files-found: error
   task01:
-    if: github.event_name != 'workflow_dispatch' || (!inputs.verify_drive_auth && !inputs.publish_drive_snapshot)
+    needs: [daily-guard]
+    if: >-
+      always() &&
+      (needs.daily-guard.result == 'skipped' || needs.daily-guard.outputs.should_run == 'true') &&
+      (github.event_name != 'workflow_dispatch' || (!inputs.verify_drive_auth && !inputs.publish_drive_snapshot))
     runs-on: ubuntu-latest
     timeout-minutes: 240
     env:
