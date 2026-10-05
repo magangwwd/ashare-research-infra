@@ -33,6 +33,15 @@ download:
   daily_basic_lookback_trading_days: 15
   financial_lookback_days: 400
   smoke_lookback_days: 60
+intraday:
+  enabled: true
+  dataset: stk_mins
+  freq: 15min
+  history_start: '20200101'
+  recent_requests_per_run: 6000
+  history_requests_per_run: 120
+  min_security_coverage: 0.95
+  activate_daily_from_minutes: true
 datasets:
   stock_basic: true
   trade_cal: true
