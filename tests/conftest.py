@@ -32,6 +32,27 @@ class FakeTushare:
             "list_status": "L", "list_date": "20000101", "delist_date": None,
         } for i in range(count)])
 
+    def pro_bar(self, ts_code, start_date, end_date, freq="15min", asset="E", adj=None):
+        self.calls.append(("stk_mins", {"ts_code": ts_code, "start_date": start_date,
+                                        "end_date": end_date, "freq": freq, "asset": asset, "adj": adj}))
+        if "stk_mins" in self.fail:
+            raise RuntimeError("permission denied")
+        start = pd.Timestamp(start_date).normalize()
+        end = pd.Timestamp(end_date).normalize()
+        times = ["09:45:00", "10:00:00", "10:15:00", "10:30:00",
+                 "10:45:00", "11:00:00", "11:15:00", "11:30:00",
+                 "13:15:00", "13:30:00", "13:45:00", "14:00:00",
+                 "14:15:00", "14:30:00", "14:45:00", "15:00:00"]
+        rows = []
+        for day in pd.date_range(start, end, freq="B"):
+            for clock in times:
+                rows.append({
+                    "ts_code": ts_code,
+                    "trade_time": f"{day:%Y-%m-%d} {clock}",
+                    "open": 10.0, "high": 11.0, "low": 9.0, "close": 10.5,
+                    "vol": 6250.0, "amount": 65625.0,
+                })
+        return pd.DataFrame(rows)
     def query(self, endpoint, **params):
         self.calls.append((endpoint, dict(params)))
         if endpoint in self.fail:
