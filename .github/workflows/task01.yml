@@ -3,9 +3,9 @@ run-name: ${{ github.event_name == 'schedule' && 'Task 01 scheduled' || (inputs.
 
 on:
   schedule:
-    # 12:17 UTC = 20:17 Asia/Shanghai. Avoid the top of the hour, where GitHub
-    # documents higher schedule load and possible delay/drop risk.
-    - cron: '17 12 * * *'
+    # 13:17 UTC = 21:17 Asia/Shanghai/Singapore. Historical minute bars may
+    # finish updating as late as 21:00, so run after the provider window.
+    - cron: '17 13 * * *'
   workflow_dispatch:
     inputs:
       verify_drive_auth:
