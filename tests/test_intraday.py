@@ -30,6 +30,7 @@ def test_15min_units_aggregate_back_to_daily_contract(provider):
 
 def test_minute_onboarding_activates_only_after_full_coverage(tmp_path, config, client, provider, as_of):
     config["intraday"].update(
+        enabled=True,
         recent_requests_per_run=100,
         history_requests_per_run=0,
         daily_validation_sample=0,
@@ -52,6 +53,7 @@ def test_minute_onboarding_activates_only_after_full_coverage(tmp_path, config, 
 
 def test_post_activation_latest_daily_does_not_use_full_market_daily(tmp_path, config, client, provider, as_of):
     config["intraday"].update(
+        enabled=True,
         recent_requests_per_run=100,
         history_requests_per_run=0,
         daily_validation_sample=0,
@@ -75,7 +77,7 @@ def test_post_activation_latest_daily_does_not_use_full_market_daily(tmp_path, c
 
 
 def test_intraday_history_is_bounded_to_2020_or_later(tmp_path, config, client, provider, as_of):
-    config["intraday"]["history_start"] = "20200101"
+    config["intraday"].update(enabled=True, history_start="20200101")
     pipeline = Pipeline(tmp_path, config, client, as_of)
     pipeline.bootstrap()
     requests = list(pipeline.intraday_history_requests())
