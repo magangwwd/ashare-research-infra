@@ -282,6 +282,23 @@ def history_progress(location: Path, metadata: Path, config: dict, as_of: date, 
     calendars_complete = len(calendar_coverage) == 2 and all(c["observed_range_complete"] for c in calendar_coverage.values())
     report["core_observed_range_complete"] = bool(core_complete) and all(core_complete) and calendars_complete and not report["scan_errors"]
     report["full_requested_core_range_complete"] = bool(requested_complete) and all(requested_complete) and calendars_complete and not report["scan_errors"]
+    intraday_state = read_json(metadata / "manifest/intraday.json")
+    report["intraday_history"] = {
+        "enabled": bool(config.get("intraday", {}).get("enabled")),
+        "available": intraday_state.get("available"),
+        "activated": intraday_state.get("activated", False),
+        "history_start": config.get("intraday", {}).get("history_start"),
+        "request_universe": intraday_state.get("history_request_universe"),
+        "complete_requests": intraday_state.get("history_complete_requests"),
+        "pending_requests": intraday_state.get("history_pending_requests"),
+        "complete_ratio": intraday_state.get("history_complete_ratio"),
+        "complete": intraday_state.get("history_complete", False),
+        "latest_session_coverage": intraday_state.get("coverage"),
+    }
+    report["market_history_complete"] = bool(
+        report["full_requested_core_range_complete"]
+        and (not report["intraday_history"]["enabled"] or report["intraday_history"]["complete"])
+    )
     return report
 
 
