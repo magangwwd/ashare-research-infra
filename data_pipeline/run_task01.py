@@ -50,7 +50,7 @@ def load_config(path: Path) -> dict:
             raise ValueError("Task 01 intraday source is fixed to Tushare stk_mins 15min")
         if str(intraday.get("history_start", "")) < "20200101":
             raise ValueError("intraday.history_start cannot be earlier than 20200101")
-        for name in ("recent_requests_per_run", "history_requests_per_run", "daily_validation_sample"):
+        for name in ("recent_requests_per_run", "history_requests_per_run", "daily_validation_sample", "max_errors_before_abort", "raw_retention_days"):
             value = intraday.get(name, 0)
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 raise ValueError(f"intraday.{name} must be a nonnegative integer")
@@ -359,6 +359,8 @@ class Pipeline:
                 bars += self.fetch_minutes(params, expected_day=day)
             except Exception as exc:
                 errors.append(self.client.redact(exc))
+                if len(errors) >= settings.get("max_errors_before_abort", 5):
+                    break
             fetched += 1
 
         minute_clean = read_session(self.stage, "stk_mins", day)
