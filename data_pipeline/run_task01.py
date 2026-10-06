@@ -334,6 +334,9 @@ class Pipeline:
         previous = read_json(state_path)
         if not self.available("stk_mins"):
             status = {**previous, "enabled": True, "available": False,
+                      "activated": bool(previous.get("activated", False)),
+                      "daily_source": ("stk_mins_15min" if previous.get("activated")
+                                       else "tushare_daily_until_minute_gate_passes"),
                       "updated_at": utcnow(), "reason": "stk_mins capability unavailable"}
             atomic_json(state_path, status)
             if previous.get("activated"):
