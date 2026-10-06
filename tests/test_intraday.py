@@ -89,6 +89,7 @@ def test_intraday_history_is_bounded_to_2020_or_later(tmp_path, config, client, 
 def test_minute_permission_failure_does_not_activate_source(tmp_path, config, provider, as_of):
     from data_pipeline.download import TushareClient
 
+    config["intraday"]["enabled"] = True
     provider.fail.add("stk_mins")
     client = TushareClient(config, provider, sleeper=lambda _: None)
     pipeline = Pipeline(tmp_path, config, client, as_of)
