@@ -27,12 +27,12 @@ def validate_bars(raw: pd.DataFrame, *, expected_day: date | None = None) -> pd.
     missing = required - set(raw.columns)
     if missing:
         raise ValueError(f"stk_mins missing fields: {sorted(missing)}")
+    if raw.duplicated(["ts_code", "trade_time"]).any():
+        raise ValueError("stk_mins duplicate ts_code/trade_time rows")
     normalized = clean.normalize("stk_mins", raw)
     parsed = pd.to_datetime(normalized["trade_time"], errors="raise")
     if expected_day is not None and set(parsed.dt.date) != {expected_day}:
         raise ValueError("stk_mins response crossed the requested trading day")
-    if normalized.duplicated(clean.KEYS["stk_mins"]).any():
-        raise ValueError("stk_mins duplicate primary keys")
     numeric = normalized[["open", "high", "low", "close", "vol", "amount"]]
     if numeric.isna().any().any():
         raise ValueError("stk_mins contains null OHLCVA values")
