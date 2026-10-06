@@ -1,6 +1,9 @@
 name: Task 01 historical backfill
 
 on:
+  push:
+    paths:
+      - '.github/backfill-now'
   schedule:
     # Asia/Shanghai / Singapore: 01:17, 05:17, 09:17, 13:17, 17:17
     - cron: '17 17 * * *'
