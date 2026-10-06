@@ -27,11 +27,11 @@ Drive 发布已接入常规数据 job；恢复优先用 checkpoint，缺失或�
 ## 范围
 
 - Critical：`stock_basic / trade_cal / daily / adj_factor / daily_basic`。不可禁用，失败返回非零，Workflow FAILED。
-- Required：Security Master、财务、行业、主要指数与成分历史、名称/ST 原资料、停复牌、涨跌停、股本变化及分红资本事件。暂时失败记录 Gap，继续核心流程。
+- Required：Security Master、**A股15分钟行情 `stk_mins`（2020-01-01 起）**、财务、行业、主要指数与成分历史、名称/ST 原资料、停复牌、涨跌停、股本变化及分红资本事件。15分钟首次权限/覆盖未通过时保持原 daily 链；激活后分钟源异常会阻止新版本发布。其他 Required 暂时失败记录 Gap，继续核心流程。
 - Optional 白名单：融资融券、大宗交易、龙虎榜、股东人数、股东增减持、机构调研、限售解禁。权限和接口可用才下载，失败不阻止核心发布。
 - Candidate：质押、回购等仅登记，不下载。
 
-Task 01 自身仍不实现因子、技术指标、选股、主升标签、ML/Ranking、回测、Walk-forward、交易、15 分钟数据、新闻/NLP、AI Agent、DuckDB、完整 Lineage、复杂日志、严格 Point-in-Time 或高级质量平台。不展开每日 ST、停牌和指数成员状态，不计算上市天数、QFQ/HFQ 或 Market Regime。Task 02 的工程代码独立放在 `research_engine/`，不改变 Task 01 的数据发布和验收边界。
+Task 01 自身仍不实现因子、技术指标、选股、主升标签、ML/Ranking、回测、Walk-forward、交易、新闻/NLP、AI Agent、DuckDB、完整 Lineage、复杂日志、严格 Point-in-Time 或高级质量平台。Task 01 已按后续需求加入 15 分钟行情作为研究数据基础设施，不在此层计算分钟因子或交易信号。不展开每日 ST、停牌和指数成员状态，不计算上市天数、QFQ/HFQ 或 Market Regime。Task 02 的工程代码独立放在 `research_engine/`，不改变 Task 01 的数据发布和验收边界。
 
 ## 安装与入口
 
@@ -64,6 +64,7 @@ Smoke 结果绑定当前 Python 代码指纹；修改代码后必须重新执行
 | 模块 | 职责 |
 | --- | --- |
 | `download.py` | Token、限流、重试、分页保护、接口能力快照、数据等级及依赖排序 |
+| `intraday.py` | 15分钟响应校验、单位换算、日线聚合；不包含策略逻辑 |
 | `clean.py` | 显式字段映射、Schema 版本、Date/dtype、主键、财务版本和 Security Master |
 | `manifest.py` | Hive 分区、ZSTD/compact、Parquet 扫描、Manifest/Gap、可恢复暂存与原子切换 |
 | `validate.py` | 基础质量、覆盖率、Critical 总验收和 CLI |
@@ -89,6 +90,7 @@ Clean 仅包含 `clean.py::SCHEMAS` 显式声明的字段；未知源字段不�
 | security_master | security_id | snapshot=current | UUID5 主键；保留 exchange/symbol、上市/退市、行业和原始名称 |
 | trade_cal | exchange + calendar_date | year | SSE、SZSE；is_open 为整数 |
 | daily | security_id + trade_date | year/month | 原始 OHLC、成交量额，重复保留最后一条 |
+| stk_mins | security_id + trade_time | year/month | 15min OHLCV；trade_time 保留本地交易时间；Clean 长期保留 |
 | daily_basic | security_id + trade_date | year/month | 原估值、市值、股本等字段，不计算因子 |
 | adj_factor | security_id + trade_date | year/month | 原复权因子，保留最后一条 |
 
@@ -96,7 +98,7 @@ Clean 仅包含 `clean.py::SCHEMAS` 显式声明的字段；未知源字段不�
 
 财务 Raw 分区 `ann_year/ann_month`；Clean 分区 `report_year/report_period`，按公告日、实际公告日及 update_flag 选择当前最新版本。报表还按 `report_type / comp_type` 区分口径。Raw 供以后重建 PIT，Clean 不是严格 PIT 数据。
 
-所有文件均为 ZSTD Parquet。每次自然分区合并前后都验证；compact 根据实际压缩体积估计分片，目标 192 MB（128–256 MB 范围内），小分区不强制拆分。行情 Raw 按获取时间保留约 180 天，刚下载的旧历史仍保留以便审计缺口；财务和元数据 Raw 长期保留，Clean 长期保留。
+所有文件均为 ZSTD Parquet。每次自然分区合并前后都验证；compact 根据实际压缩体积估计分片，目标 192 MB（128–256 MB 范围内），小分区不强制拆分。日线行情 Raw 按获取时间保留约 180 天；15分钟 Raw 默认只保留约 14 天以控制体积，15分钟 Clean 长期保留并从 2020-01-01 分批回补；财务和元数据 Raw 长期保留。
 
 ## Manifest、恢复和发布
 
@@ -114,7 +116,7 @@ Clean 仅包含 `clean.py::SCHEMAS` 显式声明的字段；未知源字段不�
 
 指数从可获得的 `index_basic` 按配置中的主要宽基名称发现，并写入 `config.yaml::index_universe`，没有硬编码指数代码。行情/成分历史按该配置抓取；Tushare 有的成分接口是定期权重快照，Task 01 不将它假装成完整每日成员状态。
 
-单次运行顺序：核心基础信息和日历 → 最新交易日三个 Critical → 各类型近期回补 → Required → Optional → Gap 修复 → 有预算历史下载 → 月度审计 → 总验收 → 发布。非交易日为 MAINTENANCE，同入口检查最近交易日，并执行低频刷新、修复及历史维护。
+单次运行顺序：核心基础信息和日历 → 15分钟最新交易日接入/覆盖门槛 → 最新 Critical（激活后 daily 由分钟聚合，adj_factor / daily_basic 继续日更）→ 各类型近期回补 → Required → Optional → Gap 修复 → 日线与分钟有界历史下载 → 月度审计 → 总验收 → 发布。非交易日为 MAINTENANCE，同入口检查最近交易日，并执行低频刷新、修复及历史维护。
 
 - daily / adj_factor：最近 5 个交易日；daily_basic：最近 15 个交易日。
 - 财务：轮转检查最近约 400 天公告，抓取后覆盖 Clean 最新版本，Raw 保留实际获取版本。
@@ -124,6 +126,18 @@ Clean 仅包含 `clean.py::SCHEMAS` 显式声明的字段；未知源字段不�
 - 行业成员按每只证券请求 `is_new=Y` 和 `is_new=N`，包括下载起始年之后上市的证券，保存当前与退出成员原记录；历史按上市日期从早到晚推进，近期刷新保持独立轮转。分红接口不支持日期范围，按证券请求全历史、轮转刷新，避免按年重复同一全历史响应。
 - Critical 历史起点由完整股票池、各交易所实际日历和 95% 覆盖率探测，不把一次非空响应当作完整历史。起点之前的来源缺口明确记录，未达标数据不会进入正式 Clean。探测假设起点后的完整覆盖基本连续，快照记录该假设；区间内部空洞仍会失败并补抓，每月重新观察边界。
 - 每次扫描全库的文件结构；每月重新抓取一段轮转的旧行情来发现修订。预算默认为 10 个工作单元，是滚动审计，**不是每月重新下载全部历史**。
+
+### 15分钟行情正式口径
+
+- 数据源：Tushare 股票历史分钟，固定 `15min`，历史目标起点 `2020-01-01`。
+- 接口只能按单只证券/时间段获取，历史按“证券 × 年”有界回补；单次结果触及 8000 行安全上限会拒绝写入，防止静默截断。
+- 最新交易日按证券抓取，证券覆盖率达到 95% 后才允许首次激活 `daily_from_minutes`。
+- 激活前，原 Tushare `daily` 保持生产保底；激活日之前的历史缺口仍可用 `daily` 补齐。
+- 激活日起，新的全市场 `daily` 不再下载，OHLCV/amount 由 15 分钟 Clean 聚合；分钟 vol（股）÷100 转成日线 vol（手），分钟 amount（元）÷1000 转成日线 amount（千元）。
+- `pre_close/change/pct_chg` 不从分钟数据臆造，聚合日线中允许为空；研究收益使用价格与 `adj_factor`。
+- `adj_factor`、`daily_basic` 继续日更；Tushare `daily` 只保留少量 OHLC 抽样 QA。
+- 分钟权限首次不可用不会破坏既有正式日线；一旦激活后分钟源不足 95%，新运行失败并保持上一正式版本。
+- 15分钟 Raw 默认保留 14 天，Clean 长期保留。历史回补有独立预算，不挤占日线 Core 75/25 快车道。
 
 API 自动重试、限速、分页。分页重复或超过上限直接失败，避免将截断结果误作完整。历史下载量和接口权限依赖实际 Tushare 账号；`metadata/manifest/history.json` 显示当前推进情况。任一 Critical 下载/验证失败，整个运行退出非零；Required/Optional 错误只记录 Gap。有限历史批次完成不代表整个 Task 01 历史验收完成。
 
@@ -139,7 +153,7 @@ API 自动重试、限速、分页。分页重复或超过上限直接失败，�
 
 ## GitHub Actions
 
-唯一 Workflow：`.github/workflows/task01.yml`。`schedule` 为 `0 12 * * *`，即北京时间约 20:00；GitHub 可能延迟启动。`workflow_dispatch` 默认运行数据任务，另可勾选只验证 Drive 授权或发布已验收 Drive 快照。
+唯一 Workflow：`.github/workflows/task01.yml`。`schedule` 为 `17 13 * * *`，即北京时间/新加坡时间约 21:17；Tushare 历史分钟可能到 21:00 才完成当日更新，因此任务放在其后，GitHub 本身仍可能延迟启动。`workflow_dispatch` 默认运行数据任务，另可勾选只验证 Drive 授权或发布已验收 Drive 快照。
 
 数据任务在仓库 **Settings → Secrets and variables → Actions** 配置 TUSHARE_TOKEN 和 GDRIVE_OAUTH_JSON，分别用于 Tushare 下载、Drive 恢复/发布；二者均已配置。Workflow 使用 GitHub 自动提供的 github.token 读取同仓库 Artifact，它不是额外的业务凭据。
 
