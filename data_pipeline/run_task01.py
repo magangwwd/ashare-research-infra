@@ -446,12 +446,20 @@ class Pipeline:
             except Exception:
                 pass
             fetched += 1
+        completed = sum(1 for params in requests if self.complete("stk_mins", params))
+        pending = len(requests) - completed
+        complete_ratio = completed / len(requests) if requests else 1.0
         state.update({
             "history_cursor": (cursor + examined) % len(requests),
             "history_requests_fetched": fetched,
             "history_bars_fetched": bars,
             "history_requests_examined": examined,
             "history_request_universe": len(requests),
+            "history_complete_requests": completed,
+            "history_pending_requests": pending,
+            "history_complete_ratio": complete_ratio,
+            "history_complete": pending == 0,
+            "history_finished_at": (state.get("history_finished_at") or utcnow()) if pending == 0 else None,
             "history_start": settings["history_start"],
             "updated_at": utcnow(),
         })
