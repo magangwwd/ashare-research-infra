@@ -98,3 +98,38 @@ def test_minute_permission_failure_does_not_activate_source(tmp_path, config, pr
     state = read_json(tmp_path / "metadata/manifest/intraday.json")
     assert state["activated"] is not True
     assert state["available"] is False
+
+
+def test_intraday_history_records_pending_and_completion(tmp_path, config, client, provider, as_of, monkeypatch):
+    config["intraday"].update(enabled=True, history_requests_per_run=2)
+    pipeline = Pipeline(tmp_path, config, client, as_of)
+    pipeline.bootstrap()
+    pipeline.capabilities.setdefault("interfaces", {})["stk_mins"] = {"status": "AVAILABLE"}
+    requests = [
+        {"ts_code": "600000.SH", "freq": "15min", "start_date": "2026-01-01 09:00:00", "end_date": "2026-12-31 16:00:00"},
+        {"ts_code": "600001.SH", "freq": "15min", "start_date": "2026-01-01 09:00:00", "end_date": "2026-12-31 16:00:00"},
+        {"ts_code": "600002.SH", "freq": "15min", "start_date": "2026-01-01 09:00:00", "end_date": "2026-12-31 16:00:00"},
+    ]
+    done = set()
+    monkeypatch.setattr(pipeline, "intraday_history_requests", lambda: iter(requests))
+    monkeypatch.setattr(pipeline, "complete", lambda name, params: params["ts_code"] in done)
+
+    def fake_fetch(params, expected_day=None):
+        done.add(params["ts_code"])
+        return 100
+    monkeypatch.setattr(pipeline, "fetch_minutes", fake_fetch)
+
+    pipeline.intraday_history()
+    state = read_json(tmp_path / "metadata/manifest/intraday.json")
+    assert state["history_request_universe"] == 3
+    assert state["history_complete_requests"] == 2
+    assert state["history_pending_requests"] == 1
+    assert state["history_complete"] is False
+
+    pipeline.intraday_history()
+    state = read_json(tmp_path / "metadata/manifest/intraday.json")
+    assert state["history_complete_requests"] == 3
+    assert state["history_pending_requests"] == 0
+    assert state["history_complete_ratio"] == pytest.approx(1.0)
+    assert state["history_complete"] is True
+    assert state["history_finished_at"]
