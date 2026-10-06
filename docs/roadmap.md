@@ -14,7 +14,7 @@
 | 存储与恢复 | Raw/Clean、固定 Schema、Date/dtype、去重、ZSTD Parquet、Hive 分区、compact、Manifest | 已实现；扫描实际文件、断点续传和失败保护已有实测 |
 | 核心下载与验收 | 历史分批、最近窗口回补、缺失股票补抓、主键/非空/覆盖率验收 | 已存数据通过；历史全量仍未补齐 |
 | 扩展数据 | 财务、行业、指数、市场状态、Optional 白名单的获取和落库 | 部分接口和数据已可用；完整历史、主行业体系仍待验收 |
-| Actions | 单一 Workflow、20:00 北京时间 cron、手动触发、恢复 checkpoint、Smoke、验收和 Artifact | 定时维护和真实交易日回放通过；连续交易日运行待观察，GitHub 可能延迟调度 |
+| Actions | 主数据 Workflow、21:17 北京/新加坡时间 cron、手动触发、恢复 checkpoint、Smoke、验收和 Artifact | 定时维护和真实交易日回放通过；分钟行情最晚更新窗口后再运行，GitHub 本身仍可能延迟调度 |
 | Drive | OAuth、staging、远程 SHA256、Manifest、Current Pointer、Drive→Runner 恢复 | 强制恢复及恢复后自动发布已在第 19 次任务实测通过；定时持续运行、实际失败回退、版本保留仍待验证 |
 
 本地 77 项普通测试通过，另有真实数据回放和恢复演练证据。真实首次 Drive 发布已成功；上传中断、漏文件、checksum 错误、远程读取及指针切换失败保护由离线故障测试验证。
@@ -25,10 +25,11 @@
 | --- | --- |
 | 快照日期 | 2026-10-04；最近交易日仍为 2026-09-30 |
 | 最近交易日核心覆盖率 | daily、adj_factor、daily_basic 均为 100%，理论池 5,559 只 |
-| 已存核心历史交易日 | 三类均为 67 日；包含早期边界资料，不能理解为连续最近 67 日 |
+| 已存核心历史交易日 | run #21 已验证三类均由 67 日推进到 **127 日**；仍以最近连续共同交易日 Readiness 为准，不能仅按总数判断 |
 | 尚缺目标交易日 | daily 8,318；adj_factor 8,669；daily_basic 8,318 |
 | Drive 正式快照 | 417 个 Parquet，503 个数据/元信息文件，共 117,020,735 字节；历史进度仍未完成 |
 | 财务/行业等完整历史 | 尚未验收；extensions_history_complete 为 null |
+| 15分钟行情 | **代码侧已接入并通过 Pipeline CI（100 passed, 2 skipped）**；目标起点 2020-01-01；真实分钟权限、首次全市场覆盖与激活状态待下一次线上 Task 01 验收 |
 | Drive 空间 | 上传前账号总配额 400 GiB、可用约 393.9 GiB；与其他 Google 服务共享 |
 
 daily/basic 另有观察边界前 351 个交易日单独记录为提供者覆盖不足，不混入上述待下载日数。起止日期、请求回执或游标不能证明历史区间完整。
@@ -41,8 +42,8 @@ daily/basic 另有观察边界前 351 个交易日单独记录为提供者覆盖
 flowchart TD
     A["Actions 定时或手动触发"] --> B["测试 · checkpoint / Drive 恢复 · 真实 Smoke"]
     B --> C["Capability Audit · 读取交易日历"]
-    C --> D["交易日更新 / 非交易日维护"]
-    D --> E["Critical 最新数据 → Required → Optional → 历史缺口"]
+    C --> D["15分钟最新日权限/覆盖 → 交易日更新 / 非交易日维护"]
+    D --> E["激活后 15min→daily；adj_factor / daily_basic 日更 → Required / Optional → 历史缺口"]
     E --> F["Raw → 固定 Schema Clean → 分区 Parquet"]
     F --> G{"Critical 总验收"}
     G -->|失败| H["FAILED · 旧正式版本不变 · Gap / 恢复状态"]
@@ -80,8 +81,9 @@ Critical 下载或质量验收失败必须让数据任务失败。Required/Optio
 2. **验收后自动上传：真实任务已通过，定时持续运行待观察。** 第 19 次常规 task01 job 在恢复、更新和验收后自动上传，远程校验、正式指针切换及 checkpoint 保存均通过。本次为手动触发的恢复演练，带新发布逻辑的每日定时运行还需持续验证。
 3. **Drive 恢复链：真实强制恢复已通过。** 第 19 次任务主动忽略 GitHub checkpoint，从 Drive 恢复 482 个文件、109,617,924 字节；远程清单、逐文件 SHA256、本地 Critical 验收均通过，之后更新及自动发布成功。恢复报告 source=google_drive_current，已独立下载核对。checkpoint 缺失/损坏时自动回退的代码保留，实际失败自动回退继续观察。
 4. **制定并实现保留策略。** 明确 Drive 版本数、行情 Raw 保留、财务 Raw 长期保留和 Artifact 配额；恢复链验证成功后再清理冗余产物。当前发布每次上传完整快照，远程增量/续传尚未实现，随历史增长再优化。
-5. **持续补齐与审计历史：Core Backfill 快车道已接入，待真实运行验收。** 最新数据、最近窗口、Required/Optional 刷新和修复优先级不变；进入历史阶段后，在最近 750 个交易日的 daily / adj_factor / daily_basic 尚未补齐前，将 75% 的历史预算保留给三类核心行情，另外 25% 继续给财务、行业、指数和 Optional 历史，避免扩展数据饿死。维护模式 240 个历史预算单位对应约 180 Core + 60 其他；交易日模式 40 对应约 30 + 10。达到 750 日目标后自动回到全数据 round-robin，不永久偏向行情。所有 Core 文件仍必须通过原有覆盖率、Gap、Schema、主键和 Critical 验收后才计为完成。下一次正常 task01 运行需核对 metadata/manifest/history.json 中 core_fetched_this_run / other_fetched_this_run 和核心交易日实际增长，才能把快车道标记为运行验收通过。
-6. **执行 Task 01 最终验收。** 联合检查历史范围、Critical 质量、连续交易日和维护运行、历史修订、断点恢复、Drive 发布及失败保护，形成完整验收记录。
-7. **进入 Task 02。** 从经验证的 Clean 开始，再建立 curated/factors，处理严格股票池、每日状态、动态复权和因子研究。Task 01 不提前实现这些功能。
+5. **持续补齐与审计历史：Core Backfill 快车道已真实运行验收。** run #21 中三类 Core 从 67 日增至 127 日，历史预算实际为 Core 180 + Other 60，与 75/25 设计一致。 最新数据、最近窗口、Required/Optional 刷新和修复优先级不变；进入历史阶段后，在最近 750 个交易日的 daily / adj_factor / daily_basic 尚未补齐前，将 75% 的历史预算保留给三类核心行情，另外 25% 继续给财务、行业、指数和 Optional 历史，避免扩展数据饿死。维护模式 240 个历史预算单位对应约 180 Core + 60 其他；交易日模式 40 对应约 30 + 10。达到 750 日目标后自动回到全数据 round-robin，不永久偏向行情。所有 Core 文件仍必须通过原有覆盖率、Gap、Schema、主键和 Critical 验收后才计为完成。下一次正常 task01 运行需核对 metadata/manifest/history.json 中 core_fetched_this_run / other_fetched_this_run 和核心交易日实际增长，才能把快车道标记为运行验收通过。
+6. **15分钟行情正式接入：代码已完成，真实运行待验收。** Tushare 股票历史分钟通过 SDK `pro_bar` 获取，内部数据集名 `stk_mins`，固定 15min，历史目标起点 2020-01-01。首次全市场证券覆盖达到 95% 后才激活 `daily_from_minutes`；激活日起未来 daily 由分钟聚合，adj_factor / daily_basic 继续日更，Tushare daily 只做少量 QA。分钟 Raw 默认保留 14 天、Clean 长期保留；历史有独立回补预算。下一次线上 Task 01 必须先确认分钟权限和实际覆盖，未通过时保持旧 daily 主链。随着分钟 Clean 增长，Drive/Checkpoint 的完整快照成本会显著增加，后续应在规模扩大前实现分钟数据的增量远程发布/恢复，当前尚未宣称已完成该优化。
+7. **执行 Task 01 最终验收。** 联合检查历史范围、Critical 质量、连续交易日和维护运行、历史修订、断点恢复、Drive 发布及失败保护，形成完整验收记录。
+8. **进入 Task 02。** 从经验证的 Clean 开始，再建立 curated/factors，处理严格股票池、每日状态、动态复权和因子研究。Task 01 不提前实现这些功能。
 
-操作入口：Actions → Task 01 data infrastructure → Run workflow；默认三个选项都不勾选执行数据更新并自动发布；仅勾选 force_drive_restore 强制从 Drive 恢复后继续完整任务；仅勾选 publish_drive_snapshot 发布现有快照；仅勾选 verify_drive_auth 检查授权。具体规则见 [Drive 发布说明](drive-phase2.md)。
+操作入口：Actions → Task 01 data infrastructure → Run workflow；正常自动计划为 **21:17**；默认三个选项都不勾选执行数据更新并自动发布；仅勾选 force_drive_restore 强制从 Drive 恢复后继续完整任务；仅勾选 publish_drive_snapshot 发布现有快照；仅勾选 verify_drive_auth 检查授权。具体规则见 [Drive 发布说明](drive-phase2.md)。
