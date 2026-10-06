@@ -19,7 +19,7 @@ download:
   page_size: 2000
   max_pages: 1000
   history_start: '19900101'
-  history_requests_per_run: 40
+  history_requests_per_run: 120
   maintenance_history_requests_per_run: 240
   # Until the newest 750 sessions are complete for daily/adj_factor/daily_basic,
   # reserve 75% of bounded history requests for that backtest-ready window.
@@ -39,10 +39,12 @@ intraday:
   freq: 15min
   history_start: '20200101'
   recent_requests_per_run: 6000
-  history_requests_per_run: 120
+  history_requests_per_run: 240
   max_errors_before_abort: 5
   min_security_coverage: 0.95
   activate_daily_from_minutes: true
+  daily_validation_sample: 20
+  raw_retention_days: 14
 datasets:
   stock_basic: true
   trade_cal: true
