@@ -212,6 +212,7 @@ def history_progress(location: Path, metadata: Path, config: dict, as_of: date, 
               "extensions_history_complete": None,
               "calendar_coverage": calendar_coverage,
               "history_run": read_json(metadata / "manifest/history.json"),
+              "intraday": read_json(metadata / "manifest/intraday.json"),
               "datasets": {}, "scan_errors": [],
               "notes": ["日期起止不能证明区间完整；核心缺失日按真实日历和基础证券池计算。",
                         "观察到的提供者边界不等于永久接口起点；边界前范围单独列出。",
@@ -292,6 +293,14 @@ def progress_markdown(report: dict) -> str:
         if "history" in item:
             h = item["history"]
             lines.append(f"| {name} | {h['target_start']} | {h['expected_sessions']} | {h['stored_target_sessions']} | {h['missing_sessions']} | {h['provider_prefix_sessions']} |")
+    minute = report.get("intraday", {})
+    if minute:
+        lines += ["", "## 15分钟行情",
+                  "",
+                  f"- 启用：{minute.get('enabled')}；接口可用：{minute.get('available')}；daily_from_minutes 激活：{minute.get('activated')}",
+                  f"- 历史起点：{minute.get('history_start')}；最新分钟交易日：{minute.get('latest_session')}；证券覆盖率：{minute.get('coverage')}",
+                  f"- 本轮最新日请求：{minute.get('recent_requests_fetched', 0)}；本轮历史请求：{minute.get('history_requests_fetched', 0)}；历史 bars：{minute.get('history_bars_fetched', 0)}",
+                  ""]
     lines += ["", "| 数据集 | 状态 | Raw 行数 | Clean 行数 | Gap 条数 |", "| --- | --- | ---: | ---: | ---: |"]
     for name, item in report["datasets"].items():
         lines.append(f"| {name} | {item['status']} | {item['layers']['raw']['rows']} | {item['layers']['clean']['rows']} | {len(item['gaps'])} |")
