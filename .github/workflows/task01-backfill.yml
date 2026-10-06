@@ -77,7 +77,10 @@ jobs:
         run: python -m data_pipeline.run_task01 --mode backfill
 
       - name: Production acceptance
-        run: python -m data_pipeline.validate
+        shell: bash
+        run: |
+          BACKFILL_AS_OF=$(TZ=Asia/Shanghai date -d 'yesterday' +%F)
+          python -m data_pipeline.validate --as-of "$BACKFILL_AS_OF"
 
       - name: Package shared recovery state
         if: always() && steps.restore.outcome == 'success'
