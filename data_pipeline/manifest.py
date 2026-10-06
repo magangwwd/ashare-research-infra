@@ -53,7 +53,7 @@ def read_dataset(root: Path, layer: str, dataset: str) -> pd.DataFrame:
 
 def read_session(root: Path, dataset: str, day) -> pd.DataFrame:
     path = root / "clean" / dataset / f"year={day.year}/month={day.month:02d}"
-    files = sorted(path.glob("*.parquet"))
+    files = sorted(path.rglob("*.parquet"))
     frame = pd.concat([read_parquet(p) for p in files], ignore_index=True) if files else pd.DataFrame()
     return frame.loc[frame["trade_date"] == day] if not frame.empty else frame
 
@@ -68,8 +68,15 @@ def partitions(dataset: str, frame: pd.DataFrame, layer: str) -> list[tuple[str,
     if column is None:
         return [("snapshot=current", frame)]
     dates = pd.to_datetime(frame[column], format="mixed", errors="coerce")
+    minute_buckets = None
+    if dataset == "stk_mins":
+        if "ts_code" not in frame:
+            raise ValueError("stk_mins partitioning requires ts_code")
+        minute_buckets = frame["ts_code"].astype("string").map(
+            lambda code: f"{int(hashlib.sha256(str(code).encode()).hexdigest()[:8], 16) % 64:02d}"
+        )
     keys = []
-    for value in dates:
+    for position, value in enumerate(dates):
         if pd.isna(value):
             keys.append("date=unknown")
         elif dataset in clean.FINANCIAL and layer == "clean":
@@ -78,6 +85,8 @@ def partitions(dataset: str, frame: pd.DataFrame, layer: str) -> list[tuple[str,
             keys.append(f"ann_year={value.year}/ann_month={value.month:02d}")
         elif dataset in ("trade_cal",):
             keys.append(f"year={value.year}")
+        elif dataset == "stk_mins":
+            keys.append(f"year={value.year}/month={value.month:02d}/bucket={minute_buckets.iloc[position]}")
         else:
             keys.append(f"year={value.year}/month={value.month:02d}")
     labels = pd.Series(keys, index=frame.index)
@@ -243,18 +252,20 @@ class Store:
             cutoff = pd.Timestamp(reference, tz="UTC") - pd.Timedelta(days=retention_days)
             for year_path in (self.stage / "raw" / dataset).glob("year=*"):
                 for month_path in year_path.glob("month=*"):
-                    files = sorted(month_path.glob("*.parquet"))
-                    if not files:
-                        continue
-                    raw = pd.concat([read_parquet(p) for p in files], ignore_index=True)
-                    if "_fetched_at" not in raw:
-                        continue
-                    fetched = pd.to_datetime(raw["_fetched_at"], utc=True, errors="raise")
-                    retained = raw.loc[fetched.isna() | (fetched >= cutoff)]
-                    if retained.empty:
-                        shutil.rmtree(month_path)
-                    elif len(retained) != len(raw):
-                        write_compacted(month_path, retained, dataset, "raw", self.config["storage"]["compact_target_mb"])
+                    partitions_to_check = sorted({p.parent for p in month_path.rglob("*.parquet")})
+                    for partition_path in partitions_to_check:
+                        files = sorted(partition_path.glob("*.parquet"))
+                        if not files:
+                            continue
+                        raw = pd.concat([read_parquet(p) for p in files], ignore_index=True)
+                        if "_fetched_at" not in raw:
+                            continue
+                        fetched = pd.to_datetime(raw["_fetched_at"], utc=True, errors="raise")
+                        retained = raw.loc[fetched.isna() | (fetched >= cutoff)]
+                        if retained.empty:
+                            shutil.rmtree(partition_path)
+                        elif len(retained) != len(raw):
+                            write_compacted(partition_path, retained, dataset, "raw", self.config["storage"]["compact_target_mb"])
 
     def publish(self, report: dict) -> None:
         if not report.get("passed"):
