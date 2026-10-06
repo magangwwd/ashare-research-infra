@@ -18,6 +18,8 @@ def config():
                               required_recent_requests_per_run=0, optional_recent_requests_per_run=0)
     result["validation"]["min_daily_rows"] = 1
     result["datasets"].update(required=False, optional=False)
+    result["intraday"].update(enabled=False, recent_requests_per_run=0,
+                              history_requests_per_run=0, daily_validation_sample=0)
     return result
 
 
