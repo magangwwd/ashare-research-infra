@@ -70,13 +70,45 @@ jobs:
           GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
         run: python -m data_pipeline.drive_restore
 
+      - name: Check whether historical acceleration is still needed
+        id: backfill_guard
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          progress_path = Path("metadata/history_progress.json")
+          history_path = Path("metadata/manifest/history.json")
+          market_complete = False
+          generic_complete = False
+          if progress_path.exists():
+              progress = json.loads(progress_path.read_text(encoding="utf-8"))
+              market_complete = bool(progress.get("market_history_complete"))
+          if history_path.exists():
+              history = json.loads(history_path.read_text(encoding="utf-8"))
+              generic_complete = bool(history.get("all_enabled_requests_examined"))
+          needed = not (market_complete and generic_complete)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"needed={'true' if needed else 'false'}\n")
+          print({
+              "backfill_needed": needed,
+              "market_history_complete": market_complete,
+              "all_enabled_requests_examined": generic_complete,
+          })
+          PY
+
       - name: Live Tushare smoke gate
+        if: steps.backfill_guard.outputs.needed == 'true'
         run: python -m data_pipeline.run_task01 --mode smoke
 
       - name: Accelerated historical backfill
+        if: steps.backfill_guard.outputs.needed == 'true'
         run: python -m data_pipeline.run_task01 --mode backfill
 
       - name: Production acceptance
+        if: steps.backfill_guard.outputs.needed == 'true'
         shell: bash
         run: |
           BACKFILL_AS_OF=$(TZ=Asia/Shanghai date -d 'yesterday' +%F)
@@ -106,7 +138,7 @@ jobs:
           compression-level: 0
 
       - name: Publish backfill progress
-        if: success()
+        if: success() && steps.backfill_guard.outputs.needed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: task01-backfill-progress
