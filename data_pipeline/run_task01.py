@@ -50,7 +50,7 @@ def load_config(path: Path) -> dict:
             raise ValueError("Task 01 intraday source is fixed to Tushare stk_mins 15min")
         if str(intraday.get("history_start", "")) < "20200101":
             raise ValueError("intraday.history_start cannot be earlier than 20200101")
-        for name in ("recent_requests_per_run", "history_requests_per_run", "daily_validation_sample", "max_errors_before_abort", "raw_retention_days"):
+        for name in ("recent_requests_per_run", "history_requests_per_run", "backfill_history_requests_per_run", "daily_validation_sample", "max_errors_before_abort", "raw_retention_days"):
             value = intraday.get(name, 0)
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 raise ValueError(f"intraday.{name} must be a nonnegative integer")
@@ -426,7 +426,8 @@ class Pipeline:
         settings = self.config.get("intraday", {})
         if not settings.get("enabled") or not self.available("stk_mins"):
             return
-        budget = settings.get("history_requests_per_run", 0)
+        budget = (settings.get("backfill_history_requests_per_run", settings.get("history_requests_per_run", 0))
+                  if self.mode == "BACKFILL" else settings.get("history_requests_per_run", 0))
         if budget <= 0:
             return
         requests = list(self.intraday_history_requests())
@@ -725,7 +726,10 @@ class Pipeline:
         return completed, fetched, exhausted
 
     def history(self) -> None:
-        budget_key = "maintenance_history_requests_per_run" if self.mode == "MAINTENANCE" else "history_requests_per_run"
+        if self.mode == "BACKFILL":
+            budget_key = "backfill_history_requests_per_run"
+        else:
+            budget_key = "maintenance_history_requests_per_run" if self.mode == "MAINTENANCE" else "history_requests_per_run"
         budget = self.config["download"].get(budget_key, self.config["download"]["history_requests_per_run"])
         if budget > 0:
             self.discover_history_ranges()
@@ -873,7 +877,7 @@ def schema_docs(root: Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Task 01: smoke or automatic daily/maintenance")
     parser.add_argument("--config", default="config/config.yaml")
-    parser.add_argument("--mode", choices=["smoke", "auto"], default="auto")
+    parser.add_argument("--mode", choices=["smoke", "auto", "backfill"], default="auto")
     parser.add_argument("--root", default=None)
     args = parser.parse_args()
     client = None
@@ -884,7 +888,10 @@ def main() -> int:
         root = Path(args.root or config["storage"]["root"]).resolve()
         root.mkdir(parents=True, exist_ok=True)
         client = TushareClient(config)
-        as_of = datetime.now(ZoneInfo(config["schedule"]["timezone"])).date()
+        local_today = datetime.now(ZoneInfo(config["schedule"]["timezone"])).date()
+        # Backfill never touches the current local date. This keeps repeated
+        # daytime runs away from an open/incomplete trading session.
+        as_of = local_today - timedelta(days=1) if args.mode == "backfill" else local_today
         schema_docs(root)
         if args.mode == "smoke":
             atomic_json(root / "metadata/smoke.json", {"passed": False, "live_tushare": True, "checked_at": utcnow()})
@@ -903,7 +910,39 @@ def main() -> int:
             gate = read_json(root / "metadata/smoke.json")
             if not gate.get("passed") or not gate.get("live_tushare") or gate.get("code_fingerprint") != code_fingerprint():
                 raise ValidationError("Run a live --mode smoke successfully for this code before history or production")
-            Pipeline(root, config, client, as_of, config_path).run()
+            pipeline = Pipeline(root, config, client, as_of, config_path)
+            if args.mode == "backfill":
+                pipeline.mode = "BACKFILL"
+                pipeline.bootstrap()
+                pipeline.mode = "BACKFILL"
+                # Safe historical-only acceleration: latest completed session,
+                # repair queues, all historical streams and minute history.
+                pipeline.intraday_recent()
+                pipeline.critical_recent(False)
+                pipeline.extensions()
+                pipeline.discover_history_ranges()
+                pipeline.repair()
+                pipeline.history()
+                pipeline.intraday_history()
+                pipeline.store.retain_raw(datetime.combine(pipeline.as_of, datetime.min.time()))
+                atomic_json(root / "metadata/effective_config.json", config)
+                entries = pipeline.store.scan()
+                report = validate_task01(
+                    pipeline.stage, config, pipeline.as_of,
+                    dates=pipeline.sessions[-config["download"]["lookback_trading_days"]:])
+                report["mode"] = "BACKFILL"
+                critical_bad = [e for e in entries if e["layer"] == "clean" and e["dataset"] in CRITICAL
+                                and e["validation_status"] != "passed"]
+                if critical_bad:
+                    report["passed"] = False
+                    report["errors"].append("Critical stored partition failed structural validation")
+                atomic_json(root / "metadata/acceptance.json", report)
+                if not report["passed"]:
+                    raise ValidationError("; ".join(report["errors"]))
+                pipeline.store.publish(report)
+                pipeline.store.prune_versions()
+            else:
+                pipeline.run()
         atomic_json(root / "metadata/last_run.json", {"status": "SUCCESS", "mode": args.mode, "updated_at": utcnow()})
         print("SUCCESS")
         return 0
