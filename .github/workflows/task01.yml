@@ -2,10 +2,6 @@ name: Task 01 data infrastructure
 run-name: ${{ github.event_name == 'schedule' && 'Task 01 scheduled' || (inputs.watchdog_trigger && 'Task 01 watchdog' || 'Task 01 manual') }}
 
 on:
-  schedule:
-    # 13:17 UTC = 21:17 Asia/Shanghai/Singapore. Historical minute bars may
-    # finish updating as late as 21:00, so run after the provider window.
-    - cron: '17 13 * * *'
   workflow_dispatch:
     inputs:
       verify_drive_auth:
