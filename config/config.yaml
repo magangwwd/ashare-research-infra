@@ -40,6 +40,7 @@ intraday:
   history_start: '20200101'
   recent_requests_per_run: 6000
   history_requests_per_run: 120
+  max_errors_before_abort: 5
   min_security_coverage: 0.95
   activate_daily_from_minutes: true
 datasets:
