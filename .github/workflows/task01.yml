@@ -2,6 +2,9 @@ name: Task 01 data infrastructure
 run-name: ${{ github.event_name == 'schedule' && 'Task 01 scheduled' || (inputs.watchdog_trigger && 'Task 01 watchdog' || 'Task 01 manual') }}
 
 on:
+  # 23:50 Asia/Shanghai / Asia/Singapore = 15:50 UTC.
+  schedule:
+    - cron: '50 15 * * *'
   workflow_dispatch:
     inputs:
       verify_drive_auth:
