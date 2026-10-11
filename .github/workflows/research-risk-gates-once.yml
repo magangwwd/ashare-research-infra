@@ -1,0 +1,85 @@
+name: One-time main-board risk thresholds and Ashare Quant audit (paper only)
+
+on:
+  push:
+    branches:
+      - research/risk-first-entry-gates-20261011
+    paths:
+      - '.github/workflows/research-risk-gates-once.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  risk-first:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PIP_NO_CACHE_DIR: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install isolated research requirements
+        run: python -m pip install 'pandas>=3.0,<4' 'numpy>=2.4,<3' 'pyarrow>=24.0,<25'
+      - name: Run offline strategy causality and risk gate invariant tests
+        working-directory: astock-quant/stock_state_strategy
+        run: python -m unittest -v test_research_mainboard_daily_pit_v0.py test_research_risk_first_gate_scenarios.py
+      - name: Configure authorized rclone remote
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo "::error::Missing Drive secret"; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 -d > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          rclone --config "$RUNNER_TEMP/rclone.conf" listremotes | grep -qx 'gdrive:'
+      - name: Read original validated down_data 2023-2026 MAIN_BOARD Gold
+        shell: bash
+        run: |
+          set -euo pipefail
+          for kind in daily_prices adjustment_factors; do
+            rclone copy "gdrive:down_data/data/gold/main_board/$kind" "$RUNNER_TEMP/mainboard/$kind" \
+              --include 'year=2023/**' --include 'year=2024/**' \
+              --include 'year=2025/**' --include 'year=2026/**' \
+              --transfers 8 --checkers 12 --retries 3
+            test -s "$RUNNER_TEMP/mainboard/$kind/year=2026/month=10/data.parquet"
+          done
+      - name: Read Ashare_Quant snapshot and actual dataset completeness metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The same authenticated Drive account can view Ashare_Quant outside
+          # the project-root gdrive: folder. Use an isolated per-command root
+          # override only for READS, never for results/uploads.
+          export RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID='1rkC99Ymgp8mjvAcJNRPJMlOGLdI9_bue'
+          rclone copyto "gdrive:current.json" "$RUNNER_TEMP/ashare_current.json"
+          version="$(python -c 'import json,sys;print(json.load(open(sys.argv[1]))["version"])' "$RUNNER_TEMP/ashare_current.json")"
+          [[ "$version" =~ ^[0-9A-Za-z._-]+$ ]] || { echo "::error::Unexpected Ashare Quant version ID"; exit 1; }
+          rclone copyto "gdrive:versions/$version/metadata/history_progress.json" "$RUNNER_TEMP/ashare_history_progress.json"
+          test -s "$RUNNER_TEMP/ashare_current.json"
+          test -s "$RUNNER_TEMP/ashare_history_progress.json"
+      - name: Replay five risk thresholds and produce risk-first analysis
+        shell: bash
+        run: |
+          set -euo pipefail
+          python astock-quant/stock_state_strategy/research_risk_first_gate_scenarios.py \
+            --market-root "$RUNNER_TEMP/mainboard" \
+            --ashare-current "$RUNNER_TEMP/ashare_current.json" \
+            --ashare-history-progress "$RUNNER_TEMP/ashare_history_progress.json" \
+            --output "$RUNNER_TEMP/research_risk_first_gates_20261009"
+      - name: Save research-only results and verify Google Drive hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest='gdrive:stock_state_strategy/output/research_risk_first_gates_20261009'
+          rclone copy "$RUNNER_TEMP/research_risk_first_gates_20261009" "$dest" --transfers 6 --checkers 12
+          rclone check "$RUNNER_TEMP/research_risk_first_gates_20261009" "$dest" --one-way --checkers 12
+          rclone cat "$dest/summary.json" | python -c 'import json,sys;s=json.load(sys.stdin);print(json.dumps({k:{"trades":v["closed_trades"],"return":v["net_total_return"],"dd":v["daily_nav_max_drawdown"]} for k,v in s["scenarios"].items()},ensure_ascii=False,indent=2))'
+          echo "Research-only; no market order, no trading automation."
