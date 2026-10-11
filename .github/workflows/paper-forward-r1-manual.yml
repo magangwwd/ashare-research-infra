@@ -1,0 +1,103 @@
+name: Manual R1 pullback-breadth forward paper ledger (no orders)
+
+on:
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: 'Genuinely new Gold trading close YYYY-MM-DD, >=2026-10-12'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: paper-forward-r1-drive
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      SOURCE_DATE: ${{ inputs.as_of }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PIP_NO_CACHE_DIR: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Require forward date, never backfill
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_DATE" =~ ^20[0-9]{2}-[0-9]{2}-[0-9]{2}$ ]] || exit 1
+          [[ "$SOURCE_DATE" > '2026-10-11' ]] || { echo "::error::History cannot be labeled forward"; exit 1; }
+      - name: Install analytical libraries
+        run: python -m pip install 'pandas>=3.0,<4' 'numpy>=2.4,<3' 'pyarrow>=24.0,<25'
+      - name: Verify model is strict, PIT and forward-only
+        working-directory: astock-quant/stock_state_strategy
+        run: python -m unittest -v test_research_entry_quality_v1.py test_research_execution_lots_v1.py test_gold_pit_risk_guards.py test_paper_forward_r0.py test_paper_forward_entry_r1.py
+      - name: Configure ephemeral Drive credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+      - name: Require exact verified new Gold source and unique prospective date
+        shell: bash
+        run: |
+          set -euo pipefail
+          rclone copyto 'gdrive:down_data/data/gold/main_board/manifest.json' "$RUNNER_TEMP/gold_manifest.json"
+          python - "$RUNNER_TEMP/gold_manifest.json" "$SOURCE_DATE" <<'PY'
+          import json,sys
+          from datetime import date
+          from pathlib import Path
+          j=json.loads(Path(sys.argv[1]).read_text())
+          assert j.get("as_of_date")==sys.argv[2], "Gold has not refreshed to this exact session"
+          assert j.get("validation",{}).get("primary_keys_unique") is True
+          assert date.today().isoformat()>=sys.argv[2], "Cannot record a future date"
+          PY
+          target="gdrive:stock_state_strategy/output/forward_r1_pullback_breadth/$SOURCE_DATE"
+          if rclone lsf "$target" --files-only 2>/dev/null | grep -q .; then
+            echo "::error::Prospective R1 ledger date already exists; no rewrite"
+            exit 1
+          fi
+      - name: Download as-of Gold price, factors and dated execution risk
+        shell: bash
+        run: |
+          set -euo pipefail
+          for dataset in daily_prices adjustment_factors; do
+            rclone copy "gdrive:down_data/data/gold/main_board/$dataset" "$RUNNER_TEMP/market/$dataset" \
+              --include 'year=2025/**' --include 'year=2026/**' \
+              --transfers 8 --checkers 12
+          done
+          for dataset in daily_limits suspension_events; do
+            rclone copy "gdrive:down_data/data/gold/main_board/$dataset" "$RUNNER_TEMP/risk/$dataset" \
+              --include 'year=2026/**' --transfers 8 --checkers 12
+          done
+          rclone copyto 'gdrive:down_data/data/gold/main_board/name_history.parquet' "$RUNNER_TEMP/risk/name_history/data.parquet"
+      - name: Record strict R1 signal-close candidates, unknown next open
+        shell: bash
+        run: |
+          set -euo pipefail
+          python astock-quant/stock_state_strategy/paper_forward_entry_r1.py \
+            --manifest "$RUNNER_TEMP/gold_manifest.json" \
+            --market-root "$RUNNER_TEMP/market" \
+            --risk-root "$RUNNER_TEMP/risk" \
+            --as-of "$SOURCE_DATE" \
+            --output "$RUNNER_TEMP/r1_forward"
+      - name: Immutable append once and byte-verify on Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="gdrive:stock_state_strategy/output/forward_r1_pullback_breadth/$SOURCE_DATE"
+          rclone copy "$RUNNER_TEMP/r1_forward" "$target" --immutable --transfers 2 --checkers 4
+          rclone check "$RUNNER_TEMP/r1_forward" "$target" --one-way --checkers 4
+          echo "CLOSE_ONLY_UNEXECUTED_R1_CANDIDATE; no broker, no order, no recommendation"
