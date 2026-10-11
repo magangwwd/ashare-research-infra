@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -152,12 +153,23 @@ def main() -> int:
                 run("rclone", "copyto", REMOTE + "down_data/" + script,
                     str(work / "down_data" / script))
             previous = validate_gold(data)
+            # Keep the prior complete stock list before rebuilding the current one.
+            # IPOs enter the new list; delisted symbols must stay for historical reads.
+            previous_instruments = scratch / "previous_instruments.parquet"
+            shutil.copy2(gold_path / "instruments.parquet", previous_instruments)
             if not os.getenv("TUSHARE_TOKEN"):
                 raise RuntimeError("TUSHARE_TOKEN secret missing; refusing Gold update")
             down = work / "down_data"
             for script in ("download_a_share_main_board.py", "build_main_board_canonical.py",
                            "backfill_main_board_history.py", "backfill_main_board_states.py"):
                 run(sys.executable, script, cwd=down)
+                if script == "build_main_board_canonical.py":
+                    run(sys.executable, str(CODE / "universe_audit.py"),
+                        "--previous", str(previous_instruments),
+                        "--current", str(gold_path / "instruments.parquet"),
+                        "--source", str(data / "gold" / "a_share_main_board.parquet"),
+                        "--output", str(gold_path / "universe_changes.json"),
+                        cwd=down)
             as_of = validate_gold(data, previous, full=True)
             if args.min_as_of and as_of < args.min_as_of:
                 raise RuntimeError(f"Refusing to publish stale refresh: {as_of}")
