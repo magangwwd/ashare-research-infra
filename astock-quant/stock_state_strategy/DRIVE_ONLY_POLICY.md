@@ -14,7 +14,7 @@
 
 ## 首次运行说明
 
-用户需在仓库 Secrets 中配置 `GDRIVE_RCLONE_CONFIG_B64`，并在需要Tushare的任务中配置 `TUSHARE_TOKEN`。所有工作流目前仅手动触发，未启用定时调度。由于云端凭据由用户管理，这次Git清理并不表示已验证旧模型从Drive实际重跑成功。
+用户需在仓库 Secrets 中配置 `GDRIVE_RCLONE_CONFIG_B64`，并在需要Tushare的任务中配置 `TUSHARE_TOKEN`。2026-10-11 已为 Task 01 股票/财务数据流水线和 stock_state_strategy Gold/状态池流水线设置每天 UTC 15:50（UTC+8 23:50）的 GitHub Actions 调度；其他旧模型工作流仍仅手动触发。调度能否实际完成取决于有效的 GitHub Secrets、Tushare 权限、Google Drive 授权和远程验收，不代表已成功夜间实跑。由于云端凭据由用户管理，这次Git清理并不表示已验证旧模型从Drive实际重跑成功。
 
 旧研究可运行入口：
 - `market-features`、`event-features`：特征生成。
