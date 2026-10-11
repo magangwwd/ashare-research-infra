@@ -79,10 +79,15 @@ def nav_periods(nav: pd.DataFrame) -> dict:
     result = {}
     for name, (first, last) in splits.items():
         frame = x.loc[first:last]
-        previous = x.loc[:first].iloc[0]["nav"] if name == "2024" else x.loc[x.index < first].iloc[-1]["nav"]
-        # 2024 begins at initial cash before any position.
+        # The calendar date January 1 is not a trading session.
+        # Do not index the (nonexistent) Jan 1 NAV.
         if name == "2024":
             previous = base.INITIAL_CASH
+        else:
+            earlier = x.loc[x.index < first, "nav"]
+            if earlier.empty:
+                raise ValueError("Missing prior NAV for period " + name)
+            previous = float(earlier.iloc[-1])
         pnl = float(frame.iloc[-1]["nav"] / previous - 1)
         max_dd = float((frame["nav"] / frame["nav"].cummax() - 1).min())
         result[name] = {"return": round(pnl, 5), "max_dd_internal": round(max_dd, 5)}
