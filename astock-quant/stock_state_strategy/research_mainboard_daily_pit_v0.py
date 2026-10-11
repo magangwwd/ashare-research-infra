@@ -170,7 +170,7 @@ def exit_position(p, quote: float, reason: str, date, cash: float, trades: list)
 def run_portfolio(sessions, price_by_sym, scheduled, *, max_stop_pct=0.10,
                   max_gap_up=0.03, min_gap_down=-0.03,
                   risk_budget=0.005, max_weight=0.15,
-                  max_positions=MAX_POSITIONS):
+                  max_positions=MAX_POSITIONS, risk_context=None):
     # All gates apply to information available by the simulated OPEN.
     # Defaults preserve the already-audited historical baseline exactly.
     if not (0.015 <= max_stop_pct <= 0.10):
@@ -207,6 +207,13 @@ def run_portfolio(sessions, price_by_sym, scheduled, *, max_stop_pct=0.10,
             if bar is None:
                 p["hold_count"] += 1
                 continue
+            if risk_context is not None:
+                block = risk_context.exit_reason(symbol, date, bar)
+                if block:
+                    p["last_price"] = float(bar["p_close"])
+                    p["hold_count"] += 1
+                    skipped["risk_" + block] += 1
+                    continue
             op = float(bar["p_open"])
             # Unknown exchange-specific hard-down-limit execution: conservatively defer.
             one_word_down = (abs(float(bar["high"] - bar["low"])) < 1e-8
@@ -254,6 +261,11 @@ def run_portfolio(sessions, price_by_sym, scheduled, *, max_stop_pct=0.10,
             if bar is None:
                 skipped["unavailable_entry_bar"] += 1
                 continue
+            if risk_context is not None:
+                block = risk_context.entry_reason(symbol, date, bar)
+                if block:
+                    skipped["risk_" + block] += 1
+                    continue
             op = float(bar["p_open"])
             gap = op / candidate["signal_close"] - 1
             locked_up = (abs(float(bar["high"] - bar["low"])) < 1e-8 and gap >= 0.095)
