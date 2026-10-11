@@ -67,3 +67,5 @@ jobs:
           rclone check "$RUNNER_TEMP/research_mainboard_daily_pit_v0_20261009" "$target" --one-way --checkers 12
           rclone cat "$target/summary.json" | python -c 'import json,sys; s=json.load(sys.stdin);print(json.dumps({"status":s["status"],"overall":s["overall"],"scope":s["scope"]},ensure_ascii=False,indent=2))'
           echo 'PAPER ONLY: no brokerage connections, no strategy rewrite.'
+
+# Re-run after correcting 20-session timeout and period return calculations.
