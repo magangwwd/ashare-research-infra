@@ -74,7 +74,7 @@ def make_snapshot(panel: pd.DataFrame, guard: GoldPITRisk, day: pd.Timestamp):
         return {
             "valid_symbols": point["valid"], "above_ma20": point["above"],
             "fraction": point["fraction"], "market_breadth_pass": False,
-            "raw_pullback_patterns": 0, "candidates": [],
+            "raw_pullback_patterns": None, "candidates": [],
         }
     for sym, history in panel.groupby("vendor_symbol", sort=True):
         if history["trade_date"].iloc[-1] != day:
