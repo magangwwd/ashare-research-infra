@@ -178,3 +178,16 @@ API 自动重试、限速、分页。分页重复或超过上限直接失败，�
 5. Task 02 只读 `data/clean/` 或经验证的正式 Artifact，从 `data/curated/` 与 `factors/` 开始，实现严格股票池、每日状态、上市天数、动态复权及第一批因子。
 
 这些接续工作必须基于真实验收记录，不得把离线测试或已编写代码标记成全量数据已验收。
+
+## 导入的原量化项目：astock-quant
+
+原 [astock-quant](https://github.com/magangwwd/astock-quant) 默认分支代码按 **2026-10-11** 快照导入 [`astock-quant/`](astock-quant/) 子目录，源提交 `04c821697f39bc0fe4c96f9968810eaa92da3398`。保留原有策略、研究脚本、测试和文档；**原仓库没有删除或重写历史**。子目录里的 `.github/workflows/` 是原始工作流存档，不会由 GitHub Actions 自动识别。
+
+已在此仓库顶层新建专用入口：
+- `.github/workflows/astock-quant-ci.yml`：离线校验和禁止数据进入 Git。
+- `.github/workflows/astock-quant-drive-first.yml`：原状态策略的独立 Drive-first 任务（仅手动）。
+- `.github/workflows/astock-quant-legacy-drive.yml`：旧量化模型的独立 Drive 任务（仅手动）。
+
+**两个项目的数据链互不替代。** 本仓库既有 Task 01 使用 `GDRIVE_OAUTH_JSON` 并写入 `Ashare_Quant`；导入的旧量化任务依赖另一套 `GDRIVE_RCLONE_CONFIG_B64` 和 `gdrive:`（其 `root_folder_id` 应为 `1eI1oqhndalitKtS3zrU449cta0TTQGY_`），如需下载或更新Tushare数据还依赖 `TUSHARE_TOKEN`。**Secrets 不随仓库复制**，需在当前仓库的 Actions Secrets 中另行配置并做真实 preflight，不能把既有 OAuth Secret 当成 rclone Secret 使用。
+
+导入部分只允许 Git 保存代码、测试和配置模板。行情、回测、模型和运行结果由 Google Drive 持久保存；手动任务开始前先检查目标 Drive 路径和授权。冻结V1仅限 PAPER，禁止实盘下单。此导入不自动连接现有 `research_engine` 和导入策略的模型，不开启定时任务。

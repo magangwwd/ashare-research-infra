@@ -1,0 +1,40 @@
+{
+  "merged_project": "stock_state_strategy",
+  "merge_mode": "self_contained_verified_merge",
+  "merge_completed_at": "2026-08-24",
+  "original_project_directories_removed": true,
+  "original_project_directories": ["demo01", "demo02"],
+  "source_projects_preserved": ["archive/source_snapshots/demo01", "archive/source_snapshots/demo02"],
+  "copied_source_scope": "all top-level Python source and tests from demo01 and demo02",
+  "large_artifacts_copied": true,
+  "large_artifact_policy": "legacy data and historical output are stored under artifacts/legacy; new output is written under this project",
+  "preserved_strategy": {
+    "path": "LOCK_TO_MARKUP_PAPER_STRATEGY.md",
+    "source": "archive/source_snapshots/demo02/LOCK_TO_MARKUP_PAPER_STRATEGY.md",
+    "sha256": "7ff70fff76c3f2bf0bbc61288baf94b41ac9c402b7c622efd90a12b82b7129af",
+    "required_byte_identity": true
+  },
+  "config_roles": {
+    "config.json": "entry model, executable labels, and frozen ranking",
+    "configs/ownership_state.json": "read-only reuse of preserved ownership disclosures and processed events",
+    "configs/ownership_rebuild.json": "full ownership rebuild under this project's runtime directory",
+    "configs/forward_20260818.json": "isolated 2026-08-18 forward state snapshot"
+  },
+  "final_verification": {
+    "tests_before_removal": "40 passed",
+    "tests_after_removal": "40 passed",
+    "smoke_as_of": "2026-08-18",
+    "smoke_a_pool_count": 94,
+    "smoke_b_pool_count": 291,
+    "smoke_removed_count": 2808,
+    "smoke_candidate_symbols": ["600400.SH"],
+    "active_original_directory_references": 0,
+    "strategy_archive_byte_identical": true
+  },
+  "renamed_documents": {
+    "archive/source_snapshots/demo01/handoff.md": "docs/ENTRY_MODEL_RESEARCH_HISTORY.md",
+    "archive/source_snapshots/demo02/handoff.md": "docs/OWNERSHIP_STATE_RESEARCH_HISTORY.md",
+    "archive/source_snapshots/demo01/V6_CONTROL_MONITOR_RESEARCH.md": "docs/CONTROL_POOL_ENTRY_AUDIT.md",
+    "archive/source_snapshots/demo02/LOCK_TO_MARKUP_PAPER_STRATEGY_V2_TRAIL.md": "docs/MOVING_TAKE_PROFIT_V2_REJECTED_EXPERIMENT.md"
+  }
+}

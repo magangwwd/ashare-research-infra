@@ -1,0 +1,28 @@
+name: Stock state sync checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - cleanup/stock-folder-20260419
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Refuse Git-tracked generated data and private runtime files
+        run: python stock_state_strategy/check_git_storage_policy.py
+      - name: Compile strategy Python files
+        run: python -m compileall -q stock_state_strategy
+      - name: Run offline path and preflight unit tests
+        working-directory: stock_state_strategy
+        run: python -m unittest -v test_data_source_paths.py test_github_drive_runner.py test_drive_only_contract.py

@@ -1,0 +1,69 @@
+{
+  "monitor_id": "example_monitor",
+  "mode": "PAPER_ONLY_NO_ENTRY_AUTHORIZATION",
+  "position": {
+    "active": false,
+    "symbol": "000001.SZ",
+    "name": "示例股票（请替换）",
+    "entry_price": null,
+    "entry_date": null,
+    "entry_date_note": "填写实际成交日后启用",
+    "shares": null,
+    "closed_note": "仅提供配置模板"
+  },
+  "strategy": {
+    "strategy_file": "../lock_to_markup_paper_strategy.json",
+    "fixed_stop_pct": null,
+    "stop_initialization": "ATR20_QFQ_BEFORE_ENTRY_FREEZE",
+    "state_transition_files": [
+      "../output/latest/state_transition/current_state_transitions.csv",
+      "../output/forward_latest/state_transition/current_state_transitions.csv",
+      "../artifacts/legacy/demo02_output/forward_20260818/state_transition/current_state_transitions.csv"
+    ],
+    "state_data_max_age_days": 3,
+    "moving_take_profit_enabled": false,
+    "moving_take_profit_reason": "V2历史实验未达到替换标准；正式V1无固定止盈，使用派发退出和20日时间退出"
+  },
+  "market_data": {
+    "providers": [
+      "eastmoney",
+      "tencent",
+      "sina"
+    ],
+    "timeout_seconds": 8,
+    "retries": 2,
+    "retry_delay_seconds": 0.5,
+    "max_cross_source_diff_pct": 0.003,
+    "max_live_quote_age_seconds": 180,
+    "max_closed_quote_age_hours": 96,
+    "local_market_data_root": "../../../down_data/data/gold/main_board",
+    "local_bar_max_age_days": 4
+  },
+  "monitor": {
+    "poll_interval_seconds": 30,
+    "closed_poll_interval_seconds": 900,
+    "market_close_time": "15:00"
+  },
+  "email": {
+    "enabled": false,
+    "env_file": ".env",
+    "subject_prefix": "[股票策略观察]",
+    "default_port": 465,
+    "default_security": "ssl",
+    "environment_variables": {
+      "host": "LIVE_MONITOR_SMTP_HOST",
+      "port": "LIVE_MONITOR_SMTP_PORT",
+      "security": "LIVE_MONITOR_SMTP_SECURITY",
+      "username": "LIVE_MONITOR_SMTP_USER",
+      "password": "LIVE_MONITOR_SMTP_PASSWORD",
+      "from_address": "LIVE_MONITOR_SMTP_FROM",
+      "to_addresses": "LIVE_MONITOR_SMTP_TO",
+      "proxy_url": "LIVE_MONITOR_SMTP_PROXY"
+    }
+  },
+  "runtime": {
+    "state_file": "runtime/state.json",
+    "audit_log": "runtime/monitor_audit.jsonl",
+    "latest_status_file": "runtime/latest_status.json"
+  }
+}

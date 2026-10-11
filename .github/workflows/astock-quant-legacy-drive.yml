@@ -1,0 +1,70 @@
+name: astock-quant - Legacy models Drive-only
+
+on:
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Legacy research action (Drive inputs, Drive outputs)"
+        required: true
+        type: choice
+        options:
+          - market-features
+          - event-features
+          - financial-score
+          - lightgbm-daily
+          - lightgbm-backtest
+          - kronos-predict
+          - combined-top3
+          - roe-fcf
+          - daily-report
+      drive_prefix:
+        description: "Legacy backup folder relative to Google Drive project root"
+        required: true
+        default: astock_quant_repo_backup
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stock-strategy-drive-writer
+  cancel-in-progress: false
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_NO_CACHE_DIR: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify Git contains no data
+        run: python astock-quant/stock_state_strategy/check_git_storage_policy.py
+      - name: Install dependencies for research
+        run: |
+          python -m pip install -r astock-quant/stock_state_strategy/requirements.txt
+      - name: Install Kronos dependencies if used
+        if: contains(fromJSON('["kronos-predict","combined-top3","daily-report"]'), inputs.job)
+        run: python -m pip install -r astock-quant/kronos_return_top3/requirements.txt
+      - name: Configure Google Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "$GDRIVE_RCLONE_CONFIG_B64" ]] || { echo "::error::GDRIVE_RCLONE_CONFIG_B64 missing"; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          rclone --config "$RUNNER_TEMP/rclone.conf" listremotes | grep -qx 'gdrive:'
+      - name: Run legacy research and persist results only on Drive
+        run: |
+          python astock-quant/stock_state_strategy/legacy_drive_runner.py \
+            "${{ inputs.job }}" --drive-prefix "${{ inputs.drive_prefix }}"

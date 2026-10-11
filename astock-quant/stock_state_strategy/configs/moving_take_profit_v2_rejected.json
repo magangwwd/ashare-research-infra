@@ -1,0 +1,106 @@
+{
+  "strategy_id": "LOCK_MARKUP_SINGLE_PAPER_V2_TRAIL",
+  "name_zh": "锁升观察者V2移动止盈候选",
+  "version": "2.0.0-rejected",
+  "designed_at": "2026-08-19",
+  "historical_data_cutoff": "2026-08-11",
+  "status": "REJECTED_BY_HISTORICAL_ACCEPTANCE_NOT_ACTIVATED",
+  "base_strategy_file": "lock_to_markup_paper_strategy.json",
+  "base_strategy_id": "LOCK_MARKUP_SINGLE_PAPER_V1",
+  "unchanged_components": [
+    "universe",
+    "state_signal",
+    "candidate_ranking",
+    "paper_entry_gate",
+    "entry_execution",
+    "portfolio",
+    "protective_stop",
+    "time_exit",
+    "costs"
+  ],
+  "protective_stop": {
+    "unchanged_from_v1": true,
+    "atr_window": 20,
+    "atr_multiplier": 1.5,
+    "minimum_stop_pct": 0.04,
+    "maximum_stop_pct": 0.08,
+    "entry_day_touch_exit": "NEXT_SELLABLE_OPEN",
+    "later_gap_stop_exit": "SELLABLE_OPEN",
+    "later_intraday_stop_exit": "STOP_PRICE"
+  },
+  "moving_take_profit": {
+    "enabled_for_candidate_test": true,
+    "enabled_for_forward_paper": false,
+    "replaces_distribution_exit_in_primary_group": true,
+    "risk_unit": "FROZEN_ENTRY_ATR_STOP_PERCENTAGE",
+    "activation_r": 1.5,
+    "trail_distance_r": 1.0,
+    "minimum_locked_gross_r": 0.25,
+    "watermark": "HIGHEST_COMPLETED_CLOSE",
+    "session_d_floor_information_cutoff": "D_MINUS_1_CLOSE",
+    "floor_formula": "MAX(ENTRY*(1+0.25*STOP_PCT), HIGHEST_COMPLETED_CLOSE-1.0*STOP_PCT*ENTRY, PREVIOUS_FLOOR)",
+    "activation_effective_time": "NEXT_SESSION_AFTER_ACTIVATING_CLOSE",
+    "gap_exit": "SELLABLE_OPEN",
+    "intraday_exit": "PRESESSION_FROZEN_TRAIL_FLOOR",
+    "monotonic_floor": true,
+    "same_day_high_updates_floor": false,
+    "reason": "Daily OHLC does not reveal whether the high or low happened first."
+  },
+  "distribution_exit": {
+    "primary_group_enabled": false,
+    "shadow_group_enabled": true,
+    "shadow_group_name": "shadow_trailing_plus_distribution",
+    "signal": "markup_to_distribution",
+    "execution": "D_PLUS_1_FIRST_SELLABLE_OPEN"
+  },
+  "time_exit": {
+    "unchanged_from_v1": true,
+    "maximum_forward_sessions_after_entry": 20,
+    "scheduled_exit": "T_PLUS_21_CLOSE",
+    "unavailable_exit": "FIRST_LATER_SELLABLE_OPEN"
+  },
+  "execution_priority": [
+    "ENTRY_DAY_STOP_NEXT_SELLABLE_OPEN",
+    "HARD_STOP_GAP",
+    "DISTRIBUTION_NEXT_OPEN_SHADOW_ONLY",
+    "TRAIL_GAP",
+    "TRAIL_INTRADAY",
+    "HARD_STOP_INTRADAY",
+    "TIME_EXIT"
+  ],
+  "historical_experiment": {
+    "script": "moving_take_profit_experiment.py",
+    "output_directory": "output/moving_take_profit_experiment",
+    "candidates": 2215,
+    "instruments": 1451,
+    "reconciliation_passed": true,
+    "primary_single_position": {
+      "trades": 77,
+      "total_return": 0.0182155031348048,
+      "mean_net_r": 0.053671894707106364,
+      "profit_factor": 1.0873910524457062,
+      "maximum_closed_trade_drawdown": -0.06948828105798932,
+      "total_return_without_best_trade": -0.013678510186085568
+    },
+    "v1_single_position_reference": {
+      "trades": 58,
+      "total_return": 0.10723264840042468,
+      "mean_net_r": 0.358880982669453,
+      "profit_factor": 1.6516904862157995,
+      "maximum_closed_trade_drawdown": -0.04869052106089067
+    },
+    "increment_vs_v1": {
+      "development_daily_mean_r": 0.1130368414608336,
+      "development_hac_p": 0.024037835269233324,
+      "diagnostic_daily_mean_r": -0.14513883053520057,
+      "diagnostic_hac_p": 0.02333211235298381
+    },
+    "acceptance_passed": false,
+    "decision": "DO_NOT_ACTIVATE_V2"
+  },
+  "activation": {
+    "forward_start_rule": "NOT_APPLICABLE_REJECTED",
+    "automatic_live_authorization": false,
+    "may_overwrite_v1": false
+  }
+}

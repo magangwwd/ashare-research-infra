@@ -1,0 +1,22 @@
+# Never commit market history, data snapshots, runtime state or account secrets.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+live_position_monitor/config.json
+live_position_monitor/runtime/
+artifacts/
+runtime/
+output/
+archive/
+*.parquet
+*.duckdb
+*.sqlite
+*.db
+*.pkl
+*.joblib
+__pycache__/
+.pytest_cache/
+*.pyc

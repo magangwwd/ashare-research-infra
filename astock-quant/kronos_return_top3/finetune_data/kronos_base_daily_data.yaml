@@ -1,0 +1,21 @@
+# Local multi-asset Kronos fine-tune dataset config
+data:
+  dataset_root: "kronos_return_top3/finetune_data"
+  train_manifest_path: "kronos_return_top3/finetune_data/train_manifest.csv"
+  val_manifest_path: "kronos_return_top3/finetune_data/val_manifest.csv"
+  test_manifest_path: "kronos_return_top3/finetune_data/test_manifest.csv"
+  lookback_window: 512
+  predict_window: 10
+  max_context: 512
+  train_end: "2023-12-31"
+  val_end: "2024-12-31"
+
+model_paths:
+  pretrained_tokenizer: "NeoQuasar/Kronos-Tokenizer-base"
+  pretrained_predictor: "NeoQuasar/Kronos-base"
+  exp_name: "daily_data_kronos_base_lb512_pred10"
+
+notes:
+  dataset_style: "multi_asset_manifest"
+  source_data: "repo daily_data/*.csv"
+  expected_loader: "kronos_return_top3.finetune_dataset.MultiAssetKlineDataset"

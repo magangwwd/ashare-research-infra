@@ -1,0 +1,134 @@
+{
+  "strategy_id": "LOCK_MARKUP_SINGLE_PAPER_V1",
+  "name_zh": "锁升观察者",
+  "version": "1.0.0",
+  "frozen_at": "2026-08-18",
+  "historical_data_cutoff": "2026-08-11",
+  "status": "PAPER_ONLY_NO_ENTRY_AUTHORIZATION",
+  "forward_start_rule": "first_fully_processed_signal_after_activation_no_backfill",
+  "universe": {
+    "market": "CN_A_MAIN_BOARD",
+    "minimum_listing_sessions": 250,
+    "minimum_history_observations_250": 238,
+    "minimum_recent_observations_20": 18,
+    "maximum_one_word_days_20": 3,
+    "exclude_historical_st": true
+  },
+  "state_signal": {
+    "current_defined_state": "markup",
+    "current_pool_status": "A_STRATEGY_CANDIDATE",
+    "previous_defined_state": "lock",
+    "minimum_transition_gap_days": 1,
+    "maximum_transition_gap_days": 45,
+    "previous_lock_must_be_a_pool": false,
+    "minimum_state_score": 65.0,
+    "minimum_state_margin": 10.0,
+    "minimum_score_coverage": 0.8,
+    "minimum_stable_days_5": 3,
+    "minimum_confidence": 80.0,
+    "minimum_average_turnover_cny_20": 100000000.0,
+    "maximum_disclosure_age_days": 180,
+    "minimum_holder_updates": 2,
+    "minimum_composition_updates": 2,
+    "require_composition_quality_valid": true
+  },
+  "candidate_ranking": [
+    {
+      "field": "estimated_pl_ratio",
+      "direction": "descending"
+    },
+    {
+      "field": "net_r_percentile",
+      "direction": "descending"
+    },
+    {
+      "field": "instrument_id",
+      "direction": "ascending"
+    }
+  ],
+  "ranking_missing_action": "NO_ENTRY",
+  "paper_entry_gate": {
+    "mode": "relative_rank_only",
+    "requires_estimated_pl_ratio_1_2": false,
+    "requires_reward_top10": false,
+    "requires_positive_estimated_expectancy": false
+  },
+  "strict_gate_shadow": {
+    "minimum_estimated_pl_ratio": 1.2,
+    "minimum_net_r_percentile": 0.9,
+    "require_positive_estimated_expectancy": true,
+    "historical_pass_count": 0,
+    "application": "LOG_ONLY_NOT_AN_ENTRY_FILTER_IN_V1"
+  },
+  "entry_execution": {
+    "signal_time": "T_CLOSE",
+    "planned_entry_time": "T_PLUS_1_OPEN",
+    "maximum_entry_gap": 0.03,
+    "reject_if_entry_unbuyable": true,
+    "reject_if_entry_missing": true,
+    "reject_if_required_state_unknown": true,
+    "defer_rejected_entry": false
+  },
+  "portfolio": {
+    "maximum_concurrent_positions": 1,
+    "risk_per_trade": 0.005,
+    "maximum_position_weight": 0.15,
+    "board_lot_shares": 100,
+    "allow_leverage": false,
+    "allow_averaging_down": false,
+    "allow_replacement_while_holding": false
+  },
+  "protective_stop": {
+    "atr_window": 20,
+    "atr_multiplier": 1.5,
+    "minimum_stop_pct": 0.04,
+    "maximum_stop_pct": 0.08,
+    "entry_day_touch_exit": "NEXT_SELLABLE_OPEN",
+    "later_gap_stop_exit": "SELLABLE_OPEN",
+    "later_intraday_stop_exit": "STOP_PRICE"
+  },
+  "distribution_exit": {
+    "enabled": true,
+    "signal": "markup_to_distribution",
+    "decision_time": "D_CLOSE",
+    "execution": "D_PLUS_1_FIRST_SELLABLE_OPEN",
+    "evidence_level": "B_MONITOR_PROXY",
+    "experimental": true
+  },
+  "time_exit": {
+    "maximum_forward_sessions_after_entry": 20,
+    "scheduled_exit": "T_PLUS_21_CLOSE",
+    "unavailable_exit": "FIRST_LATER_SELLABLE_OPEN"
+  },
+  "costs": {
+    "buy_cost_rate": 0.0013,
+    "sell_cost_rate": 0.0018
+  },
+  "paper_acceptance": {
+    "minimum_closed_trades": 30,
+    "minimum_calendar_months": 12,
+    "minimum_mean_net_r": 0.0,
+    "minimum_profit_factor": 1.2,
+    "require_positive_net_total_return": true,
+    "maximum_closed_trade_drawdown_abs": 0.1,
+    "require_positive_daily_increment_vs_no_distribution_exit": true,
+    "maximum_hac_p_value": 0.05,
+    "maximum_rule_violations": 0,
+    "automatic_live_authorization": false
+  },
+  "pause_conditions": {
+    "maximum_closed_trade_drawdown_abs": 0.1,
+    "pause_on_data_audit_failure": true,
+    "pause_on_missing_ranking_fields": true,
+    "pause_on_implementation_mismatch": true,
+    "logic_change_requires_new_version": true
+  },
+  "output_directory": "output/lock_to_markup_paper_v1",
+  "required_logs": [
+    "signal_log.parquet",
+    "orders.csv",
+    "trades.csv",
+    "daily_nav.csv",
+    "exceptions.csv"
+  ]
+}

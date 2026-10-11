@@ -1,0 +1,22 @@
+{
+  "market_data_root": "../down_data/data/gold/main_board",
+  "raw_data_dir": "artifacts/legacy/demo02_data/raw",
+  "processed_data_dir": "artifacts/legacy/demo02_data/processed",
+  "output_dir": "output",
+  "research_start": "2016-01-01",
+  "research_end": "2026-08-11",
+  "discovery_end": "2020-12-31",
+  "validation_start": "2021-01-01",
+  "validation_end": "2023-12-31",
+  "holdout_start": "2024-01-01",
+  "horizons": [5, 20, 60],
+  "minimum_listing_sessions": 250,
+  "minimum_average_turnover_cny": 100000000.0,
+  "minimum_cross_section": 20,
+  "buy_cost_rate": 0.0013,
+  "sell_cost_rate": 0.0018,
+  "download_batch_size": 100,
+  "download_min_interval_seconds": 0.32,
+  "download_attempts": 5,
+  "random_seed": 20260818
+}
