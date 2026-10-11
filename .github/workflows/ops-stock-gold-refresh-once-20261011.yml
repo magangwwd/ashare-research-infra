@@ -1,0 +1,71 @@
+name: One-time stock Gold refresh + state output (2026-10-11)
+
+# This workflow exists on a dedicated operations branch, not main.
+# Only its initial branch push triggers it; no schedules or dispatch.
+on:
+  push:
+    branches:
+      - ops/refresh-stock-gold-once-20261011
+    paths:
+      - '.github/workflows/ops-stock-gold-refresh-once-20261011.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stock-strategy-drive-writer
+  cancel-in-progress: false
+
+jobs:
+  refresh-and-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_NO_CACHE_DIR: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify input Secrets without showing them
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo "::error::Missing GDRIVE_RCLONE_CONFIG_B64"; exit 1; }
+          test -n "$TUSHARE_TOKEN" || { echo "::error::Missing TUSHARE_TOKEN"; exit 1; }
+      - name: Install approved strategy requirements
+        run: python -m pip install -r astock-quant/stock_state_strategy/requirements.txt
+      - name: Install rclone and configure Drive project root
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          cfg="$RUNNER_TEMP/rclone.conf"
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$cfg")
+          echo "RCLONE_CONFIG=$cfg" >> "$GITHUB_ENV"
+          rclone --config "$cfg" listremotes | grep -qx 'gdrive:'
+          for file in stock_state_strategy/LOCK_TO_MARKUP_PAPER_STRATEGY.md down_data/DATABASE_STATUS.md; do
+            rclone --config "$cfg" lsf "gdrive:${file%/*}" --files-only --max-depth 1 | grep -qx "${file##*/}"
+          done
+      - name: Refresh Tushare Gold and validate all manifests (min 2026-10-09)
+        working-directory: astock-quant/stock_state_strategy
+        run: |
+          python github_drive_runner.py gold-refresh --as-of auto --min-as-of 2026-10-09
+      - name: Compute latest stock state and save to Google Drive
+        working-directory: astock-quant/stock_state_strategy
+        run: |
+          python github_drive_runner.py current-state --as-of auto --min-as-of 2026-10-09
+      - name: Verify both run statuses on Google Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          rid="$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          rclone cat "gdrive:stock_state_strategy/runs/$rid/run_status.json"
+          echo "Strategy outputs published under gdrive:stock_state_strategy/output/"
+          rclone lsf gdrive:stock_state_strategy/output --dirs-only --max-depth 1
