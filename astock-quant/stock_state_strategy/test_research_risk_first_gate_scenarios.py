@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 from research_mainboard_daily_pit_v0 import run_portfolio
-from research_risk_first_gate_scenarios import EXPERIMENTS, asharereadiness
+from research_risk_first_gate_scenarios import EXPERIMENTS, asharereadiness, nav_periods
 
 
 class RiskGateInvariants(unittest.TestCase):
@@ -48,6 +48,15 @@ class RiskGateInvariants(unittest.TestCase):
             self.assertFalse(result["eligible_for_full_2024_2026_pit_replay"])
             self.assertFalse(result["critical_history_complete"])
             self.assertEqual(result["datasets"]["daily"]["clean_rows"],123)
+
+    def test_returns_do_not_require_nontrading_january_1(self):
+        nav=pd.DataFrame({
+            "trade_date":["2024-01-02","2024-12-31","2025-01-02","2026-10-09"],
+            "nav":[990000.0,1010000.0,1015000.0,1020000.0],
+        })
+        out=nav_periods(nav)
+        self.assertAlmostEqual(out["2024"]["return"],0.01)
+        self.assertAlmostEqual(out["2025_2026"]["return"],round(1020000/1010000-1,5))
 
     def test_unvalidated_ashare_quant_snapshot_rejected(self):
         with tempfile.TemporaryDirectory() as d:
