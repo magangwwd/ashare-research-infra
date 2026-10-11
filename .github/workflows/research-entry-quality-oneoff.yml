@@ -1,0 +1,74 @@
+name: One-time fixed R0 entry-pattern and breadth research
+
+on:
+  push:
+    branches: [research/r0-lot-size-execution-stress-20261011]
+    paths:
+      - '.github/workflows/research-entry-quality-oneoff.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oneoff-r0-breadth-entry-drive
+  cancel-in-progress: false
+
+jobs:
+  explore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PIP_NO_CACHE_DIR: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install minimal requirements
+        run: python -m pip install 'pandas>=3.0,<4' 'numpy>=2.4,<3' 'pyarrow>=24.0,<25'
+      - name: Test strict paid prices, point-in-time breadth and exits
+        working-directory: astock-quant/stock_state_strategy
+        run: python -m unittest -v test_research_mainboard_daily_pit_v0.py test_research_execution_lots_v1.py test_research_entry_quality_v1.py test_gold_pit_risk_guards.py
+      - name: Authenticate Drive into ephemeral runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+      - name: Read historical Gold price factors and historical PIT status
+        shell: bash
+        run: |
+          set -euo pipefail
+          for dataset in daily_prices adjustment_factors; do
+            rclone copy "gdrive:down_data/data/gold/main_board/$dataset" "$RUNNER_TEMP/market/$dataset" \
+              --include 'year=2023/**' --include 'year=2024/**' --include 'year=2025/**' --include 'year=2026/**' \
+              --transfers 8 --checkers 12
+          done
+          for dataset in daily_limits suspension_events; do
+            rclone copy "gdrive:down_data/data/gold/main_board/$dataset" "$RUNNER_TEMP/risk/$dataset" \
+              --include 'year=2024/**' --include 'year=2025/**' --include 'year=2026/**' \
+              --transfers 8 --checkers 12
+          done
+          rclone copyto "gdrive:down_data/data/gold/main_board/name_history.parquet" "$RUNNER_TEMP/risk/name_history/data.parquet"
+      - name: Seven fixed causal entry-quality replays (no orders)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python astock-quant/stock_state_strategy/research_entry_quality_v1.py \
+            --market-root "$RUNNER_TEMP/market" \
+            --risk-root "$RUNNER_TEMP/risk" \
+            --out "$RUNNER_TEMP/entry_quality"
+      - name: Publish previously examined historical diagnostics only
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="gdrive:stock_state_strategy/output/r0_entry_quality_20261009"
+          rclone copy "$RUNNER_TEMP/entry_quality" "$target" --immutable --transfers 4 --checkers 8
+          rclone check "$RUNNER_TEMP/entry_quality" "$target" --one-way --checkers 8
+          echo "PAPER_ONLY_NO_ENTRY_AUTHORIZATION; seen 2024-2026 are not an untouched holdout"
