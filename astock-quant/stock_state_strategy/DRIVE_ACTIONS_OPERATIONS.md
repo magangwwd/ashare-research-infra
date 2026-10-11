@@ -39,6 +39,19 @@ GitHub 只保存代码、测试、配置与策略文档。临时 Ubuntu Runner �
 | gold-refresh | 执行原 down_data 的下载、构建、历史与状态更新 | down_data/data |
 | backup-repo-data | 备份旧 Git 数据并执行 rclone 校验，**不删除源文件** | astock_quant_repo_backup |
 
+
+### 主板股票清单的夜间更新与历史保护（2026-10-11）
+
+`gold-refresh` 已按以下顺序调用 Drive 中的原始脚本：
+
+1. `download_a_share_main_board.py` 每次重新查询 Tushare `stock_basic` 的 L（上市）、D（退市）、P（暂停上市），仅保留 `market=主板` 的沪深证券；再取得最近有效交易日的 `daily` 与 `daily_basic`，不因停牌而从股票清单移除证券。
+2. `build_main_board_canonical.py` 生成新的 `data/gold/main_board/instruments.parquet`（全历史股票名录）与 `daily_snapshot.parquet`。
+3. GitHub `stock_state_strategy/universe_audit.py` 对照本次源数据与前一正式名录，记录新增证券、上市状态变化，阻止新名单异常丢失既有证券、混入非主板、标识变更及日期回退；输出 `data/gold/main_board/universe_changes.json`。退市属于状态变化，不删除历史记录。历史上市/退市日期缺失会写入该审计报告待核查。
+4. `backfill_main_board_history.py` 依据刚更新的 `instruments.parquet` 获取全市场按交易日的行情、估值和复权数据，并筛选主板清单，逐月持久化；`backfill_main_board_states.py` 补充名称、停复牌、涨跌停等状态。
+5. `validate_gold`、历史完整性、状态数据验证通过才进入 `publish_data`，将更新的全量股票名录、每日行情、历史分区与审计记录发布到 Drive；失败不提交新的正式 Gold 版本。
+
+注意：原历史回填脚本会跳过已验证月份；当供应商追溯修订了某只老股票的板块归属时，既有月份不一定自动重新下载，需要定向回补。Task 01 财务 Raw/Clean 属于另一独立存储层，并未直接加入冻结 V1 选股条件。数据或主板清单的最新观察时间不得误用于历史回测中对应公告日前的信号。
+
 Gold 更新直接读取 Drive down_data 目录现有的四个 .py 下载与回填脚本，避免在 GitHub 再维护第二套实现。它只负责日频，不包括尚未落地的 15 分钟主库。
 
 as_of 参数可选 auto（读取 Gold manifest 的日期），min_as_of 可设置要求的最低交易日。数据不够新时任务失败而非伪造信号。对股票状态研究而言，仅更新行情并不代表股东公告已足够新；自动日报和实盘提醒必须另行通过数据时点验收。
