@@ -145,13 +145,41 @@ def findbar(frame: pd.DataFrame, date: pd.Timestamp):
     return bar
 
 
-def exit_position(p, quote: float, reason: str, date, cash: float, trades: list):
-    executed = float(quote) * (1 - SLIP)
-    proceeds = p["shares"] * executed * (1 - SELL_FEE)
+def paper_commission(gross: float, rate: float, minimum: float = 5.) -> float:
+    """Conservative broker-minimum *scenario assumption*, not a universal fee."""
+    if not (math.isfinite(gross) and gross >= 0 and math.isfinite(rate) and rate >= 0):
+        raise ValueError("Invalid turnover/fee rate")
+    return max(minimum, gross * rate)
+
+
+def paper_cent_price(price: float, *, buy: bool) -> float:
+    """Conservatively round synthetic order price to the A-share 0.01 tick."""
+    if not (math.isfinite(price) and price > 0):
+        raise ValueError("Invalid raw order price")
+    scaled = price * 100.
+    return (math.ceil(scaled - 1e-9) if buy else math.floor(scaled + 1e-9)) / 100.
+
+
+def exit_position(p, quote: float, reason: str, date, cash: float, trades: list,
+                  *, exit_factor: float | None = None):
+    if p.get("lot100_execution"):
+        # Holdings are in adjusted-share units; factor evolution is a total-return
+        # proxy, NOT a corporate-action cash and actual-share ledger.
+        if exit_factor is None or not math.isfinite(exit_factor) or exit_factor <= 0:
+            raise ValueError("Cannot liquidate lot scenario without an adjustment factor")
+        raw_sell = paper_cent_price(
+            float(quote) / exit_factor * (1 - p["model_slippage"]), buy=False)
+        gross = p["shares"] * raw_sell * exit_factor
+        sell_fee = paper_commission(gross, SELL_FEE)
+        proceeds = gross - sell_fee
+        invested = p["entry_notional"] + p["entry_commission"]
+    else:
+        executed = float(quote) * (1 - SLIP)
+        proceeds = p["shares"] * executed * (1 - SELL_FEE)
+        invested = p["shares"] * p["entry_price"] * (1 + BUY_FEE)
     cash += proceeds
-    invested = p["shares"] * p["entry_price"] * (1 + BUY_FEE)
     pnl = proceeds / invested - 1
-    trades.append({
+    record = {
         "symbol": p["symbol"], "pattern": p["pattern"],
         "signal_date": str(p["signal_date"].date()),
         "entry_date": str(p["entry_date"].date()), "exit_date": str(date.date()),
@@ -163,15 +191,32 @@ def exit_position(p, quote: float, reason: str, date, cash: float, trades: list)
         "net_portfolio_pnl": round(proceeds - invested, 2),
         "exit_reason": reason,
         "hold_sessions": int(p["hold_count"] + 2),
-    })
+    }
+    if p.get("lot100_execution"):
+        record.update({
+            "entry_raw_shares": p["entry_raw_shares"],
+            "entry_factor": p["entry_factor"],
+            "exit_factor": float(exit_factor),
+            "entry_notional": round(p["entry_notional"], 2),
+            "buy_commission": round(p["entry_commission"], 2),
+            "sell_commission": round(sell_fee, 2),
+            "actual_entry_weight": round(p["weight"], 6),
+            "factor_total_return_proxy": True,
+        })
+    trades.append(record)
     return cash
 
 
 def run_portfolio(sessions, price_by_sym, scheduled, *, max_stop_pct=0.10,
                   max_gap_up=0.03, min_gap_down=-0.03,
                   risk_budget=0.005, max_weight=0.15,
-                  max_positions=MAX_POSITIONS, risk_context=None):
+                  max_positions=MAX_POSITIONS, risk_context=None,
+                  execution_model="legacy", execution_slippage=SLIP):
     # All gates apply to information available by the simulated OPEN.
+    if execution_model not in ("legacy", "lot100_minfee"):
+        raise ValueError("Unknown execution model")
+    if execution_model != "legacy" and not (0.001 <= execution_slippage <= 0.005):
+        raise ValueError("Stress slippage must be in 0.10%-0.50% per side")
     # Defaults preserve the already-audited historical baseline exactly.
     if not (0.015 <= max_stop_pct <= 0.10):
         raise ValueError("max_stop_pct must be between 1.5% and 10%")
@@ -238,7 +283,10 @@ def run_portfolio(sessions, price_by_sym, scheduled, *, max_stop_pct=0.10,
                 reason, quote = "TIME_EXIT", float(bar["p_close"])
             if reason:
                 previous_cash = cash
-                cash = exit_position(p, quote, reason, date, cash, trades)
+                cash = exit_position(
+                    p, quote, reason, date, cash, trades,
+                    exit_factor=float(bar["adjustment_factor"])
+                    if execution_model == "lot100_minfee" else None)
                 # Only overnight-pending exits and price-gap exits are executable
                 # at the OPEN; an intraday stop/target/time exit is too late
                 # to release buying capacity at today's OPEN.
@@ -272,25 +320,62 @@ def run_portfolio(sessions, price_by_sym, scheduled, *, max_stop_pct=0.10,
             if gap < min_gap_down or gap > max_gap_up or locked_up:
                 skipped["gap_or_limit"] += 1
                 continue
-            entry = op * (1 + SLIP)
+            if execution_model == "lot100_minfee":
+                factor = float(bar["adjustment_factor"])
+                if not math.isfinite(factor) or factor <= 0:
+                    skipped["unknown_entry_factor"] += 1
+                    continue
+                raw_buy = paper_cent_price(
+                    float(bar["open"]) * (1 + execution_slippage), buy=True)
+                entry = raw_buy * factor
+            else:
+                entry = op * (1 + SLIP)
             risk = 2 * candidate["atr"]
             risk_pct = risk / entry
             if not (0.015 <= risk_pct <= max_stop_pct):
                 skipped["atr_risk"] += 1
                 continue
             weight = min(max_weight, risk_budget / risk_pct)
-            notional = min(opening_equity * weight, (cash - intraday_proceeds) / (1 + BUY_FEE))
+            usable_cash = cash - intraday_proceeds
+            notional = min(opening_equity * weight, usable_cash / (1 + BUY_FEE))
             if notional < 10_000:
                 skipped["small_notional"] += 1
                 continue
-            shares = notional / entry
-            cash -= notional * (1 + BUY_FEE)
+            if execution_model == "lot100_minfee":
+                raw_shares = 100 * math.floor(notional / raw_buy / 100)
+                # Decrease by whole lots until both account-risk/cash limits fit
+                # after the broker minimum commission assumption.
+                while raw_shares:
+                    actual_notional = raw_shares * raw_buy
+                    buy_fee = paper_commission(actual_notional, BUY_FEE)
+                    if (actual_notional <= notional + 1e-8
+                            and actual_notional + buy_fee <= usable_cash + 1e-8):
+                        break
+                    raw_shares -= 100
+                if raw_shares <= 0 or actual_notional < 10_000:
+                    skipped["lot_rounding_or_cash"] += 1
+                    continue
+                shares = raw_shares / factor
+                cash -= actual_notional + buy_fee
+                weight = actual_notional / opening_equity
+            else:
+                shares = notional / entry
+                cash -= notional * (1 + BUY_FEE)
             p = {"symbol": symbol, "pattern": candidate["pattern"],
                  "signal_date": candidate["signal_date"], "entry_date": date,
                  "entry_price": entry, "risk_pct": risk_pct, "weight": weight,
                  "shares": shares, "stop": entry - risk, "target": entry + 2 * risk,
                  "last_price": float(bar["p_close"]), "hold_count": 0,
                  "sell_pending": float(bar["p_low"]) <= entry - risk}
+            if execution_model == "lot100_minfee":
+                p.update({
+                    "lot100_execution": True,
+                    "entry_raw_shares": int(raw_shares),
+                    "entry_factor": factor,
+                    "entry_notional": actual_notional,
+                    "entry_commission": buy_fee,
+                    "model_slippage": execution_slippage,
+                })
             positions[symbol] = p
             skipped["entered"] += 1
         # Mark-to-market using latest observed close; missing bars carry previous mark.
