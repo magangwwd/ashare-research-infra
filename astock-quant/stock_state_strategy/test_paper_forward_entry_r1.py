@@ -85,8 +85,11 @@ class ProspectiveR1Tests(unittest.TestCase):
 
     def test_low_breadth_is_no_signal_not_a_buy(self):
         panel, day = fixture()
-        m = panel.vendor_symbol.eq("000001.SZ")
-        panel.loc[m, "p_close"] = np.linspace(20., 10., int(m.sum()))
+        # All eligible symbols are below their trailing 20-day average;
+        # exactly half would pass the >=50% majority rule.
+        for sym in panel.vendor_symbol.unique():
+            m = panel.vendor_symbol.eq(sym)
+            panel.loc[m, "p_close"] = np.linspace(20., 10., int(m.sum()))
         with patch.object(eq,"BREADTH_MIN_VALID_SYMBOLS",2):
             result=make_snapshot(panel,PassRisk(),day)
         self.assertEqual(len(result["candidates"]), 0)
