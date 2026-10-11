@@ -162,7 +162,7 @@ def exit_position(p, quote: float, reason: str, date, cash: float, trades: list)
         "entry_weight": round(p["weight"], 5),
         "net_portfolio_pnl": round(proceeds - invested, 2),
         "exit_reason": reason,
-        "hold_sessions": int(p["hold_count"] + 1),
+        "hold_sessions": int(p["hold_count"] + 2),
     })
     return cash
 
@@ -214,7 +214,7 @@ def run_portfolio(sessions, price_by_sym, scheduled):
                 reason, quote = "STOP", p["stop"]
             elif float(bar["p_high"]) >= p["target"]:
                 reason, quote = "TARGET", p["target"]
-            elif p["hold_count"] >= MAX_HOLD - 1:
+            elif p["hold_count"] >= MAX_HOLD - 2:
                 reason, quote = "TIME_EXIT", float(bar["p_close"])
             if reason:
                 previous_cash = cash
@@ -333,7 +333,9 @@ def main():
         closed = trade[(trade["exit_date"] >= a) & (trade["exit_date"] <= b)]
         st = stats(closed, nav_piece)
         first_nav = float(nav_piece["nav"].iloc[0])
-        st["period_return_from_first_nav"] = round(float(nav_piece["nav"].iloc[-1] / first_nav - 1), 5)
+        st["initial_cash"] = round(first_nav, 2)
+        st["net_total_return"] = round(float(nav_piece["nav"].iloc[-1] / first_nav - 1), 5)
+        st["period_return_from_first_nav"] = st["net_total_return"]
         period_data[label] = st
     pattern = {key: {"closed_trades": int(len(part)),
                      "win_rate": round(float(part["net_return"].gt(0).mean()), 4),
