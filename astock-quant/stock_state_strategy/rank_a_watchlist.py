@@ -158,7 +158,7 @@ def write_report(rows: list[dict], as_of: str, top: int) -> str:
         "",
         "源：Google Drive stock_state_strategy/output/state_definition_"
         + as_of.replace("-", "") + "/a_strategy_pool.csv",
-        "完整排名：full_rank_134.csv；前20：watchlist_top20.csv；统计：ranking_summary.json。",
+        "完整排名：full_rank.csv；前20：watchlist_top20.csv；统计：ranking_summary.json。",
         "",
     ]
     return "\n".join(result)
@@ -175,7 +175,7 @@ def main() -> int:
         raise ValueError("Top count must be positive")
     rows = load_ranked(args.input, args.as_of)
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    save_csv(args.output_dir / "full_rank_134.csv", rows)
+    save_csv(args.output_dir / "full_rank.csv", rows)
     save_csv(args.output_dir / "watchlist_top20.csv", rows[:args.top])
     (args.output_dir / "research_watchlist.md").write_text(
         write_report(rows, args.as_of, args.top), encoding="utf-8"
