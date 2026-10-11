@@ -1,0 +1,148 @@
+name: R1 five-stock paper candidates after verified Gold (no orders)
+
+on:
+  # Runs only after the entire nightly gold-refresh + current-state workflow
+  # has completed SUCCESSFULLY on main, never during an incomplete upload.
+  workflow_run:
+    workflows: ["astock-quant - Drive-first strategy"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: 'Recovery only: exact validated Gold close YYYY-MM-DD (>=2026-10-12)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: r1-five-read-published-gold
+  cancel-in-progress: false
+
+jobs:
+  five-r1:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'schedule')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      OVERRIDE_AS_OF: ${{ inputs.as_of }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PIP_NO_CACHE_DIR: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install only research runtime requirements
+        run: python -m pip install 'pandas>=3.0,<4' 'numpy>=2.4,<3' 'pyarrow>=24.0,<25'
+      - name: Validate frozen R1 and PIT offline invariants
+        working-directory: astock-quant/stock_state_strategy
+        run: python -m unittest -v test_paper_forward_watchlist_r1.py test_gold_pit_risk_guards.py test_paper_forward_r0.py
+      - name: Configure temporary Google Drive client
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          test "$(rclone lsf 'gdrive:stock_state_strategy/' --max-depth 1 | wc -l)" -gt 0
+      - name: Fetch only validated source manifest and decide target trading date
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          rclone copyto 'gdrive:down_data/data/gold/main_board/manifest.json' "$RUNNER_TEMP/manifest.json"
+          python - "$RUNNER_TEMP/manifest.json" "$OVERRIDE_AS_OF" <<'PY'
+          import json, os, sys
+          from datetime import datetime
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+          meta=json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          day=str(meta.get("as_of_date",""))[:10]
+          if day < "2026-10-12":
+              if os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch":
+                  raise SystemExit("Cannot record a prospective R1 day before 2026-10-12")
+              with open(os.environ["GITHUB_OUTPUT"],"a") as f:
+                  f.write("skip=true\n")
+              print("SKIP: no new R1 unseen session yet")
+              raise SystemExit(0)
+          from datetime import date
+          date.fromisoformat(day)
+          override=sys.argv[2]
+          if override and override!=day:
+              raise SystemExit("Manual as_of must exactly match the current verified Gold manifest")
+          checks=meta.get("validation",{})
+          if checks.get("primary_keys_unique") is not True or checks.get("ohlc_valid") is not True:
+              raise SystemExit("Gold manifest integrity gates failed")
+          now=datetime.now(ZoneInfo("Asia/Shanghai"))
+          if date.fromisoformat(day)>now.date():
+              raise SystemExit("Source is dated in the future")
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f:
+              f.write(f"skip=false\nas_of={day}\n")
+          print("VALIDATED_GOLD_AS_OF="+day)
+          PY
+      - name: Skip on existing immutable day (never overwrite)
+        if: steps.source.outputs.skip != 'true'
+        id: dedupe
+        shell: bash
+        env:
+          AS_OF: ${{ steps.source.outputs.as_of }}
+        run: |
+          set -euo pipefail
+          target="gdrive:stock_state_strategy/output/forward_r1_watchlist_5/$AS_OF"
+          if rclone lsf "$target" --files-only 2>/dev/null | grep -q .; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "SKIP: forward R1 ledger already recorded for $AS_OF"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Download only recent Gold partitions and PIT risk records
+        if: steps.source.outputs.skip != 'true' && steps.dedupe.outputs.skip != 'true'
+        shell: bash
+        env:
+          AS_OF: ${{ steps.source.outputs.as_of }}
+        run: |
+          set -euo pipefail
+          this_year="${AS_OF:0:4}"
+          prev_year="$((10#$this_year-1))"
+          for dataset in daily_prices adjustment_factors; do
+            rclone copy "gdrive:down_data/data/gold/main_board/$dataset" "$RUNNER_TEMP/market/$dataset" \
+              --include "year=$this_year/**" --include "year=$prev_year/**" \
+              --transfers 8 --checkers 12
+          done
+          for dataset in daily_limits suspension_events; do
+            rclone copy "gdrive:down_data/data/gold/main_board/$dataset" "$RUNNER_TEMP/risk/$dataset" \
+              --include "year=$this_year/**" --include "year=$prev_year/**" \
+              --transfers 8 --checkers 12
+          done
+          rclone copyto 'gdrive:down_data/data/gold/main_board/name_history.parquet' "$RUNNER_TEMP/risk/name_history/data.parquet"
+      - name: Generate five named-symbol R1 research results, close-only
+        if: steps.source.outputs.skip != 'true' && steps.dedupe.outputs.skip != 'true'
+        shell: bash
+        env:
+          AS_OF: ${{ steps.source.outputs.as_of }}
+        run: |
+          set -euo pipefail
+          python astock-quant/stock_state_strategy/paper_forward_watchlist_r1.py \
+            --manifest "$RUNNER_TEMP/manifest.json" --market-root "$RUNNER_TEMP/market" \
+            --risk-root "$RUNNER_TEMP/risk" --as-of "$AS_OF" \
+            --output "$RUNNER_TEMP/r1_five"
+      - name: Immutable Google Drive publish and exact-byte check
+        if: steps.source.outputs.skip != 'true' && steps.dedupe.outputs.skip != 'true'
+        shell: bash
+        env:
+          AS_OF: ${{ steps.source.outputs.as_of }}
+        run: |
+          set -euo pipefail
+          target="gdrive:stock_state_strategy/output/forward_r1_watchlist_5/$AS_OF"
+          rclone copy "$RUNNER_TEMP/r1_five/$AS_OF" "$target" --immutable --transfers 2 --checkers 4
+          rclone check "$RUNNER_TEMP/r1_five/$AS_OF" "$target" --one-way --checkers 4
+          echo "R1 paper five-stock observation saved; NO_ORDERS_NO_ENTRY_AUTHORIZATION"
