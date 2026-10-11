@@ -315,7 +315,10 @@ def run_portfolio(sessions, price_by_sym, scheduled, *, max_stop_pct=0.10,
                     skipped["risk_" + block] += 1
                     continue
             op = float(bar["p_open"])
-            gap = op / candidate["signal_close"] - 1
+            # Legacy historical R0 is deliberately frozen for comparability.
+            # Opt-in lot model MUST compare same-basis adjusted prices.
+            decision_open = float(bar["p_open"]) if execution_model == "lot100_minfee" else op
+            gap = decision_open / candidate["signal_close"] - 1
             locked_up = (abs(float(bar["high"] - bar["low"])) < 1e-8 and gap >= 0.095)
             if gap < min_gap_down or gap > max_gap_up or locked_up:
                 skipped["gap_or_limit"] += 1
@@ -328,6 +331,21 @@ def run_portfolio(sessions, price_by_sym, scheduled, *, max_stop_pct=0.10,
                 raw_buy = paper_cent_price(
                     float(bar["open"]) * (1 + execution_slippage), buy=True)
                 entry = raw_buy * factor
+                # The actual modeled paid limit must obey the trading rule.
+                # Open-only gap checking otherwise permits paid prices > +1%.
+                paid_gap = entry / candidate["signal_close"] - 1.
+                if paid_gap < min_gap_down or paid_gap > max_gap_up + 1e-10:
+                    skipped["paid_price_outside_gap"] += 1
+                    continue
+                if risk_context is not None:
+                    limits = risk_context.limits.get((symbol, pd.Timestamp(date).normalize()))
+                    if limits is None:
+                        skipped["risk_LIMIT_UNKNOWN"] += 1
+                        continue
+                    upper, lower = limits
+                    if raw_buy >= upper - .006 or raw_buy < lower - .006:
+                        skipped["paid_price_at_exchange_limit"] += 1
+                        continue
             else:
                 entry = op * (1 + SLIP)
             risk = 2 * candidate["atr"]
