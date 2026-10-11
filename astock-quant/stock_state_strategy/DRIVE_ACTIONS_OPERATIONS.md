@@ -43,7 +43,10 @@ Gold 更新直接读取 Drive down_data 目录现有的四个 .py 下载与回�
 
 as_of 参数可选 auto（读取 Gold manifest 的日期），min_as_of 可设置要求的最低交易日。数据不够新时任务失败而非伪造信号。对股票状态研究而言，仅更新行情并不代表股东公告已足够新；自动日报和实盘提醒必须另行通过数据时点验收。
 
-**目前刻意未启用周期调度。** 应先完成 Secrets、Gold 写回、历史输入恢复、端到端一致性检查，再决定是否每天收盘后定时运行。
+**日频调度已添加（2026-10-11）**：GitHub Actions 在每天北京时间/新加坡时间 **23:50**（UTC 15:50）自动触发。\
+`astock-quant-drive-first.yml` 将依次执行 `gold-refresh` 和 `current-state --as-of auto`，所有产物继续写入 Drive；`task01.yml` 同时执行独立的 Tushare Raw/Clean 财务、估值与行情增量流水线，正式发布到 Drive 的 `Ashare_Quant` 数据目录。两套数据存储隔离，严禁将 Task 01 的未验证数据直接混入冻结V1。GitHub定时任务可能延迟启动。\
+
+**重要前置条件**：需确认 Secrets `GDRIVE_RCLONE_CONFIG_B64`、`TUSHARE_TOKEN`、`GDRIVE_OAUTH_JSON` 有效并完成一次真实端到端验证；仅有 cron 配置不表示更新已经成功。财务清洗数据当前属于研究数据源，不会自动成为 LOCK_MARKUP_SINGLE_PAPER_V1 的筛选条件，任何因子接入须另行审计并获得新的策略版本。
 
 ## 旧 Git 数据清理
 
