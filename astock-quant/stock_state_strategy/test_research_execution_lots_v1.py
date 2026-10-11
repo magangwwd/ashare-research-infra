@@ -98,6 +98,57 @@ class LotExecutionInvariants(unittest.TestCase):
         with self.assertRaises(ValueError):
             simulate(mode="guaranteed_fill")
 
+    def test_final_paid_price_cannot_exceed_one_percent_chase_cap(self):
+        dates, bars, scheduled = fixture()
+        # At open 10.09 the observable gap is 0.9%; after tick/slippage
+        # the paid raw limit is 10.11 => 1.1%, MUST be rejected.
+        sym = "600000.SH"
+        bars[sym].loc[dates[0], "open"] = 10.09
+        bars[sym].loc[dates[0], "p_open"] = 10.09
+        _, nav, skips, held = run_portfolio(
+            list(dates), bars, scheduled, max_stop_pct=.04,
+            max_gap_up=.01, risk_budget=.0025, max_weight=.10,
+            execution_model="lot100_minfee",
+        )
+        self.assertEqual(skips.get("entered", 0), 0)
+        self.assertGreater(skips.get("paid_price_outside_gap", 0), 0)
+        self.assertEqual(held, 0)
+        self.assertEqual(float(nav["nav"].iloc[-1]), INITIAL_CASH)
+
+    def test_final_paid_price_cannot_be_at_exchange_up_limit(self):
+        dates, bars, scheduled = fixture()
+        sym = "600000.SH"
+        class StubPIT:
+            limits = {(sym, dates[0]): (10.01, 9.0)}
+            def entry_reason(self, symbol, day, bar):
+                return None
+            def exit_reason(self, symbol, day, bar):
+                return None
+        _, nav, skips, held = run_portfolio(
+            list(dates), bars, scheduled, max_stop_pct=.04,
+            max_gap_up=.01, risk_budget=.0025, max_weight=.10,
+            execution_model="lot100_minfee", risk_context=StubPIT(),
+        )
+        self.assertEqual(skips.get("entered", 0), 0)
+        self.assertEqual(skips.get("paid_price_at_exchange_limit", 0), 1)
+        self.assertEqual(held, 0)
+
+    def test_nonunit_adjustment_factor_uses_adjusted_gap_basis(self):
+        days, frames, scheduled = fixture()
+        df = frames["600000.SH"]
+        for col in ("open", "high", "low", "close"):
+            df[col] = df[col] / 2.
+        df["adjustment_factor"] = 2.
+        # Adjusted prices remain around 10; raw open is around 5.
+        trades, nav, skipped, held = run_portfolio(
+            list(days), frames, scheduled, max_stop_pct=.04,
+            max_gap_up=.01, risk_budget=.0025, max_weight=.10,
+            execution_model="lot100_minfee",
+        )
+        self.assertEqual(skipped.get("entered", 0), 1)
+        self.assertTrue((nav["cash"] >= 0).all())
+        self.assertTrue(held == 1 or len(trades) == 1)
+
     def test_risk_model_is_still_t_plus_one(self):
         trades, _, _, _ = simulate()
         self.assertNotEqual(trades.iloc[0]["entry_date"], trades.iloc[0]["exit_date"])
