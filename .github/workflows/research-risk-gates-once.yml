@@ -83,3 +83,5 @@ jobs:
           rclone check "$RUNNER_TEMP/research_risk_first_gates_20261009" "$dest" --one-way --checkers 12
           rclone cat "$dest/summary.json" | python -c 'import json,sys;s=json.load(sys.stdin);print(json.dumps({k:{"trades":v["closed_trades"],"return":v["net_total_return"],"dd":v["daily_nav_max_drawdown"]} for k,v in s["scenarios"].items()},ensure_ascii=False,indent=2))'
           echo "Research-only; no market order, no trading automation."
+
+# Retry after period-NAV trading-calendar fix and regression test.
