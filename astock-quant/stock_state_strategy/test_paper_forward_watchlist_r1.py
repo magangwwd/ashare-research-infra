@@ -19,8 +19,8 @@ def panel_fixture(*, falling=False):
         frame = pd.DataFrame({
             "vendor_symbol": symbol,
             "trade_date": days,
-            "open": close - 0.07, "high": close + 0.13,
-            "low": close - 0.16, "close": close,
+            "open": close - 0.05, "high": close + 0.11,
+            "low": close - 0.12, "close": close,
             "volume_shares": np.full(len(days), 800_000.),
             "turnover_cny": np.full(len(days), 125_000_000.),
             "adjustment_factor": np.ones(len(days)),
