@@ -176,6 +176,17 @@ def run_portfolio(sessions, price_by_sym, scheduled):
         if date < START:
             continue
         exited = set()
+        # Snapshot the OPEN equity BEFORE any same-session intraday outcome.
+        # Intraday exits cannot finance entries executed earlier at the OPEN.
+        opening_equity = cash + sum(
+            p["shares"] * (
+                float(bar["p_open"]) if (bar := findbar(price_by_sym[symbol], date)) is not None
+                else p["last_price"]
+            )
+            for symbol, p in positions.items()
+        )
+        intraday_proceeds = 0.0
+        intraday_slots = 0
         # Sell previously held positions only if actually quoted.
         for symbol in list(positions):
             p = positions[symbol]
@@ -206,21 +217,22 @@ def run_portfolio(sessions, price_by_sym, scheduled):
             elif p["hold_count"] >= MAX_HOLD - 1:
                 reason, quote = "TIME_EXIT", float(bar["p_close"])
             if reason:
+                previous_cash = cash
                 cash = exit_position(p, quote, reason, date, cash, trades)
+                # Only overnight-pending exits and price-gap exits are executable
+                # at the OPEN; an intraday stop/target/time exit is too late
+                # to release buying capacity at today's OPEN.
+                if reason not in ("ENTRY_DAY_STOP_TPLUS1", "STOP_GAP", "TARGET_GAP"):
+                    intraday_proceeds += cash - previous_cash
+                    intraday_slots += 1
                 del positions[symbol]
                 exited.add(symbol)
             else:
                 p["hold_count"] += 1
                 p["last_price"] = float(bar["p_close"])
         # New signal was fixed by yesterday's CLOSE, execution is today's OPEN.
-        opening_equity = cash
-        for symbol, p in positions.items():
-            bar = findbar(price_by_sym[symbol], date)
-            opening_equity += p["shares"] * (
-                float(bar["p_open"]) if bar is not None else p["last_price"]
-            )
         for candidate in scheduled.get(date, []):
-            if len(positions) >= MAX_POSITIONS or cash <= 0:
+            if len(positions) + intraday_slots >= MAX_POSITIONS or cash - intraday_proceeds <= 0:
                 break
             symbol = candidate["symbol"]
             if symbol in positions or symbol in exited:
@@ -242,7 +254,7 @@ def run_portfolio(sessions, price_by_sym, scheduled):
                 skipped["atr_risk"] += 1
                 continue
             weight = min(0.15, 0.005 / risk_pct)
-            notional = min(opening_equity * weight, cash / (1 + BUY_FEE))
+            notional = min(opening_equity * weight, (cash - intraday_proceeds) / (1 + BUY_FEE))
             if notional < 10_000:
                 skipped["small_notional"] += 1
                 continue
