@@ -153,7 +153,7 @@ API 自动重试、限速、分页。分页重复或超过上限直接失败，�
 
 ## GitHub Actions
 
-唯一 Workflow：`.github/workflows/task01.yml`。`schedule` 为 `17 13 * * *`，即北京时间/新加坡时间约 21:17；Tushare 历史分钟可能到 21:00 才完成当日更新，因此任务放在其后，GitHub 本身仍可能延迟启动。`workflow_dispatch` 默认运行数据任务，另可勾选只验证 Drive 授权或发布已验收 Drive 快照。
+唯一 Workflow：`.github/workflows/task01.yml`。`schedule` 为 `50 15 * * *`，即北京时间/新加坡时间 23:50（GitHub 可能延迟启动），用于收盘后的行情、财务披露增量检查与 Google Drive 发布。策略目录另有同时间调度的 `astock-quant-drive-first.yml`，更新 `down_data` Gold 日频库并生成最新 `stock_state_strategy` 状态池；两套数据库彼此隔离，Task 01 财务因子尚未直接接入冻结 V1 选股规则。`workflow_dispatch` 默认运行数据任务，另可勾选只验证 Drive 授权或发布已验收 Drive 快照。
 
 数据任务在仓库 **Settings → Secrets and variables → Actions** 配置 TUSHARE_TOKEN 和 GDRIVE_OAUTH_JSON，分别用于 Tushare 下载、Drive 恢复/发布；二者均已配置。Workflow 使用 GitHub 自动提供的 github.token 读取同仓库 Artifact，它不是额外的业务凭据。
 
