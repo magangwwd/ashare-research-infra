@@ -167,7 +167,20 @@ def exit_position(p, quote: float, reason: str, date, cash: float, trades: list)
     return cash
 
 
-def run_portfolio(sessions, price_by_sym, scheduled):
+def run_portfolio(sessions, price_by_sym, scheduled, *, max_stop_pct=0.10,
+                  max_gap_up=0.03, min_gap_down=-0.03,
+                  risk_budget=0.005, max_weight=0.15,
+                  max_positions=MAX_POSITIONS):
+    # All gates apply to information available by the simulated OPEN.
+    # Defaults preserve the already-audited historical baseline exactly.
+    if not (0.015 <= max_stop_pct <= 0.10):
+        raise ValueError("max_stop_pct must be between 1.5% and 10%")
+    if not (0 <= max_gap_up <= 0.03 and -0.03 <= min_gap_down <= 0):
+        raise ValueError("gap bounds exceed audited execution settings")
+    if not (0 < risk_budget <= 0.005 and 0 < max_weight <= 0.15):
+        raise ValueError("risk budget or max weight must reduce baseline exposure")
+    if not (1 <= max_positions <= MAX_POSITIONS):
+        raise ValueError("max_positions must not exceed baseline")
     cash = INITIAL_CASH
     positions = {}
     trades, nav = [], []
@@ -232,7 +245,7 @@ def run_portfolio(sessions, price_by_sym, scheduled):
                 p["last_price"] = float(bar["p_close"])
         # New signal was fixed by yesterday's CLOSE, execution is today's OPEN.
         for candidate in scheduled.get(date, []):
-            if len(positions) + intraday_slots >= MAX_POSITIONS or cash - intraday_proceeds <= 0:
+            if len(positions) + intraday_slots >= max_positions or cash - intraday_proceeds <= 0:
                 break
             symbol = candidate["symbol"]
             if symbol in positions or symbol in exited:
@@ -244,16 +257,16 @@ def run_portfolio(sessions, price_by_sym, scheduled):
             op = float(bar["p_open"])
             gap = op / candidate["signal_close"] - 1
             locked_up = (abs(float(bar["high"] - bar["low"])) < 1e-8 and gap >= 0.095)
-            if abs(gap) > 0.03 or locked_up:
+            if gap < min_gap_down or gap > max_gap_up or locked_up:
                 skipped["gap_or_limit"] += 1
                 continue
             entry = op * (1 + SLIP)
             risk = 2 * candidate["atr"]
             risk_pct = risk / entry
-            if not (0.015 <= risk_pct <= 0.10):
+            if not (0.015 <= risk_pct <= max_stop_pct):
                 skipped["atr_risk"] += 1
                 continue
-            weight = min(0.15, 0.005 / risk_pct)
+            weight = min(max_weight, risk_budget / risk_pct)
             notional = min(opening_equity * weight, (cash - intraday_proceeds) / (1 + BUY_FEE))
             if notional < 10_000:
                 skipped["small_notional"] += 1
