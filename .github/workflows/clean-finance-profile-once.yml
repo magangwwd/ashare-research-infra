@@ -30,6 +30,10 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/finance"
+          echo "Root folders potentially relevant to finance:"
+          rclone lsf gdrive: --dirs-only | grep -Ei 'Ashare|quant|stock|data|research' || true
+          echo "Testing foreign shared-drive root (do not expose credentials)"
+          rclone lsf gdrive:Ashare_Quant --max-depth 1 || true
           rclone copyto gdrive:Ashare_Quant/current.json "$RUNNER_TEMP/finance/current.json"
           python - <<'PY'
           import json,os,pathlib
