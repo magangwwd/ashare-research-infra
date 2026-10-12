@@ -1,0 +1,107 @@
+[
+  {
+    "symbol": "600351.SH",
+    "name": "亚宝药业",
+    "report_period": "2026-06-30",
+    "published_at": "2026-08-01",
+    "captured_at": "2026-10-12",
+    "source_kind": "full_company_report_mirrored_on_sina",
+    "source_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12471387&stockid=600351",
+    "financials": {
+      "revenue_cny": 1144946503.15,
+      "attributable_net_profit_cny": 177596487.26,
+      "deducted_net_profit_cny": 179283467.83,
+      "operating_cashflow_cny": 352861785.53,
+      "total_assets_cny": 3252463375.54,
+      "attributable_equity_cny": 2821003410.63,
+      "revenue_yoy_pct": 0.49,
+      "attributable_net_profit_yoy_pct": 1.83,
+      "deducted_profit_yoy_pct": 12.28,
+      "operating_cashflow_yoy_pct": 7.81
+    }
+  },
+  {
+    "symbol": "002107.SZ",
+    "name": "沃华医药",
+    "report_period": "2026-06-30",
+    "published_at": "2026-07-16",
+    "captured_at": "2026-10-12",
+    "source_kind": "full_company_report_mirrored_on_sina",
+    "source_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12448924&stockid=002107",
+    "financials": {
+      "revenue_cny": 393349512.77,
+      "attributable_net_profit_cny": 67566295.15,
+      "deducted_net_profit_cny": 65959000.12,
+      "operating_cashflow_cny": 81367502.48,
+      "total_assets_cny": 955597741.49,
+      "attributable_equity_cny": 707112139.6,
+      "revenue_yoy_pct": -7.53,
+      "attributable_net_profit_yoy_pct": 51.23,
+      "deducted_profit_yoy_pct": 54.34,
+      "operating_cashflow_yoy_pct": 8.07
+    }
+  },
+  {
+    "symbol": "600641.SH",
+    "name": "先导基电",
+    "report_period": "2026-06-30",
+    "published_at": "2026-08-01",
+    "captured_at": "2026-10-12",
+    "source_kind": "full_company_report_mirrored_on_sina",
+    "source_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12473225&stockid=600641",
+    "financials": {
+      "revenue_cny": 1146692842.72,
+      "attributable_net_profit_cny": 210130445.65,
+      "deducted_net_profit_cny": -112468103.61,
+      "operating_cashflow_cny": -1152082004.33,
+      "total_assets_cny": 12801176685.87,
+      "attributable_equity_cny": 8410744125.26,
+      "revenue_yoy_pct": 64.06,
+      "attributable_net_profit_yoy_pct": 414.95,
+      "deducted_profit_yoy_pct": null,
+      "operating_cashflow_yoy_pct": null
+    }
+  },
+  {
+    "symbol": "002568.SZ",
+    "name": "百润股份",
+    "report_period": "2026-06-30",
+    "published_at": "2026-08-05",
+    "captured_at": "2026-10-12",
+    "source_kind": "full_company_report_mirrored_on_sina",
+    "source_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12477637&stockid=002568",
+    "financials": {
+      "revenue_cny": 1657844914.77,
+      "attributable_net_profit_cny": 478883744.22,
+      "deducted_net_profit_cny": 453314545.09,
+      "operating_cashflow_cny": 441098123.51,
+      "total_assets_cny": 8751694486.62,
+      "attributable_equity_cny": 5128168408.85,
+      "revenue_yoy_pct": 11.34,
+      "attributable_net_profit_yoy_pct": 23.08,
+      "deducted_profit_yoy_pct": 27.29,
+      "operating_cashflow_yoy_pct": -10.12
+    }
+  },
+  {
+    "symbol": "002296.SZ",
+    "name": "辉煌科技",
+    "report_period": "2026-06-30",
+    "published_at": "2026-07-31",
+    "captured_at": "2026-10-12",
+    "source_kind": "full_company_report_mirrored_on_sina",
+    "source_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12469657&stockid=002296",
+    "financials": {
+      "revenue_cny": 372161096.54,
+      "attributable_net_profit_cny": 118017828.58,
+      "deducted_net_profit_cny": 118362893.46,
+      "operating_cashflow_cny": 115070018.83,
+      "total_assets_cny": 3315304085.12,
+      "attributable_equity_cny": 2493399653.45,
+      "revenue_yoy_pct": -7.91,
+      "attributable_net_profit_yoy_pct": -12.27,
+      "deducted_profit_yoy_pct": -12.52,
+      "operating_cashflow_yoy_pct": 108.21
+    }
+  }
+]

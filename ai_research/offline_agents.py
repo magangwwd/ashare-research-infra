@@ -326,6 +326,14 @@ def render(report):
         lines += ["**消息 Agent：**" + s["news_agent"]["status"]]
         for note in s["news_agent"]["evidence"]:
             lines.append(f"- [{note['headline']}]({note['source_url']})，披露 {note['published_at']}，采集 {note['captured_at']}")
+        if "public_filing_sidecar" in s:
+            side = s["public_filing_sidecar"]
+            lines += ["", "**单独核验的公司半年报摘要（非Clean表）：**",
+                      "报告期：" + side["report_period"] +
+                      "；披露：" + side["published_at"] +
+                      "；采集：" + side["captured_at"],
+                      "；".join(f"{k}={v}" for k, v in side["facts"].items()),
+                      "来源：" + side["source_url"], ""]
         lines += ["", "**多方 Agent：**" + "；".join(s["bull_agent"]["evidence"]), "",
                   "**空方 Agent：**" + "；".join(s["bear_agent"]["evidence"]), "",
                   "**风控 Agent：**" + "；".join(s["risk_agent"]["flags"]), "",
@@ -348,6 +356,7 @@ def main(argv=None):
     parser.add_argument("--clean-root", type=Path, help="Optional accepted version-pinned Clean staging")
     parser.add_argument("--require-all-clean", action="store_true", help="Fail if any researched symbol missing Clean")
     parser.add_argument("--web-evidence", type=Path)
+    parser.add_argument("--verified-disclosures", type=Path, help="Separately stored publicly mirrored annual/interim report sidecar")
     parser.add_argument("--as-of", required=True)
     parser.add_argument("--top", type=int, default=5)
     parser.add_argument("--output-dir", type=Path, required=True)
@@ -378,6 +387,11 @@ def main(argv=None):
             legacy["clean_source_coverage"] = clean["coverage"] if clean else None
         return legacy
 
+    verified, disclosure_audit = {}, None
+    if args.verified_disclosures is not None:
+        from ai_research.verified_disclosures import evaluate as evaluate_disclosures
+        verified, disclosure_audit = evaluate_disclosures(args.verified_disclosures, day, symbols)
+
     evidence = evidence_role(args.web_evidence, symbols, day)
     stocks = [
         compose(row,
@@ -386,6 +400,33 @@ def main(argv=None):
                 evidence.get(row["vendor_symbol"], []))
         for row in rows
     ]
+    # Do not launder human-sourced headline figures into verified Clean ETL coverage.
+    for stock in stocks:
+        filing = verified.get(stock["symbol"])
+        if filing is None:
+            continue
+        facts = filing["financials"]
+        stock["public_filing_sidecar"] = {
+            "status": "MANUAL_VERIFIED_REPORT_HEADLINES_NOT_CLEAN",
+            "report_period": filing["report_period"],
+            "published_at": filing["published_at"],
+            "captured_at": filing["captured_at"],
+            "source_url": filing["source_url"],
+            "source_kind": filing["source_kind"],
+            "facts": facts,
+        }
+        flags = stock["risk_agent"]["flags"]
+        flags.append("人工核验的半年报摘要，不等于四张Clean财务表已完整覆盖")
+        if facts["operating_cashflow_cny"] < 0:
+            flags.append("最近核验半年报经营活动现金流为负")
+        if facts["deducted_net_profit_cny"] < 0:
+            flags.append("最近核验半年报扣非归母净利润为负")
+        if facts["revenue_yoy_pct"] is not None and facts["revenue_yoy_pct"] < 0:
+            stock["bear_agent"]["evidence"].append("已核验半年报营业收入同比下降")
+        if facts["attributable_net_profit_cny"] > 0 and facts["deducted_net_profit_cny"] < 0:
+            stock["bear_agent"]["evidence"].append("已核验半年报归母盈利、扣非亏损存在背离")
+        stock["manager_agent"]["decision"] = "RESEARCH_ONLY_NEEDS_REVIEW"
+
     report = {"version": VERSION, "as_of": day.isoformat(),
               "generated_utc": datetime.now(timezone.utc).isoformat(),
               "mode": "DETERMINISTIC_MULTI_ROLE_NO_LLM_NO_NETWORK",
@@ -394,7 +435,8 @@ def main(argv=None):
                          "clean_financial_bridge": clean_audit["snapshot"] if clean_audit else None,
                          "clean_coverage_complete": clean_audit["all_target_symbols_covered"]
                                                     if clean_audit else None,
-                         "web_evidence": "supplied PIT observations" if args.web_evidence else None},
+                         "web_evidence": "supplied PIT observations" if args.web_evidence else None,
+                         "manual_verified_disclosures": disclosure_audit},
               "authorization": AUTHORIZATION, "stocks": stocks}
     args.output_dir.mkdir(parents=True, exist_ok=True)
     (args.output_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False,
@@ -402,6 +444,9 @@ def main(argv=None):
     if clean_audit is not None:
         (args.output_dir / "financial_clean_coverage.json").write_text(
             json.dumps(clean_audit, ensure_ascii=False, indent=2), encoding="utf-8")
+    if disclosure_audit is not None:
+        (args.output_dir / "verified_disclosure_coverage.json").write_text(
+            json.dumps(disclosure_audit, ensure_ascii=False, indent=2), encoding="utf-8")
     markdown = render(report)
     (args.output_dir / "report.md").write_text(markdown, encoding="utf-8")
     page = ('<!doctype html><meta charset="utf-8"><title>离线多角色投研</title>'

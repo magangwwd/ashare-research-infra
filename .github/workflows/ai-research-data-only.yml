@@ -153,6 +153,16 @@ jobs:
           else
             echo "No point-in-time captured web evidence available; news role will mark missing."
           fi
+      - name: Restore separate manually verified company report headlines
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="gdrive:stock_state_strategy/verified_disclosures/20261012/halfyear_20260630_five.json"
+          if rclone lsf "gdrive:stock_state_strategy/verified_disclosures/20261012" --files-only 2>/dev/null | grep -qx 'halfyear_20260630_five.json'; then
+            rclone copyto "$src" "$RUNNER_TEMP/ai_input/verified_disclosures.json"
+          else
+            echo "::warning::Human-reviewed filing sidecar not yet published in Drive; leave extra figures unavailable."
+          fi
       - name: Run deterministic role research
         shell: bash
         run: |
@@ -160,6 +170,9 @@ jobs:
           args=()
           if [[ -s "$RUNNER_TEMP/ai_input/web_evidence.json" ]]; then
             args+=(--web-evidence "$RUNNER_TEMP/ai_input/web_evidence.json")
+          fi
+          if [[ -s "$RUNNER_TEMP/ai_input/verified_disclosures.json" ]]; then
+            args+=(--verified-disclosures "$RUNNER_TEMP/ai_input/verified_disclosures.json")
           fi
           python -m ai_research.offline_agents \
             --watchlist "$RUNNER_TEMP/ai_input/ranked/watchlist_top20.csv" \
