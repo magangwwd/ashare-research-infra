@@ -52,7 +52,9 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y rclone
           (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
-          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          export RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf"
+          echo "RCLONE_CONFIG=$RCLONE_CONFIG" >> "$GITHUB_ENV"
+          rclone listremotes | grep -qx 'gdrive:'
           test "$(rclone lsf 'gdrive:stock_state_strategy/' --max-depth 1 | wc -l)" -gt 0
       - name: Fetch only validated source manifest and decide target trading date
         id: source
