@@ -25,6 +25,88 @@ REQUIRED_NUMBERS = {
 AUTHORIZATION = "PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
 
 
+# Authority is the issuer's published 2026-Q1 announcement (CNINFO).
+# Hardcode ONLY independently checked disputed items, not synthetic financial data.
+OFFICIAL_600641_Q1 = {
+    "url": "https://static.cninfo.com.cn/finalpage/2026-04-30/1225256552.PDF",
+    "ann_date": "20260430",
+    "eps": -0.0186,
+    "dt_eps": -0.0186,
+    "profit_dedt": -17819692.06,
+    "extra_item": 917627.99,
+}
+
+
+def reconcile_fina_indicator(same, symbol: str, period: str):
+    """Safe Clean-schema projection: keep source-row disagreements auditable.
+
+    A different non-null Clean value always fails. NULL-vs-value Clean fields
+    are rejected except for issuer-PDF-verified 600641 2026-Q1 fields.
+    Original raw-source fields absent from Clean remain distinct in audit.
+    """
+    import pandas as pd
+    from data_pipeline.clean import SCHEMAS
+
+    scope_fields = {f.source for f in SCHEMAS["fina_indicator"]}
+    all_columns = sorted(c for c in same if c != "_fetched_at")
+    different = {}
+    for col in all_columns:
+        values = [None if pd.isna(v) else (v.item() if hasattr(v, "item") else v)
+                  for v in same[col].tolist()]
+        if len({json.dumps(v, default=str, ensure_ascii=False) for v in values}) > 1:
+            different[col] = values
+    projected_conflicts = sorted(set(different).intersection(scope_fields))
+    # Non-null different Clean values are always a blocker; no precedence rule.
+    for col in projected_conflicts:
+        distinct_present = {json.dumps(v, default=str, ensure_ascii=False)
+                            for v in different[col] if v is not None}
+        if len(distinct_present) > 1:
+            raise ValueError("CONFLICTING_DUPLICATE_REPORT_FIELDS:" + col)
+
+    official = None
+    if projected_conflicts:
+        if (symbol, period) != ("600641.SH", "20260331"):
+            raise ValueError("UNVERIFIED_PARTIAL_CLEAN_PROJECTION:" +
+                             ",".join(projected_conflicts))
+        allowed = set(OFFICIAL_600641_Q1) - {"url", "ann_date"}
+        if set(projected_conflicts) - allowed:
+            raise ValueError("UNVERIFIED_PARTIAL_CLEAN_PROJECTION:" +
+                             ",".join(projected_conflicts))
+        if not same["ann_date"].astype(str).eq(OFFICIAL_600641_Q1["ann_date"]).all():
+            raise ValueError("ISSUER_REPORT_DATE_MISMATCH")
+        for col in allowed:
+            if col not in same:
+                raise ValueError("MISSING_OFFICIAL_VERIFICATION_FIELD:" + col)
+            present = pd.to_numeric(same[col], errors="coerce").dropna().tolist()
+            if not present or any(abs(float(v)-OFFICIAL_600641_Q1[col]) > (
+                    0.00000001 if col in ("eps", "dt_eps") else 0.005) for v in present):
+                raise ValueError("OFFICIAL_REPORT_VERIFICATION_FAILED:" + col)
+        official = {"source_url": OFFICIAL_600641_Q1["url"],
+                    "published_at": "2026-04-30",
+                    "fields": {k: OFFICIAL_600641_Q1[k] for k in sorted(allowed)}}
+
+    scored = same.copy()
+    projected = sorted(scope_fields.intersection(scored.columns))
+    scored["_projection_count"] = scored[projected].notna().sum(axis=1)
+    # Deterministic selection: maximal non-null Clean fields; equivalent
+    # projection otherwise. This is not an arbitrary raw record precedence.
+    index = scored["_projection_count"].idxmax()
+    chosen = same.loc[[index]].copy()
+    chosen.attrs["deduplicated_identical_source_rows"] = (
+        len(same)-1 if not different else 0)
+    chosen.attrs["reconciliation"] = {
+        "status": ("OFFICIAL_Q1_GATED_NONNULL_COMPLETION" if official
+                   else "CLEAN_PROJECTION_EQUAL"),
+        "source_variant_count": len(same),
+        "differing_source_fields": different,
+        "out_of_clean_schema_conflicts": sorted(set(different) - scope_fields),
+        "filled_clean_columns": projected_conflicts,
+        "issuer_document_verification": official,
+        "authorized_for_other_datasets": False,
+    }
+    return chosen
+
+
 def select_report(frame, symbol: str, period: str, dataset: str):
     """Select dated, consolidated, non-ambiguous issuer data, not a substitute."""
     import pandas as pd
@@ -69,19 +151,16 @@ def select_report(frame, symbol: str, period: str, dataset: str):
             same = same.loc[same[name].fillna("__NULL__").astype(str) ==
                             str(final[name] if pd.notna(final[name]) else "__NULL__")]
         if len(same) > 1:
-            # Tushare can return byte-for-byte equivalent indicator rows with
-            # identical publication/revision metadata. De-duplicate *only*
-            # when all non-volatile source fields agree. Never pick arbitrarily
-            # between different financial facts published under the same key.
-            comparisons = [col for col in same.columns if col != "_fetched_at"]
-            distinct = same[comparisons].drop_duplicates()
-            if len(distinct) != 1:
-                conflicts = [col for col in comparisons
-                             if same[col].astype("string").fillna("__NULL__").nunique() > 1]
-                raise ValueError("CONFLICTING_DUPLICATE_REPORT_FIELDS:" +
-                                 ",".join(conflicts[:12]))
-            chosen = same.iloc[[-1]].copy()
-            chosen.attrs["deduplicated_identical_source_rows"] = len(same) - 1
+            if dataset == "fina_indicator":
+                chosen = reconcile_fina_indicator(same, symbol, period)
+            else:
+                # Never assume different consolidated statement revisions are equivalent.
+                comparisons = [col for col in same.columns if col != "_fetched_at"]
+                distinct = same[comparisons].drop_duplicates()
+                if len(distinct) != 1:
+                    raise ValueError("CONFLICTING_DUPLICATE_REPORT_FIELDS")
+                chosen = same.iloc[[-1]].copy()
+                chosen.attrs["deduplicated_identical_source_rows"] = len(same)-1
     return chosen
 
 
@@ -108,6 +187,7 @@ def collect(root: Path, client, throttle: float = 0):
                     original = client.query(dataset, ts_code=symbol, period=period)
                     selected = select_report(original, symbol, period, dataset)
                     duplicate_count = selected.attrs.get("deduplicated_identical_source_rows", 0)
+                    reconciliation = selected.attrs.get("reconciliation")
                     cleaned = normalize(dataset, selected)
                     if (len(cleaned) != 1 or cleaned["ts_code"].iloc[0] != symbol or
                             cleaned["report_period"].iloc[0].strftime("%Y%m%d") != period or
@@ -120,6 +200,7 @@ def collect(root: Path, client, throttle: float = 0):
                         "symbol": symbol, "ann_date": cleaned["ann_date"].iloc[0].isoformat(),
                         "status": "VALID",
                         "identical_source_rows_deduplicated": duplicate_count,
+                        "source_reconciliation": reconciliation,
                     })
                 except Exception as error:
                     reason = str(error)

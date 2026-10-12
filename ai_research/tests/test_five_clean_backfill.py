@@ -73,6 +73,69 @@ class FiveCleanBackfillTests(unittest.TestCase):
             select_report(pd.concat([frame, different], ignore_index=True),
                           SYMBOLS[0], PERIODS[1], "fina_indicator")
 
+    def test_extra_source_only_conflicts_keep_clean_projection(self):
+        raw = self.make_frame("fina_indicator", "002107.SZ", "20260331")
+        raw["fcff"] = None
+        enriched = raw.copy()
+        enriched["fcff"] = 58944011.7006
+        selected = select_report(pd.concat([raw, enriched], ignore_index=True),
+                                 "002107.SZ", "20260331", "fina_indicator")
+        self.assertEqual(selected.attrs["reconciliation"]["status"], "CLEAN_PROJECTION_EQUAL")
+        self.assertIn("fcff", selected.attrs["reconciliation"]["out_of_clean_schema_conflicts"])
+        self.assertFalse(selected.attrs["reconciliation"]["filled_clean_columns"])
+
+    def test_600641_official_pdf_gates_null_to_value_completion(self):
+        a = self.make_frame("fina_indicator", "600641.SH", "20260331")
+        a["ann_date"] = "20260430"
+        a["eps"] = None
+        a["dt_eps"] = None
+        a["profit_dedt"] = None
+        a["extra_item"] = None
+        b = a.copy()
+        for k, v in (("eps", -0.0186), ("dt_eps", -0.0186),
+                     ("profit_dedt", -17819692.06), ("extra_item", 917627.99)):
+            b[k] = v
+        selected = select_report(pd.concat([a, b], ignore_index=True),
+                                 "600641.SH", "20260331", "fina_indicator")
+        self.assertEqual(float(selected.iloc[0]["eps"]), -0.0186)
+        self.assertEqual(selected.attrs["reconciliation"]["status"],
+                         "OFFICIAL_Q1_GATED_NONNULL_COMPLETION")
+        self.assertEqual(len(selected.attrs["reconciliation"]["filled_clean_columns"]), 4)
+        self.assertIn("cninfo.com.cn", selected.attrs["reconciliation"]
+                      ["issuer_document_verification"]["source_url"])
+
+    def test_600641_bad_nonnull_value_is_never_accepted(self):
+        a = self.make_frame("fina_indicator", "600641.SH", "20260331")
+        a["ann_date"] = "20260430"
+        a["eps"] = None
+        b = a.copy()
+        b["eps"] = 0.17
+        for frame in (a,b):
+            frame["dt_eps"] = -0.0186
+            frame["extra_item"] = 917627.99
+            frame["profit_dedt"] = -17819692.06
+        with self.assertRaisesRegex(ValueError, "OFFICIAL_REPORT_VERIFICATION_FAILED:eps"):
+            select_report(pd.concat([a,b], ignore_index=True),
+                          "600641.SH", "20260331", "fina_indicator")
+
+    def test_unverified_null_to_value_clean_field_is_rejected(self):
+        a = self.make_frame("fina_indicator", "002107.SZ", "20260331")
+        a["eps"] = None
+        b = a.copy()
+        b["eps"] = 0.08
+        with self.assertRaisesRegex(ValueError, "UNVERIFIED_PARTIAL_CLEAN_PROJECTION"):
+            select_report(pd.concat([a,b], ignore_index=True),
+                          "002107.SZ", "20260331", "fina_indicator")
+
+    def test_different_nonnull_clean_metrics_remain_hard_fail(self):
+        a = self.make_frame("fina_indicator", "002568.SZ", "20260630")
+        b = a.copy()
+        a["roe"] = 10.1
+        b["roe"] = 10.2
+        with self.assertRaisesRegex(ValueError, "CONFLICTING_DUPLICATE_REPORT_FIELDS:roe"):
+            select_report(pd.concat([a,b], ignore_index=True),
+                          "002568.SZ", "20260630", "fina_indicator")
+
     def test_e2e_full_40_partitions_and_checksums(self):
         outer = self
         class FakeClient:
