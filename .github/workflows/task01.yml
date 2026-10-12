@@ -244,7 +244,9 @@ jobs:
           if-no-files-found: ignore
           compression-level: 0
       - name: Prune superseded recovery checkpoints
-        if: always() && steps.restore.outcome == 'success'
+        # No new checkpoint was produced if the live smoke gate blocked updates;
+        # leave the previous recovery checkpoint untouched for the next run.
+        if: always() && steps.restore.outcome == 'success' && steps.daily_update.outcome != 'skipped'
         shell: bash
         env:
           DRIVE_PUBLISHED: ${{ steps.drive_publish.outcome == 'success' }}
