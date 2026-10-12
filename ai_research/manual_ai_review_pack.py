@@ -200,7 +200,8 @@ def package(report, clean_root, latest_path, review_clock):
         result["stocks"].append({
             "symbol": symbol, "name": raw["name"], "research_rank_historical": raw.get("research_rank"),
             "historical_pool_state": raw.get("original_state"),
-            "technical": {"source": "OLDER_OFFLINE_REPORT_GOLD", "market_as_of": market_day.isoformat(),
+            "technical": {"id": f"T:{symbol}:{market_day.isoformat()}",
+                          "source": "OLDER_OFFLINE_REPORT_GOLD", "market_as_of": market_day.isoformat(),
                           "status": technical.get("status"), "facts": tech_facts,
                           "flags": technical.get("flags", [])},
             "finance": clean[symbol], "curated_announcements": curated,
