@@ -131,6 +131,16 @@ jobs:
               rclone copyto "$src" "$target"
             done < "$RUNNER_TEMP/month_keys.txt"
           done
+      - name: Restore version-pinned accepted Clean finance snapshot (partial coverage allowed)
+        shell: bash
+        run: |
+          set -euo pipefail
+          origin="gdrive:stock_state_strategy/finance_clean_stage"
+          target="$RUNNER_TEMP/ai_input/finance_clean_stage"
+          mkdir -p "$target"
+          rclone copy "$origin" "$target" --include '*.parquet' --include 'clean_current_20261005.json' --include 'acceptance_v20261005.json'
+          test -s "$target/clean_current_20261005.json"
+          test -s "$target/acceptance_v20261005.json"
       - name: Restore dated financials and optional curated chat evidence
         shell: bash
         run: |
@@ -156,6 +166,7 @@ jobs:
             --summary "$RUNNER_TEMP/ai_input/ranked/ranking_summary.json" \
             --gold-root "$RUNNER_TEMP/ai_input/gold" \
             --financial-csv "$RUNNER_TEMP/ai_input/fina_indicator_q.csv" \
+            --clean-root "$RUNNER_TEMP/ai_input/finance_clean_stage" \
             --as-of "$AS_OF" --top "$RESEARCH_TOP" \
             --output-dir "$RUNNER_TEMP/ai_output" "${args[@]}"
           python - <<'PY'
@@ -165,6 +176,10 @@ jobs:
           assert r["mode"]=="DETERMINISTIC_MULTI_ROLE_NO_LLM_NO_NETWORK"
           assert r["authorization"]=="PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
           assert len(r["stocks"])==int(os.environ["RESEARCH_TOP"])
+          assert isinstance(r["source"]["clean_coverage_complete"], bool)
+          audit=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"ai_output/financial_clean_coverage.json").read_text())
+          assert len(audit["symbols"])==int(os.environ["RESEARCH_TOP"])
+          assert audit["authorization"]=="PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
           for s in r["stocks"]:
               assert s["manager_agent"]["trade_authorization"]==r["authorization"]
           PY
@@ -172,7 +187,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          dest="gdrive:stock_state_strategy/output/ai_multiagent_offline_$DAYKEY"
+          dest="gdrive:stock_state_strategy/output/ai_multiagent_offline_v3_$DAYKEY"
           rclone copy "$RUNNER_TEMP/ai_output" "$dest" --checkers 6 --transfers 3
           rclone check "$RUNNER_TEMP/ai_output" "$dest" --one-way --checkers 6
           echo "OFFLINE_MULTIROLES_VERIFIED day=$AS_OF top=$RESEARCH_TOP llm=false"
