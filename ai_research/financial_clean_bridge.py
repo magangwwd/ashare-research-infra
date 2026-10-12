@@ -17,7 +17,7 @@ AUTHORIZATION = "PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
 
 
 def iso_day(value):
-    if value is None:
+    if value is None or str(value).strip().lower() in ("none", "nan", "nat", "<na>"):
         return None
     if isinstance(value, datetime):
         return value.date()
