@@ -180,6 +180,10 @@ jobs:
           audit=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"ai_output/financial_clean_coverage.json").read_text())
           assert len(audit["symbols"])==int(os.environ["RESEARCH_TOP"])
           assert audit["authorization"]=="PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
+          if not audit["all_target_symbols_covered"]:
+              print("::warning::Accepted Clean finance has gaps for ranked stocks; legacy dated-source fallback is clearly labeled")
+          if audit["snapshot"]["age_days"] > 14:
+              print("::warning::Clean staging is more than 14 days old; manual resync from Ashare_Quant is needed")
           for s in r["stocks"]:
               assert s["manager_agent"]["trade_authorization"]==r["authorization"]
           PY
