@@ -89,6 +89,8 @@ class ManualAiEvidenceTests(unittest.TestCase):
         self.assertEqual(pack["finance_clean_version"],"five-clean-12345")
         self.assertEqual(pack["stocks"][0]["finance"]["20260630"]["income"]["fields"]["total_revenue"],1e8)
         self.assertEqual(len(pack["stocks"][0]["finance"]["20260630"]),4)
+        self.assertEqual(pack["stocks"][0]["technical"]["id"],
+                         "T:600351.SH:2026-10-09")
         self.assertEqual(pack["stocks"][0]["r1_signal"],"NOT_GENERATED_OR_CHANGED_BY_THIS_REVIEW")
         self.assertNotIn("fundamental_agent",json.dumps(pack))
         self.assertNotIn("999",json.dumps(pack))
