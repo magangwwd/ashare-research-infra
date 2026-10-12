@@ -57,3 +57,26 @@ def test_stock_st_server_page_cap_is_respected(config):
 
     client = TushareClient(config, Capped(), sleeper=lambda _: None)
     assert len(client.fetch("stock_st", trade_date="20261002")) == 2301
+
+def test_critical_audit_reports_redacted_provider_reasons(config, monkeypatch, tmp_path):
+    monkeypatch.setenv("TUSHARE_TOKEN", "test-sensitive-token")
+
+    class Probe:
+        def query(self, endpoint, **params):
+            if endpoint == "trade_cal":
+                return pd.DataFrame({"cal_date": ["20261009"], "is_open": [1]})
+            if endpoint == "daily":
+                raise RuntimeError("permission denied test-sensitive-token")
+            if endpoint == "daily_basic":
+                return pd.DataFrame()
+            return pd.DataFrame({"ts_code": ["000001.SZ"]})
+
+    client = TushareClient(config, Probe(), sleeper=lambda _: None)
+    with pytest.raises(DownloadError) as exc:
+        client.audit(tmp_path, "20261012")
+
+    message = str(exc.value)
+    assert "daily (DENIED): daily: permission denied [REDACTED]" in message
+    assert "daily_basic (UNKNOWN): critical probe returned no rows" in message
+    assert "test-sensitive-token" not in message
+    assert (tmp_path / "metadata/capabilities/latest.json").exists()

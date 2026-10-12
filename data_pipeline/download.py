@@ -232,5 +232,13 @@ class TushareClient:
         atomic_json(directory / "latest.json", results)
         missing = [n for n in CRITICAL if results["interfaces"][n]["status"] != "AVAILABLE"]
         if missing:
-            raise DownloadError(f"Critical capability audit FAILED: {', '.join(missing)}")
+            # Preserve the original fail-closed gate, but surface the provider's
+            # redacted per-endpoint reason so an Actions log is actionable even
+            # when the repository's artifact quota prevents evidence uploads.
+            details = []
+            for name in missing:
+                probe = results["interfaces"][name]
+                reason = " ".join(str(probe.get("reason", "no provider detail")).split())[:300]
+                details.append(f"{name} ({probe.get('permission_status', 'UNKNOWN')}): {reason}")
+            raise DownloadError("Critical capability audit FAILED: " + "; ".join(details))
         return results
