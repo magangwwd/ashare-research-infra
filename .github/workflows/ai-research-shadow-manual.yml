@@ -1,0 +1,116 @@
+name: AI research shadow V0.1 (manual Drive)
+
+on:
+  pull_request:
+    paths:
+      - "ai_research/**"
+      - ".github/workflows/ai-research-shadow-manual.yml"
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: "Verified historical trading date (YYYY-MM-DD)"
+        required: true
+        type: string
+      top:
+        description: "Stocks to research (1-5)"
+        required: true
+        default: "5"
+        type: string
+      enable_llm:
+        description: "Opt-in to provider API charges (default OFF)"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: No-network unit tests
+        run: python -m unittest discover -s ai_research/tests -v
+
+  publish-shadow:
+    if: github.event_name == 'workflow_dispatch'
+    needs: offline-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: ai-research-shadow-drive
+      cancel-in-progress: false
+    env:
+      AS_OF: ${{ inputs.as_of }}
+      TOP: ${{ inputs.top }}
+      ENABLE_LLM: ${{ inputs.enable_llm }}
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      AI_RESEARCH_API_KEY: ${{ secrets.AI_RESEARCH_API_KEY }}
+      AI_RESEARCH_BASE_URL: ${{ secrets.AI_RESEARCH_BASE_URL }}
+      AI_RESEARCH_MODEL: ${{ secrets.AI_RESEARCH_MODEL }}
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Validate request and resolve storage path
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$AS_OF" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { echo "::error::Invalid date"; exit 1; }
+          python -c 'import datetime,os; datetime.date.fromisoformat(os.environ["AS_OF"])'
+          [[ "$TOP" =~ ^[1-5]$ ]] || { echo "::error::top must be 1..5"; exit 1; }
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo "::error::Drive secret missing"; exit 1; }
+          echo "DAYKEY=${AS_OF//-/}" >> "$GITHUB_ENV"
+      - name: Restore Drive authentication
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 -d > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          rclone --config "$RUNNER_TEMP/rclone.conf" listremotes | grep -qx 'gdrive:'
+          rclone lsf "gdrive:stock_state_strategy" --files-only --max-depth 1 | grep -qx 'LOCK_TO_MARKUP_PAPER_STRATEGY.md'
+      - name: Read one verified A-pool ranking snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          source="gdrive:stock_state_strategy/output/research_watchlist_$DAYKEY"
+          mkdir -p "$RUNNER_TEMP/ai_research_input"
+          rclone copyto "$source/watchlist_top20.csv" "$RUNNER_TEMP/ai_research_input/watchlist_top20.csv"
+          rclone copyto "$source/ranking_summary.json" "$RUNNER_TEMP/ai_research_input/ranking_summary.json"
+          test -s "$RUNNER_TEMP/ai_research_input/watchlist_top20.csv"
+          test -s "$RUNNER_TEMP/ai_research_input/ranking_summary.json"
+      - name: Run bounded shadow analysis
+        shell: bash
+        run: |
+          set -euo pipefail
+          options=()
+          if [[ "$ENABLE_LLM" == "true" ]]; then
+            options+=(--enable-llm)
+          fi
+          python -m ai_research.run_daily \
+            --watchlist "$RUNNER_TEMP/ai_research_input/watchlist_top20.csv" \
+            --summary "$RUNNER_TEMP/ai_research_input/ranking_summary.json" \
+            --as-of "$AS_OF" --top "$TOP" \
+            --output-dir "$RUNNER_TEMP/ai_research_output" "${options[@]}"
+          test -s "$RUNNER_TEMP/ai_research_output/report.json"
+      - name: Publish to Drive and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="gdrive:stock_state_strategy/output/ai_research_$DAYKEY"
+          rclone copy "$RUNNER_TEMP/ai_research_output" "$target" --transfers 3
+          rclone check "$RUNNER_TEMP/ai_research_output" "$target" --one-way
+          echo "Verified paper-only shadow research for $AS_OF."
