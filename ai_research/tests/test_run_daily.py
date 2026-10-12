@@ -107,9 +107,9 @@ class ShadowV01(unittest.TestCase):
         self.assertEqual(len(data["600351.SH"]["news"]), 1)
         self.assertEqual(data["600351.SH"]["news"][0]["text"], "可用")
 
-    def test_llm_requires_explicit_opt_in_configuration(self):
-        with patch.dict(os.environ, {}, clear=True):
-            with self.assertRaisesRegex(ValueError, "HTTPS"):
+    def test_llm_is_not_available(self):
+        with patch("urllib.request.urlopen", side_effect=AssertionError("network used")):
+            with self.assertRaises(SystemExit):
                 main(self.command("--enable-llm"))
         self.assertFalse(self.output.exists())
 
