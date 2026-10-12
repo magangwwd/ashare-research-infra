@@ -89,9 +89,9 @@ jobs:
           run=str(ptr.get("run_id",""))
           if not re.fullmatch(r"[0-9]{5,20}",run) or ptr.get("status")!="COMPLETE":
               raise ValueError("Invalid latest accepted five-stock finance version")
-          with open(os.environ["GITHUB_ENV"],"a") as f:
-              f.write("FINANCE_RUN="+run+"\n")
+          (pathlib.Path(os.environ["RUNNER_TEMP"])/"ai_manual/input/finance_run.txt").write_text(run)
           PY
+          FINANCE_RUN="$(cat "$RUNNER_TEMP/ai_manual/input/finance_run.txt")"
           src="$root/finance_clean_five/versions/$FINANCE_RUN"
           rclone copy "$src" "$RUNNER_TEMP/ai_manual/input/clean" --checkers 4 --transfers 3
           test -s "$RUNNER_TEMP/ai_manual/input/clean/targeted_acceptance.json"
