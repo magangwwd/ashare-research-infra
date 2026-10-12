@@ -1,0 +1,173 @@
+name: One-shot Clean finance integration E2E
+
+on:
+  push:
+    branches: [validation/finance-clean-e2e-20261009]
+    paths:
+      - ".github/workflows/finance-clean-e2e-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  offline-unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: No-network offline tests
+        run: python -m unittest discover -s ai_research/tests -v
+
+  verified-drive:
+    needs: offline-unit-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    concurrency:
+      group: ai-research-drive-paper-only
+      cancel-in-progress: false
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      REQUESTED_AS_OF: "2026-10-09"
+      RESEARCH_TOP: "5"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_NO_CACHE_DIR: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install Parquet readers only
+        run: python -m pip install "pandas>=2.2,<3.0" "pyarrow>=18,<25"
+      - name: Setup Drive and verify root
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo "::error::Missing Drive rclone secret"; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          export RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf"
+          echo "RCLONE_CONFIG=$RCLONE_CONFIG" >> "$GITHUB_ENV"
+          rclone listremotes | grep -qx 'gdrive:'
+          rclone lsf gdrive:stock_state_strategy --files-only --max-depth 1 | grep -qx 'LOCK_TO_MARKUP_PAPER_STRATEGY.md'
+      - name: Resolve real Gold as-of and source pool
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/ai_input/gold"
+          rclone copyto "gdrive:down_data/data/gold/main_board/manifest.json" "$RUNNER_TEMP/ai_input/gold/manifest.json"
+          python - <<'PY'
+          import datetime,json,os,pathlib,re
+          m=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"ai_input/gold/manifest.json").read_text())
+          golden=datetime.date.fromisoformat(m["as_of_date"][:10])
+          requested=os.environ["REQUESTED_AS_OF"]
+          day=golden if requested=="auto" else datetime.date.fromisoformat(requested)
+          if day>golden: raise ValueError("Requested date is newer than validated Gold")
+          count=int(os.environ["RESEARCH_TOP"])
+          if not 1<=count<=20: raise ValueError("RESEARCH_TOP must be 1..20")
+          env=pathlib.Path(os.environ["GITHUB_ENV"])
+          with env.open("a") as f:
+              f.write("AS_OF="+day.isoformat()+"\n")
+              f.write("DAYKEY="+day.strftime("%Y%m%d")+"\n")
+          PY
+      - name: Restore A-pool and build same-day ranking
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="gdrive:stock_state_strategy/output/state_definition_$DAYKEY/a_strategy_pool.csv"
+          rclone copyto "$src" "$RUNNER_TEMP/ai_input/a_strategy_pool.csv"
+          python astock-quant/stock_state_strategy/rank_a_watchlist.py \
+            --input "$RUNNER_TEMP/ai_input/a_strategy_pool.csv" \
+            --output-dir "$RUNNER_TEMP/ai_input/ranked" \
+            --as-of "$AS_OF" --top 20
+          test -s "$RUNNER_TEMP/ai_input/ranked/watchlist_top20.csv"
+      - name: Restore six months of verified Gold OHLC and adjustment factors
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from datetime import date
+          from pathlib import Path
+          import os
+          year,month=map(int,os.environ["AS_OF"][:7].split("-"))
+          p=Path(os.environ["RUNNER_TEMP"])/"month_keys.txt"
+          with p.open("w") as f:
+              for _ in range(6):
+                  f.write(f"year={year}/month={month:02d}\n")
+                  month-=1
+                  if month==0: month=12;year-=1
+          PY
+          for dataset in daily_prices adjustment_factors; do
+            while IFS= read -r month; do
+              src="gdrive:down_data/data/gold/main_board/$dataset/$month/data.parquet"
+              target="$RUNNER_TEMP/ai_input/gold/$dataset/$month/data.parquet"
+              rclone copyto "$src" "$target"
+            done < "$RUNNER_TEMP/month_keys.txt"
+          done
+      - name: Restore version-pinned accepted Clean finance snapshot (partial coverage allowed)
+        shell: bash
+        run: |
+          set -euo pipefail
+          origin="gdrive:stock_state_strategy/finance_clean_stage"
+          target="$RUNNER_TEMP/ai_input/finance_clean_stage"
+          mkdir -p "$target"
+          rclone copy "$origin" "$target" --include '*.parquet' --include 'clean_current_20261005.json' --include 'acceptance_v20261005.json'
+          test -s "$target/clean_current_20261005.json"
+          test -s "$target/acceptance_v20261005.json"
+      - name: Restore dated financials and optional curated chat evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          rclone copyto "gdrive:stock/financial_data/fina_indicator_q.csv" \
+            "$RUNNER_TEMP/ai_input/fina_indicator_q.csv"
+          evidence="gdrive:stock_state_strategy/research_evidence/$DAYKEY.json"
+          if rclone lsf "gdrive:stock_state_strategy/research_evidence" --files-only --max-depth 1 2>/dev/null | grep -qx "$DAYKEY.json"; then
+            rclone copyto "$evidence" "$RUNNER_TEMP/ai_input/web_evidence.json"
+          else
+            echo "No point-in-time captured web evidence available; news role will mark missing."
+          fi
+      - name: Run deterministic role research
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ -s "$RUNNER_TEMP/ai_input/web_evidence.json" ]]; then
+            args+=(--web-evidence "$RUNNER_TEMP/ai_input/web_evidence.json")
+          fi
+          python -m ai_research.offline_agents \
+            --watchlist "$RUNNER_TEMP/ai_input/ranked/watchlist_top20.csv" \
+            --summary "$RUNNER_TEMP/ai_input/ranked/ranking_summary.json" \
+            --gold-root "$RUNNER_TEMP/ai_input/gold" \
+            --financial-csv "$RUNNER_TEMP/ai_input/fina_indicator_q.csv" \
+            --clean-root "$RUNNER_TEMP/ai_input/finance_clean_stage" \
+            --as-of "$AS_OF" --top "$RESEARCH_TOP" \
+            --output-dir "$RUNNER_TEMP/ai_output" "${args[@]}"
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"ai_output/report.json"
+          r=json.loads(p.read_text(encoding="utf-8"))
+          assert r["mode"]=="DETERMINISTIC_MULTI_ROLE_NO_LLM_NO_NETWORK"
+          assert r["authorization"]=="PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
+          assert len(r["stocks"])==int(os.environ["RESEARCH_TOP"])
+          assert isinstance(r["source"]["clean_coverage_complete"], bool)
+          audit=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"ai_output/financial_clean_coverage.json").read_text())
+          assert len(audit["symbols"])==int(os.environ["RESEARCH_TOP"])
+          assert audit["authorization"]=="PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
+          for s in r["stocks"]:
+              assert s["manager_agent"]["trade_authorization"]==r["authorization"]
+          PY
+      - name: Save reports to Google Drive and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/ai_multiagent_offline_v3_$DAYKEY"
+          rclone copy "$RUNNER_TEMP/ai_output" "$dest" --checkers 6 --transfers 3
+          rclone check "$RUNNER_TEMP/ai_output" "$dest" --one-way --checkers 6
+          echo "OFFLINE_MULTIROLES_VERIFIED day=$AS_OF top=$RESEARCH_TOP llm=false"
