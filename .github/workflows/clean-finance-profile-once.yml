@@ -1,0 +1,67 @@
+name: One-shot Clean Financial PIT Profile
+on:
+  push:
+    branches: [validation/finance-clean-profile-20261009]
+    paths: ['.github/workflows/clean-finance-profile-once.yml']
+permissions:
+  contents: read
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - run: python -m pip install 'pandas>=2.2,<3.0' 'pyarrow>=18,<25'
+      - name: Setup rclone
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get -qq update && sudo apt-get -qq install -y rclone
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+      - name: Read current and four Clean datasets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/finance"
+          rclone copyto gdrive:Ashare_Quant/current.json "$RUNNER_TEMP/finance/current.json"
+          python - <<'PY'
+          import json,os,pathlib
+          j=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"finance/current.json").read_text())
+          assert j.get('validated') is True
+          with open(os.environ["GITHUB_ENV"],'a') as f: f.write('CLEAN_VERSION='+j['version']+'\n')
+          print('Validated Clean version',j['version'],'snapshot',j.get('snapshot_as_of'),'completeness',j.get('critical_history_complete'))
+          PY
+          rclone copyto "gdrive:Ashare_Quant/versions/$CLEAN_VERSION/data/acceptance.json" "$RUNNER_TEMP/finance/acceptance.json"
+          for dataset in income balancesheet cashflow fina_indicator; do
+            for period in 20260630 20250630; do
+              p="gdrive:Ashare_Quant/versions/$CLEAN_VERSION/data/clean/$dataset/report_year=${period:0:4}/report_period=$period/part-000.parquet"
+              rclone copyto "$p" "$RUNNER_TEMP/finance/${dataset}_$period.parquet"
+            done
+          done
+      - name: Print safe five-stock PIT profile
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from datetime import date
+          import json,os,pandas as pd
+          root=Path(os.environ['RUNNER_TEMP'])/'finance'
+          a=json.loads((root/'acceptance.json').read_text())
+          print('Acceptance passed:',a.get('passed'))
+          symbols=['600351.SH','002107.SZ','600641.SH','002568.SZ','002296.SZ']
+          for ds in ['income','balancesheet','cashflow','fina_indicator']:
+            for period in ['20260630','20250630']:
+              d=pd.read_parquet(root/(ds+'_'+period+'.parquet'))
+              print('DATASET',ds,period,'all_rows',len(d),'COLUMNS',list(d.columns))
+              f=d[d['ts_code'].isin(symbols)].copy()
+              print('FIVE_STOCK_ROWS',len(f))
+              cols=[c for c in ['ts_code','report_period','ann_date','actual_ann_date','available_date','update_flag','roe','profit_dedt','gross_margin','total_revenue','n_income_attr_p','n_cashflow_act','total_assets','total_liab','total_cur_assets','total_cur_liab'] if c in f]
+              print(f[cols].sort_values('ts_code').to_json(orient='records',date_format='iso',force_ascii=False))
+          PY
