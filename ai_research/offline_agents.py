@@ -13,7 +13,7 @@ import math
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-VERSION = "OFFLINE_MULTIAGENT_SHADOW_V2"
+VERSION = "OFFLINE_MULTIAGENT_SHADOW_V3"
 AUTHORIZATION = "PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
 REQUIRED_MARKET = {"vendor_symbol", "trade_date", "open", "high", "low", "close",
                    "volume_shares", "turnover_cny", "is_quality_valid"}
@@ -291,7 +291,8 @@ def compose(row, tech, financial, news):
     if not negative:
         negative.append("基本面、公告或技术指标可能存在未覆盖风险")
     incomplete = (tech["status"] != "CALCULATED_GOLD_PIT" or
-                  financial["status"] == "NO_DATED_FINANCIAL" or
+                  financial["status"] in ("NO_DATED_FINANCIAL", "LEGACY_FALLBACK_CLEAN_GAP",
+                                           "NO_CLEAN_OR_LEGACY_FINANCIAL", "CLEAN_PIT_PARTIAL") or
                   not news)
     return {
         "symbol": row["vendor_symbol"], "name": row["name_zh"],
@@ -344,6 +345,8 @@ def main(argv=None):
     parser.add_argument("--summary", type=Path, required=True)
     parser.add_argument("--gold-root", type=Path, required=True)
     parser.add_argument("--financial-csv", type=Path)
+    parser.add_argument("--clean-root", type=Path, help="Optional accepted version-pinned Clean staging")
+    parser.add_argument("--require-all-clean", action="store_true", help="Fail if any researched symbol missing Clean")
     parser.add_argument("--web-evidence", type=Path)
     parser.add_argument("--as-of", required=True)
     parser.add_argument("--top", type=int, default=5)
@@ -353,25 +356,52 @@ def main(argv=None):
     rows = load_validated_watchlist(args.watchlist, args.summary, day, args.top)
     symbols = {r["vendor_symbol"] for r in rows}
     market, provenance = load_market(args.gold_root, day, symbols)
+    # Maintain explicitly identified dated-CSV fallback for uncovered symbols.
     financial = load_financial(args.financial_csv, symbols, day)
+    clean_roles, clean_audit = {}, None
+    if args.clean_root is not None:
+        from ai_research.financial_clean_bridge import evaluate
+        clean_roles, clean_audit = evaluate(args.clean_root, day, symbols)
+        if args.require_all_clean and not clean_audit["all_target_symbols_covered"]:
+            raise ValueError("Clean dataset coverage insufficient; no report published")
+
+    def select_financial(symbol: str):
+        clean = clean_roles.get(symbol)
+        if clean and clean["status"] != "NO_DATED_FINANCIAL":
+            return clean
+        legacy = fundamental_role(financial, symbol, day)
+        if args.clean_root is not None:
+            legacy["flags"].insert(0, "最新已验收Clean快照未覆盖该股票，显式回退原带日期财务CSV")
+            legacy["status"] = ("LEGACY_FALLBACK_CLEAN_GAP"
+                                if legacy["status"] != "NO_DATED_FINANCIAL"
+                                else "NO_CLEAN_OR_LEGACY_FINANCIAL")
+            legacy["clean_source_coverage"] = clean["coverage"] if clean else None
+        return legacy
+
     evidence = evidence_role(args.web_evidence, symbols, day)
     stocks = [
         compose(row,
                 technical_role(market, row["vendor_symbol"], day),
-                fundamental_role(financial, row["vendor_symbol"], day),
+                select_financial(row["vendor_symbol"]),
                 evidence.get(row["vendor_symbol"], []))
         for row in rows
     ]
     report = {"version": VERSION, "as_of": day.isoformat(),
               "generated_utc": datetime.now(timezone.utc).isoformat(),
               "mode": "DETERMINISTIC_MULTI_ROLE_NO_LLM_NO_NETWORK",
-              "source": {"gold": provenance, "financial": str(args.financial_csv)
-                         if args.financial_csv else None,
+              "source": {"gold": provenance,
+                         "legacy_financial_csv": str(args.financial_csv) if args.financial_csv else None,
+                         "clean_financial_bridge": clean_audit["snapshot"] if clean_audit else None,
+                         "clean_coverage_complete": clean_audit["all_target_symbols_covered"]
+                                                    if clean_audit else None,
                          "web_evidence": "supplied PIT observations" if args.web_evidence else None},
               "authorization": AUTHORIZATION, "stocks": stocks}
     args.output_dir.mkdir(parents=True, exist_ok=True)
     (args.output_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False,
                                                            indent=2), encoding="utf-8")
+    if clean_audit is not None:
+        (args.output_dir / "financial_clean_coverage.json").write_text(
+            json.dumps(clean_audit, ensure_ascii=False, indent=2), encoding="utf-8")
     markdown = render(report)
     (args.output_dir / "report.md").write_text(markdown, encoding="utf-8")
     page = ('<!doctype html><meta charset="utf-8"><title>离线多角色投研</title>'
