@@ -26,7 +26,7 @@ on:
 
 permissions:
   contents: read
-  actions: read
+  actions: write
 
 concurrency:
   group: task01-data
@@ -185,17 +185,6 @@ jobs:
         env:
           TASK01_RECOVERY_ROOT: .
         run: python -m pytest -q tests/test_live_recovery.py
-      - name: Package validated production
-        run: |
-          tar -czhf task01-validated.tar.gz data/raw data/clean data/current/acceptance.json metadata docs/datasets
-      - name: Publish validated artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: task01-validated-data
-          path: task01-validated.tar.gz
-          retention-days: 30
-          if-no-files-found: error
-          compression-level: 0
       - name: Publish acceptance evidence
         uses: actions/upload-artifact@v4
         with:
@@ -230,7 +219,7 @@ jobs:
           retention-days: 30
           if-no-files-found: error
       - name: Package recovery state, including unfinished work
-        if: always() && steps.restore.outcome == 'success'
+        if: always() && steps.restore.outcome == 'success' && steps.drive_publish.outcome != 'success'
         shell: bash
         run: |
           set -euo pipefail
@@ -242,14 +231,33 @@ jobs:
             fi
           fi
       - name: Save recovery checkpoint
-        if: always() && steps.restore.outcome == 'success'
+        if: always() && steps.restore.outcome == 'success' && steps.drive_publish.outcome != 'success'
         uses: actions/upload-artifact@v4
         with:
           name: task01-checkpoint
           path: task01-state.tar.gz
-          retention-days: 90
+          retention-days: 3
           if-no-files-found: ignore
           compression-level: 0
+      - name: Prune superseded recovery checkpoints
+        if: always() && steps.restore.outcome == 'success'
+        shell: bash
+        env:
+          DRIVE_PUBLISHED: ${{ steps.drive_publish.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          # Once this run has published to Drive, Drive is the source of truth: drop every
+          # GitHub checkpoint so the next run restores from Drive. Otherwise keep only the
+          # newest checkpoint so an unfinished run can resume.
+          if [ "$DRIVE_PUBLISHED" = "true" ]; then keep=0; else keep=1; fi
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100&name=task01-checkpoint" \
+            --jq '.artifacts[] | select(.expired | not) | [.created_at, .id] | @tsv' \
+            | sort -r | tail -n +"$((keep + 1))" | cut -f2 \
+            | while read -r id; do
+                [ -n "$id" ] || continue
+                gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id"
+                echo "deleted task01-checkpoint $id"
+              done
       - name: Generate Task 02 readiness (non-blocking)
         id: task02_readiness
         if: success()

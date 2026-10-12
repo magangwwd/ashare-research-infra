@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: read
-  actions: read
+  actions: write
 
 concurrency:
   group: task01-data
@@ -129,10 +129,24 @@ jobs:
         with:
           name: task01-checkpoint
           path: task01-state.tar.gz
-          retention-days: 90
+          retention-days: 3
           if-no-files-found: ignore
           compression-level: 0
 
+      - name: Prune superseded recovery checkpoints
+        if: always() && steps.restore.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Backfill never publishes to Drive, so always keep the newest checkpoint only.
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100&name=task01-checkpoint" \
+            --jq '.artifacts[] | select(.expired | not) | [.created_at, .id] | @tsv' \
+            | sort -r | tail -n +2 | cut -f2 \
+            | while read -r id; do
+                [ -n "$id" ] || continue
+                gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id"
+                echo "deleted task01-checkpoint $id"
+              done
       - name: Publish backfill progress
         if: success() && steps.backfill_guard.outputs.needed == 'true'
         uses: actions/upload-artifact@v4
