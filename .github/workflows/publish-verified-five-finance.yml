@@ -1,0 +1,53 @@
+name: Publish verified five-stock interim report evidence to Drive
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/seed/verified_five_halfyear_20261012.json'
+      - '.github/workflows/publish-verified-five-finance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish-sidecar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Validate provenance and prevent hindsight
+        run: |
+          python -m ai_research.verified_disclosures --path ai_research/seed/verified_five_halfyear_20261012.json --validate-only
+          python -m unittest discover -s ai_research/tests -p test_verified_disclosures.py -v
+      - name: Install rclone and configure private temp credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo "::error::Missing Drive rclone secret"; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          export RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf"
+          echo "RCLONE_CONFIG=$RCLONE_CONFIG" >> "$GITHUB_ENV"
+          rclone listremotes | grep -qx 'gdrive:'
+      - name: Immutable Drive publication and exact content verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_file="ai_research/seed/verified_five_halfyear_20261012.json"
+          dest="gdrive:stock_state_strategy/verified_disclosures/20261012/halfyear_20260630_five.json"
+          rclone copyto "$source_file" "$dest" --immutable --retries 3
+          local_digest="$(sha256sum "$source_file" | awk '{print $1}')"
+          drive_digest="$(rclone cat "$dest" | sha256sum | awk '{print $1}')"
+          test "$local_digest" = "$drive_digest" || { echo "::error::Drive digest mismatch"; exit 1; }
+          echo "VERIFIED_FIVE_DISCLOSURES_SAVED_TO_DRIVE count=5 captured_at=2026-10-12 sha256=$local_digest"
