@@ -13,7 +13,7 @@ import math
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-VERSION = "OFFLINE_MULTIAGENT_SHADOW_V2"
+VERSION = "OFFLINE_MULTIAGENT_SHADOW_V3"
 AUTHORIZATION = "PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
 REQUIRED_MARKET = {"vendor_symbol", "trade_date", "open", "high", "low", "close",
                    "volume_shares", "turnover_cny", "is_quality_valid"}
