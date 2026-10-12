@@ -141,9 +141,12 @@ def technical_role(bars, symbol: str, day: date):
     if len(part) < 21:
         return {"status": "INSUFFICIENT_HISTORY", "facts": {"valid_bars": len(part)},
                 "flags": ["有效历史不足21日，不计算趋势"]}
-    close = part["close"] * part["adjustment_factor"]
-    high = part["high"] * part["adjustment_factor"]
-    low = part["low"] * part["adjustment_factor"]
+    # Rebase point-in-time adjusted series to the unadjusted as-of price.
+    # Raw provider adjustment factors have an arbitrary scale across issuers.
+    scale = part["adjustment_factor"] / float(part["adjustment_factor"].iloc[-1])
+    close = part["close"] * scale
+    high = part["high"] * scale
+    low = part["low"] * scale
     prev = close.shift(1)
     tr = pd.concat([high-low, (high-prev).abs(), (low-prev).abs()], axis=1).max(axis=1)
     current = float(close.iloc[-1])
