@@ -291,7 +291,8 @@ def compose(row, tech, financial, news):
     if not negative:
         negative.append("基本面、公告或技术指标可能存在未覆盖风险")
     incomplete = (tech["status"] != "CALCULATED_GOLD_PIT" or
-                  financial["status"] == "NO_DATED_FINANCIAL" or
+                  financial["status"] in ("NO_DATED_FINANCIAL", "LEGACY_FALLBACK_CLEAN_GAP",
+                                           "NO_CLEAN_OR_LEGACY_FINANCIAL", "CLEAN_PIT_PARTIAL") or
                   not news)
     return {
         "symbol": row["vendor_symbol"], "name": row["name_zh"],
