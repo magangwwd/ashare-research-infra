@@ -1,4 +1,5 @@
 name: One-shot offline multi-role Gold/finance E2E
+# Recheck adjusted moving averages after same-day unit rebasing.
 
 on:
   push:
