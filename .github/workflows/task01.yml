@@ -178,6 +178,7 @@ jobs:
       - name: Live Tushare smoke gate
         run: python -m data_pipeline.run_task01 --mode smoke
       - name: Daily update or maintenance
+        id: daily_update
         run: python -m data_pipeline.run_task01 --mode auto
       - name: Production acceptance
         run: python -m data_pipeline.validate
@@ -219,7 +220,10 @@ jobs:
           retention-days: 30
           if-no-files-found: error
       - name: Package recovery state, including unfinished work
-        if: always() && steps.restore.outcome == 'success' && steps.drive_publish.outcome != 'success'
+        # Smoke only writes temporary diagnostic data; do not checkpoint a full
+        # restored baseline when live API probes fail before any daily update.
+        # Keep pre-existing checkpoints, and checkpoint any attempted update.
+        if: always() && steps.restore.outcome == 'success' && steps.daily_update.outcome != 'skipped' && steps.drive_publish.outcome != 'success'
         shell: bash
         run: |
           set -euo pipefail
@@ -231,7 +235,7 @@ jobs:
             fi
           fi
       - name: Save recovery checkpoint
-        if: always() && steps.restore.outcome == 'success' && steps.drive_publish.outcome != 'success'
+        if: always() && steps.restore.outcome == 'success' && steps.daily_update.outcome != 'skipped' && steps.drive_publish.outcome != 'success'
         uses: actions/upload-artifact@v4
         with:
           name: task01-checkpoint
