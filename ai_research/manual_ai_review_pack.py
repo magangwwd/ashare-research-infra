@@ -81,6 +81,10 @@ def verified_finance(root, latest, review_clock):
     records = acceptance.get("partitions", {})
     if set(records) != filenames or set(audit.get("files", {})) != filenames:
         raise ValueError("Missing or extra finance partitions")
+    for filename in filenames:
+        if (records[filename]["sha256"] != audit["files"][filename]["sha256"] or
+                records[filename]["rows"] != 5 or audit["files"][filename]["rows"] != 5):
+            raise ValueError("Audit and acceptance partition ledgers disagree: " + filename)
     output = {s: {} for s in SYMBOLS}
     for dataset in DATASETS:
         for period in PERIODS:
@@ -230,7 +234,7 @@ def instruction(packet):
 9. 五股末尾给出证据质量对比，允许「暂缓判断」，不构造 R1 信号，不建议实盘买卖、仓位、具体交易价、目标价或参数调优。
 10. 所有结论必须是研究观点，模型不能自行更改 GitHub、Google Drive 或交易策略。
 
-**输出要求：** 中文；事实/推断分离；至少列明一次 2026-10-12 财务采集时间。
+**输出要求：** 中文；事实/推断分离；明确列出 packet 的财务实际采集时间。
 授权边界：{AUTHORIZATION}。
 """
 
