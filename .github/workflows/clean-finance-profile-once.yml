@@ -34,7 +34,8 @@ jobs:
           rclone lsf gdrive: --dirs-only | grep -Ei 'Ashare|quant|stock|data|research' || true
           echo "Testing foreign shared-drive root (do not expose credentials)"
           rclone lsf gdrive:Ashare_Quant --max-depth 1 || true
-          rclone copyto gdrive:Ashare_Quant/current.json "$RUNNER_TEMP/finance/current.json"
+          rclone lsf "gdrive,team_drive=0AADaRL7lG9JJUk9PVA:" --max-depth 1 | grep -Ei 'current|versions|docs|metadata' || true
+          rclone copyto "gdrive,team_drive=0AADaRL7lG9JJUk9PVA:current.json" "$RUNNER_TEMP/finance/current.json"
           python - <<'PY'
           import json,os,pathlib
           j=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"finance/current.json").read_text())
@@ -42,10 +43,10 @@ jobs:
           with open(os.environ["GITHUB_ENV"],'a') as f: f.write('CLEAN_VERSION='+j['version']+'\n')
           print('Validated Clean version',j['version'],'snapshot',j.get('snapshot_as_of'),'completeness',j.get('critical_history_complete'))
           PY
-          rclone copyto "gdrive:Ashare_Quant/versions/$CLEAN_VERSION/data/acceptance.json" "$RUNNER_TEMP/finance/acceptance.json"
+          rclone copyto "gdrive,team_drive=0AADaRL7lG9JJUk9PVA:versions/$CLEAN_VERSION/data/acceptance.json" "$RUNNER_TEMP/finance/acceptance.json"
           for dataset in income balancesheet cashflow fina_indicator; do
             for period in 20260630 20250630; do
-              p="gdrive:Ashare_Quant/versions/$CLEAN_VERSION/data/clean/$dataset/report_year=${period:0:4}/report_period=$period/part-000.parquet"
+              p="gdrive,team_drive=0AADaRL7lG9JJUk9PVA:versions/$CLEAN_VERSION/data/clean/$dataset/report_year=${period:0:4}/report_period=$period/part-000.parquet"
               rclone copyto "$p" "$RUNNER_TEMP/finance/${dataset}_$period.parquet"
             done
           done
