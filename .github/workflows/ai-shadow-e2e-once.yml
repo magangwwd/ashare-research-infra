@@ -1,0 +1,76 @@
+name: One-shot AI shadow Drive end-to-end validation (2026-10-09)
+
+on:
+  push:
+    branches:
+      - validation/ai-shadow-e2e-20261009
+    paths:
+      - .github/workflows/ai-shadow-e2e-once.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-shadow-e2e-historical-20261009
+  cancel-in-progress: false
+
+jobs:
+  historical-paper-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: "1"
+      AS_OF: "2026-10-09"
+      DAYKEY: "20261009"
+      TOP: "5"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Verify offline safeguards
+        run: python -m unittest discover -s ai_research/tests -v
+      - name: Restore Google Drive credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo "::error::GDRIVE_RCLONE_CONFIG_B64 is missing"; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          rclone --config "$RUNNER_TEMP/rclone.conf" listremotes | grep -qx 'gdrive:'
+          rclone lsf "gdrive:stock_state_strategy" --max-depth 1 --files-only | grep -qx 'LOCK_TO_MARKUP_PAPER_STRATEGY.md'
+      - name: Restore 2026-10-09 verified historical ranking
+        shell: bash
+        run: |
+          set -euo pipefail
+          source="gdrive:stock_state_strategy/output/research_watchlist_$DAYKEY"
+          mkdir -p "$RUNNER_TEMP/ai_shadow_input"
+          rclone copyto "$source/watchlist_top20.csv" "$RUNNER_TEMP/ai_shadow_input/watchlist_top20.csv"
+          rclone copyto "$source/ranking_summary.json" "$RUNNER_TEMP/ai_shadow_input/ranking_summary.json"
+          test -s "$RUNNER_TEMP/ai_shadow_input/watchlist_top20.csv"
+          test -s "$RUNNER_TEMP/ai_shadow_input/ranking_summary.json"
+      - name: Generate rule-only Top 5 research without LLM or brokerage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.run_daily \
+            --watchlist "$RUNNER_TEMP/ai_shadow_input/watchlist_top20.csv" \
+            --summary "$RUNNER_TEMP/ai_shadow_input/ranking_summary.json" \
+            --as-of "$AS_OF" \
+            --top "$TOP" \
+            --output-dir "$RUNNER_TEMP/ai_shadow_output"
+          python -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"ai_shadow_output"/"report.json"; d=json.loads(p.read_text(encoding="utf-8")); assert d["mode"]=="RULE_ONLY_NO_API" and d["authorization"]=="PAPER_ONLY_NO_ENTRY_AUTHORIZATION" and len(d["stocks"])==5; print("Verified paper-only no-API Top-5 report")'
+      - name: Publish and verify Drive results
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="gdrive:stock_state_strategy/output/ai_research_$DAYKEY"
+          rclone copy "$RUNNER_TEMP/ai_shadow_output" "$target" --transfers 3 --checkers 6
+          rclone check "$RUNNER_TEMP/ai_shadow_output" "$target" --one-way --checkers 6
+          rclone lsf "$target"
+          echo "DRIVE_E2E_VERIFIED day=$AS_OF top=$TOP llm=false trade=false"
