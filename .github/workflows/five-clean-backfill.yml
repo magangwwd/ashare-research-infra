@@ -1,0 +1,88 @@
+name: Five-stock targeted Tushare Clean backfill
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/five_clean_backfill.py'
+      - '.github/workflows/five-clean-backfill.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: finance-clean-five-backfill
+  cancel-in-progress: false
+
+jobs:
+  collect-and-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PIP_NO_CACHE_DIR: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install official Tushare / pandas / Parquet
+        run: python -m pip install 'tushare>=1.4,<2' 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+      - name: Offline regression tests
+        run: python -m unittest discover -s ai_research/tests -p test_five_clean_backfill.py -v
+      - name: Live targeted request audit (non-publishing on errors)
+        shell: bash
+        run: |
+          set +e
+          python -m ai_research.five_clean_backfill \
+            --out "$RUNNER_TEMP/finance5" --throttle 0.7
+          rc=$?
+          echo "CLEAN_FETCH_RC=$rc" >> "$GITHUB_ENV"
+          exit 0
+      - name: Configure temporary existing Drive credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo "::error::Missing Drive rclone secret"; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          export RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf"
+          echo "RCLONE_CONFIG=$RCLONE_CONFIG" >> "$GITHUB_ENV"
+          rclone listremotes | grep -qx 'gdrive:'
+      - name: Always save and SHA-verify isolated diagnostic JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+          file="$RUNNER_TEMP/finance5/audit.json"
+          test -s "$file"
+          dest="gdrive:stock_state_strategy/finance_clean_five/diagnostics/$GITHUB_RUN_ID/audit.json"
+          rclone copyto "$file" "$dest" --immutable
+          test "$(sha256sum "$file" | awk '{print $1}')" = "$(rclone cat "$dest" | sha256sum | awk '{print $1}')"
+      - name: Publish immutable Clean partitions only if 40 of 40 pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$CLEAN_FETCH_RC" != "0" ]]; then
+            echo "::error::Clean fetch incomplete: inspect Drive diagnostics, do NOT treat as validated Clean."
+            exit 1
+          fi
+          python - "$RUNNER_TEMP/finance5/audit.json" <<'PY'
+          import json,sys
+          r=json.load(open(sys.argv[1]))
+          assert r['status']=='COMPLETE' and r['valid']==40 and len(r['files'])==8
+          PY
+          src="$RUNNER_TEMP/finance5"
+          dest="gdrive:stock_state_strategy/finance_clean_five/versions/$GITHUB_RUN_ID"
+          rclone copy "$src" "$dest" --immutable --checkers 4 --transfers 2
+          rclone check "$src" "$dest" --one-way
+          printf '{"run_id":"%s","version_path":"stock_state_strategy/finance_clean_five/versions/%s","status":"COMPLETE","groups":40}\n' \
+            "$GITHUB_RUN_ID" "$GITHUB_RUN_ID" > "$RUNNER_TEMP/finance5_pointer.json"
+          rclone copyto "$RUNNER_TEMP/finance5_pointer.json" \
+            "gdrive:stock_state_strategy/finance_clean_five/latest.json"
+          echo "FIVE_CLEAN_VERIFIED published_run=$GITHUB_RUN_ID 40_of_40=true"
