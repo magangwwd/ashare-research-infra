@@ -69,7 +69,19 @@ def select_report(frame, symbol: str, period: str, dataset: str):
             same = same.loc[same[name].fillna("__NULL__").astype(str) ==
                             str(final[name] if pd.notna(final[name]) else "__NULL__")]
         if len(same) > 1:
-            raise ValueError("AMBIGUOUS_DUPLICATE_REPORT")
+            # Tushare can return byte-for-byte equivalent indicator rows with
+            # identical publication/revision metadata. De-duplicate *only*
+            # when all non-volatile source fields agree. Never pick arbitrarily
+            # between different financial facts published under the same key.
+            comparisons = [col for col in same.columns if col != "_fetched_at"]
+            distinct = same[comparisons].drop_duplicates()
+            if len(distinct) != 1:
+                conflicts = [col for col in comparisons
+                             if same[col].astype("string").fillna("__NULL__").nunique() > 1]
+                raise ValueError("CONFLICTING_DUPLICATE_REPORT_FIELDS:" +
+                                 ",".join(conflicts[:12]))
+            chosen = same.iloc[[-1]].copy()
+            chosen.attrs["deduplicated_identical_source_rows"] = len(same) - 1
     return chosen
 
 
@@ -95,6 +107,7 @@ def collect(root: Path, client, throttle: float = 0):
                 try:
                     original = client.query(dataset, ts_code=symbol, period=period)
                     selected = select_report(original, symbol, period, dataset)
+                    duplicate_count = selected.attrs.get("deduplicated_identical_source_rows", 0)
                     cleaned = normalize(dataset, selected)
                     if (len(cleaned) != 1 or cleaned["ts_code"].iloc[0] != symbol or
                             cleaned["report_period"].iloc[0].strftime("%Y%m%d") != period or
@@ -106,6 +119,7 @@ def collect(root: Path, client, throttle: float = 0):
                         "dataset": dataset, "period": period,
                         "symbol": symbol, "ann_date": cleaned["ann_date"].iloc[0].isoformat(),
                         "status": "VALID",
+                        "identical_source_rows_deduplicated": duplicate_count,
                     })
                 except Exception as error:
                     reason = str(error)
