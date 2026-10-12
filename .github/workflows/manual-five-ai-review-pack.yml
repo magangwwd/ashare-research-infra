@@ -1,0 +1,112 @@
+name: Five-stock manual ChatGPT research packet (zero model API)
+
+on:
+  pull_request:
+    paths:
+      - 'ai_research/manual_ai_review_pack.py'
+      - 'ai_research/tests/test_manual_ai_review_pack.py'
+      - '.github/workflows/manual-five-ai-review-pack.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/manual_ai_review_pack.py'
+      - '.github/workflows/manual-five-ai-review-pack.yml'
+  workflow_dispatch:
+    inputs:
+      market_day:
+        description: "Existing offline report date YYYYMMDD; NOT finance capture date"
+        type: string
+        required: true
+        default: "20261009"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: five-stock-manual-chatgpt-packet
+  cancel-in-progress: false
+
+jobs:
+  evidence-pack-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install offline Clean parquet readers
+        run: python -m pip install 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+      - name: Test accepted scope, five symbols, hash and time controls
+        run: python -m unittest discover -s ai_research/tests -p test_manual_ai_review_pack.py -v
+
+  build-drive-manual-packet:
+    needs: evidence-pack-tests
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      INPUT_MARKET_DAY: ${{ github.event_name == 'workflow_dispatch' && inputs.market_day || '20261009' }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install parquet readers and rclone
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+      - name: Configure existing private Drive-only credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo "::error::Drive Secret missing"; exit 1; }
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          export RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf"
+          echo "RCLONE_CONFIG=$RCLONE_CONFIG" >> "$GITHUB_ENV"
+          rclone listremotes | grep -qx 'gdrive:'
+      - name: Restore validated report and version-pinned five-stock Clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$INPUT_MARKET_DAY" =~ ^[0-9]{8}$ ]] || exit 1
+          root="gdrive:stock_state_strategy"
+          mkdir -p "$RUNNER_TEMP/ai_manual/input/clean"
+          rclone copyto "$root/output/ai_multiagent_offline_v3_$INPUT_MARKET_DAY/report.json" "$RUNNER_TEMP/ai_manual/input/report.json"
+          rclone copyto "$root/finance_clean_five/latest.json" "$RUNNER_TEMP/ai_manual/input/latest.json"
+          python - <<'PY'
+          import json,os,pathlib,re
+          ptr=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"ai_manual/input/latest.json").read_text())
+          run=str(ptr.get("run_id",""))
+          if not re.fullmatch(r"[0-9]{5,20}",run) or ptr.get("status")!="COMPLETE":
+              raise ValueError("Invalid latest accepted five-stock finance version")
+          with open(os.environ["GITHUB_ENV"],"a") as f:
+              f.write("FINANCE_RUN="+run+"\n")
+          PY
+          src="$root/finance_clean_five/versions/$FINANCE_RUN"
+          rclone copy "$src" "$RUNNER_TEMP/ai_manual/input/clean" --checkers 4 --transfers 3
+          test -s "$RUNNER_TEMP/ai_manual/input/clean/targeted_acceptance.json"
+      - name: Generate manual AI prompts and source-only packets (NO LLM API)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.manual_ai_review_pack             --report-json "$RUNNER_TEMP/ai_manual/input/report.json"             --clean-root "$RUNNER_TEMP/ai_manual/input/clean"             --latest "$RUNNER_TEMP/ai_manual/input/latest.json"             --output-dir "$RUNNER_TEMP/ai_manual/output"
+          test -s "$RUNNER_TEMP/ai_manual/output/manual_ai_packet.json"
+          test -s "$RUNNER_TEMP/ai_manual/output/chatgpt_prompt.md"
+      - name: Publish immutable ChatGPT manual review packet to Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/manual_ai_review_v1/$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/ai_manual/output" "$dest" --immutable
+          rclone check "$RUNNER_TEMP/ai_manual/output" "$dest" --one-way
+          echo "MANUAL_AI_PACKET_VERIFIED run=$GITHUB_RUN_ID model_api=false charge=0 stocks=5"
