@@ -79,6 +79,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y rclone
           (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 -d > "$RUNNER_TEMP/rclone.conf")
+          export RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf"
           echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
           rclone --config "$RUNNER_TEMP/rclone.conf" listremotes | grep -qx 'gdrive:'
           rclone lsf "gdrive:stock_state_strategy" --files-only --max-depth 1 | grep -qx 'LOCK_TO_MARKUP_PAPER_STRATEGY.md'
