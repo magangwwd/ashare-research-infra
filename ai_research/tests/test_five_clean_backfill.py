@@ -58,10 +58,20 @@ class FiveCleanBackfillTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "MISSING_COLUMN:operate_profit"):
             select_report(frame, SYMBOLS[0], PERIODS[1], "income")
 
-    def test_reject_same_date_duplicate(self):
-        frame = self.make_frame("income", SYMBOLS[0], PERIODS[1])
-        with self.assertRaisesRegex(ValueError, "AMBIGUOUS"):
-            select_report(pd.concat([frame, frame]), SYMBOLS[0], PERIODS[1], "income")
+    def test_accept_only_exact_duplicate_source_rows(self):
+        frame = self.make_frame("fina_indicator", SYMBOLS[0], PERIODS[1])
+        chosen = select_report(pd.concat([frame, frame], ignore_index=True),
+                               SYMBOLS[0], PERIODS[1], "fina_indicator")
+        self.assertEqual(len(chosen), 1)
+        self.assertEqual(chosen.attrs["deduplicated_identical_source_rows"], 1)
+
+    def test_reject_conflicting_duplicate_source_rows(self):
+        frame = self.make_frame("fina_indicator", SYMBOLS[0], PERIODS[1])
+        different = frame.copy()
+        different["roe"] = 7.5
+        with self.assertRaisesRegex(ValueError, "CONFLICTING_DUPLICATE_REPORT_FIELDS:roe"):
+            select_report(pd.concat([frame, different], ignore_index=True),
+                          SYMBOLS[0], PERIODS[1], "fina_indicator")
 
     def test_e2e_full_40_partitions_and_checksums(self):
         outer = self
