@@ -905,9 +905,10 @@ def main() -> int:
         client = TushareClient(config)
         now_local = datetime.now(ZoneInfo(config["schedule"]["timezone"]))
         as_of = resolved_as_of(now_local)
-        # Backfill must only use historical sessions, not the latest session.
+        # Backfill stays before today, but should not skip an extra day when
+        # the scheduled job is already running after midnight.
         if args.mode == "backfill":
-            as_of -= timedelta(days=1)
+            as_of = min(as_of, now_local.date() - timedelta(days=1))
         print(f"TASK01_DATE_SELECTION mode={args.mode} local_now={now_local.isoformat()} as_of={as_of}")
         schema_docs(root)
         if args.mode == "smoke":
