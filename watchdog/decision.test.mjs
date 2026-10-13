@@ -71,3 +71,18 @@ test("earlier-in-evening manual checks still watch previous slot", () => {
   const evening = new Date("2026-10-07T12:40:00Z"); // Oct 7 20:40
   assert.equal(decideWatchdog([run()], evening).action, "done");
 });
+
+test("21:17 primary opens a new session slot", () => {
+  assert.equal(lastScheduledSlot(new Date("2026-10-07T13:16:00Z")).toISOString(),
+               "2026-10-06T13:17:00.000Z"); // Oct 7 21:16
+  assert.equal(lastScheduledSlot(new Date("2026-10-07T13:17:00Z")).toISOString(),
+               "2026-10-07T13:17:00.000Z"); // Oct 7 21:17
+});
+
+test("23:30 and next-day 03:23 share one primary session", () => {
+  assert.equal(lastScheduledSlot(new Date("2026-10-06T15:30:00Z")).toISOString(),
+               "2026-10-06T13:17:00.000Z");
+  assert.equal(lastScheduledSlot(new Date("2026-10-06T19:23:00Z")).toISOString(),
+               "2026-10-06T13:17:00.000Z");
+  assert.equal(decideWatchdog([run()], new Date("2026-10-06T19:23:00Z")).action, "done");
+});
