@@ -2,12 +2,12 @@ name: Task 01 data infrastructure
 run-name: ${{ github.event_name == 'schedule' && 'Task 01 scheduled' || (inputs.watchdog_trigger && 'Task 01 watchdog' || 'Task 01 manual') }}
 
 on:
-  # Primary 23:50 China time; native backup checks at 00:35 and 01:35.
-  # GitHub schedule is best-effort, so a separate external watchdog is also used.
+  # Beijing (UTC+08): primary 21:17, backup 23:30, next-day backup 03:23.
+  # GitHub schedule is best-effort; an independent watchdog also monitors it.
   schedule:
-    - cron: '50 15 * * *'
-    - cron: '35 16 * * *'
-    - cron: '35 17 * * *'
+    - cron: '17 13 * * *'  # 21:17 same local day
+    - cron: '30 15 * * *'  # 23:30 same local day
+    - cron: '23 19 * * *'  # 03:23 next local day
   workflow_dispatch:
     inputs:
       verify_drive_auth:
@@ -62,7 +62,7 @@ jobs:
           current = int(os.environ["GITHUB_RUN_ID"])
           now = datetime.now(ZoneInfo("Asia/Shanghai"))
           # Align duplicate guard with the data session, not the calendar date.
-          # At 00:35, the prior 23:50 run must suppress another update.
+          # At 03:23, an accepted run from 21:17 or 23:30 must suppress duplicates.
           cutoff = now.replace(hour=18, minute=0, second=0, microsecond=0)
           if now < cutoff:
               cutoff -= timedelta(days=1)

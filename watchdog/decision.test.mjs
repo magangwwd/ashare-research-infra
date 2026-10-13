@@ -3,14 +3,14 @@ import assert from "node:assert/strict";
 
 import { decideWatchdog, localDay, lastScheduledSlot } from "./decision.mjs";
 
-const now = new Date("2026-10-06T17:00:00Z"); // Oct 7 01:00 Asia/Shanghai, after Oct 6 23:50 slot
+const now = new Date("2026-10-06T17:00:00Z"); // Oct 7 01:00 Asia/Shanghai, after Oct 6 21:17 slot
 
 function run(overrides = {}) {
   return {
     id: 100,
     event: "schedule",
     display_title: "Task 01 scheduled",
-    created_at: "2026-10-06T15:57:00Z",
+    created_at: "2026-10-06T13:25:00Z",
     status: "completed",
     conclusion: "success",
     run_attempt: 1,
@@ -53,12 +53,12 @@ test("alerts after second terminal failure", () => {
 });
 
 test("older slot success cannot suppress latest slot", () => {
-  const yesterday = run({ created_at: "2026-10-05T15:57:00Z" });
+  const yesterday = run({ created_at: "2026-10-05T13:25:00Z" });
   assert.equal(decideWatchdog([yesterday], now).action, "dispatch");
 });
 
-test("midnight recovery includes preceding 23:50 run", () => {
-  assert.equal(lastScheduledSlot(now).toISOString(), "2026-10-06T15:50:00.000Z");
+test("next-day 03:23 backup belongs to preceding 21:17 slot", () => {
+  assert.equal(lastScheduledSlot(now).toISOString(), "2026-10-06T13:17:00.000Z");
   assert.equal(decideWatchdog([run()], now).action, "done");
 });
 
@@ -70,4 +70,19 @@ test("next evening cannot be suppressed by last night's acceptance", () => {
 test("earlier-in-evening manual checks still watch previous slot", () => {
   const evening = new Date("2026-10-07T12:40:00Z"); // Oct 7 20:40
   assert.equal(decideWatchdog([run()], evening).action, "done");
+});
+
+test("21:17 primary opens a new session slot", () => {
+  assert.equal(lastScheduledSlot(new Date("2026-10-07T13:16:00Z")).toISOString(),
+               "2026-10-06T13:17:00.000Z"); // Oct 7 21:16
+  assert.equal(lastScheduledSlot(new Date("2026-10-07T13:17:00Z")).toISOString(),
+               "2026-10-07T13:17:00.000Z"); // Oct 7 21:17
+});
+
+test("23:30 and next-day 03:23 share one primary session", () => {
+  assert.equal(lastScheduledSlot(new Date("2026-10-06T15:30:00Z")).toISOString(),
+               "2026-10-06T13:17:00.000Z");
+  assert.equal(lastScheduledSlot(new Date("2026-10-06T19:23:00Z")).toISOString(),
+               "2026-10-06T13:17:00.000Z");
+  assert.equal(decideWatchdog([run()], new Date("2026-10-06T19:23:00Z")).action, "done");
 });

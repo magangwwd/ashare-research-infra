@@ -14,8 +14,8 @@ export function localDay(value, timeZone = "Asia/Shanghai") {
   return `${obj.year}-${obj.month}-${obj.day}`;
 }
 
-// The Task 01 scheduled slot belongs to the 23:50 local trading day.
-// Recovery at 00:20 next morning must look back to that slot, not midnight.
+// The Task 01 primary scheduled slot belongs to the 21:17 local trading day.
+// Backup at 23:30 / next-day 03:23 and watchdog recovery share this slot.
 // The project timezone is Asia/Shanghai (UTC+08:00, no DST).
 export function lastScheduledSlot(now = new Date(), timeZone = "Asia/Shanghai") {
   if (timeZone !== "Asia/Shanghai" && timeZone !== "Asia/Singapore") {
@@ -24,9 +24,9 @@ export function lastScheduledSlot(now = new Date(), timeZone = "Asia/Shanghai") 
   const clock = Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
     timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23"
   }).formatToParts(now).map(part => [part.type, part.value]));
-  const beforeScheduledSlot = Number(clock.hour) * 60 + Number(clock.minute) < 23 * 60 + 50;
+  const beforeScheduledSlot = Number(clock.hour) * 60 + Number(clock.minute) < 21 * 60 + 17;
   const day = localDay(new Date(now.getTime() - (beforeScheduledSlot ? 86400000 : 0)), timeZone);
-  return new Date(`${day}T15:50:00Z`);
+  return new Date(`${day}T13:17:00Z`);
 }
 
 export function isManagedRun(run) {
@@ -42,7 +42,7 @@ export function decideWatchdog(runs, now = new Date(), timeZone = "Asia/Shanghai
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   if (!candidates.length) {
-    return { action: "dispatch", reason: "no managed Task 01 run exists since the latest 23:50 slot" };
+    return { action: "dispatch", reason: "no managed Task 01 run exists since the latest 21:17 slot" };
   }
 
   const active = candidates.find((run) => ["queued", "in_progress", "pending", "waiting", "requested"].includes(run.status));
