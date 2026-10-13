@@ -2,9 +2,12 @@ name: Task 01 data infrastructure
 run-name: ${{ github.event_name == 'schedule' && 'Task 01 scheduled' || (inputs.watchdog_trigger && 'Task 01 watchdog' || 'Task 01 manual') }}
 
 on:
-  # 23:50 Asia/Shanghai / Asia/Singapore = 15:50 UTC.
+  # Primary 23:50 China time; native backup checks at 00:35 and 01:35.
+  # GitHub schedule is best-effort, so a separate external watchdog is also used.
   schedule:
     - cron: '50 15 * * *'
+    - cron: '35 16 * * *'
+    - cron: '35 17 * * *'
   workflow_dispatch:
     inputs:
       verify_drive_auth:
@@ -52,12 +55,17 @@ jobs:
           import json
           import os
           import subprocess
-          from datetime import datetime
+          from datetime import datetime, timedelta
           from zoneinfo import ZoneInfo
 
           repo = os.environ["GITHUB_REPOSITORY"]
           current = int(os.environ["GITHUB_RUN_ID"])
-          today = datetime.now(ZoneInfo("Asia/Shanghai")).date()
+          now = datetime.now(ZoneInfo("Asia/Shanghai"))
+          # Align duplicate guard with the data session, not the calendar date.
+          # At 00:35, the prior 23:50 run must suppress another update.
+          cutoff = now.replace(hour=18, minute=0, second=0, microsecond=0)
+          if now < cutoff:
+              cutoff -= timedelta(days=1)
           runs = json.load(open("/tmp/task01-runs.json", encoding="utf-8"))["workflow_runs"]
           duplicate = None
 
@@ -65,7 +73,7 @@ jobs:
               if int(run["id"]) == current or run.get("conclusion") != "success":
                   continue
               created = datetime.fromisoformat(run["created_at"].replace("Z", "+00:00")).astimezone(ZoneInfo("Asia/Shanghai"))
-              if created.date() != today:
+              if created < cutoff:
                   continue
               # A successful data run publishes this artifact. Drive-only/auth-only
               # dispatches do not, so they cannot suppress the daily data task.
@@ -81,9 +89,9 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
               out.write(f"should_run={'true' if should_run else 'false'}\n")
           if duplicate:
-              print(f"SUCCESS daily duplicate guard: accepted run {duplicate['id']} already exists for {today}; skipping")
+              print(f"SUCCESS daily duplicate guard: accepted run {duplicate['id']} already exists since {cutoff.isoformat()}; skipping")
           else:
-              print(f"SUCCESS daily duplicate guard: no accepted data run exists for {today}; proceeding")
+              print(f"SUCCESS daily duplicate guard: no accepted data run exists since {cutoff.isoformat()}; proceeding")
           PY
 
   drive-auth:
