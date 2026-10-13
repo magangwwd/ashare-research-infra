@@ -181,6 +181,8 @@ class TushareClient:
         except Exception as exc:
             probe_day = day
             results["calendar_probe_error"] = self.redact(exc)
+        results["probe_trade_date"] = probe_day
+        print(f"CAPABILITY_AUDIT cutoff_date={day} probe_trade_date={probe_day}")
         for name, spec in DATASETS.items():
             if spec.strategy == "derived":
                 continue
