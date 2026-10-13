@@ -3,7 +3,7 @@ main = "worker.mjs"
 compatibility_date = "2026-10-01"
 
 [triggers]
-# External checks AFTER the primary 23:50 slot: 00:20, 01:20, 02:20,
+# External checks AFTER the primary 21:17 slot: 00:20, 01:20, 02:20,
 # and 06:20 Asia/Shanghai (UTC+08). Requires a Cloudflare Worker redeploy.
 # A cross-midnight run window keeps these checks idempotent.
 crons = ["20 16 * * *", "20 17 * * *", "20 18 * * *", "20 22 * * *"]
