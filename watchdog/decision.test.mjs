@@ -1,16 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { decideWatchdog, localDay } from "./decision.mjs";
+import { decideWatchdog, localDay, lastScheduledSlot } from "./decision.mjs";
 
-const now = new Date("2026-10-06T13:00:00Z"); // 21:00 Asia/Shanghai
+const now = new Date("2026-10-06T17:00:00Z"); // Oct 7 01:00 Asia/Shanghai, after Oct 6 23:50 slot
 
 function run(overrides = {}) {
   return {
     id: 100,
     event: "schedule",
     display_title: "Task 01 scheduled",
-    created_at: "2026-10-06T12:17:00Z",
+    created_at: "2026-10-06T15:57:00Z",
     status: "completed",
     conclusion: "success",
     run_attempt: 1,
@@ -22,7 +22,7 @@ test("localDay uses Asia/Shanghai boundary", () => {
   assert.equal(localDay("2026-10-05T16:30:00Z"), "2026-10-06");
 });
 
-test("dispatches when no managed run exists today", () => {
+test("dispatches when no managed run exists since last scheduled slot", () => {
   assert.equal(decideWatchdog([], now).action, "dispatch");
 });
 
@@ -36,7 +36,7 @@ test("waits when scheduled run is active", () => {
   assert.equal(decision.action, "wait");
 });
 
-test("stops when today's managed run succeeded", () => {
+test("stops when last slot's managed run succeeded", () => {
   const decision = decideWatchdog([run()], now);
   assert.equal(decision.action, "done");
 });
@@ -52,7 +52,22 @@ test("alerts after second terminal failure", () => {
   assert.equal(decision.action, "alert");
 });
 
-test("yesterday's success cannot suppress today", () => {
-  const yesterday = run({ created_at: "2026-10-05T12:17:00Z" });
+test("older slot success cannot suppress latest slot", () => {
+  const yesterday = run({ created_at: "2026-10-05T15:57:00Z" });
   assert.equal(decideWatchdog([yesterday], now).action, "dispatch");
+});
+
+test("midnight recovery includes preceding 23:50 run", () => {
+  assert.equal(lastScheduledSlot(now).toISOString(), "2026-10-06T15:50:00.000Z");
+  assert.equal(decideWatchdog([run()], now).action, "done");
+});
+
+test("next evening cannot be suppressed by last night's acceptance", () => {
+  const nextEvening = new Date("2026-10-07T15:55:00Z"); // Oct 7 23:55
+  assert.equal(decideWatchdog([run()], nextEvening).action, "dispatch");
+});
+
+test("earlier-in-evening manual checks still watch previous slot", () => {
+  const evening = new Date("2026-10-07T12:40:00Z"); // Oct 7 20:40
+  assert.equal(decideWatchdog([run()], evening).action, "done");
 });

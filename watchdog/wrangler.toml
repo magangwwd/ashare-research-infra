@@ -3,9 +3,10 @@ main = "worker.mjs"
 compatibility_date = "2026-10-01"
 
 [triggers]
-# 20:40, 21:40 and 22:40 Asia/Shanghai / Singapore.
-# Repeated checks are safe because the watchdog is idempotent.
-crons = ["40 12 * * *", "40 13 * * *", "40 14 * * *"]
+# External checks AFTER the primary 23:50 slot: 00:20, 01:20, 02:20,
+# and 06:20 Asia/Shanghai (UTC+08). Requires a Cloudflare Worker redeploy.
+# A cross-midnight run window keeps these checks idempotent.
+crons = ["20 16 * * *", "20 17 * * *", "20 18 * * *", "20 22 * * *"]
 
 [secrets]
 required = ["GITHUB_TOKEN"]

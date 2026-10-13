@@ -60,6 +60,21 @@ def load_config(path: Path) -> dict:
     return config
 
 
+def resolved_as_of(now: datetime, completed_session_hour: int = 18) -> date:
+    """Never select an unfinished A-share session for live smoke or updates.
+
+    The provider publishes daily and daily_basic after the 15:00 market close;
+    use an 18:00 local-time buffer for the full Critical bundle. Holidays and
+    weekends are resolved through the SSE/SZSE trade calendar in the pipeline.
+    A delayed 23:50 schedule starting next morning targets yesterday.
+    """
+    if now.tzinfo is None or now.utcoffset() is None:
+        raise ValueError("resolved_as_of requires a timezone-aware datetime")
+    if not 16 <= completed_session_hour <= 23:
+        raise ValueError("completed_session_hour must be 16..23 local time")
+    return (now - timedelta(days=1)).date() if now.hour < completed_session_hour else now.date()
+
+
 def code_fingerprint() -> str:
     return hashlib.sha256(b"".join(p.read_bytes() for p in sorted(Path(__file__).parent.glob("*.py")))).hexdigest()
 
@@ -888,10 +903,13 @@ def main() -> int:
         root = Path(args.root or config["storage"]["root"]).resolve()
         root.mkdir(parents=True, exist_ok=True)
         client = TushareClient(config)
-        local_today = datetime.now(ZoneInfo(config["schedule"]["timezone"])).date()
-        # Backfill never touches the current local date. This keeps repeated
-        # daytime runs away from an open/incomplete trading session.
-        as_of = local_today - timedelta(days=1) if args.mode == "backfill" else local_today
+        now_local = datetime.now(ZoneInfo(config["schedule"]["timezone"]))
+        as_of = resolved_as_of(now_local)
+        # Backfill stays before today, but should not skip an extra day when
+        # the scheduled job is already running after midnight.
+        if args.mode == "backfill":
+            as_of = min(as_of, now_local.date() - timedelta(days=1))
+        print(f"TASK01_DATE_SELECTION mode={args.mode} local_now={now_local.isoformat()} as_of={as_of}")
         schema_docs(root)
         if args.mode == "smoke":
             atomic_json(root / "metadata/smoke.json", {"passed": False, "live_tushare": True, "checked_at": utcnow()})
