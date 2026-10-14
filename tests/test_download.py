@@ -80,3 +80,26 @@ def test_critical_audit_reports_redacted_provider_reasons(config, monkeypatch, t
     assert "daily_basic (UNKNOWN): critical probe returned no rows" in message
     assert "test-sensitive-token" not in message
     assert (tmp_path / "metadata/capabilities/latest.json").exists()
+
+
+def test_stk_mins_uses_dedicated_tushare_endpoint(config, provider):
+    client = TushareClient(config, provider, sleeper=lambda _: None)
+    bars = client.fetch("stk_mins", ts_code="600000.SH", freq="15min",
+                        start_date="2026-10-02 09:00:00", end_date="2026-10-02 16:00:00")
+    assert len(bars) == 16
+    assert any(name == "stk_mins" for name, _ in provider.calls)
+
+
+def test_empty_minute_probe_is_not_reported_available(config, provider, monkeypatch, tmp_path):
+    query = provider.query
+
+    def empty_minutes(endpoint, **params):
+        if endpoint == "stk_mins":
+            return pd.DataFrame()
+        return query(endpoint, **params)
+
+    monkeypatch.setattr(provider, "query", empty_minutes)
+    client = TushareClient(config, provider, sleeper=lambda _: None)
+    report = client.audit(tmp_path, "20261002")
+    assert report["interfaces"]["stk_mins"]["status"] == "UNAVAILABLE"
+    assert report["interfaces"]["daily"]["status"] == "AVAILABLE"
