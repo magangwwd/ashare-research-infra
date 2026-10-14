@@ -549,8 +549,11 @@ class Pipeline:
                     errors.append(self.client.redact(exc))
         if fallbacks:
             atomic_json(self.store.metadata / "daily_source_fallback.json", {
-                "status": "DEGRADED_MINUTES_WITH_VALIDATED_DAILY",
+                "status": "FALLBACK_PENDING_TASK01_ACCEPTANCE",
                 "sessions": fallbacks, "updated_at": utcnow()})
+        else:
+            # The report describes this run, not a historical unresolved outage.
+            (self.store.metadata / "daily_source_fallback.json").unlink(missing_ok=True)
         if errors:
             raise ValidationError("; ".join(errors))
 
