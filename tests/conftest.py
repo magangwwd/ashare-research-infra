@@ -70,6 +70,12 @@ class FakeTushare:
             frame = pd.DataFrame([{"exchange": params.get("exchange", "SSE"), "cal_date": d.strftime("%Y%m%d"),
                                    "is_open": int(d.weekday() < 5), "pretrade_date": (d-pd.offsets.BDay()).strftime("%Y%m%d")}
                                   for d in pd.date_range(start, end)])
+        elif endpoint == "stk_mins":
+            # The production client calls the official pro.stk_mins API.
+            return self.pro_bar(ts_code=params["ts_code"],
+                                start_date=params["start_date"],
+                                end_date=params["end_date"],
+                                freq=params.get("freq", "15min"))
         elif endpoint in ("daily", "daily_basic", "adj_factor"):
             codes = list(self.stocks["ts_code"])
             if "ts_code" in params:
