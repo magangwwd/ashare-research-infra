@@ -11,22 +11,21 @@
 - 对照：V1、V2-A、V2-B、V3、V3-NoTrend、50/50 月调仓及全现金。
 - 历史报告不可直接视为复现；若旧代码/数据/交易日志缺失，明确标记为“重新实现”。不得捏造缺失 K 线或独立样本外表现。
 
-## 计划代码结构（初始化阶段）
-- `strategies/`：策略规则
-- `backtest/`：模拟成交、成本、净值、风控
-- `validation/`：行情认证与账目对账
-- `tests/`：程序正确性测试
-- `config/`：冻结的参数版本
-- `docs/`：研究协议与中文报告索引
-- `live_sim/`：仅在研究通过后启用的模拟信号（不接真实下单）
+## 当前已提交代码（第一版）
+- `data/download.py`：下载 Binance Vision 现货 BTCUSDT 4h 月度 ZIP。
+- `data/validate.py` 与 `data/prepare.py`：严格校验 4h K 线并合成 UTC 日线。
+- `backtest/run.py`：重建 V1、V2-A、V2-B、V3、V3-NoTrend、现金及 50/50 基准，带双成本和回撤保护。
+- `tests/test_research.py`：合成行情单元测试（本地通过 7 项）。
+- `docs/RUNBOOK.md`：复现命令、数据路径、研究限制及验收要求。
+- `.github/workflows/btc-v3-backtest.yml`：一次推送触发及手动触发，尝试下载真实历史数据、回测并写入已有 Drive 子文件夹；实际 Actions 成功与 Drive 上传尚待日志/文件核验。
 
 ## 持久化与安全
-GitHub 保存源代码、测试和参数；Google Drive **不新建目录**，沿用现有的 `project/BTC_Quant_System_OKX/` 保存行情原件、清洗数据、日志、净值、研究报告和证据清单；现有文件保持不变，新增研究结果需清晰命名、不可覆盖历史成果。对应文件夹：https://drive.google.com/drive/folders/1f1QpjccD0YvciS7RwaxfRGkuW-o0k_0P 。当前仅初始化目录，**尚未执行第三轮回测**。
+GitHub 保存源代码、测试和参数；Google Drive **不新建目录**，沿用现有的 `project/BTC_Quant_System_OKX/` 保存行情原件、清洗数据、日志、净值、研究报告和证据清单；现有文件保持不变，新增研究结果需清晰命名、不可覆盖历史成果。对应文件夹：https://drive.google.com/drive/folders/1f1QpjccD0YvciS7RwaxfRGkuW-o0k_0P 。已编写和提交回测程序、通过本地合成数据测试；**尚未确认 GitHub Actions 真实历史回测成功**。
 
 **重要：**本仓库当前为公开仓库，不得提交 API Key、Token、账户信息、交易密钥或受限/敏感数据。大文件及生成数据不直接提交 Git。
 
 ## 下一步验收
-1. 找到并归档早期 BTC 回测报告及历史代码/数据；记录每份文件哈希。
-2. 重新抓取并认证 Binance 历史 K 线、处理缺口和 4h 日线聚合。
-3. 实际执行冻结规则的统一回测、逐笔交易核算、双成本与诊断曲线。
-4. 保存可复现指令、运行环境、版本、日志及完整中文报告，独立验证不达标则不进入模拟盘。
+1. 核实 GitHub Actions 是否真正启动、7 项测试是否通过、Binance 下载是否成功。
+2. 核实 Drive 原有 `BTC_V3_第三轮回测_20261014` 子文件夹新增源数据哈希、交易日志、净值和 summary.json；若缺失，查看 Actions 失败步骤。
+3. 审查旧 V1/V2 原始脚本和报告，明确标注重新实现与历史数字的差异。
+4. 补独立样本外、多周期稳定性、执行假设与中文结论；未通过不进入模拟盘。
