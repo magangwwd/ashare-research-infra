@@ -24,10 +24,14 @@ Drive 发布已接入常规数据 job；恢复优先用 checkpoint，缺失或�
 
 首次真实 Drive 发布 [run #18](https://github.com/magangwwd/ashare-research-infra/actions/runs/37160747646) 已成功，快照 as_of=2026-10-03，480 个数据/元信息文件共 106,368,751 字节；[首次版本目录](https://drive.google.com/drive/folders/1xuu9_7Kuc325Wz4IeMImgMnswd2xgxSP) 保留，但已不是当前正式版本。正式读取以根目录 current.json 为入口，历史未完成标记保留。Runner OAuth 已配置，无需重新提供凭据。
 
+## 2026-10-15 分钟源故障恢复
+
+生产分钟采集改用 Tushare 独立 `stk_mins` API；空分钟探测不再视为权限可用。分钟源恢复前仍明确记录缺口，不以日线冒充分钟数据。只有分钟覆盖合格才使用分钟聚合日线；否则明确切换至通过相同 Critical 验收的官方日线，以保护财务数据刷新。首次真实生产重跑及 Google Drive 发布尚待单独核验。
+
 ## 范围
 
 - Critical：`stock_basic / trade_cal / daily / adj_factor / daily_basic`。不可禁用，失败返回非零，Workflow FAILED。
-- Required：Security Master、**A股15分钟行情 `stk_mins`（2020-01-01 起）**、财务、行业、主要指数与成分历史、名称/ST 原资料、停复牌、涨跌停、股本变化及分红资本事件。15分钟首次权限/覆盖未通过时保持原 daily 链；激活后分钟源异常会阻止新版本发布。其他 Required 暂时失败记录 Gap，继续核心流程。
+- Required：Security Master、**A股15分钟行情 `stk_mins`（2020-01-01 起）**、财务、行业、主要指数与成分历史、名称/ST 原资料、停复牌、涨跌停、股本变化及分红资本事件。15分钟首次权限/覆盖未通过时保持原 daily 链；激活后分钟源异常须记录 DEGRADED/GAP，优先恢复分钟源；期间只能在 Tushare 原生 daily 完整重新获取并通过原 Critical 校验后降级发布，日线校验失败仍禁止发布。其他 Required 暂时失败记录 Gap，继续核心流程。
 - Optional 白名单：融资融券、大宗交易、龙虎榜、股东人数、股东增减持、机构调研、限售解禁。权限和接口可用才下载，失败不阻止核心发布。
 - Candidate：质押、回购等仅登记，不下载。
 
@@ -133,10 +137,10 @@ Clean 仅包含 `clean.py::SCHEMAS` 显式声明的字段；未知源字段不�
 - 接口只能按单只证券/时间段获取，历史按“证券 × 年”有界回补；单次结果触及 8000 行安全上限会拒绝写入，防止静默截断。
 - 最新交易日按证券抓取，证券覆盖率达到 95% 后才允许首次激活 `daily_from_minutes`。
 - 激活前，原 Tushare `daily` 保持生产保底；激活日之前的历史缺口仍可用 `daily` 补齐。
-- 激活日起，新的全市场 `daily` 不再下载，OHLCV/amount 由 15 分钟 Clean 聚合；分钟 vol（股）÷100 转成日线 vol（手），分钟 amount（元）÷1000 转成日线 amount（千元）。
+- 激活后仅在分钟源健康且当日覆盖率达 95% 时使用 15 分钟 Clean 聚合 daily；分钟源降级时可使用重新下载并通过原 Critical 质量/覆盖率校验的 Tushare 原生日线。分钟 vol（股）÷100 转日线 vol（手），amount（元）÷1000 转日线 amount（千元）。
 - `pre_close/change/pct_chg` 不从分钟数据臆造，聚合日线中允许为空；研究收益使用价格与 `adj_factor`。
 - `adj_factor`、`daily_basic` 继续日更；Tushare `daily` 只保留少量 OHLC 抽样 QA。
-- 分钟权限首次不可用不会破坏既有正式日线；一旦激活后分钟源不足 95%，新运行失败并保持上一正式版本。
+- 分钟权限首次不可用不会破坏既有正式日线；激活后分钟源不足 95%，须保留缺口和 source 状态（`DEGRADED`），并尝试完整官方日线作为降级输入；若官方日线的严格验收失败，新运行仍失败并保持旧正式版本。
 - 15分钟 Raw 默认保留 14 天，Clean 长期保留。历史回补有独立预算，不挤占日线 Core 75/25 快车道。
 
 API 自动重试、限速、分页。分页重复或超过上限直接失败，避免将截断结果误作完整。历史下载量和接口权限依赖实际 Tushare 账号；`metadata/manifest/history.json` 显示当前推进情况。任一 Critical 下载/验证失败，整个运行退出非零；Required/Optional 错误只记录 Gap。有限历史批次完成不代表整个 Task 01 历史验收完成。
