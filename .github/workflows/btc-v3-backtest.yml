@@ -1,0 +1,94 @@
+name: BTC V3 third-round backtest (research only)
+
+on:
+  push:
+    paths:
+      - '.github/workflows/btc-v3-backtest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: btc-v3-backtest-drive
+  cancel-in-progress: false
+
+jobs:
+  historical-backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Run synthetic unit tests first
+        run: python -m unittest discover -s btc-quant/tests -v
+      - name: Download official complete-month BTCUSDT 4h archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/btc_raw"
+          python btc-quant/data/download.py --start 2018-01 --end 2026-09 --out "$RUNNER_TEMP/btc_raw"
+      - name: Strict UTC data validation and daily aggregation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python btc-quant/data/prepare.py --source "$RUNNER_TEMP/btc_raw" --out "$RUNNER_TEMP/btc_validated"
+      - name: Rebuild V1 V2 V3 backtests with costs and guards
+        shell: bash
+        run: |
+          set -euo pipefail
+          python btc-quant/backtest/run.py --input "$RUNNER_TEMP/btc_validated/btc_daily_utc.csv" --out "$RUNNER_TEMP/btc_results"
+      - name: Stage immutable evidence for existing Drive project
+        shell: bash
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/btc_staged"
+          mkdir -p "$stage"
+          prefix="run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}__"
+          for file in "$RUNNER_TEMP/btc_results"/* "$RUNNER_TEMP/btc_validated"/*; do
+            test -f "$file"
+            cp "$file" "$stage/${prefix}$(basename "$file")"
+          done
+          tar -C "$RUNNER_TEMP" -czf "$stage/${prefix}official_4h_archives.tar.gz" btc_raw
+          python - "$stage/${prefix}manifest.json" <<'PY'
+          import json,os,sys,datetime
+          json.dump({'repo_sha':os.environ['GITHUB_SHA'],
+                     'workflow_run_id':os.environ['GITHUB_RUN_ID'],
+                     'attempt':os.environ['GITHUB_RUN_ATTEMPT'],
+                     'created_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                     'input_period':'2018-01 through 2026-09 full months',
+                     'data_source':'https://data.binance.vision/data/spot/monthly/klines/BTCUSDT/4h/',
+                     'execution':'research-only, no OKX keys or live orders'},
+                    open(sys.argv[1],'w'),ensure_ascii=False,indent=2)
+          PY
+          echo "STAGED=$stage" >> "$GITHUB_ENV"
+      - name: Configure rclone, verify existing Drive destination
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo '::error::Missing existing GDRIVE_RCLONE_CONFIG_B64 secret. Results not uploaded.'; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          rclone --config "$RUNNER_TEMP/rclone.conf" lsf gdrive: --dirs-only > "$RUNNER_TEMP/drive_dirs.txt"
+          grep -Fxq 'BTC_Quant_System_OKX/' "$RUNNER_TEMP/drive_dirs.txt" || { echo '::error::Expected project/BTC_Quant_System_OKX folder is not visible. No upload.'; exit 1; }
+          rclone --config "$RUNNER_TEMP/rclone.conf" lsf 'gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014/' --dirs-only >/dev/null || { echo '::error::Existing BTC V3 research folder is missing. No new root folder created.'; exit 1; }
+      - name: Write append-only research outputs to existing Drive folder
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest='gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014/'
+          rclone copy "$STAGED" "$dest" --immutable --transfers 4 --checkers 6
+          rclone check "$STAGED" "$dest" --one-way --size-only
+          echo 'Validation, backtests and evidence copied and checked under existing Drive folder.'
+      - name: Remove temporary rclone credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rclone.conf"
