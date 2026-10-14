@@ -66,7 +66,7 @@ def weekly_weight(rows, i, no_trend=False):
         return 0.0
     c = [r['close'] for r in rows]
     score = 1.0 if no_trend else sum(c[j] > c[j-n] for n in (30, 90, 180))/3.0
-    returns = [math.log(c[k]/c[k-1]) for k in range(j-59, j+1)]
+    returns = [c[k]/c[k-1]-1 for k in range(j-59, j+1)]
     sigma = statistics.stdev(returns) * math.sqrt(365)
     return score * min(.5, .10/sigma if sigma > 0 else .5)
 
@@ -124,6 +124,7 @@ def simulate(rows, strategy, protected=False, cost_mult=1):
     cost = (FEE + SLIP)*cost_mult
     for i, day in enumerate(rows):
         op, close = day['open'], day['close']
+        previous_target = old_target
         if i:
             old_target = target_signal(rows, i, strategy, old_target, feat)
         target = old_target
@@ -135,9 +136,17 @@ def simulate(rows, strategy, protected=False, cost_mult=1):
                 target = old_target * .5
         value_open = cash + btc*op
         current_w = btc*op/value_open if value_open > 0 else 0
-        threshold = 0.05 if strategy.startswith('v3') else 1e-9
-        # Risk stop always liquidates, even for small residual positions.
-        rebalance = i > 0 and (abs(current_w-target) >= threshold-1e-12 or (stopped and btc > 0))
+        if strategy.startswith('v3'):
+            rebalance = i > 0 and abs(current_w-target) >= .05-1e-12
+        elif strategy == 'half_monthly':
+            rebalance = i > 0 and (i == 1 or day['date'].month != rows[i-1]['date'].month)
+        else:
+            rebalance = i > 0 and abs(previous_target-target) > 1e-9
+        # A risk cut bypasses the normal 5 percentage point buffer.
+        if protected and prev_dd >= .08 and abs(current_w-target) > 1e-9:
+            rebalance = True
+        if stopped and btc > 1e-14:
+            rebalance = True
         if rebalance:
             diff = target*value_open - btc*op
             if diff > 1e-10:
