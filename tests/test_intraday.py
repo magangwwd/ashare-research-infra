@@ -151,3 +151,19 @@ def test_minute_permission_loss_after_activation_falls_back_to_verified_daily(tm
     assert len(read_session(pipeline.stage, "daily_basic", latest)) == len(provider.stocks)
     report = read_json(pipeline.store.metadata / "daily_source_fallback.json")
     assert report["sessions"][0]["source"] == "tushare_daily"
+
+
+def test_failed_official_daily_does_not_pass_minute_fallback(tmp_path, config, client, provider, as_of):
+    from data_pipeline.validate import ValidationError
+
+    config["intraday"].update(enabled=True, recent_requests_per_run=100,
+                              history_requests_per_run=0, daily_validation_sample=0)
+    pipeline = Pipeline(tmp_path, config, client, as_of)
+    pipeline.bootstrap()
+    atomic_json(pipeline.store.metadata / "intraday.json", {
+        "activated": True, "activation_date": str(pipeline.sessions[-1])})
+    provider.fail.update({"stk_mins", "daily"})
+    pipeline.intraday_recent()
+    with pytest.raises(ValidationError, match="daily"):
+        pipeline.critical_recent()
+    assert not read_session(pipeline.stage, "daily", pipeline.sessions[-1]).shape[0]
