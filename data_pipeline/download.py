@@ -90,9 +90,10 @@ class TushareClient:
             import tushare as ts
             ts.set_token(self.token)
             client = ts.pro_api(self.token)
-            bar_fetcher = ts.pro_bar
         self.client = client
-        self.bar_fetcher = bar_fetcher or getattr(client, "pro_bar", None)
+        # Official, permission-scoped Tushare historical minutes use pro.stk_mins.
+        # An explicitly injected bar_fetcher is retained only for isolated tests.
+        self.bar_fetcher = bar_fetcher
 
     def redact(self, exc: Exception) -> str:
         message = str(exc)
@@ -117,37 +118,37 @@ class TushareClient:
     def fetch(self, endpoint: str, **params: Any) -> pd.DataFrame:
         """Fetch one dataset with explicit safety bounds."""
         if endpoint == "stk_mins":
-            if self.bar_fetcher is None:
-                raise DownloadError("stk_mins: Tushare pro_bar SDK fetcher is unavailable")
             required = ("ts_code", "start_date", "end_date")
             if any(not params.get(name) for name in required):
                 raise DownloadError("stk_mins: ts_code/start_date/end_date are required")
-            # Historical stock minute data is an SDK-level pro_bar interface. The
-            # caller uses bounded windows so the documented 8,000-row cap cannot
-            # silently truncate history.
-            for attempt in range(self.config["retries"]):
-                spacing = 60 / self.config["requests_per_minute"]
-                self.sleeper(max(0, spacing - (time.monotonic() - self.last_call)))
-                self.last_call = time.monotonic()
-                try:
-                    result = self.bar_fetcher(
-                        ts_code=params["ts_code"],
-                        start_date=params["start_date"],
-                        end_date=params["end_date"],
-                        freq=params.get("freq", "15min"),
-                        asset="E",
-                        adj=None,
-                    )
-                    if not isinstance(result, pd.DataFrame):
-                        raise DownloadError("stk_mins: API returned a non-DataFrame response")
-                    if len(result) >= 8000:
-                        raise DownloadError("stk_mins: result reached the 8000-row safety cap; split the time range")
-                    return result.reset_index(drop=True)
-                except Exception as exc:
-                    if attempt + 1 == self.config["retries"]:
-                        raise DownloadError(f"stk_mins: {self.redact(exc)}") from None
-                    self.sleeper(self.config["retry_seconds"] * 2 ** attempt)
-            raise DownloadError("stk_mins")
+            request = {
+                "ts_code": params["ts_code"],
+                "start_date": params["start_date"],
+                "end_date": params["end_date"],
+                "freq": params.get("freq", "15min"),
+            }
+            # Use Tushare's dedicated stk_mins API rather than pro_bar:
+            # they can have different permission/empty-response behavior.
+            # Only a test-injected fetcher uses the legacy SDK-shaped call.
+            if self.bar_fetcher is None:
+                result = self.query("stk_mins", **request)
+            else:
+                for attempt in range(self.config["retries"]):
+                    spacing = 60 / self.config["requests_per_minute"]
+                    self.sleeper(max(0, spacing - (time.monotonic() - self.last_call)))
+                    self.last_call = time.monotonic()
+                    try:
+                        result = self.bar_fetcher(**request, asset="E", adj=None)
+                        break
+                    except Exception as exc:
+                        if attempt + 1 == self.config["retries"]:
+                            raise DownloadError(f"stk_mins: {self.redact(exc)}") from None
+                        self.sleeper(self.config["retry_seconds"] * 2 ** attempt)
+            if not isinstance(result, pd.DataFrame):
+                raise DownloadError("stk_mins: API returned a non-DataFrame response")
+            if len(result) >= 8000:
+                raise DownloadError("stk_mins: result reached the 8000-row safety cap; split the time range")
+            return result.reset_index(drop=True)
         if endpoint == "stock_basic":
             params.setdefault("fields", STOCK_BASIC_FIELDS)
         pages, fingerprints, offset = [], set(), 0
@@ -203,11 +204,15 @@ class TushareClient:
                     minute_day = datetime.strptime(probe_day, "%Y%m%d").date().isoformat()
                     frame = self.fetch(
                         name,
-                        ts_code="000001.SZ",
+                        ts_code="600000.SH",
                         freq="15min",
                         start_date=f"{minute_day} 09:00:00",
                         end_date=f"{minute_day} 16:00:00",
                     )
+                    if frame.empty:
+                        raise DownloadError(
+                            "stk_mins: liquid-stock minute probe returned 0 rows; "
+                            "check dedicated historical-minute permission and provider data")
                 else:
                     frame = self.query(name, **params, limit=10, offset=0)
                 if name in CRITICAL and frame.empty:
