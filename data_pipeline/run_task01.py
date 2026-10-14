@@ -348,14 +348,18 @@ class Pipeline:
         state_path = self.store.metadata / "intraday.json"
         previous = read_json(state_path)
         if not self.available("stk_mins"):
+            reason = self.capabilities["interfaces"].get("stk_mins", {}).get(
+                "reason", "stk_mins capability unavailable")
             status = {**previous, "enabled": True, "available": False,
                       "activated": bool(previous.get("activated", False)),
-                      "daily_source": ("stk_mins_15min" if previous.get("activated")
+                      "minute_source_healthy": False,
+                      "daily_source": ("tushare_daily_fallback" if previous.get("activated")
                                        else "tushare_daily_until_minute_gate_passes"),
-                      "updated_at": utcnow(), "reason": "stk_mins capability unavailable"}
+                      "updated_at": utcnow(), "reason": reason,
+                      "source_status": "DEGRADED" if previous.get("activated") else "NOT_ACTIVATED"}
             atomic_json(state_path, status)
-            if previous.get("activated"):
-                raise ValidationError("stk_mins became unavailable after daily-from-minutes activation")
+            self.store.gap("stk_mins", {"trade_date": str(self.sessions[-1])}, reason)
+            print(f"WARNING minute feed unavailable; validated daily fallback required: {reason}")
             return
 
         day = self.sessions[-1]
@@ -365,7 +369,7 @@ class Pipeline:
         expected = sorted(clean.expected_pool(
             self.master, day, suspension_codes(self.stage, day), self.open_exchanges(day)))
         budget = settings["recent_requests_per_run"]
-        fetched = bars = 0
+        fetched = bars = empty_streak = 0
         errors = []
         for code in expected:
             params = self.minute_params(code, day)
@@ -374,12 +378,19 @@ class Pipeline:
             if fetched >= budget:
                 break
             try:
-                bars += self.fetch_minutes(params, expected_day=day)
+                rows = self.fetch_minutes(params, expected_day=day)
+                bars += rows
+                empty_streak = empty_streak + 1 if rows == 0 else 0
             except Exception as exc:
                 errors.append(self.client.redact(exc))
                 if len(errors) >= settings.get("max_errors_before_abort", 5):
                     break
             fetched += 1
+            # Prevent thousands of zero-row calls when an API silently stops
+            # returning market minutes. This is never treated as good coverage.
+            if empty_streak >= 30 and bars == 0:
+                print("WARNING stk_mins 30 successive empty security responses; stopping minute probe")
+                break
 
         minute_clean = read_session(self.stage, "stk_mins", day)
         covered = covered_codes(minute_clean, day) & set(expected)
@@ -391,8 +402,10 @@ class Pipeline:
             if settings.get("activate_daily_from_minutes"):
                 activated = True
         elif activated:
-            raise ValidationError(
-                f"stk_mins {day}: activated source incomplete, coverage={coverage:.2%}")
+            reason = (f"stk_mins {day}: activated source incomplete, coverage={coverage:.2%}, "
+                      f"expected={len(expected)}, covered={len(covered)}")
+            self.store.gap("stk_mins", {"trade_date": str(day)}, reason)
+            print(f"WARNING {reason}; use fully validated Tushare daily fallback")
 
         state = {
             **previous,
@@ -408,8 +421,13 @@ class Pipeline:
             "recent_bars_fetched": bars,
             "request_errors": len(errors),
             "activated": activated,
+            "minute_source_healthy": coverage >= settings["min_security_coverage"],
+            "source_status": ("HEALTHY" if coverage >= settings["min_security_coverage"]
+                              else ("DEGRADED" if activated else "NOT_ACTIVATED")),
             "activation_date": previous.get("activation_date") or (str(day) if activated else None),
-            "daily_source": "stk_mins_15min" if activated else "tushare_daily_until_minute_gate_passes",
+            "daily_source": ("stk_mins_15min" if activated and coverage >= settings["min_security_coverage"]
+                             else ("tushare_daily_fallback" if activated
+                                   else "tushare_daily_until_minute_gate_passes")),
             "derived_daily": derived,
             "updated_at": utcnow(),
         }
@@ -487,8 +505,10 @@ class Pipeline:
         counts = {n: 2 if sample else self.config["download"]["daily_basic_lookback_trading_days" if n == "daily_basic" else "lookback_trading_days"] for n in names}
         intraday_state = self.intraday_state()
         minute_daily = bool(intraday_state.get("activated")) and not sample
+        minute_healthy = bool(intraday_state.get("minute_source_healthy", True))
         activation_date = (date.fromisoformat(intraday_state["activation_date"])
                            if minute_daily and intraday_state.get("activation_date") else None)
+        fallbacks = []
         # Complete the newest session for all Critical datasets before older sessions.
         for day in reversed(self.sessions[-max(counts.values()):]):
             for dataset in names:
@@ -497,13 +517,35 @@ class Pipeline:
                 try:
                     if dataset == "daily" and minute_daily and activation_date and day >= activation_date:
                         params = {"trade_date": day.strftime("%Y%m%d")}
-                        if self.complete("daily", params):
-                            continue
-                        self.derive_daily_from_minutes(day)
+                        # Minutes are authoritative only when this day's coverage
+                        # meets the frozen 95% gate. Otherwise the entire daily
+                        # session is fetched afresh and validated using the same
+                        # strict Critical acceptance rules, never partial bars.
+                        frame = read_session(self.stage, "stk_mins", day) if minute_healthy else pd.DataFrame()
+                        if day not in self.suspension_probed and self.available("suspend_d"):
+                            self.get_save("suspend_d", params)
+                            self.suspension_probed.add(day)
+                        suspended = suspension_codes(self.stage, day)
+                        expected = clean.expected_pool(self.master, day, suspended, self.open_exchanges(day))
+                        covered = covered_codes(frame, day) & expected
+                        coverage = len(covered) / len(expected) if expected else 0.0
+                        if minute_healthy and coverage >= self.config["intraday"]["min_security_coverage"]:
+                            if not self.complete("daily", params):
+                                self.derive_daily_from_minutes(day)
+                        else:
+                            reason = (f"minute coverage {coverage:.2%} below gate for {day}"
+                                      if minute_healthy else "minute source unavailable or degraded")
+                            print(f"WARNING {day}: {reason}; fetching and validating Tushare daily")
+                            fallbacks.append({"date": str(day), "reason": reason, "source": "tushare_daily"})
+                            self.daily(dataset, day, sample)
                     else:
                         self.daily(dataset, day, sample)
                 except Exception as exc:
                     errors.append(self.client.redact(exc))
+        if fallbacks:
+            atomic_json(self.store.metadata / "daily_source_fallback.json", {
+                "status": "DEGRADED_MINUTES_WITH_VALIDATED_DAILY",
+                "sessions": fallbacks, "updated_at": utcnow()})
         if errors:
             raise ValidationError("; ".join(errors))
 
