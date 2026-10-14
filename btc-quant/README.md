@@ -21,7 +21,7 @@
 - `live_sim/`：仅在研究通过后启用的模拟信号（不接真实下单）
 
 ## 持久化与安全
-GitHub 保存源代码、测试和参数；Google Drive 的 `project/btc-quant/` 保存行情原件、清洗数据、日志、净值、研究报告和证据清单。当前仅初始化目录，**尚未执行第三轮回测**。
+GitHub 保存源代码、测试和参数；Google Drive **不新建目录**，沿用现有的 `project/BTC_Quant_System_OKX/` 保存行情原件、清洗数据、日志、净值、研究报告和证据清单；现有文件保持不变，新增研究结果需清晰命名、不可覆盖历史成果。对应文件夹：https://drive.google.com/drive/folders/1f1QpjccD0YvciS7RwaxfRGkuW-o0k_0P 。当前仅初始化目录，**尚未执行第三轮回测**。
 
 **重要：**本仓库当前为公开仓库，不得提交 API Key、Token、账户信息、交易密钥或受限/敏感数据。大文件及生成数据不直接提交 Git。
 
