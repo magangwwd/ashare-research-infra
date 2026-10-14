@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from data_pipeline.intraday import aggregate_daily, validate_bars
-from data_pipeline.manifest import read_json, read_session
+from data_pipeline.manifest import atomic_json, read_json, read_session
 from data_pipeline.run_task01 import Pipeline
 
 
@@ -133,3 +133,21 @@ def test_intraday_history_records_pending_and_completion(tmp_path, config, clien
     assert state["history_complete_ratio"] == pytest.approx(1.0)
     assert state["history_complete"] is True
     assert state["history_finished_at"]
+
+def test_minute_permission_loss_after_activation_falls_back_to_verified_daily(tmp_path, config, client, provider, as_of):
+    config["intraday"].update(enabled=True, recent_requests_per_run=100, history_requests_per_run=0)
+    pipeline = Pipeline(tmp_path, config, client, as_of)
+    pipeline.bootstrap()
+    latest = pipeline.sessions[-1]
+    atomic_json(pipeline.store.metadata / "intraday.json", {
+        "activated": True, "activation_date": str(latest)})
+    provider.fail.add("stk_mins")
+    pipeline.intraday_recent()
+    status = read_json(pipeline.store.metadata / "intraday.json")
+    assert status["minute_source_healthy"] is False
+    assert status["daily_source"] == "tushare_daily_fallback"
+    pipeline.critical_recent()
+    assert len(read_session(pipeline.stage, "daily", latest)) == len(provider.stocks)
+    assert len(read_session(pipeline.stage, "daily_basic", latest)) == len(provider.stocks)
+    report = read_json(pipeline.store.metadata / "daily_source_fallback.json")
+    assert report["sessions"][0]["source"] == "tushare_daily"
