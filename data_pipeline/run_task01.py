@@ -273,7 +273,12 @@ class Pipeline:
         try:
             raw = self.client.fetch("stk_mins", **params)
             if raw.empty:
-                self.store.receipt("stk_mins", params, 0)
+                if expected_day is not None:
+                    # Do not checkpoint an empty latest session as complete:
+                    # retry it when minute entitlement/data recovers.
+                    self.store.gap("stk_mins", params, "empty minute response for expected active session")
+                else:
+                    self.store.receipt("stk_mins", params, 0)
                 return 0
             validate_bars(raw, expected_day=expected_day)
             self.store.save("stk_mins", raw)
@@ -736,7 +741,9 @@ class Pipeline:
     def repair(self) -> None:
         budget = self.config["download"]["repair_requests_per_run"]
         candidates = [g for g in self.store.gaps.values() if "partition" not in g["params"]
-                      and not g["params"].get("coverage_boundary") and self.available(g["dataset"])]
+                      and not g["params"].get("coverage_boundary")
+                      and DATASETS[g["dataset"]].strategy != "intraday"
+                      and self.available(g["dataset"])]
         candidates.sort(key=lambda g: (DATASETS[g["dataset"]].tier != "critical", g["updated_at"]))
         repaired: set[tuple] = set()
         for gap in candidates[:budget]:
