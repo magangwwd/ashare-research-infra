@@ -1,0 +1,99 @@
+name: BTC V3 native daily alternative (research only)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/btc-v3-daily-alternative.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: btc-v3-native-daily-alternative
+  cancel-in-progress: false
+
+jobs:
+  native-daily-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Offline unit tests for all research code and data checks
+        run: python -m unittest discover -s btc-quant/tests -v
+      - name: Download and strictly validate Binance original Spot 1d archives
+        run: |
+          set -euo pipefail
+          python btc-quant/data/native_daily.py --start 2020-01 --end 2026-09 \
+            --raw "$RUNNER_TEMP/btc_native_1d_raw" \
+            --out "$RUNNER_TEMP/btc_native_1d_checked"
+      - name: Run V1 V2 V3 native daily alternative research
+        run: |
+          set -euo pipefail
+          python btc-quant/backtest/run.py \
+            --input "$RUNNER_TEMP/btc_native_1d_checked/btc_daily_utc.csv" \
+            --out "$RUNNER_TEMP/btc_native_1d_results"
+      - name: Stage append-only, source-distinct audit and research artifacts
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/btc_native_1d_staged"
+          mkdir -p "$stage"
+          prefix="native_daily_run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}__"
+          for file in "$RUNNER_TEMP/btc_native_1d_checked"/* "$RUNNER_TEMP/btc_native_1d_results"/*; do
+            test -f "$file"
+            cp "$file" "$stage/${prefix}$(basename "$file")"
+          done
+          python - "$stage/${prefix}dataset_boundary.json" <<'PY'
+          import datetime,json,os,sys
+          with open(sys.argv[1],'w',encoding='utf8') as f:
+              json.dump({
+                  'dataset':'BINANCE_SPOT_NATIVE_UTC_1D_ALTERNATIVE',
+                  'not_primary_4h_repaired':True,
+                  'not_directly_comparable_without_window_alignment':True,
+                  'first_month':'2020-01','last_complete_month':'2026-09',
+                  'primary_4h_gap':'2018-02-08 to 2018-02-09 (exchange outage documented)',
+                  'research_only':True,'live_trading':False,
+                  'repo_commit_sha':os.environ['GITHUB_SHA'],
+                  'github_run_id':os.environ['GITHUB_RUN_ID'],
+                  'run_attempt':os.environ['GITHUB_RUN_ATTEMPT'],
+                  'timestamp_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                  'warning':'Official daily bars may include exchange outages inside a UTC day. No intraday 4h completeness claim.'
+              },f,ensure_ascii=False,indent=2)
+          PY
+          echo "STAGED=$stage" >> "$GITHUB_ENV"
+      - name: Preserve standalone GitHub Actions artifact (30 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-native-daily-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.STAGED }}/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Append outputs to EXISTING Google Drive research folder if connected
+        env:
+          GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$GDRIVE_RCLONE_CONFIG_B64" ]; then
+            echo '::warning::Drive rclone secret absent; GitHub artifact still saved. No new Drive folders created.'
+            exit 0
+          fi
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          trap 'rm -f "$RUNNER_TEMP/rclone.conf"' EXIT
+          dest='gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014/'
+          rclone --config "$RUNNER_TEMP/rclone.conf" lsf "$dest" --files-only >/dev/null || {
+            echo '::error::Existing Drive destination inaccessible. Did not create or overwrite anything.'
+            exit 1
+          }
+          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$STAGED" "$dest" --immutable
+          rclone --config "$RUNNER_TEMP/rclone.conf" check "$STAGED" "$dest" --one-way --size-only
+          echo 'Native daily alternative artifacts appended into existing Drive folder.'
