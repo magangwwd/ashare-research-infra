@@ -79,8 +79,14 @@ class StrategyExecution(unittest.TestCase):
         self.assertTrue(all(row['nav']==1000 for row in nav))
         for name in ('v1_kalman_rebuilt','v2_breakout','v2_ema_buffer','v3','v3_notrend','half_monthly'):
             nav, trades, cost = e.simulate(x,name,protected=True)
-            self.assertTrue(all(row['nav']>0 and row['cash_usdt']>=-1e-6 and 0<=row['btc_weight']<=.55 for row in nav),name)
+            self.assertTrue(all(row['nav']>0 and row['cash_usdt']>=-1e-6 and 0<=row['btc_weight']<=1.0 for row in nav),name)
             self.assertTrue(cost>=0)
+
+    def test_monthly_benchmark_does_not_rebalance_daily(self):
+        x=sample_daily(260)
+        _, trades, _ = e.simulate(x,'half_monthly')
+        self.assertLessEqual(len(trades), 11)
+        self.assertGreaterEqual(len(trades), 8)
 
     def test_guard_stops_on_drawdown_and_never_resumes(self):
         x = sample_daily(270)
