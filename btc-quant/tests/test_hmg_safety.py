@@ -2,13 +2,15 @@
 import datetime as dt
 import importlib.util
 import math
+import sys
 from pathlib import Path
 from unittest import TestCase, main
 
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("hmg", ROOT / "regime" / "hmg.py")
+spec = importlib.util.spec_from_file_location("hmg_test_module", ROOT / "regime" / "hmg.py")
 hmg = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = hmg
 spec.loader.exec_module(hmg)
 
 
