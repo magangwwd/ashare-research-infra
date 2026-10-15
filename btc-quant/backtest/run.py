@@ -66,9 +66,14 @@ def weekly_weight(rows, i, no_trend=False):
         return 0.0
     c = [r['close'] for r in rows]
     score = 1.0 if no_trend else sum(c[j] > c[j-n] for n in (30, 90, 180))/3.0
-    returns = [c[k]/c[k-1]-1 for k in range(j-59, j+1)]
+    # The research specification freezes VOL60 as 60 daily LOG returns.
+    returns = [math.log(c[k]/c[k-1]) for k in range(j-59, j+1)]
+    if not all(math.isfinite(r) for r in returns):
+        return 0.0  # fail closed
     sigma = statistics.stdev(returns) * math.sqrt(365)
-    return score * min(.5, .10/sigma if sigma > 0 else .5)
+    if not math.isfinite(sigma) or sigma <= 0:
+        return 0.0  # zero/invalid volatility must NEVER imply max BTC allocation
+    return score * min(.5, .10/sigma)
 
 
 def target_signal(rows, i, strategy, old, feat):
@@ -112,6 +117,16 @@ def target_signal(rows, i, strategy, old, feat):
 
 
 def simulate(rows, strategy, protected=False, cost_mult=1):
+    """Long-only daily research simulation. Close-derived decisions fill next open.
+
+    V3 risk-state machine:
+      NORMAL -> REDUCED on a completed-day account drawdown >=8%;
+      REDUCED -> NORMAL only on Monday if completed-day drawdown <=4%;
+      either -> HALTED on >=15%, never resumes during this backtest.
+    A transition to REDUCED forces *one* risk-decreasing reduction next open.
+    Ordinary position adjustments retain the 5pp weekly buffer; a target of
+    exactly zero always liquidates residual BTC. Drawdown HWM never resets.
+    """
     if cost_mult <= 0:
         raise ValueError('cost_mult must be positive')
     feat = features(rows)
@@ -119,6 +134,7 @@ def simulate(rows, strategy, protected=False, cost_mult=1):
     peak = START_CASH
     prev_dd = 0.0
     stopped = False
+    risk_reduced = False
     old_target = 0.0
     trades, equity, total_cost = [], [], 0.0
     cost = (FEE + SLIP)*cost_mult
@@ -128,25 +144,40 @@ def simulate(rows, strategy, protected=False, cost_mult=1):
         if i:
             old_target = target_signal(rows, i, strategy, old_target, feat)
         target = old_target
+        entered_reduced = False
         if protected:
             if stopped or prev_dd >= .15:
                 stopped = True
                 target = 0.0
-            elif prev_dd >= .08:
-                target = old_target * .5
+            else:
+                if prev_dd >= .08 and not risk_reduced:
+                    risk_reduced = True
+                    entered_reduced = True
+                elif risk_reduced and day['date'].weekday() == 0 and prev_dd <= .04:
+                    # Hysteresis: avoid rapid on/off when NAV crosses 8%.
+                    risk_reduced = False
+                if risk_reduced:
+                    target = min(old_target * .5, .25)
         value_open = cash + btc*op
         current_w = btc*op/value_open if value_open > 0 else 0
         if strategy.startswith('v3'):
-            rebalance = i > 0 and abs(current_w-target) >= .05-1e-12
+            rebalance = i > 0 and abs(current_w-target) >= .05-1e-12 and day['date'].weekday() == 0
+            # A zero target is a liquidation command, not an ordinary
+            # rebalancing request. This bypasses the 5pp no-trade band.
+            if i > 0 and target <= 1e-12 and btc > 1e-14:
+                rebalance = True
         elif strategy == 'half_monthly':
             rebalance = i > 0 and (i == 1 or day['date'].month != rows[i-1]['date'].month)
         else:
             rebalance = i > 0 and abs(previous_target-target) > 1e-9
-        # A risk cut bypasses the normal 5 percentage point buffer.
-        if protected and prev_dd >= .08 and abs(current_w-target) > 1e-9:
+        # Force a REDUCTION only on first entry into reduced-risk mode,
+        # not daily target chasing. The next ordinary rebalance is Monday.
+        if protected and entered_reduced and current_w > target + 1e-12:
             rebalance = True
         if stopped and btc > 1e-14:
             rebalance = True
+        if entered_reduced and day['date'].weekday() != 0 and current_w < target:
+            rebalance = False  # emergency risk event never adds exposure
         if rebalance:
             diff = target*value_open - btc*op
             if diff > 1e-10:
@@ -165,16 +196,19 @@ def simulate(rows, strategy, protected=False, cost_mult=1):
                 trades.append({'date':day['date'].isoformat(), 'side':side,
                                'btc_qty':round(units,10), 'open_price':op,
                                'friction_usdt':round(expense,8),
-                               'target_weight':round(target,6), 'forced_stop':stopped})
+                               'target_weight':round(target,6),
+                               'forced_stop':stopped,
+                               'risk_transition':('REDUCED' if entered_reduced else
+                                                  'HALTED' if stopped else '')})
         nav = cash + btc*close
         peak = max(peak, nav)
         prev_dd = (peak-nav)/peak
         equity.append({'date':day['date'].isoformat(), 'nav':round(nav,8),
                        'btc_qty':round(btc,10), 'cash_usdt':round(cash,8),
                        'btc_weight':round(btc*close/nav,6) if nav else 0,
-                       'drawdown':round(prev_dd,8), 'stopped':stopped})
+                       'drawdown':round(prev_dd,8), 'stopped':stopped,
+                       'risk_reduced':risk_reduced})
     return equity, trades, total_cost
-
 
 def metrics(equity, trades, cost):
     nav = [r['nav'] for r in equity]
