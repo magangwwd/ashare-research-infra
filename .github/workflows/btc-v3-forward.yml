@@ -59,7 +59,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y rclone
           (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
-          trap 'rm -f "$RUNNER_TEMP/rclone.conf"' EXIT
+          # Credential cleanup belongs to the final always() step, not this step.
           dest='gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014'
           rclone --config "$RUNNER_TEMP/rclone.conf" lsf "$dest/" --files-only > "$RUNNER_TEMP/drive_listing.txt"
           rclone --config "$RUNNER_TEMP/rclone.conf" copyto \
