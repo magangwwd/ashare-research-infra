@@ -109,6 +109,10 @@ def simulate(rows, regime_by_date, initial_cash=1000.0, cost_rate=0.0015,
         if dd >= 0.15 and not halted:
             halted = True
             sell_all(cur["open"], cur["date"], "GLOBAL_DRAWDOWN_15PCT")
+        elif reduced and dd <= 0.04 and prev_regime == "RANGE":
+            # Hysteresis: risk can only be restored after the account recovers
+            # and the market is still in a confirmed range.
+            reduced = False
         elif dd >= 0.08 and not reduced and btc > 0:
             reduced = True
             # Reduce half at next open. No new grid adds after this point.
