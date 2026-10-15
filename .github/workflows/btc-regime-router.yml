@@ -1,0 +1,166 @@
+name: BTC Regime Router - daily shadow research
+
+on:
+  pull_request:
+    paths:
+      - "btc-quant/regime/**"
+      - "btc-quant/config/regime_router_20261016.json"
+      - "btc-quant/tests/test_regime_router.py"
+      - "btc-quant/tests/test_hmg_safety.py"
+      - ".github/workflows/btc-regime-router.yml"
+  push:
+    branches: [main]
+    paths:
+      - "btc-quant/regime/**"
+      - "btc-quant/config/regime_router_20261016.json"
+      - "btc-quant/tests/test_regime_router.py"
+      - "btc-quant/tests/test_hmg_safety.py"
+      - ".github/workflows/btc-regime-router.yml"
+  schedule:
+    - cron: "50 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: btc-regime-router-daily
+  cancel-in-progress: false
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Run complete BTC test suite
+        run: python -m unittest discover -s btc-quant/tests -v
+
+  daily-shadow:
+    if: github.event_name != 'pull_request'
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Connect existing BTC Quant Drive folder
+        env:
+          GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || {
+            echo "::error::Missing existing Drive configuration; fail closed."
+            exit 1
+          }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          dest='gdrive:BTC_Quant_System_OKX'
+          rclone --config "$RUNNER_TEMP/rclone.conf" lsf "$dest/" --files-only > "$RUNNER_TEMP/drive_listing.txt"
+          base='native_daily_run_38670182049_1__btc_daily_utc.csv'
+          grep -Fx "$base" "$RUNNER_TEMP/drive_listing.txt" >/dev/null
+          rclone --config "$RUNNER_TEMP/rclone.conf" copyto "$dest/$base" "$RUNNER_TEMP/frozen_base.csv"
+
+      - name: Determine latest completed UTC day
+        run: |
+          set -euo pipefail
+          latest="$(date -u -d 'yesterday' +%Y-%m-%d)"
+          echo "LATEST_CLOSED_UTC=$latest" >> "$GITHUB_ENV"
+
+      - name: Extend canonical Binance UTC 1D data with original daily archives
+        run: |
+          set -euo pipefail
+          python btc-quant/data/extend_daily.py \
+            --base "$RUNNER_TEMP/frozen_base.csv" \
+            --out "$RUNNER_TEMP/current_data" \
+            --cache "$RUNNER_TEMP/daily_archives" \
+            --end "$LATEST_CLOSED_UTC"
+
+      - name: Run leakage-safe regime router
+        run: |
+          set -euo pipefail
+          python btc-quant/regime/router.py \
+            --input "$RUNNER_TEMP/current_data/btc_daily_utc.csv" \
+            --config btc-quant/config/regime_router_20261016.json \
+            --out "$RUNNER_TEMP/regime"
+
+      - name: Run HMG at 1x and 2x transaction-cost stress
+        run: |
+          set -euo pipefail
+          python btc-quant/regime/hmg.py \
+            --input "$RUNNER_TEMP/current_data/btc_daily_utc.csv" \
+            --regime-csv "$RUNNER_TEMP/regime/regime_history.csv" \
+            --out "$RUNNER_TEMP/hmg_1x" \
+            --cost-multiplier 1
+          python btc-quant/regime/hmg.py \
+            --input "$RUNNER_TEMP/current_data/btc_daily_utc.csv" \
+            --regime-csv "$RUNNER_TEMP/regime/regime_history.csv" \
+            --out "$RUNNER_TEMP/hmg_2x" \
+            --cost-multiplier 2
+
+      - name: Run existing V3 diagnostic and guarded baseline
+        run: |
+          set -euo pipefail
+          python btc-quant/backtest/run.py \
+            --input "$RUNNER_TEMP/current_data/btc_daily_utc.csv" \
+            --out "$RUNNER_TEMP/v3"
+
+      - name: Build historical regime validation package
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/validation"
+          python btc-quant/regime/validate.py \
+            --daily "$RUNNER_TEMP/current_data/btc_daily_utc.csv" \
+            --regime-csv "$RUNNER_TEMP/regime/regime_history.csv" \
+            --out "$RUNNER_TEMP/validation" \
+            --v3-equity "$RUNNER_TEMP/v3/v3_diagnostic_1x_cost_equity.csv" \
+            --hmg-equity "$RUNNER_TEMP/hmg_1x/hmg_equity.csv"
+
+      - name: Assemble immutable daily evidence
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/persist"
+          asof="$LATEST_CLOSED_UTC"
+          cp "$RUNNER_TEMP/regime/latest_regime.json" "$RUNNER_TEMP/persist/btc_regime_$asof__latest_regime.json"
+          cp "$RUNNER_TEMP/regime/regime_history.csv" "$RUNNER_TEMP/persist/btc_regime_$asof__history.csv"
+          cp "$RUNNER_TEMP/regime/feature_history.csv" "$RUNNER_TEMP/persist/btc_regime_$asof__features.csv"
+          cp "$RUNNER_TEMP/hmg_1x/hmg_summary.json" "$RUNNER_TEMP/persist/btc_hmg_$asof__1x_summary.json"
+          cp "$RUNNER_TEMP/hmg_2x/hmg_summary.json" "$RUNNER_TEMP/persist/btc_hmg_$asof__2x_summary.json"
+          cp "$RUNNER_TEMP/validation/validation_summary.json" "$RUNNER_TEMP/persist/btc_regime_$asof__validation_summary.json"
+          cp "$RUNNER_TEMP/validation/regime_coverage.csv" "$RUNNER_TEMP/persist/btc_regime_$asof__coverage.csv"
+          cp "$RUNNER_TEMP/validation/forward_regime_behavior.csv" "$RUNNER_TEMP/persist/btc_regime_$asof__forward_behavior.csv"
+          cp "$RUNNER_TEMP/current_data/data_provenance.json" "$RUNNER_TEMP/persist/btc_regime_$asof__data_provenance.json"
+          sha256sum "$RUNNER_TEMP/persist"/* > "$RUNNER_TEMP/persist/SHA256SUMS"
+
+      - name: Upload 30-day GitHub evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-regime-router-${{ github.run_id }}
+          path: ${{ runner.temp }}/persist/
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Append immutable evidence to existing Drive folder
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$RUNNER_TEMP/persist" 'gdrive:BTC_Quant_System_OKX/' --immutable
+          rclone --config "$RUNNER_TEMP/rclone.conf" check "$RUNNER_TEMP/persist" 'gdrive:BTC_Quant_System_OKX/' --one-way --size-only
+
+      - name: Remove Drive credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rclone.conf"
