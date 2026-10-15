@@ -1,0 +1,95 @@
+name: BTC V3 freeze cutoff historical backfill (research only)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/btc-v3-cutoff-backfill.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: btc-v3-freeze-cutoff-backfill
+  cancel-in-progress: false
+
+jobs:
+  verify-cutoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Strict frozen V3 test suite
+        run: python -m unittest discover -s btc-quant/tests -v
+      - name: Verify frozen code SHA and research config
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          f=json.load(open('btc-quant/config/v3_daily_frozen_20261015.json'))
+          assert f['frozen_git_commit']=='d60c667b3654dbfb00efea9bc72241cca3bb8d5c'
+          assert f['historical_csv_sha256']=='67acc682f6430e16a721747a59dba0d51e913ab9730d30275ab89787251bc076'
+          PY
+      - name: Install rclone and retrieve existing immutable native daily historical CSV
+        env:
+          GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo '::error::Drive config absent; cannot prove frozen historical baseline'; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          rclone --config "$RUNNER_TEMP/rclone.conf" copyto \
+            'gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014/native_daily_run_38670182049_1__btc_daily_utc.csv' \
+            "$RUNNER_TEMP/btc_frozen_base_20260930.csv"
+      - name: Download and strictly audit ALL October daily bars through UTC 2026-10-14
+        run: |
+          set -euo pipefail
+          python btc-quant/data/extend_daily.py \
+            --base "$RUNNER_TEMP/btc_frozen_base_20260930.csv" \
+            --out "$RUNNER_TEMP/btc_cutoff_checked" \
+            --cache "$RUNNER_TEMP/btc_cutoff_downloads" --end 2026-10-14
+      - name: Preserve labeled historical-only audit; NO prospective results
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json,os
+          d=Path(os.environ['RUNNER_TEMP'])/'btc_cutoff_checked'
+          (d/'HISTORICAL_BACKFILL_NOT_FORWARD.json').write_text(json.dumps({
+            'classification':'HISTORICAL_BACKFILL_NOT_PROSPECTIVE',
+            'backfill_last_day_utc':'2026-10-14',
+            'freeze_branch':'btc-v3-daily-freeze-20261015',
+            'freeze_commit':'d60c667b3654dbfb00efea9bc72241cca3bb8d5c',
+            'run_id':os.environ['GITHUB_RUN_ID']
+          },indent=2),encoding='utf8')
+          PY
+          stage="$RUNNER_TEMP/btc_cutoff_staged"
+          mkdir -p "$stage"
+          prefix="btc_v3_cutoff_20261014_run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}__"
+          for src in "$RUNNER_TEMP/btc_cutoff_checked"/*; do
+            cp "$src" "$stage/$prefix$(basename "$src")"
+          done
+          echo "STAGED=$stage" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: btc-v3-cutoff-20261014-${{ github.run_id }}
+          path: ${{ env.STAGED }}/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Append historical cutoff audit to EXISTING BTC Drive folder
+        run: |
+          set -euo pipefail
+          dst='gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014/'
+          rclone --config "$RUNNER_TEMP/rclone.conf" lsf "$dst" --files-only >/dev/null
+          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$STAGED" "$dst" --immutable
+          rclone --config "$RUNNER_TEMP/rclone.conf" check "$STAGED" "$dst" --one-way --size-only
+          echo 'Confirmed immutable historical backfill data through 2026-10-14.'
+      - name: Remove temporary credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rclone.conf"
