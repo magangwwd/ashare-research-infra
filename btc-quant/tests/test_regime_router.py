@@ -3,14 +3,16 @@ import datetime as dt
 import importlib.util
 import json
 import math
+import sys
 import tempfile
 from pathlib import Path
 from unittest import TestCase, main
 
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("router", ROOT / "regime" / "router.py")
+spec = importlib.util.spec_from_file_location("router_test_module", ROOT / "regime" / "router.py")
 router = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = router
 spec.loader.exec_module(router)
 
 
