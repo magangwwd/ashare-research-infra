@@ -68,11 +68,11 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y rclone
           (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
-          dest='gdrive:BTC_Quant_System_OKX'
-          rclone --config "$RUNNER_TEMP/rclone.conf" lsf "$dest/" --files-only > "$RUNNER_TEMP/drive_listing.txt"
+          source='gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014'
+          rclone --config "$RUNNER_TEMP/rclone.conf" lsf "$source/" --files-only > "$RUNNER_TEMP/drive_listing.txt"
           base='native_daily_run_38670182049_1__btc_daily_utc.csv'
           grep -Fx "$base" "$RUNNER_TEMP/drive_listing.txt" >/dev/null
-          rclone --config "$RUNNER_TEMP/rclone.conf" copyto "$dest/$base" "$RUNNER_TEMP/frozen_base.csv"
+          rclone --config "$RUNNER_TEMP/rclone.conf" copyto "$source/$base" "$RUNNER_TEMP/frozen_base.csv"
 
       - name: Determine latest completed UTC day
         run: |
