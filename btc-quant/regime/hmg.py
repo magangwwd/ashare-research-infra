@@ -74,6 +74,8 @@ def simulate(rows, regime_by_date, initial_cash=1000.0, cost_rate=0.0015,
     reduced = False
     trades = []
     curve = []
+    router = router_module()
+    feature_map = {f.date: f for f in router.compute_features(rows)}
 
     def nav(px):
         return cash + btc * px
@@ -135,8 +137,6 @@ def simulate(rows, regime_by_date, initial_cash=1000.0, cost_rate=0.0015,
             sell_all(cur["open"], cur["date"], "BASKET_TP")
         elif btc == 0 and prev_regime == "RANGE" and not reduced:
             # Start a fresh basket on next day's open.
-            router = router_module()
-            feature_map = {f.date: f for f in router.compute_features(rows[:i])}
             f = feature_map.get(prev["date"].isoformat())
             if f is not None:
                 spacing_pct = max(0.018, min(0.90 * f.atr14_pct, 0.035))
