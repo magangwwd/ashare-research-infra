@@ -1,0 +1,63 @@
+{
+  "schema": "BTC_REGIME_ROUTER_V1",
+  "approval_date_beijing": "2026-10-16",
+  "status": "RESEARCH_CANDIDATE_SHADOW_ONLY",
+  "data_policy": "Use only completed UTC daily candles. No current unclosed candle. No lookahead.",
+  "regime_policy": {
+    "high_vol_percentile": 0.90,
+    "high_vol_atr_pct": 0.05,
+    "trend_score_up": 0.6666666667,
+    "trend_score_down": 0.3333333333,
+    "trend_er_min": 0.35,
+    "up_ema_gap_min": 0.03,
+    "down_ema_gap_max": -0.03,
+    "range_er_max": 0.30,
+    "range_vol_percentile_max": 0.85,
+    "range_ema_gap_max": 0.20,
+    "recovery_trend_score_min": 0.3333333333
+  },
+  "strategy_policy": {
+    "trend_cap": 0.50,
+    "recovery_cap": 0.25,
+    "transition_cap": 0.25,
+    "grid_account_cap": 0.25,
+    "grid_atr_multiple": 0.90,
+    "grid_min_pct": 0.018,
+    "grid_max_pct": 0.035,
+    "grid_max_layers": 5,
+    "grid_size_multipliers": [1.0, 1.15, 1.25, 1.35, 1.50],
+    "grid_basket_tp_pct": 0.008,
+    "account_drawdown_reduce": 0.08,
+    "account_drawdown_halt": 0.15
+  },
+  "switch_policy": {
+    "confirm_days": 2,
+    "min_hold_days": 7,
+    "emergency_min_hold_days": 3,
+    "emergency_exit_confirm_days": 3
+  },
+  "validation_policy": {
+    "walk_forward_train_days": 730,
+    "walk_forward_test_days": 90,
+    "refit_days": 90,
+    "minimum_regime_observations": 120,
+    "minimum_regime_episodes": 3,
+    "cost_scenarios": [1, 2],
+    "primary_acceptance": [
+      "OOS risk-adjusted performance must beat or materially improve versus the best static candidate in most folds",
+      "No fold may use future prices or future regime labels",
+      "2x cost stress must not cause structural collapse",
+      "Max drawdown and maximum capital utilization are hard constraints",
+      "HMG must never exceed 5 layers"
+    ]
+  },
+  "research_candidates": ["CASH", "V3", "V3_DEFENSIVE", "HMG"],
+  "live_policy": {
+    "current_mode_is_shadow_only": true,
+    "no_exchange_orders": true,
+    "no_api_keys": true,
+    "daily_review_after_completed_utc_close": true,
+    "manual_strategy_change_requires_two_confirmed_daily_closes": true,
+    "emergency_risk_off_can_trigger_on_one_completed_close": true
+  }
+}
