@@ -5,6 +5,8 @@ on:
   push:
     paths:
       - '.github/workflows/btc-v3-daily-alternative.yml'
+      - 'btc-quant/backtest/**'
+      - 'btc-quant/tests/**'
 
 permissions:
   contents: read
