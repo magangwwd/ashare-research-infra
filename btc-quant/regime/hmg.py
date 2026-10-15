@@ -24,6 +24,7 @@ import csv
 import importlib.util
 import json
 import math
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -51,6 +52,7 @@ def router_module():
     path = Path(__file__).resolve().parent / "router.py"
     spec = importlib.util.spec_from_file_location("btc_regime_router", path)
     mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)
     return mod
 
