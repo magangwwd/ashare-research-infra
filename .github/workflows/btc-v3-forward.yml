@@ -42,6 +42,7 @@ jobs:
           python -m unittest discover -s btc-quant/tests -v
           test "$(git -C frozen-v3-code rev-parse HEAD)" = 'd60c667b3654dbfb00efea9bc72241cca3bb8d5c'
           test "$(git hash-object frozen-v3-code/btc-quant/backtest/run.py)" = 'cd6525f62d145c10447311d7e63413f7a21037e6'
+          test "$(git hash-object btc-quant/config/v3_daily_frozen_20261015.json)" = '9a82e4a472ca3355ad49cd6b70cae6d84dceb227'
           python - <<'PY'
           import json
           c=json.load(open('btc-quant/config/v3_daily_frozen_20261015.json'))
