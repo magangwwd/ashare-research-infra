@@ -1,0 +1,144 @@
+name: BTC V3 frozen daily forward shadow paper (NO REAL ORDERS)
+
+on:
+  schedule:
+    - cron: '41 2 * * *' # 10:41 Beijing; next day's completed UTC daily archive
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/btc-v3-forward.yml'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: btc-v3-forward-single-writer
+  cancel-in-progress: false
+
+jobs:
+  frozen-forward:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Checkout operations on main
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout pinned and FROZEN strategy implementation
+        uses: actions/checkout@v4
+        with:
+          ref: d60c667b3654dbfb00efea9bc72241cca3bb8d5c
+          path: frozen-v3-code
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Verify complete test suite, pinned engine blob and frozen config
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s btc-quant/tests -v
+          test "$(git -C frozen-v3-code rev-parse HEAD)" = 'd60c667b3654dbfb00efea9bc72241cca3bb8d5c'
+          test "$(git hash-object frozen-v3-code/btc-quant/backtest/run.py)" = 'cd6525f62d145c10447311d7e63413f7a21037e6'
+          python - <<'PY'
+          import json
+          c=json.load(open('btc-quant/config/v3_daily_frozen_20261015.json'))
+          assert c['risk_lifecycle'].startswith('NORMAL -> REDUCED')
+          assert c['frozen_git_commit']=='d60c667b3654dbfb00efea9bc72241cca3bb8d5c'
+          assert c['historical_csv_sha256']=='67acc682f6430e16a721747a59dba0d51e913ab9730d30275ab89787251bc076'
+          PY
+      - name: Connect EXISTING Drive folder and find prior immutable forward state
+        env:
+          GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo '::error::Missing existing Drive config; fail closed'; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          trap 'rm -f "$RUNNER_TEMP/rclone.conf"' EXIT
+          dest='gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014'
+          rclone --config "$RUNNER_TEMP/rclone.conf" lsf "$dest/" --files-only > "$RUNNER_TEMP/drive_listing.txt"
+          rclone --config "$RUNNER_TEMP/rclone.conf" copyto \
+            "$dest/native_daily_run_38670182049_1__btc_daily_utc.csv" \
+            "$RUNNER_TEMP/frozen_base.csv"
+          last="$(grep -E '^btc_v3_forward_[0-9]{8}__state\.json$' "$RUNNER_TEMP/drive_listing.txt" | LC_ALL=C sort | tail -n1 || true)"
+          if [ -n "$last" ]; then
+            rclone --config "$RUNNER_TEMP/rclone.conf" copyto "$dest/$last" "$RUNNER_TEMP/previous_state.json"
+            echo "PREVIOUS_STATE=$RUNNER_TEMP/previous_state.json" >> "$GITHUB_ENV"
+          else
+            echo "PREVIOUS_STATE=" >> "$GITHUB_ENV"
+          fi
+          echo "NEWEST_STATE=$last" >> "$GITHUB_ENV"
+      - name: Confirm one-time frozen genesis or exactly one NEW closed UTC day
+        run: |
+          set -euo pipefail
+          today_utc="$(date -u +%Y-%m-%d)"
+          end_utc="$(date -u -d 'yesterday' +%Y-%m-%d)"
+          if [[ "$end_utc" > '2027-01-06' ]]; then end_utc='2027-01-06'; fi
+          if [[ "$today_utc" < '2026-10-15' ]]; then echo '::error::Cannot predate freeze'; exit 1; fi
+          if [ -n "$PREVIOUS_STATE" ]; then
+            prev="$(python - "$PREVIOUS_STATE" <<'PY'
+          import json,sys
+          print(json.load(open(sys.argv[1]))['state_asof_utc'])
+          PY
+          )"
+            if [[ "$prev" == "$end_utc" ]]; then
+              echo 'No NEW fully closed UTC daily candle; idempotent no-op.'
+              echo 'PROCESS_NEW=false' >> "$GITHUB_ENV"
+              exit 0
+            fi
+          fi
+          echo "PROCESS_NEW=true" >> "$GITHUB_ENV"
+          echo "LATEST_CLOSED_UTC=$end_utc" >> "$GITHUB_ENV"
+      - name: Download original full UTC days, reject gaps/mutations
+        if: env.PROCESS_NEW == 'true'
+        run: |
+          set -euo pipefail
+          python btc-quant/data/extend_daily.py \
+            --base "$RUNNER_TEMP/frozen_base.csv" \
+            --out "$RUNNER_TEMP/fwd_data" --cache "$RUNNER_TEMP/fwd_candles" \
+            --end "$LATEST_CLOSED_UTC"
+      - name: Advance paper ledger ONE UTC day; no replay/backfill
+        if: env.PROCESS_NEW == 'true'
+        run: |
+          set -euo pipefail
+          cmd=(python btc-quant/forward/paper.py \
+            --config btc-quant/config/v3_daily_frozen_20261015.json \
+            --engine frozen-v3-code/btc-quant/backtest/run.py \
+            --data "$RUNNER_TEMP/fwd_data/btc_daily_utc.csv" \
+            --out "$RUNNER_TEMP/fwd_result")
+          if [ -n "$PREVIOUS_STATE" ]; then cmd+=(--previous "$PREVIOUS_STATE"); fi
+          "${cmd[@]}"
+      - name: Persist Github Actions evidence (30-day mirror)
+        if: env.PROCESS_NEW == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-v3-forward-frozen-${{ github.run_id }}
+          path: ${{ runner.temp }}/fwd_result/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Append immutable prospective daily record to EXISTING Drive folder
+        if: env.PROCESS_NEW == 'true'
+        run: |
+          set -euo pipefail
+          dest='gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014/'
+          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$RUNNER_TEMP/fwd_result" "$dest" --immutable
+          rclone --config "$RUNNER_TEMP/rclone.conf" check "$RUNNER_TEMP/fwd_result" "$dest" --one-way --size-only
+          echo 'Committed one immutable forward paper daily state, no actual trade submitted.'
+      - name: Close previously reported forward issue after healthy check
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python btc-quant/forward/incident.py recovered
+      - name: Raise assigned GitHub Issue immediately on any forward failure
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python btc-quant/forward/incident.py failed
+      - name: Remove temporary Drive secrets
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rclone.conf"
