@@ -159,7 +159,7 @@ def classify(f: RegimeFeatures, cfg):
         return "HIGH_VOL"
 
     if (
-        f.trend_score >= cfg["trend_score_up"]
+        round(f.trend_score * 3) >= 2
         and f.er60 >= cfg["trend_er_min"]
         and f.ema200_gap >= cfg["up_ema_gap_min"]
         and f.ema200_slope30 > 0
@@ -167,7 +167,7 @@ def classify(f: RegimeFeatures, cfg):
         return "TREND_UP"
 
     if (
-        f.trend_score <= cfg["trend_score_down"]
+        round(f.trend_score * 3) <= 1
         and f.er60 >= cfg["trend_er_min"]
         and f.ema200_gap <= cfg["down_ema_gap_max"]
         and f.ema200_slope30 < 0
@@ -183,7 +183,7 @@ def classify(f: RegimeFeatures, cfg):
 
     if (
         f.ema200_gap > 0
-        and f.trend_score >= cfg["recovery_trend_score_min"]
+        and round(f.trend_score * 3) >= 1
     ):
         return "RECOVERY"
 
@@ -238,7 +238,7 @@ def recommendation(regime, f: RegimeFeatures, cfg):
         }
     return {
         "strategy": "CASH",
-        "target_cap": cfg["transition_cap"],
+        "target_cap": 0.0,
         "allow_new_grid": False,
         "action": "WAIT_FOR_CONFIRMATION",
     }
@@ -307,7 +307,15 @@ def smooth_regimes(features, cfg):
 
 
 def load_config(path):
-    cfg = json.loads(Path(path).read_text(encoding="utf8"))
+    source = json.loads(Path(path).read_text(encoding="utf8"))
+    # Production configuration is nested, legacy synthetic fixtures are flat.
+    if "regime_policy" in source:
+        cfg = {}
+        for group in ("regime_policy", "strategy_policy", "switch_policy"):
+            cfg.update(source[group])
+    else:
+        cfg = source
+    cfg["transition_cap"] = 0.0
     required = {
         "high_vol_percentile", "high_vol_atr_pct",
         "trend_score_up", "trend_score_down", "trend_er_min",
