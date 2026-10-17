@@ -32,7 +32,7 @@
 - Training only determines whether HMG candidate has minimum episode coverage. **No training-period profit-based mapping optimization or parameter selection is performed.** This is a valid rolling holdout evaluation of pre-registered deterministic logic, NOT proof of an optimized adaptive selector.
 - Test account cash/coin/grid layers, state, and HWM continue across boundaries. Next-open historical fill model applies to ALL strategy transfers and costs. Stats export per fold and one continuous NAV.
 - `stage1_summary.json` reports three variants x 1x/2x; `*_equity.csv`, `*_trades.csv`, `*_events.csv`, `*_folds.csv`, `fold_boundaries.csv`.
-- Outcomes from 2020-2026 are retrospective OOS protocol folds, NOT unobserved genuinely new independent market data. Baseline V3 independent equity under `v3_guarded_*_equity.csv`; stage-1 results are not risk-matched and do not automatically beat frozen V3.
+- Outcomes from 2020-2026 are retrospective OOS protocol folds, NOT genuinely new independent market data. The stage-1 paired benchmarks include **V3_STATIC**, **VOL_STATIC** (no trend vote, weekly risk scaling) and **CASH_STATIC**, all under identical fold dates, initial cash and friction assumptions, in addition to the independent frozen V3 diagnostics. These comparisons are not yet volatility/risk-matched; no claim of positive alpha over frozen V3 is implied.
 - Benchmark promotion requires paired common-period comparison, many-fold risk improvement, positive net OOS and risk-matched superiority, independent forward verification, and separate high-frequency HMG fill reliability. **Not claimed by this stage.**
 
 ## Daily run and issue visibility
@@ -42,6 +42,6 @@ Run is scheduled UTC 02:50 = Beijing 10:50, or via GitHub Actions workflow_dispa
 3. Extend original complete daily candles to most recently completed UTC date, reject gaps/errors.
 4. Router, independent HMG 1x/2x, existing frozen-code-style V3 research diagnostics, descriptive summary.
 5. Run `r1_experiment.py` historical fold comparison.
-6. Upload artifacts and append immutable, run-ID-specific outputs to the existing Drive root and verify with rclone.
+6. Upload artifacts and append immutable, run-ID-specific outputs to the existing Drive root and verify with rclone. The evidence includes full validated daily BTC OHLCV, the latest genuinely fetched official daily ZIP, config snapshot, provenance, source freshness manifest, per-fold holdings/trades/events, summary and relative SHA256SUMS. No separate Drive folder.
 
 Never report unit-test PASS as end-to-end PASS, and never report artifacts as uploaded unless the Drive check succeeds. Open blockers must be recorded without fabricated performance statistics.
