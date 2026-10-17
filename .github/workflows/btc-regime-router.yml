@@ -8,6 +8,8 @@ on:
       - "btc-quant/tests/test_regime_router.py"
       - "btc-quant/tests/test_hmg_safety.py"
       - "btc-quant/tests/test_router_stage1.py"
+      - "btc-quant/tests/test_archive_freshness.py"
+      - "btc-quant/data/select_available_day.py"
       - ".github/workflows/btc-regime-router.yml"
   push:
     branches: [main]
@@ -17,9 +19,12 @@ on:
       - "btc-quant/tests/test_regime_router.py"
       - "btc-quant/tests/test_hmg_safety.py"
       - "btc-quant/tests/test_router_stage1.py"
+      - "btc-quant/tests/test_archive_freshness.py"
+      - "btc-quant/data/select_available_day.py"
       - ".github/workflows/btc-regime-router.yml"
   schedule:
     - cron: "50 2 * * *"
+    - cron: "50 8 * * *" # second publication check, Beijing 16:50
   workflow_dispatch:
 
 permissions:
@@ -76,11 +81,13 @@ jobs:
           grep -Fx "$base" "$RUNNER_TEMP/drive_listing.txt" >/dev/null
           rclone --config "$RUNNER_TEMP/rclone.conf" copyto "$source/$base" "$RUNNER_TEMP/frozen_base.csv"
 
-      - name: Determine latest completed UTC day
+      - name: Verify published UTC archive without pretending stale data is current
         run: |
           set -euo pipefail
-          latest="$(date -u -d 'yesterday' +%Y-%m-%d)"
-          echo "LATEST_CLOSED_UTC=$latest" >> "$GITHUB_ENV"
+          python btc-quant/data/select_available_day.py \
+            --output "$RUNNER_TEMP/source_availability.json" \
+            --github-env "$GITHUB_ENV" \
+            --max-lag 3
 
       - name: Extend canonical Binance UTC 1D data with original daily archives
         run: |
@@ -155,6 +162,7 @@ jobs:
           cp "$RUNNER_TEMP/validation/forward_regime_behavior.csv" "$RUNNER_TEMP/persist/${prefix}__forward_behavior.csv"
           cp "$RUNNER_TEMP/validation/conditional_strategy_matrix.csv" "$RUNNER_TEMP/persist/${prefix}__conditional_matrix.csv"
           cp "$RUNNER_TEMP/current_data/data_provenance.json" "$RUNNER_TEMP/persist/${prefix}__data_provenance.json"
+          cp "$RUNNER_TEMP/source_availability.json" "$RUNNER_TEMP/persist/${prefix}__source_availability.json"
           for file in "$RUNNER_TEMP/stage1/"*; do
             basename="$(basename "$file")"
             cp "$file" "$RUNNER_TEMP/persist/${prefix}__${basename}"
