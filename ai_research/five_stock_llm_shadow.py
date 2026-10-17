@@ -19,6 +19,15 @@ from ai_research.manual_ai_review_pack import SYMBOLS, AUTHORIZATION
 ROLES = ("bull_initial", "bear_initial", "bull_rebuttal", "bear_rebuttal", "risk_manager")
 PROMPT_VERSION = "FIVE_LLM_SHADOW_RESEARCH_V1_20261017"
 ENDPOINT = "https://api.openai.com/v1/responses"
+PARTIAL_MODE = "INCOMPLETE_PARTIAL_LLM_SHADOW_NOT_VERIFIED"
+PARTIAL_FILE = "llm_shadow.partial.json"
+FINAL_FILE = "llm_shadow.json"
+
+
+def write_json_atomic(path, value):
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    os.replace(temporary, path)
 
 
 def text_from_response(reply):
@@ -51,7 +60,12 @@ def call_api(payload, api_key, timeout=45):
         return json.loads(response.read().decode())
 
 
-def run(report, model, api_key, max_requests, call=call_api):
+def run(report, model, api_key, max_requests, call=call_api, on_checkpoint=None):
+    """Run the 25-call shadow debate.
+
+    ``on_checkpoint`` (optional) receives a partial result dict after every
+    completed call, so a failure on call N never discards the N-1 paid answers.
+    """
     if not api_key or not model:
         raise ValueError("LLM API key and explicitly chosen model are both required")
     if (report.get("authorization") != AUTHORIZATION
@@ -95,6 +109,14 @@ def run(report, model, api_key, max_requests, call=call_api):
                                 body, ensure_ascii=False, sort_keys=True).encode()).hexdigest(),
                             "response_sha256": hashlib.sha256(output.encode()).hexdigest()}
             count += 1
+            if on_checkpoint is not None:
+                on_checkpoint({"mode": PARTIAL_MODE, "prompt_version": PROMPT_VERSION,
+                               "model": model, "as_of": report["as_of"],
+                               "calls_completed": count, "calls_expected": max_requests,
+                               "usage_reported": {"input_tokens": input_tokens,
+                                                  "output_tokens": output_tokens},
+                               "authorization": AUTHORIZATION,
+                               "stocks": out + [{"symbol": stock["symbol"], "roles": dict(debate)}]})
         out.append({"symbol": stock["symbol"], "roles": debate,
                     "verification_status": "UNVALIDATED_LLM_SHADOW_NO_ENTRY_AUTHORIZATION"})
     return {"mode": "REAL_API_INFERRED_FIVE_ROLE_SHADOW_NOT_TRADINGAGENTS",
@@ -119,11 +141,26 @@ def main():
     if not args.enable_paid_api:
         print("PAID_LLM_DISABLED_NO_NETWORK")
         return
+    # Claim the output directory before spending anything: a pre-existing
+    # directory must fail now, not after 25 billed calls.
+    if args.output_dir.exists():
+        raise SystemExit(f"Output directory already exists: {args.output_dir}; no API calls were made")
     report = json.loads(args.report_json.read_text(encoding="utf-8"))
-    result = run(report, args.model, os.environ.get("OPENAI_API_KEY", ""), args.max_requests)
     args.output_dir.mkdir(parents=True, exist_ok=False)
-    (args.output_dir / "llm_shadow.json").write_text(
-        json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    partial_path = args.output_dir / PARTIAL_FILE
+
+    def checkpoint(snapshot):
+        write_json_atomic(partial_path, snapshot)
+
+    try:
+        result = run(report, args.model, os.environ.get("OPENAI_API_KEY", ""),
+                     args.max_requests, on_checkpoint=checkpoint)
+    except Exception:
+        saved = "yes" if partial_path.exists() else "no"
+        print(f"LLM_SHADOW_FAILED partial_results_saved={saved} path={partial_path}")
+        raise
+    write_json_atomic(args.output_dir / FINAL_FILE, result)
+    partial_path.unlink(missing_ok=True)
     print(json.dumps({"status": "SHADOW_INFERRED_NEEDS_HUMAN_REVIEW",
                       "calls": result["calls"], "as_of": result["as_of"]}))
 
