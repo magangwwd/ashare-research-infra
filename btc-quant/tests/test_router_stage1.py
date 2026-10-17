@@ -100,3 +100,18 @@ class StageOneTests(TestCase):
         self.assertTrue(math.isfinite(b["final_nav"]))
         self.assertLessEqual(a["max_grid_layers"],5)
         self.assertLessEqual(b["max_grid_layers"],5)
+
+    def test_static_benchmarks_use_same_folds_and_shared_cash(self):
+        data = rows()
+        states = artificial_states(data)
+        folds = stage.create_folds(data,states)
+        cash,eq,t,ev,f = stage.simulate(data,states,folds,"CASH_STATIC",1)
+        self.assertEqual(cash["final_nav"],1000.0)
+        self.assertEqual(cash["trades"],0)
+        self.assertEqual(cash["max_drawdown"],0.0)
+        for variant in ("V3_STATIC","VOL_STATIC"):
+            result,curve,trades,_,_ = stage.simulate(data,states,folds,variant,1)
+            self.assertTrue(math.isfinite(result["final_nav"]))
+            self.assertEqual(len(curve),len(eq))
+            self.assertTrue(all(t["fill_date"]>t["signal_asof"] for t in trades))
+            self.assertEqual(result["max_grid_layers"],0)
