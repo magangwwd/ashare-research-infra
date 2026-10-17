@@ -163,6 +163,9 @@ jobs:
           cp "$RUNNER_TEMP/validation/conditional_strategy_matrix.csv" "$RUNNER_TEMP/persist/${prefix}__conditional_matrix.csv"
           cp "$RUNNER_TEMP/current_data/data_provenance.json" "$RUNNER_TEMP/persist/${prefix}__data_provenance.json"
           cp "$RUNNER_TEMP/source_availability.json" "$RUNNER_TEMP/persist/${prefix}__source_availability.json"
+          cp "$RUNNER_TEMP/current_data/btc_daily_utc.csv" "$RUNNER_TEMP/persist/${prefix}__btc_daily_utc.csv"
+          cp "$RUNNER_TEMP/daily_archives/BTCUSDT-1d-${asof}.zip" "$RUNNER_TEMP/persist/${prefix}__official_source_BTCUSDT-1d-${asof}.zip"
+          cp btc-quant/config/regime_router_20261016.json "$RUNNER_TEMP/persist/${prefix}__router_config.json"
           for file in "$RUNNER_TEMP/stage1/"*; do
             basename="$(basename "$file")"
             cp "$file" "$RUNNER_TEMP/persist/${prefix}__${basename}"
