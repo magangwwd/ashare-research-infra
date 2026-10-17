@@ -1,0 +1,94 @@
+name: Optional five-stock LLM shadow debate (PAID, manual, no orders)
+
+on:
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: 'Existing fixed-five report day YYYY-MM-DD'
+        required: true
+        type: string
+        default: '2026-10-16'
+      enable_paid_api:
+        description: 'Explicit opt-in; charges API usage; false never calls model'
+        required: true
+        type: boolean
+        default: false
+      model:
+        description: 'Explicit enabled API model ID; blank disables paid inference'
+        type: string
+        required: false
+        default: ''
+  pull_request:
+    paths:
+      - 'ai_research/five_stock_llm_shadow.py'
+      - 'ai_research/tests/test_five_stock_llm_shadow.py'
+      - '.github/workflows/five-stock-llm-shadow.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manual-paid-llm-shadow
+  cancel-in-progress: false
+
+jobs:
+  offline-contract-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Mock all 25 API interactions (no charges)
+        run: python -m unittest -v ai_research.tests.test_five_stock_llm_shadow
+
+  paid-inference:
+    needs: offline-contract-tests
+    if: github.event_name == 'workflow_dispatch' && inputs.enable_paid_api == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      SELECTED_MODEL: ${{ inputs.model }}
+      AS_OF: ${{ inputs.as_of }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Explicit costs/secret preflight (do not expose credentials)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$OPENAI_API_KEY" || { echo "::error::OPENAI_API_KEY missing"; exit 1; }
+          test -n "$SELECTED_MODEL" || { echo "::error::Specify model input"; exit 1; }
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo "::error::Drive secret missing"; exit 1; }
+          [[ "$AS_OF" =~ ^20[0-9]{2}-[0-9]{2}-[0-9]{2}$ ]] || exit 1
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          rclone listremotes | grep -qx 'gdrive:'
+      - name: Restore one already immutable deterministic fixed-five report
+        shell: bash
+        run: |
+          set -euo pipefail
+          rclone copyto "gdrive:stock_state_strategy/output/five_stock_decision_v1/$AS_OF/report.json" "$RUNNER_TEMP/paper_report.json"
+      - name: Run actual opt-in independent 25-inference debate (research only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.five_stock_llm_shadow \
+            --report-json "$RUNNER_TEMP/paper_report.json" \
+            --enable-paid-api --max-requests 25 --model "$SELECTED_MODEL" \
+            --output-dir "$RUNNER_TEMP/llm_shadow"
+      - name: Immutable archive by run ID after all 25 roles complete
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/five_stock_llm_shadow_v1/$AS_OF/$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/llm_shadow" "$dest" --immutable
+          rclone check "$RUNNER_TEMP/llm_shadow" "$dest" --one-way
+          echo "LLM_SHADOW_VERIFIED five_symbols=true role_calls=25 entry_authorized=false"

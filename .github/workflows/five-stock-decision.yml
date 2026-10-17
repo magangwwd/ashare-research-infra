@@ -1,0 +1,186 @@
+name: Fixed five-stock PIT research after validated R1 (paper only)
+
+on:
+  workflow_run:
+    workflows: ["R1 five-stock paper candidates after verified Gold (no orders)"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: 'Existing R1 snapshot date YYYY-MM-DD; for same-date recovery only'
+        type: string
+        required: true
+        default: '2026-10-16'
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/five_stock_decision.py'
+      - '.github/workflows/five-stock-decision.yml'
+  pull_request:
+    paths:
+      - 'ai_research/five_stock_decision.py'
+      - 'ai_research/tests/test_five_stock_decision.py'
+      - '.github/workflows/five-stock-decision.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fixed-five-stock-paper-decision
+  cancel-in-progress: false
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Pure-Python paper/PIT invariant tests
+        run: python -m unittest -v ai_research.tests.test_five_stock_decision
+
+  publish-paper-only:
+    needs: offline-tests
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'workflow_run' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      REQUESTED_AS_OF: ${{ inputs.as_of }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install accepted Clean/Parquet readers and rclone
+        run: |
+          set -euo pipefail
+          python -m pip install 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+      - name: Temporary existing Drive credential (no secrets printed)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Read current Gold date, then require R1 immutable dated snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="gdrive:stock_state_strategy"
+          mkdir -p "$RUNNER_TEMP/decision/finance"
+          rclone copyto "gdrive:down_data/data/gold/main_board/manifest.json" "$RUNNER_TEMP/decision/gold_manifest.json"
+          python - <<'PY'
+          import json,os,pathlib,datetime,re
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"decision"
+          src=json.loads((root/"gold_manifest.json").read_text())
+          day=str(src["as_of_date"])[:10]
+          req=os.environ.get("REQUESTED_AS_OF") or day
+          datetime.date.fromisoformat(req)
+          if req>day or req<"2026-10-12":
+              raise SystemExit("Requested day exceeds validated Gold or precedes unseen study")
+          if os.environ.get("GITHUB_EVENT_NAME")=="workflow_run" and req!=day:
+              raise SystemExit("Automated day must equal current Gold manifest")
+          valid=src.get("validation",{})
+          if valid.get("primary_keys_unique") is not True or valid.get("ohlc_valid") is not True:
+              raise SystemExit("Gold validation failed")
+          with open(os.environ["GITHUB_ENV"],"a") as f: f.write("AS_OF="+req+"\n")
+          PY
+          rclone copyto "$root/output/forward_r1_watchlist_5/$AS_OF/r1_watchlist_5.json" "$RUNNER_TEMP/decision/r1.json"
+          python - <<'PY'
+          import json,os,pathlib,hashlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"decision"
+          r=json.loads((p/"r1.json").read_text())
+          m=(p/"gold_manifest.json").read_bytes()
+          assert r["snapshot_date"]==os.environ["AS_OF"]
+          assert r["gold_as_of"]==os.environ["AS_OF"]
+          assert r["manifest_sha256"]==hashlib.sha256(m).hexdigest(), "Gold/R1 manifest hash mismatch"
+          PY
+      - name: Skip only already fully published dated result
+        id: dedupe
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/five_stock_decision_v1/$AS_OF"
+          if rclone lsf "$dest" --files-only 2>/dev/null | grep -q '^manifest.json$'; then
+            echo 'skip=true' >> "$GITHUB_OUTPUT"
+            echo "Immutable dated five-stock report already exists, not overwriting"
+          else
+            echo 'skip=false' >> "$GITHUB_OUTPUT"
+            if rclone lsf "$dest" --files-only 2>/dev/null | grep -q .; then
+              echo "::error::Partial remote publication exists; do not overwrite, manual repair required"
+              exit 1
+            fi
+          fi
+      - name: Restore immutable verified fixed-five Clean 40/40 version
+        if: steps.dedupe.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="gdrive:stock_state_strategy"
+          rclone copyto "$root/finance_clean_five/latest.json" "$RUNNER_TEMP/decision/latest.json"
+          python - <<'PY'
+          import os,json,pathlib,re
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"decision/latest.json"
+          x=json.loads(p.read_text())
+          if x.get("status")!="COMPLETE" or x.get("groups")!=40 or not re.fullmatch(r"[0-9]{5,20}",str(x.get("run_id",""))):
+              raise SystemExit("No accepted 40/40 five-stock Clean pointer")
+          with open(os.environ["GITHUB_ENV"],"a") as f:f.write("CLEAN_RUN="+x["run_id"]+"\n")
+          PY
+          rclone copy "$root/finance_clean_five/versions/$CLEAN_RUN" "$RUNNER_TEMP/decision/finance" --transfers 3
+          test -s "$RUNNER_TEMP/decision/finance/targeted_acceptance.json"
+      - name: Restore optional previously captured PIT disclosure evidence
+        if: steps.dedupe.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          key="${AS_OF//-/}"
+          src="gdrive:stock_state_strategy/research_evidence/$key.json"
+          if rclone lsjson "$src" --files-only >/dev/null 2>&1; then
+            rclone copyto "$src" "$RUNNER_TEMP/decision/evidence.json"
+          else
+            echo "::warning::No captured PIT issuer-news evidence; report will explicitly say MISSING"
+          fi
+      - name: Generate immutable five-stock evidence and A/B intent (not realized PnL)
+        if: steps.dedupe.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ -s "$RUNNER_TEMP/decision/evidence.json" ]]; then
+            args+=(--evidence "$RUNNER_TEMP/decision/evidence.json")
+          fi
+          python -m ai_research.five_stock_decision \
+            --r1-json "$RUNNER_TEMP/decision/r1.json" \
+            --finance-latest "$RUNNER_TEMP/decision/latest.json" \
+            --finance-root "$RUNNER_TEMP/decision/finance" \
+            --output-dir "$RUNNER_TEMP/decision/result" "${args[@]}"
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"decision/result"
+          r=json.loads((p/"report.json").read_text())
+          assert r["as_of"]==os.environ["AS_OF"] and len(r["stocks"])==5
+          assert r["authorization"]=="PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
+          assert not any(s["paper_entry_authorized"] for s in r["stocks"])
+          PY
+      - name: Publish dated research and remote byte-check
+        if: steps.dedupe.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/five_stock_decision_v1/$AS_OF"
+          rclone copy "$RUNNER_TEMP/decision/result" "$dest" --immutable --checkers 4 --transfers 2
+          rclone check "$RUNNER_TEMP/decision/result" "$dest" --one-way --checkers 4
+          echo "FIVE_STOCK_PAPER_RESEARCH_VERIFIED day=$AS_OF no_order=true"
