@@ -254,13 +254,23 @@ def simulate(rows, states, folds, variant, cost_mult):
                     continue
                 lower = min(x["low"] for x in rows[i-31:i-1])
                 atr = f.atr14_pct*prev["close"]
-                full_budget = min(current_nav(px)*.25, cash)
-                first_usdt = full_budget * weights[0]/sum(weights)
-                if trade(i, "BUY", first_usdt/(px*(1+cost)), "HMG_INITIAL", d):
+                entry_warning = (variant != "R0" and
+                                 (prev["close"] < lower or
+                                  (variant == "R1" and volatility_warning(rows, i-1, lower, atr))))
+                if entry_warning:
                     fixed_lower, fixed_atr = lower, atr
-                    below, recovered, watch = 0, 0, "NONE"
-                    anchor, spacing, budget = px, max(.018, min(.9*f.atr14_pct, .035)), full_budget
-                    layer, avg_cost, active = 1, px*(1+cost), "HMG"
+                    watch, below, recovered = "WATCH", int(prev["close"] < lower), 0
+                    events.append({"signal_asof": d, "event": "PRE_ENTRY_WATCH",
+                                   "fixed_lower": lower, "signal_close": prev["close"],
+                                   "variant": variant})
+                else:
+                    full_budget = min(current_nav(px)*.25, cash)
+                    first_usdt = full_budget * weights[0]/sum(weights)
+                    if trade(i, "BUY", first_usdt/(px*(1+cost)), "HMG_INITIAL", d):
+                        fixed_lower, fixed_atr = lower, atr
+                        below, recovered, watch = 0, 0, "NONE"
+                        anchor, spacing, budget = px, max(.018, min(.9*f.atr14_pct, .035)), full_budget
+                        layer, avg_cost, active = 1, px*(1+cost), "HMG"
             elif btc > 0 and active in ("HMG", "HMG_BLOCKED_ADDS") and layer < 5:
                 if prev["close"] <= anchor*(1-spacing*layer):
                     allowance = budget*weights[layer]/sum(weights)
