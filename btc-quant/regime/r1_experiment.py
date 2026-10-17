@@ -94,7 +94,7 @@ def volatility_warning(rows, j, lower, atr_usdt):
 
 
 def simulate(rows, states, folds, variant, cost_mult):
-    if variant not in ("R0", "R1_PRICE", "R1"):
+    if variant not in ("R0", "R1_PRICE", "R1", "V3_STATIC", "VOL_STATIC", "CASH_STATIC"):
         raise ValueError(variant)
     cost = .0015*cost_mult
     state = {r["date"]: r["confirmed_regime"] for r in states}
@@ -218,9 +218,13 @@ def simulate(rows, states, folds, variant, cost_mult):
                                "execution_date": cur["date"].isoformat(), "variant": variant})
 
         eligible = bool(fold["hmg_research_eligible"])
-        requested = ("HMG" if g == "RANGE" and eligible else
-                     "V3" if g == "TREND_UP" else
-                     "V3_DEFENSIVE" if g == "RECOVERY" else "CASH")
+        if variant in ("V3_STATIC", "VOL_STATIC", "CASH_STATIC"):
+            requested = {"V3_STATIC": "V3", "VOL_STATIC": "VOL",
+                         "CASH_STATIC": "CASH"}[variant]
+        else:
+            requested = ("HMG" if g == "RANGE" and eligible else
+                         "V3" if g == "TREND_UP" else
+                         "V3_DEFENSIVE" if g == "RECOVERY" else "CASH")
         if risk == "HALTED" or (risk == "REDUCED" and requested == "HMG"):
             requested = "CASH"
         if requested == "HMG" and watch != "NONE":
@@ -234,9 +238,15 @@ def simulate(rows, states, folds, variant, cost_mult):
         if requested == "CASH" and btc:
             exited = close_position(i, "REQUESTED_CASH_EXIT", d) or exited
 
-        if risk != "HALTED" and not reduced_now and not exited and requested in ("V3", "V3_DEFENSIVE"):
+        if risk != "HALTED" and not reduced_now and not exited and requested in ("V3", "V3_DEFENSIVE", "VOL"):
             if cur["date"].weekday() == 0:
                 base_target = weekly_target(rows, i)
+                if requested == "VOL":
+                    closes = [r["close"] for r in rows]
+                    j = i-1
+                    returns = [math.log(closes[k]/closes[k-1]) for k in range(j-59,j+1)]
+                    sigma = statistics.stdev(returns)*math.sqrt(365)
+                    base_target = min(.5,.10/sigma) if sigma>0 and math.isfinite(sigma) else 0.0
                 desired = min(base_target, .25) if requested == "V3_DEFENSIVE" else base_target
                 if risk == "REDUCED":
                     desired = min(.5*desired, .25)
@@ -340,7 +350,7 @@ def main():
     write_csv(dest/"fold_boundaries.csv", folds)
     results = {}
     for cost_mult in (1, 2):
-        for version in ("R0", "R1_PRICE", "R1"):
+        for version in ("R0", "R1_PRICE", "R1", "V3_STATIC", "VOL_STATIC", "CASH_STATIC"):
             tag = version.lower() + "_" + str(cost_mult) + "x"
             summary, equity, trades, events, fold_stats = simulate(rows, states, folds, version, cost_mult)
             write_csv(dest/(tag+"_equity.csv"), equity)
@@ -356,7 +366,15 @@ def main():
                 "folds": len(folds), "fold_train_days": 730, "fold_test_days": 90,
                 "pre_registered": True, "param_fitting": "NONE; train range coverage eligibility only",
                 "warning": "Retrospective OOS folds, NOT independent forward evidence",
-                "results": results}
+                "results": results,
+                "paired_total_return_delta": {
+                    str(mult) + "x": {
+                        "r1_minus_r0": results["r1_"+str(mult)+"x"]["total_return"]-results["r0_"+str(mult)+"x"]["total_return"],
+                        "r1_price_minus_r0": results["r1_price_"+str(mult)+"x"]["total_return"]-results["r0_"+str(mult)+"x"]["total_return"],
+                        "r0_minus_v3_static": results["r0_"+str(mult)+"x"]["total_return"]-results["v3_static_"+str(mult)+"x"]["total_return"],
+                        "r1_minus_v3_static": results["r1_"+str(mult)+"x"]["total_return"]-results["v3_static_"+str(mult)+"x"]["total_return"],
+                        "r1_minus_vol_static": results["r1_"+str(mult)+"x"]["total_return"]-results["vol_static_"+str(mult)+"x"]["total_return"],
+                    } for mult in (1,2)}}
     (dest/"stage1_summary.json").write_text(json.dumps(manifest,indent=2,ensure_ascii=False)+"\n",encoding="utf8")
     print(json.dumps({"data_end_utc":manifest["data_end_utc"],"folds":len(folds),"results":results},ensure_ascii=False,indent=2))
 
