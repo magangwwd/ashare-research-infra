@@ -78,7 +78,7 @@ class FixedFiveTests(unittest.TestCase):
         wrong = r1()
         wrong["checked"][0]["candidate"] = True
         wrong["candidate_count"] = 1
-        with self.assertRaisesRegex(ValueError, "candidate despite breadth"):
+        with self.assertRaisesRegex(ValueError, "Contradictory R1 candidate"):
             build(wrong, finance(), MARKER, now=NOW)
 
     def test_candidate_with_news_is_still_next_open_conditional(self):
