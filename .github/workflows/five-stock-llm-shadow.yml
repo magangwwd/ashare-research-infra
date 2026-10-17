@@ -36,9 +36,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with: {persist-credentials: false}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with: {python-version: '3.13'}
       - name: Mock all 25 API interactions (no charges)
         run: python -m unittest -v ai_research.tests.test_five_stock_llm_shadow
@@ -54,9 +54,9 @@ jobs:
       SELECTED_MODEL: ${{ inputs.model }}
       AS_OF: ${{ inputs.as_of }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with: {persist-credentials: false}
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with: {python-version: '3.13'}
       - name: Explicit costs/secret preflight (do not expose credentials)
         shell: bash

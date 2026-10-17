@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Actions are pinned to full commit SHAs (with the release tag in a trailing
+  # comment); Dependabot bumps the SHA and the comment together.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Shanghai
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(actions)"

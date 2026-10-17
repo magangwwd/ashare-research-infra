@@ -167,3 +167,77 @@ def test_failed_official_daily_does_not_pass_minute_fallback(tmp_path, config, c
     with pytest.raises(ValidationError, match="daily"):
         pipeline.critical_recent()
     assert not read_session(pipeline.stage, "daily", pipeline.sessions[-1]).shape[0]
+
+
+def _history_requests(count):
+    return [{"ts_code": f"6000{i:02d}.SH", "freq": "15min",
+             "start_date": "2026-01-01 09:00:00", "end_date": "2026-12-31 16:00:00"}
+            for i in range(count)]
+
+
+def _history_pipeline(tmp_path, config, client, as_of, monkeypatch, requests, **settings):
+    config["intraday"].update(enabled=True, **settings)
+    pipeline = Pipeline(tmp_path, config, client, as_of)
+    pipeline.bootstrap()
+    pipeline.capabilities.setdefault("interfaces", {})["stk_mins"] = {"status": "AVAILABLE"}
+    done = set()
+    monkeypatch.setattr(pipeline, "intraday_history_requests", lambda: iter(requests))
+    monkeypatch.setattr(pipeline, "complete", lambda name, params: params["ts_code"] in done)
+    return pipeline, done
+
+
+def test_intraday_history_stops_after_consecutive_errors_and_resumes_at_the_failures(
+        tmp_path, config, client, as_of, monkeypatch, capsys):
+    requests = _history_requests(10)
+    pipeline, done = _history_pipeline(
+        tmp_path, config, client, as_of, monkeypatch, requests,
+        history_requests_per_run=100, max_errors_before_abort=3)
+    calls = []
+    outage = {"on": True}
+
+    def fetch(params, expected_day=None):
+        calls.append(params["ts_code"])
+        if len(calls) > 2 and outage["on"]:      # two successes, then the provider fails
+            raise RuntimeError("permission denied for stk_mins")
+        done.add(params["ts_code"])
+        return 100
+
+    monkeypatch.setattr(pipeline, "fetch_minutes", fetch)
+    pipeline.intraday_history()
+
+    assert len(calls) == 5                        # 2 ok + 3 consecutive errors, then abort
+    state = read_json(tmp_path / "metadata/manifest/intraday.json")
+    assert state["history_aborted_on_errors"] is True
+    assert state["history_errors"] == 3
+    assert "permission denied" in state["history_last_error"]
+    assert state["history_cursor"] == 2           # resumes at the first failing request
+    assert "WARNING stk_mins history backfill stopped after 3 consecutive errors" in capsys.readouterr().out
+
+    outage["on"] = False
+    calls.clear()
+    pipeline.intraday_history()
+    assert calls[0] == requests[2]["ts_code"]     # the failed requests are retried first
+    state = read_json(tmp_path / "metadata/manifest/intraday.json")
+    assert state["history_aborted_on_errors"] is False
+    assert state["history_complete"] is True
+
+
+def test_intraday_history_tolerates_scattered_errors(tmp_path, config, client, as_of, monkeypatch):
+    requests = _history_requests(8)
+    pipeline, done = _history_pipeline(
+        tmp_path, config, client, as_of, monkeypatch, requests,
+        history_requests_per_run=100, max_errors_before_abort=2)
+
+    def fetch(params, expected_day=None):
+        if params["ts_code"] in {requests[1]["ts_code"], requests[3]["ts_code"], requests[5]["ts_code"]}:
+            raise RuntimeError("transient provider error")
+        done.add(params["ts_code"])
+        return 100
+
+    monkeypatch.setattr(pipeline, "fetch_minutes", fetch)
+    pipeline.intraday_history()
+    state = read_json(tmp_path / "metadata/manifest/intraday.json")
+    assert state["history_aborted_on_errors"] is False
+    assert state["history_errors"] == 3           # more than the limit, but never consecutive
+    assert state["history_complete_requests"] == 5
+    assert state["history_requests_examined"] == 8

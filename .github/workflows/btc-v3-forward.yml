@@ -24,16 +24,16 @@ jobs:
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - name: Checkout operations on main
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
       - name: Checkout pinned and FROZEN strategy implementation
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: d60c667b3654dbfb00efea9bc72241cca3bb8d5c
           path: frozen-v3-code
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.13'
       - name: Verify complete test suite, pinned engine blob and frozen config
@@ -116,7 +116,7 @@ jobs:
           "${cmd[@]}"
       - name: Persist Github Actions evidence (30-day mirror)
         if: env.PROCESS_NEW == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: btc-v3-forward-frozen-${{ github.run_id }}
           path: ${{ runner.temp }}/fwd_result/
