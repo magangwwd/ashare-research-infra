@@ -111,29 +111,35 @@ def simulate(rows, regime_by_date, initial_cash=1000.0, cost_rate=0.0015,
         if dd >= 0.15 and not halted:
             halted = True
             sell_all(cur["open"], cur["date"], "GLOBAL_DRAWDOWN_15PCT")
-        elif reduced and dd <= 0.04 and prev_regime == "RANGE":
+        elif reduced and dd <= 0.04 and cur["date"].weekday() == 0:
             # Hysteresis: risk can only be restored after the account recovers
             # and the market is still in a confirmed range.
             reduced = False
-        elif dd >= 0.08 and not reduced and btc > 0:
+        elif dd >= 0.08 and not reduced:
             reduced = True
             # Reduce half at next open. No new grid adds after this point.
             qty = btc * 0.5
-            cash += qty * cur["open"] * (1.0 - cost_rate)
-            btc -= qty
-            trades.append({
-                "date": cur["date"].isoformat(), "side": "SELL",
-                "quantity_btc": qty, "price": cur["open"],
-                "reason": "DRAWDOWN_8PCT_RISK_REDUCTION",
-                "cost_rate": cost_rate,
-            })
+            if qty > 1e-14:
+                cash += qty * cur["open"] * (1.0 - cost_rate)
+                btc -= qty
+                trades.append({
+                    "date": cur["date"].isoformat(), "side": "SELL",
+                    "quantity_btc": qty, "price": cur["open"],
+                    "reason": "DRAWDOWN_8PCT_RISK_REDUCTION",
+                    "cost_rate": cost_rate,
+                })
             if btc <= 1e-14:
                 anchor = spacing_pct = avg_cost = None
                 layer = 0
                 budget = 0.0
 
         if halted:
-            curve.append({"date": cur["date"].isoformat(), "nav": nav(cur["close"])})
+            end_nav = nav(cur["close"])
+            hwm = max(hwm, end_nav)
+            curve.append({"date": cur["date"].isoformat(), "nav": end_nav,
+                          "drawdown": (hwm-end_nav)/hwm if hwm else 0,
+                          "btc_qty": btc, "cash": cash, "layer": layer,
+                          "regime": prev_regime})
             continue
 
         # HMG is only permitted in a confirmed RANGE.
@@ -240,7 +246,7 @@ def main():
         w.writerows(result["curve"])
     with (out / "hmg_trades.csv").open("w", newline="", encoding="utf8") as f:
         if result["trades_detail"]:
-            w = csv.DictWriter(f, fieldnames=sorted(result["trades_detail"][0]))
+            w = csv.DictWriter(f, fieldnames=sorted({k for trade in result["trades_detail"] for k in trade}))
             w.writeheader()
             w.writerows(result["trades_detail"])
     print(json.dumps(summary, ensure_ascii=False, indent=2))
