@@ -100,10 +100,13 @@ def equity_returns(path):
 def conditional_strategy_matrix(states, strategy_paths):
     returns = {name: equity_returns(path) for name, path in strategy_paths.items() if path}
     regime = {r["date"]: r["confirmed_regime"] for r in states}
+    # T close-derived regime can only explain T+1 returns.
+    ordered = sorted({d for series in returns.values() for d in series})
+    predecessor = {ordered[i]: ordered[i-1] for i in range(1, len(ordered))}
     buckets = defaultdict(lambda: defaultdict(list))
     for name, series in returns.items():
         for d, r in series.items():
-            g = regime.get(d)
+            g = regime.get(predecessor.get(d))
             if g:
                 buckets[g][name].append(r)
 
@@ -150,7 +153,7 @@ def main():
         "data_end": rows[-1]["date"],
         "regime_observations": sum(x["observations"] for x in coverage),
         "weak_regimes_under_120_observations": weak,
-        "historical_evidence_status": "INSUFFICIENT" if weak else "READY_FOR_OOS_REVIEW",
+        "historical_evidence_status": "INSUFFICIENT" if weak else "DESCRIPTIVE_ONLY_NOT_WALK_FORWARD",
         "important_note": "This report is evidence for strategy selection, not proof of future profitability.",
     }
 

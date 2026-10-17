@@ -7,6 +7,7 @@ on:
       - "btc-quant/config/regime_router_20261016.json"
       - "btc-quant/tests/test_regime_router.py"
       - "btc-quant/tests/test_hmg_safety.py"
+      - "btc-quant/tests/test_router_stage1.py"
       - ".github/workflows/btc-regime-router.yml"
   push:
     branches: [main]
@@ -15,6 +16,7 @@ on:
       - "btc-quant/config/regime_router_20261016.json"
       - "btc-quant/tests/test_regime_router.py"
       - "btc-quant/tests/test_hmg_safety.py"
+      - "btc-quant/tests/test_router_stage1.py"
       - ".github/workflows/btc-regime-router.yml"
   schedule:
     - cron: "50 2 * * *"
@@ -129,21 +131,38 @@ jobs:
             --v3-equity "$RUNNER_TEMP/v3/v3_diagnostic_1x_cost_equity.csv" \
             --hmg-equity "$RUNNER_TEMP/hmg_1x/hmg_equity.csv"
 
+      - name: Rolling 730/90 R0/R1 shared-account stage-one experiment
+        run: |
+          set -euo pipefail
+          python btc-quant/regime/r1_experiment.py \
+            --input "$RUNNER_TEMP/current_data/btc_daily_utc.csv" \
+            --config btc-quant/config/regime_router_20261016.json \
+            --out "$RUNNER_TEMP/stage1"
+
       - name: Assemble immutable daily evidence
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/persist"
           asof="$LATEST_CLOSED_UTC"
-          cp "$RUNNER_TEMP/regime/latest_regime.json" "$RUNNER_TEMP/persist/btc_regime_$asof__latest_regime.json"
-          cp "$RUNNER_TEMP/regime/regime_history.csv" "$RUNNER_TEMP/persist/btc_regime_$asof__history.csv"
-          cp "$RUNNER_TEMP/regime/feature_history.csv" "$RUNNER_TEMP/persist/btc_regime_$asof__features.csv"
-          cp "$RUNNER_TEMP/hmg_1x/hmg_summary.json" "$RUNNER_TEMP/persist/btc_hmg_$asof__1x_summary.json"
-          cp "$RUNNER_TEMP/hmg_2x/hmg_summary.json" "$RUNNER_TEMP/persist/btc_hmg_$asof__2x_summary.json"
-          cp "$RUNNER_TEMP/validation/validation_summary.json" "$RUNNER_TEMP/persist/btc_regime_$asof__validation_summary.json"
-          cp "$RUNNER_TEMP/validation/regime_coverage.csv" "$RUNNER_TEMP/persist/btc_regime_$asof__coverage.csv"
-          cp "$RUNNER_TEMP/validation/forward_regime_behavior.csv" "$RUNNER_TEMP/persist/btc_regime_$asof__forward_behavior.csv"
-          cp "$RUNNER_TEMP/current_data/data_provenance.json" "$RUNNER_TEMP/persist/btc_regime_$asof__data_provenance.json"
-          sha256sum "$RUNNER_TEMP/persist"/* > "$RUNNER_TEMP/persist/SHA256SUMS"
+          prefix="btc_router_${asof}__run_${GITHUB_RUN_ID}"
+          cp "$RUNNER_TEMP/regime/latest_regime.json" "$RUNNER_TEMP/persist/${prefix}__latest_regime.json"
+          cp "$RUNNER_TEMP/regime/regime_history.csv" "$RUNNER_TEMP/persist/${prefix}__history.csv"
+          cp "$RUNNER_TEMP/regime/feature_history.csv" "$RUNNER_TEMP/persist/${prefix}__features.csv"
+          cp "$RUNNER_TEMP/hmg_1x/hmg_summary.json" "$RUNNER_TEMP/persist/${prefix}__hmg_1x.json"
+          cp "$RUNNER_TEMP/hmg_2x/hmg_summary.json" "$RUNNER_TEMP/persist/${prefix}__hmg_2x.json"
+          cp "$RUNNER_TEMP/validation/validation_summary.json" "$RUNNER_TEMP/persist/${prefix}__descriptive_validation.json"
+          cp "$RUNNER_TEMP/validation/regime_coverage.csv" "$RUNNER_TEMP/persist/${prefix}__coverage.csv"
+          cp "$RUNNER_TEMP/validation/forward_regime_behavior.csv" "$RUNNER_TEMP/persist/${prefix}__forward_behavior.csv"
+          cp "$RUNNER_TEMP/validation/conditional_strategy_matrix.csv" "$RUNNER_TEMP/persist/${prefix}__conditional_matrix.csv"
+          cp "$RUNNER_TEMP/current_data/data_provenance.json" "$RUNNER_TEMP/persist/${prefix}__data_provenance.json"
+          for file in "$RUNNER_TEMP/stage1/"*; do
+            basename="$(basename "$file")"
+            cp "$file" "$RUNNER_TEMP/persist/${prefix}__${basename}"
+          done
+          (
+            cd "$RUNNER_TEMP/persist"
+            sha256sum ./* > "SHA256SUMS_${GITHUB_RUN_ID}.txt"
+          )
 
       - name: Upload 30-day GitHub evidence
         uses: actions/upload-artifact@v4
