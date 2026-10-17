@@ -98,6 +98,8 @@ jobs:
               raise SystemExit("Gold validation failed")
           with open(os.environ["GITHUB_ENV"],"a") as f: f.write("AS_OF="+req+"\n")
           PY
+          export AS_OF="$(sed -n 's/^AS_OF=//p' "$GITHUB_ENV" | tail -n 1)"
+          test -n "$AS_OF"
           rclone copyto "$root/output/forward_r1_watchlist_5/$AS_OF/r1_watchlist_5.json" "$RUNNER_TEMP/decision/r1.json"
           python - <<'PY'
           import json,os,pathlib,hashlib
@@ -139,6 +141,8 @@ jobs:
               raise SystemExit("No accepted 40/40 five-stock Clean pointer")
           with open(os.environ["GITHUB_ENV"],"a") as f:f.write("CLEAN_RUN="+x["run_id"]+"\n")
           PY
+          export CLEAN_RUN="$(sed -n 's/^CLEAN_RUN=//p' "$GITHUB_ENV" | tail -n 1)"
+          test -n "$CLEAN_RUN"
           rclone copy "$root/finance_clean_five/versions/$CLEAN_RUN" "$RUNNER_TEMP/decision/finance" --transfers 3
           test -s "$RUNNER_TEMP/decision/finance/targeted_acceptance.json"
       - name: Restore optional previously captured PIT disclosure evidence
