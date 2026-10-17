@@ -147,8 +147,24 @@ class Drive:
     def read(self, file_id):
         return self.request("GET", f"{API}/{file_id}", params={"alt": "media", "supportsAllDrives": "true"}).content
 
-    def download(self, file_id, path):
-        """Stream a Drive file to disk and return its byte count and SHA256."""
+    def download(self, file_id, path, attempts=3):
+        """Stream a Drive file to disk and return its byte count and SHA256.
+
+        ``request`` already retries the HTTP call, but a connection that drops
+        while the body is streaming surfaces here. Retry the whole file (each
+        attempt restarts from byte zero into a fresh temporary file) so one
+        transient failure cannot abort a 400+ file disaster recovery.
+        """
+        for attempt in range(attempts):
+            try:
+                return self._download_once(file_id, path)
+            except requests.RequestException:
+                if attempt + 1 == attempts:
+                    raise PublishError("Drive download was interrupted; the file could not be retrieved.") from None
+                time.sleep(2 ** attempt)
+        raise PublishError("Drive download failed.")
+
+    def _download_once(self, file_id, path):
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         temporary = path.with_name(path.name + ".download-" + uuid.uuid4().hex[:8])

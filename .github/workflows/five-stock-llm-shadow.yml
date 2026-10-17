@@ -92,3 +92,16 @@ jobs:
           rclone copy "$RUNNER_TEMP/llm_shadow" "$dest" --immutable
           rclone check "$RUNNER_TEMP/llm_shadow" "$dest" --one-way
           echo "LLM_SHADOW_VERIFIED five_symbols=true role_calls=25 entry_authorized=false"
+      - name: Archive partial answers if the debate did not finish (paid calls are not lost)
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/llm_shadow"
+          if [ -s "$out/llm_shadow.partial.json" ] && [ ! -e "$out/llm_shadow.json" ]; then
+            dest="gdrive:stock_state_strategy/output/five_stock_llm_shadow_v1/$AS_OF/$GITHUB_RUN_ID-partial"
+            rclone copy "$out" "$dest" --immutable
+            echo "LLM_SHADOW_PARTIAL_ARCHIVED incomplete=true verified=false entry_authorized=false"
+          else
+            echo "No partial LLM answers to archive."
+          fi

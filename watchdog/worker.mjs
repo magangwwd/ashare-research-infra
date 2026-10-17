@@ -1,4 +1,5 @@
 import { decideWatchdog } from "./decision.mjs";
+import { isAuthorized } from "./auth.mjs";
 
 const OWNER = "magangwwd";
 const REPO = "ashare-research-infra";
@@ -74,7 +75,13 @@ export default {
   async scheduled(_controller, env, ctx) {
     ctx.waitUntil(evaluate(env));
   },
-  async fetch(_request, env) {
+  async fetch(request, env) {
+    // The HTTP path can dispatch workflows and re-run Actions, so it is closed
+    // unless the caller presents WATCHDOG_HTTP_TOKEN. Rejections look like a
+    // missing route and never reveal whether a token is configured.
+    if (!isAuthorized(request, env)) {
+      return new Response("Not found", { status: 404 });
+    }
     const decision = await evaluate(env);
     return Response.json(decision);
   },

@@ -35,8 +35,10 @@ Files:
 
 - `watchdog/worker.mjs` — Cloudflare Worker entrypoint.
 - `watchdog/decision.mjs` — pure idempotent state machine.
+- `watchdog/auth.mjs` — bearer-token check for the Worker's HTTP handler.
 - `watchdog/wrangler.toml.example` — three daily Cron Triggers.
 - `watchdog/decision.test.mjs` — state-machine tests.
+- `watchdog/auth.test.mjs` — HTTP authentication tests.
 
 Create a fine-grained GitHub personal access token limited to this repository with **Actions: Read and write**. No Contents, Issues, or repository administration write permission is required by the Worker. The alert workflow itself uses GitHub's short-lived repository token to create the Issue.
 
@@ -51,7 +53,16 @@ npx wrangler secret put GITHUB_TOKEN
 npx wrangler deploy
 ```
 
-The Worker exposes an HTTP handler for manual verification, but the production path is the Cron Trigger. A successful HTTP call returns the decision such as `done`, `wait`, `dispatch`, `rerun`, or `alert`.
+The production path is the Cron Trigger. The Worker also has an HTTP handler for manual verification, but that handler can dispatch workflows and re-run Actions, so it is **closed by default**: every request returns `404` unless the Worker has a `WATCHDOG_HTTP_TOKEN` secret and the request sends `Authorization: Bearer <token>`.
+
+```bash
+# Optional: enable authenticated manual checks (use a long random value).
+npx wrangler secret put WATCHDOG_HTTP_TOKEN
+
+curl -H "Authorization: Bearer $WATCHDOG_HTTP_TOKEN" https://<worker-url>/
+```
+
+An authorized call returns the decision such as `done`, `wait`, `dispatch`, `rerun`, or `alert`. Without the secret, only the Cron Trigger runs the watchdog. Redeploy the Worker (`npx wrangler deploy`) for the change to take effect.
 
 ## Security boundary
 
