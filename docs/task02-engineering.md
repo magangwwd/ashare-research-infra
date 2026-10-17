@@ -14,6 +14,9 @@ Task 02 只读 Task 01 已验收的 `data/current/clean`。不得从 staging、�
 - `factors.py`：工程验证用的后视趋势、波动率、成交量因子。
 - `signals.py`：横截面排序与目标权重。
 - `backtest.py`：信号日收盘后生成目标，严格到下一全局交易日开盘执行；支持显式佣金、滑点和卖出税参数。
+  - 退市：传入 `delistings`（`security_id`、`delist_date`）后，持仓在退市日及之后第一个无开盘价的交易日按最后估值乘以 `delisting_recovery_ratio`（默认 0，即全额核销）清算，交易记录为 `DELIST`；不传则保持原行为（按最后收盘价持有）。
+  - 涨跌停：`market` 含原始 `open`、`up_limit`、`down_limit` 列时（可用 `CleanResearchData.market(include_limits=True)` 并入 `stk_limit`），开盘即涨停不可买入、开盘即跌停不可卖出；缺少限价的行视为可交易，`enforce_price_limits=False` 可关闭。
+  - 输入校验：目标权重含 NaN/inf 或同一 `(signal_date, security_id)` 重复时直接报错。
 - `metrics.py`：收益、波动、Sharpe、最大回撤、换手和成本统计。
 - `walkforward.py`：按时间顺序生成 train / validation / test 窗口。
 - `readiness.py`：只按三类核心数据“最近连续共同交易日”判断研究成熟度。
