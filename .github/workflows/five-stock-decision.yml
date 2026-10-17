@@ -12,6 +12,11 @@ on:
         type: string
         required: true
         default: '2026-10-16'
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/five_stock_decision.py'
+      - '.github/workflows/five-stock-decision.yml'
   pull_request:
     paths:
       - 'ai_research/five_stock_decision.py'
@@ -41,6 +46,7 @@ jobs:
     needs: offline-tests
     if: >-
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'workflow_run' &&
