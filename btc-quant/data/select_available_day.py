@@ -27,7 +27,7 @@ def select_latest_published(closed_day, max_lag=3, opener=urlopen):
             req = Request(url,headers={"User-Agent": "BTC-router-research/1.0"})
             with opener(req, timeout=25) as response:
                 signature = response.read(4)
-                if signature != b"PK\\x03\\x04":
+                if signature[:2] != b"PK":
                     raise ValueError("source is not a ZIP: "+day.isoformat())
             checked.append({"day": day.isoformat(), "http": 200, "published": True})
             return day, checked
