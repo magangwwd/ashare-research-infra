@@ -26,7 +26,7 @@ def report():
 
 def event(pub, cap, symbol=SYMBOLS[0]):
     return {"symbol": symbol, "title": "Issuer announcement",
-            "source_url": "https://sse.com.cn/announcement", "event_kind": "filing",
+            "source_url": "https://sse.com.cn/announcement", "event_kind": "filing", "source_type": "ISSUER_DISCLOSURE",
             "published_at": pub, "captured_at": cap,
             "company_outlook": None, "expected_date": None, "short_fact": "Verified disclosure"}
 
@@ -46,7 +46,7 @@ class MorningPacketTests(unittest.TestCase):
     def test_close_pit_vs_weekend_disclosure(self):
         evt = [
             event("2026-10-16T06:00:00Z", "2026-10-16T06:30:00Z"),
-            event("2026-10-16T07:00:00Z", "2026-10-16T08:00:00Z"),
+            event("2026-10-16T07:30:00Z", "2026-10-16T08:00:00Z"),
             event("2026-10-15T07:00:00Z", "2026-10-17T06:00:00Z"),
         ]
         x = build(report(), {"events": evt}, REVIEW)
