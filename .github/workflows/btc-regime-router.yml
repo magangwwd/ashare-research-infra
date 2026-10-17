@@ -8,6 +8,7 @@ on:
       - "btc-quant/tests/test_regime_router.py"
       - "btc-quant/tests/test_hmg_safety.py"
       - "btc-quant/tests/test_router_stage1.py"
+      - "btc-quant/tests/test_vol_risk_study.py"
       - "btc-quant/tests/test_archive_freshness.py"
       - "btc-quant/data/select_available_day.py"
       - ".github/workflows/btc-regime-router.yml"
@@ -19,6 +20,7 @@ on:
       - "btc-quant/tests/test_regime_router.py"
       - "btc-quant/tests/test_hmg_safety.py"
       - "btc-quant/tests/test_router_stage1.py"
+      - "btc-quant/tests/test_vol_risk_study.py"
       - "btc-quant/tests/test_archive_freshness.py"
       - "btc-quant/data/select_available_day.py"
       - ".github/workflows/btc-regime-router.yml"
@@ -146,6 +148,13 @@ jobs:
             --config btc-quant/config/regime_router_20261016.json \
             --out "$RUNNER_TEMP/stage1"
 
+      - name: Evaluate volatility-risk overlays against verified VOL_STATIC and V3
+        run: |
+          set -euo pipefail
+          python btc-quant/regime/vol_risk_study.py \
+            --input "$RUNNER_TEMP/current_data/btc_daily_utc.csv" \
+            --out "$RUNNER_TEMP/vol_risk"
+
       - name: Assemble immutable daily evidence
         run: |
           set -euo pipefail
@@ -166,6 +175,10 @@ jobs:
           cp "$RUNNER_TEMP/current_data/btc_daily_utc.csv" "$RUNNER_TEMP/persist/${prefix}__btc_daily_utc.csv"
           cp "$RUNNER_TEMP/daily_archives/BTCUSDT-1d-${asof}.zip" "$RUNNER_TEMP/persist/${prefix}__official_source_BTCUSDT-1d-${asof}.zip"
           cp btc-quant/config/regime_router_20261016.json "$RUNNER_TEMP/persist/${prefix}__router_config.json"
+          for file in "$RUNNER_TEMP/vol_risk/"*; do
+            basename="$(basename "$file")"
+            cp "$file" "$RUNNER_TEMP/persist/${prefix}__VOL_RISK__${basename}"
+          done
           for file in "$RUNNER_TEMP/stage1/"*; do
             basename="$(basename "$file")"
             cp "$file" "$RUNNER_TEMP/persist/${prefix}__${basename}"
