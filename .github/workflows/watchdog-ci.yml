@@ -24,8 +24,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Test watchdog state machine
-        run: node --test watchdog/decision.test.mjs
+      - name: Test watchdog state machine and HTTP auth
+        run: node --test watchdog/decision.test.mjs watchdog/auth.test.mjs
       - name: Validate workflow YAML parses
         run: |
           python - <<'PY'
