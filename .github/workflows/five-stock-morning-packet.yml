@@ -1,0 +1,147 @@
+name: Fixed five-stock morning GPT role packet (no model API)
+
+on:
+  workflow_run:
+    workflows: ["Fixed five-stock PIT research after validated R1 (paper only)"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: 'Already-published fixed five-stock report YYYY-MM-DD'
+        required: true
+        type: string
+        default: '2026-10-16'
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/morning_review_packet.py'
+      - '.github/workflows/five-stock-morning-packet.yml'
+  pull_request:
+    paths:
+      - 'ai_research/morning_review_packet.py'
+      - 'ai_research/tests/test_morning_review_packet.py'
+      - '.github/workflows/five-stock-morning-packet.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: five-stock-morning-packet
+  cancel-in-progress: false
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Check time-travel / evidence / role and summary invariants
+        run: python -m unittest -v ai_research.tests.test_morning_review_packet
+
+  archive-packet:
+    needs: tests
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      REQUESTED_AS_OF: ${{ inputs.as_of }}
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Use existing read/write rclone credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Validate current Gold manifest and select existing report day
+        shell: bash
+        run: |
+          set -euo pipefail
+          rclone copyto 'gdrive:down_data/data/gold/main_board/manifest.json' "$RUNNER_TEMP/gold.json"
+          python - <<'PY'
+          import json,datetime,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"gold.json"
+          m=json.loads(p.read_text())
+          day=str(m["as_of_date"])[:10]
+          req=os.environ.get("REQUESTED_AS_OF") or day
+          datetime.date.fromisoformat(req)
+          if req>day or req<"2026-10-12": raise SystemExit("Requested day is invalid or newer than Gold")
+          if os.environ.get("GITHUB_EVENT_NAME")=="workflow_run" and req!=day:
+              raise SystemExit("Nightly day must match Gold manifest")
+          if m.get("validation",{}).get("primary_keys_unique") is not True or m.get("validation",{}).get("ohlc_valid") is not True:
+              raise SystemExit("Gold integrity validation not passed")
+          with open(os.environ["GITHUB_ENV"],"a") as f:f.write("AS_OF="+req+"\n")
+          PY
+          export AS_OF="$(sed -n 's/^AS_OF=//p' "$GITHUB_ENV" | tail -n 1)"
+          test -n "$AS_OF"
+          rclone copyto "gdrive:stock_state_strategy/output/five_stock_decision_v1/$AS_OF/report.json" "$RUNNER_TEMP/report.json"
+          python - <<'PY'
+          import json,os,pathlib
+          r=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"report.json").read_text())
+          assert r["as_of"]==os.environ["AS_OF"]
+          assert r["authorization"]=="PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
+          assert len(r["stocks"])==5
+          PY
+      - name: Require no existing archive (immutable)
+        id: archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/five_stock_morning_packet_v1/$AS_OF"
+          if rclone lsf "$dest" --files-only 2>/dev/null | grep -q '^manifest.json$'; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Archive for this R1 session already exists"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            if rclone lsf "$dest" --files-only 2>/dev/null | grep -q .; then
+              echo "::error::Partial folder; no overwrite allowed"; exit 1
+            fi
+          fi
+      - name: Generate verifiable morning evidence packet for ChatGPT roleplay
+        if: steps.archive.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.morning_review_packet \
+            --report "$RUNNER_TEMP/report.json" --out "$RUNNER_TEMP/morning"
+          python - <<'PY'
+          import pathlib,os,json,hashlib
+          out=pathlib.Path(os.environ["RUNNER_TEMP"])/"morning"
+          pack=json.loads((out/"morning_model_packet.json").read_text())
+          assert len(pack["stocks"])==5
+          assert not any(s["entry_authorized"] for s in pack["stocks"])
+          assert pack["model_mode"]=="CHATGPT_SCHEDULED_ROLE_PLAY_NOT_EXECUTED_BY_THIS_SCRIPT"
+          manifest={"as_of":pack["price_as_of"],"source_r1_sha256":pack["source_report_sha256"],
+                    "finance_version":pack["financial_version"],"llm_called":False,
+                    "news_collection":"CHATGPT_NEWS_LAYER_ADDED_AT_MORNING_REVIEW_ONLY",
+                    "files_sha256":{p.name:hashlib.sha256(p.read_bytes()).hexdigest()
+                                    for p in out.iterdir() if p.is_file()}}
+          (out/"manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n")
+          PY
+      - name: Archive model-input packet on Drive, verify exact bytes
+        if: steps.archive.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/five_stock_morning_packet_v1/$AS_OF"
+          rclone copy "$RUNNER_TEMP/morning" "$dest" --immutable
+          rclone check "$RUNNER_TEMP/morning" "$dest" --one-way
+          echo "MORNING_MODEL_PACKET_ARCHIVED day=$AS_OF news_fetched=false model_called=false"
