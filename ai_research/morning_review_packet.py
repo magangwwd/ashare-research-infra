@@ -18,7 +18,7 @@ NAME = {"600351.SH": "亚宝药业", "002107.SZ": "沃华医药",
 STATUS = "PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
 SHANGHAI = ZoneInfo("Asia/Shanghai")
 ROLE_SEQUENCE = [
-    "技术专家", "财务三表专家", "公告与预期专家",
+    "技术专家", "财务三表专家", "公告、舆情与预期专家",
     "多头研究员", "空头研究员", "独立风控裁决专家"
 ]
 PROMPT_VERSION = "FIVE_STOCK_GPT_ROLEPLAY_MORNING_V1_20261017"
@@ -58,7 +58,7 @@ def classify_news(records, symbol, signal_cutoff, review_time):
             continue
         evidence = {k: e.get(k) for k in
                     ("title", "source_url", "published_at", "captured_at",
-                     "event_kind", "company_outlook", "expected_date", "short_fact")}
+                     "event_kind", "source_type", "sentiment_label", "company_outlook", "expected_date", "short_fact")}
         evidence["record_type"] = "CAPTURED_DISCLOSURE_NOT_CONSENSUS_FORECAST"
         evidence["timing"] = ("POST_SIGNAL_SESSION" if published > signal_cutoff
                               else ("LATE_CAPTURE_NO_BACKTEST_USE"
@@ -119,8 +119,21 @@ def build(report, captured_news=None, review_at=None):
                 "gaps_and_risks": fin.get("data_gaps_and_risks", []),
                 "record_ids": fin.get("record_ids", {}),
             },
-            "disclosure_evidence": news,
-            "disclosure_status": "SOME_DATED_CAPTURED" if news else "NO_CAPTURED_NEWS",
+            "disclosure_evidence": [e for e in news if e.get("source_type") in
+                                    ("ISSUER_DISCLOSURE", "REGULATORY_FILING")],
+            "news_evidence": [e for e in news if e.get("source_type") ==
+                              "MAINSTREAM_REPORT"],
+            "public_sentiment_evidence": [e for e in news if e.get("source_type") ==
+                                          "PUBLIC_DISCUSSION"],
+            "uncategorized_evidence": [e for e in news if e.get("source_type") not in
+                                      ("ISSUER_DISCLOSURE", "REGULATORY_FILING",
+                                       "MAINSTREAM_REPORT", "PUBLIC_DISCUSSION")],
+            "disclosure_status": "SOME_DATED_CAPTURED" if any(
+                e.get("source_type") in ("ISSUER_DISCLOSURE", "REGULATORY_FILING")
+                for e in news) else "NO_CAPTURED_NEWS",
+            "public_sentiment_status": "CITED_UNREPRESENTATIVE_OPINIONS" if any(
+                e.get("source_type") == "PUBLIC_DISCUSSION" for e in news
+            ) else "NOT_VERIFIED_DO_NOT_INFER",
             "scenario_outlook_status": "HYPOTHESES_REQUIRE_EVIDENCE_NOT_PRICE_TARGETS",
             "entry_authorized": False,
             "evidence_required": s.get("waiting_for", []),
@@ -140,7 +153,9 @@ def build(report, captured_news=None, review_at=None):
             "六位专家同一GPT会话角色扮演并非独立六个模型；分别呈现证据和反驳",
             "第一轮技术/财务/公告专家独立陈述，第二轮多头与空头相互质疑，第三轮风控裁决",
             "未来预期分为公司正式指引、机构一致预期、模型情景；未经来源支持的预期不得写成事实",
-            "公告需要文档链接、发表时间、采集时间；15:00后或后日新增信息不得倒灌收盘策略",
+            "公告、舆情与新闻均须记录真实链接、发表时间、采集时间及来源类型；舆情样本不代表总体共识",
+            "论坛和社交舆情只反映观点不能作为事实，任何热度与正负面比例未经可靠采样不允许编造",
+            "15:00后或后日新增信息不得倒灌收盘策略",
             "时点缺失的新闻或技术数据明确不可核验，不能把缺失当无风险",
             "最终风控只评定WATCH/SETUP/NEEDS_REVIEW/AVOID，绝不推翻冻结R1或执行真实交易",
             "若5只均无R1候选仍报全五只；无A/B真实成交时收益和回撤均未知",
@@ -157,8 +172,8 @@ def format_prompt(packet):
         "",
         "## 工作顺序",
         "1. 先呈现五股结论：股票、R1候选、WATCH/SETUP/AVOID、最关键风险、下一核验条件。",
-        "2. 每股依次呈现：技术证据→财务三表与数据缺口→公告/新闻/近期预期→风险和等待条件。",
-        "3. 第一轮：技术专家、财务专家、公告与预期专家分别独立列证；第二轮：多头提出论点，空头反驳，多头再应答，空头再追问。",
+        "2. 每股依次呈现：技术证据→财务三表与数据缺口→公告、近期舆情、新闻和未来预期→风险和等待条件。",
+        "3. 第一轮：技术专家、财务专家、公告舆情预期专家分别独立列证；第二轮：多头提出论点，空头反驳，多头再应答，空头再追问。",
         "4. 第三轮：风控裁决专家区分已证实事实、合理情景、待核验假设，综合状态不得篡改R1原始候选。",
         "5. 严格区分：收盘时已知证据、盘后新增证据、未来潜在事件。未来预期不能制造价格目标和概率。",
         "6. 有网络时优先交易所/巨潮官方披露，列出真实URL和时间；查不到即标记NEWS_COVERAGE_MISSING。",
