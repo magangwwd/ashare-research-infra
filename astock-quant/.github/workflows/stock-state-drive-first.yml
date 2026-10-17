@@ -69,7 +69,13 @@ jobs:
           rclone --config "$config_file" listremotes | grep -qx 'gdrive:'
       - name: Execute isolated task and save outputs to Google Drive
         working-directory: stock_state_strategy
+        # Inputs go through env, never into the script text, so a crafted value
+        # cannot be executed by the shell. The runner validates every value.
+        env:
+          TASK: ${{ inputs.task }}
+          AS_OF: ${{ inputs.as_of }}
+          MIN_AS_OF: ${{ inputs.min_as_of }}
         run: |
-          python github_drive_runner.py "${{ inputs.task }}" \
-            --as-of "${{ inputs.as_of }}" \
-            --min-as-of "${{ inputs.min_as_of }}"
+          python github_drive_runner.py "$TASK" \
+            --as-of "$AS_OF" \
+            --min-as-of "$MIN_AS_OF"

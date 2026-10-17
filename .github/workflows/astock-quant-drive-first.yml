@@ -73,10 +73,16 @@ jobs:
       - name: Execute isolated task and save outputs to Google Drive
         if: github.event_name == 'workflow_dispatch'
         working-directory: astock-quant/stock_state_strategy
+        # Inputs go through env, never into the script text, so a crafted value
+        # cannot be executed by the shell. The runner validates every value.
+        env:
+          TASK: ${{ inputs.task }}
+          AS_OF: ${{ inputs.as_of }}
+          MIN_AS_OF: ${{ inputs.min_as_of }}
         run: |
-          python github_drive_runner.py "${{ inputs.task }}" \
-            --as-of "${{ inputs.as_of }}" \
-            --min-as-of "${{ inputs.min_as_of }}"
+          python github_drive_runner.py "$TASK" \
+            --as-of "$AS_OF" \
+            --min-as-of "$MIN_AS_OF"
       - name: Nightly validated Gold refresh and latest state snapshot
         if: github.event_name == 'schedule'
         working-directory: astock-quant/stock_state_strategy

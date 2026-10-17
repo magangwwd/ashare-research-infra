@@ -65,6 +65,10 @@ jobs:
           echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
           rclone --config "$RUNNER_TEMP/rclone.conf" listremotes | grep -qx 'gdrive:'
       - name: Run legacy research and persist results only on Drive
+        # Inputs go through env, never into the script text (shell injection).
+        env:
+          JOB: ${{ inputs.job }}
+          DRIVE_PREFIX: ${{ inputs.drive_prefix }}
         run: |
           python stock_state_strategy/legacy_drive_runner.py \
-            "${{ inputs.job }}" --drive-prefix "${{ inputs.drive_prefix }}"
+            "$JOB" --drive-prefix "$DRIVE_PREFIX"
