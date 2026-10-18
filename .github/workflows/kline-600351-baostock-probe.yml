@@ -1,0 +1,106 @@
+name: One-off 600351 free Baostock 15m historical probe (research only)
+
+on:
+  pull_request:
+    paths:
+      - 'ai_research/baostock_600351_minute.py'
+      - 'ai_research/tests/test_baostock_600351_minute.py'
+      - '.github/workflows/kline-600351-baostock-probe.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/baostock_600351_minute.py'
+      - '.github/workflows/kline-600351-baostock-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: baostock-600351-15m-oneoff
+  cancel-in-progress: false
+
+jobs:
+  offline-adapter-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Source adapter and joined Kline QA in synthetic mode
+        run: |
+          python -m pip install 'pandas>=2.2,<3' 'numpy>=2,<3' 'pyarrow>=18,<25'
+          python -m unittest -v ai_research.tests.test_baostock_600351_minute ai_research.tests.test_kline_15m_bridge
+
+  single-ticker-research:
+    needs: offline-adapter-tests
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install source and existing read-only Drive dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install 'baostock>=0.8.8' 'pandas>=2.2,<3' 'numpy>=2,<3' 'pyarrow>=18,<25'
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Free single-ticker historical 15-minute data request
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.baostock_600351_minute --output-dir "$RUNNER_TEMP/baostock/provider"
+      - name: Load canonical daily Tushare prices and PIT adjustment factors for cross-check
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='gdrive:down_data/data/gold/main_board'
+          mkdir -p "$RUNNER_TEMP/baostock/daily"
+          rclone copyto "$root/trading_calendar.parquet" "$RUNNER_TEMP/baostock/daily/trading_calendar.parquet"
+          for dataset in daily_prices adjustment_factors; do
+            rclone copy "$root/$dataset" "$RUNNER_TEMP/baostock/daily/$dataset" \
+              --include 'year=202[3456]/month=*/data.parquet' --transfers 4
+            test "$(find "$RUNNER_TEMP/baostock/daily/$dataset" -name data.parquet | wc -l)" -ge 40
+          done
+      - name: Cross-check all 15-minute days and two original daily signals
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.kline_15m_bridge \
+            --minutes-root "$RUNNER_TEMP/baostock/provider/kline_15m" \
+            --daily-root "$RUNNER_TEMP/baostock/daily" \
+            --output-dir "$RUNNER_TEMP/baostock/study"
+          python - <<'PY'
+          import json,pathlib,os
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"baostock/study/statistics.json"
+          j=json.loads(p.read_text())
+          assert j["authorization"]=="RESEARCH_ONLY_NO_TRADING"
+          assert j["status"] in ("EXPLORATORY_COVERAGE_PASSED_NOT_PROVEN",
+                                  "INCOMPLETE_MINUTE_COVERAGE_NO_CONCLUSIONS")
+          print("JOIN_QUALITY",j["status"],
+                "minutes",j["minute_valid_days_aligned"],
+                "daily",j["daily_valid_days"])
+          PY
+      - name: Archive provider provenance and research results without replacing original Gold
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/kline_600351_15m_baostock_experiment_v1/2026-10-16/run_$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/baostock/provider" "$dest/provider" --immutable --transfers 4
+          rclone copy "$RUNNER_TEMP/baostock/study" "$dest/study" --immutable
+          rclone check "$RUNNER_TEMP/baostock/provider" "$dest/provider" --one-way
+          rclone check "$RUNNER_TEMP/baostock/study" "$dest/study" --one-way
+          echo 'ALTERNATIVE_MINUTE_SOURCE_VALIDATED_PAPER_ONLY; source=Baostock; canonical Tushare Gold untouched'
