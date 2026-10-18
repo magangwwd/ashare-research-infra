@@ -1,0 +1,109 @@
+name: Four-stock frozen volatility 2025 risk replication (RESEARCH ONLY)
+
+on:
+  pull_request:
+    paths:
+      - 'ai_research/four_stock_volatility_compare.py'
+      - 'ai_research/tests/test_four_stock_volatility_compare.py'
+      - '.github/workflows/four-stock-volatility-compare.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/four_stock_volatility_compare.py'
+      - '.github/workflows/four-stock-volatility-compare.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: four-stock-frozen-volatility-replication
+  cancel-in-progress: false
+
+jobs:
+  offline-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install minimal analysis readers
+        run: python -m pip install 'numpy>=2,<3' 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+      - name: Test four symbol lock and time-split invariants
+        run: python -m unittest -v ai_research.tests.test_four_stock_volatility_compare
+
+  actual-gold-study:
+    needs: offline-qa
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Prepare numerical environment and authenticated Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install 'numpy>=2,<3' 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Download only validated 2023-2026 daily OHLCV and adjustment factors
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='gdrive:down_data/data/gold/main_board'
+          mkdir -p "$RUNNER_TEMP/four/gold"
+          rclone copyto "$root/manifest.json" "$RUNNER_TEMP/four/gold_manifest.json"
+          rclone copyto "$root/trading_calendar.parquet" "$RUNNER_TEMP/four/gold/trading_calendar.parquet"
+          python - <<'PY'
+          import os,pathlib,json
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"four/gold_manifest.json"
+          g=json.loads(p.read_text())
+          assert g["as_of_date"]>="2026-10-16"
+          assert g["validation"]["primary_keys_unique"] and g["validation"]["ohlc_valid"]
+          print("Gold source manifest validated",g["as_of_date"])
+          PY
+          for dataset in daily_prices adjustment_factors; do
+            rclone copy "$root/$dataset" "$RUNNER_TEMP/four/gold/$dataset" \
+              --include 'year=202[3456]/month=*/data.parquet' --checkers 4 --transfers 6
+            count="$(find "$RUNNER_TEMP/four/gold/$dataset" -name data.parquet | wc -l)"
+            test "$count" -ge 45
+            echo "$dataset partitions=$count"
+          done
+      - name: Recompute exact original frozen volatility expansion rule on all four stocks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.four_stock_volatility_compare \
+            --gold-root "$RUNNER_TEMP/four/gold" \
+            --gold-manifest "$RUNNER_TEMP/four/gold_manifest.json" \
+            --out "$RUNNER_TEMP/four/report"
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"four/report/statistics.json"
+          x=json.loads(p.read_text())
+          assert x["symbol_count"]==4
+          assert x["authorization"]=="RESEARCH_ONLY_NO_TRADING"
+          assert x["as_of"]=="2026-10-16"
+          assert set(x["symbols"])=={"002107.SZ","600641.SH","002568.SZ","002296.SZ"}
+          print("2025 negative signal means", x["question_2025"]["negative_2025_stock_count"])
+          PY
+      - name: Archive immutable report and verify actual Google Drive stored bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/four_stock_frozen_volatility_v1/2026-10-16/run_$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/four/report" "$dest" --immutable --transfers 3
+          rclone check "$RUNNER_TEMP/four/report" "$dest" --one-way
+          echo "FOUR_STOCK_VOLATILITY_REPLICATION_PUBLISHED; research only; no orders"
