@@ -1,13 +1,18 @@
 """Offline invariants for the deeper frozen 5–10% volatility study."""
 import unittest
-import pandas as pd
-import numpy as np
+try:
+    import pandas as pd
+    import numpy as np
+    from ai_research.volatility_pre20_deep import (
+        BINS, TARGET_BIN, bin_for, summary, thinning, raw_rows, grouped, make_report,
+    )
+except ModuleNotFoundError as exc:
+    if exc.name not in ("pandas","numpy"):
+        raise
+    pd = np = None
 
-from ai_research.volatility_pre20_deep import (
-    BINS, TARGET_BIN, bin_for, summary, thinning, raw_rows, grouped, make_report,
-)
 
-
+@unittest.skipIf(pd is None, "Optional pandas/numpy only in dedicated numerical CI")
 class DeepPre20Tests(unittest.TestCase):
     def test_bins_exact_edges(self):
         self.assertEqual([bin_for(v) for v in
