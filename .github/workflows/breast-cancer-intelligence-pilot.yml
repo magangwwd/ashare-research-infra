@@ -8,27 +8,28 @@ on:
 permissions:
   contents: read
 jobs:
-  test-public-research-apis:
+  collect-public-research-data:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Local data and URL unit tests
+      - name: Unit tests
         run: python -m unittest discover -s breast_cancer_intelligence/tests -v
-      - name: PubMed URL dry run
-        run: python breast_cancer_intelligence/collect_pubmed.py --dry-run
-      - name: ClinicalTrials.gov URL dry run
-        run: python breast_cancer_intelligence/collect_trials.py --dry-run
-      - name: Real public API connectivity and response schema
+      - name: Live API connectivity checks
         run: python breast_cancer_intelligence/smoke_real_apis.py
-      - name: Save validation evidence, including failures
+      - name: Collect real timestamped research snapshots
+        run: python breast_cancer_intelligence/collect_public_intelligence.py
+      - name: Preserve immutable bundle and smoke evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bci-public-api-smoke-${{ github.run_id }}
-          path: breast_cancer_intelligence/smoke_report.json
+          name: bci-data-validation-${{ github.run_id }}
+          path: |
+            breast_cancer_intelligence/data_snapshots/*.zip
+            breast_cancer_intelligence/data_snapshots/*/manifest.json
+            breast_cancer_intelligence/smoke_report.json
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 14
