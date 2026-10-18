@@ -26,7 +26,9 @@ MONITOR = [
     {"id":"fda_oncology_approvals", "section":"regulatory", "url":FDA_INDEX, "type":"regulator_approval_index"},
     {"id":"nci_breast_treatment", "section":"guidelines", "url":"https://www.cancer.gov/types/breast/hp/breast-treatment-pdq", "type":"reviewed_evidence_summary_not_guideline"},
     {"id":"nci_breast_prevention", "section":"guidelines", "url":"https://www.cancer.gov/types/breast/hp/breast-prevention-pdq", "type":"reviewed_evidence_summary_not_guideline"},
-    {"id":"nci_follow_up", "section":"rehabilitation", "url":"https://www.cancer.gov/about-cancer/coping/survivorship/follow-up-care", "type":"patient_education_not_personal_medical_advice"}
+    {"id":"nci_follow_up", "section":"rehabilitation", "url":"https://www.cancer.gov/about-cancer/coping/survivorship/follow-up-care", "type":"patient_education_not_personal_medical_advice"},
+    {"id":"caca_2026_breast_guideline", "section":"guidelines", "url":"https://www.china-oncology.com/zh/article/doi/10.19401/j.cnki.1007-3639.2025.12.009/", "type":"clinical_guideline_2026"},
+    {"id":"esmo_guideline_news", "section":"guidelines", "url":"https://www.esmo.org/guidelines/guidelines-news", "type":"society_guideline_index"}
 ]
 TOPICS = {
     "recent_articles": {"term": '("Breast Neoplasms"[MeSH Terms] OR "breast cancer"[Title/Abstract])', "days":30, "limit":45},
@@ -85,9 +87,10 @@ def articles_xml(raw: bytes, ids: list[str], topic: str, fetched_at: str):
             "topic":topic,"fetched_at_utc":fetched_at,"review_status":"unreviewed",
             "rights_note":"Research-only index; original abstract may be copyrighted; do not redistribute without license."})
     expected=set(ids); actual={x["pmid"] for x in records}
-    if actual != expected:
-        raise ValueError("EFetch PMID mismatch; missing="+str(sorted(expected-actual)[:10]))
-    return records
+    missing = sorted(expected - actual)
+    if len(missing) > max(2, len(ids)//5):
+        raise ValueError("EFetch coverage insufficient; missing="+str(missing[:10]))
+    return records, missing
 
 def collect_pubmed(topic, spec, timestamp):
     base_params={"db":"pubmed","retmode":"json","term":spec["term"],"retmax":spec["limit"],
@@ -107,7 +110,9 @@ def collect_pubmed(topic, spec, timestamp):
     fetch_url=NCBI+"efetch.fcgi?"+urlencode({"db":"pubmed","id":",".join(ids),"retmode":"xml",
          "tool":"BreastCancerIntelligenceResearch"})
     fetched, p2=request(fetch_url,limit=9_000_000)
-    items=articles_xml(fetched,ids,topic,timestamp)
+    items, missing=articles_xml(fetched,ids,topic,timestamp)
+    meta["unresolved_pmids"]=missing
+    meta["fetch_coverage"]=round(len(items)/len(ids),4)
     meta["efetch_sha256"]=p2["sha256"]
     meta["efetch_bytes"]=p2["byte_count"]
     return items,meta
@@ -227,6 +232,9 @@ def run(base_folder):
     approvals,checks,errors=official_sites(ts)
     all_files.append(dump_jsonl(out/"official_sources"/"source_checks.jsonl",checks))
     all_files.append(dump_jsonl(out/"official_sources"/"fda_breast_approval_links.jsonl",approvals))
+    check_map={x["id"]:x for x in checks}
+    guidelines=[{"id":"caca_2026_breast_guideline","title":"中国抗癌协会乳腺癌诊治指南与规范（2026年版）","issued_by":"中国抗癌协会乳腺癌专业委员会；中华医学会肿瘤学分会乳腺肿瘤学组","published_in":"中国癌症杂志 2025;35(12):1157-1255","doi":"10.19401/j.cnki.1007-3639.2025.12.009","url":"https://www.china-oncology.com/zh/article/doi/10.19401/j.cnki.1007-3639.2025.12.009/","reference_kind":"published_guideline_bibliographic_metadata","fetched_at_utc":ts,"source_http_status":check_map.get("caca_2026_breast_guideline",{}).get("status"),"note":"Record of publication only; no full PDF copied, no clinical interpretation"}]
+    all_files.append(dump_jsonl(out/"guidelines"/"verified_publication_index.jsonl",guidelines))
     if not approvals: failures["fda_breast_approval_links"]="No verified breast approval links; do not classify approval results."
     for source in errors: failures["source_"+source]="HTTP check failed"
     required=("pubmed_recent_articles","clinical_trials")
