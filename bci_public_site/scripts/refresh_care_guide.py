@@ -12,19 +12,19 @@ from urllib.parse import urlsplit
 from datetime import datetime, timezone
 from refresh_drive import get_session
 
-DOC_ID = "1YPYjBWGa9BMqG8qQ7AFqommHDSiiywMONh8LcVvwF5s"
+DOC_ID = "1toRSe-wLsKCbpju7zVvLIN2Xx-S52PRta6IBhxNpfH8"
 MAX_BYTES = 250_000
 ALLOWED_HOSTS = {
     "www.shca.org.cn", "www.cicams.ac.cn", "www.bjcancer.org",
-    "bjcancer.org", "www.sysucc.org.cn", "xuebao.301hospital.com.cn",
-    "www.cancer.gov", "www.china-oncology.com"
+    "bjcancer.org", "www.sysucc.org.cn", "sysucc.org.cn", "xuebao.301hospital.com.cn",
+    "www.cancer.gov", "www.china-oncology.com", "www.zchospital.com", "www.wchscu.cn", "wchscu.cn", "www.tjmuch.com", "tmucih.com", "www.nj12320.org", "www.haodf.com", "www.fmmu.edu.cn"
 }
 def safe_url(value):
     u=urlsplit(str(value or ""))
     return u.scheme=="https" and (u.hostname or "") in ALLOWED_HOSTS and not u.username and not u.password
 
 def validate(data):
-    if not isinstance(data,dict) or data.get("schema_version")!=1:
+    if not isinstance(data,dict) or data.get("schema_version")!=2:
         raise ValueError("Unsupported editorial guide schema")
     if data.get("review_status")!="editorial_reference_only_not_medically_reviewed":
         raise ValueError("Editorial evidence state must be explicit")
@@ -53,10 +53,42 @@ def validate(data):
                     raise ValueError("Hospital focus must be sourced")
                 if row.get("secondary_url") and not safe_url(row["secondary_url"]):
                     raise ValueError("Invalid secondary URL")
+                if not isinstance(row.get("checked_at"),str) or not row["checked_at"]:
+                    raise ValueError("Missing dated source verification")
+                if not isinstance(row.get("match"),list) or not row["match"]:
+                    raise ValueError("Missing patient-facing care topic")
+                if not isinstance(row.get("appointment"),dict):
+                    raise ValueError("Missing booking-source status")
+                app=row["appointment"]
+                if not all(isinstance(app.get(x),str) and app[x] for x in ("summary","url","status","checked_at")):
+                    raise ValueError("Incomplete booking-source evidence")
+                if not safe_url(app["url"]):
+                    raise ValueError("Unapproved hospital booking-source host")
+                if not isinstance(row.get("doctors"),list) or not isinstance(row.get("sources"),list) or not row["sources"]:
+                    raise ValueError("Missing source-traceable doctor roster")
+                for doctor in row["doctors"]:
+                    if not all(isinstance(doctor.get(x),str) and doctor[x] for x in ("name","focus","url","source","checked_at")):
+                        raise ValueError("Incomplete dated doctor description")
+                    if not safe_url(doctor["url"]):
+                        raise ValueError("Unapproved doctor source")
+                for citation in row["sources"]:
+                    if not all(isinstance(citation.get(x),str) and citation[x] for x in ("title","url","kind","checked_at")):
+                        raise ValueError("Incomplete dated hospital citation")
+                    if not safe_url(citation["url"]):
+                        raise ValueError("Unapproved hospital evidence host")
+                    if citation.get("source_date") is not None and not isinstance(citation.get("source_date"),str):
+                        raise ValueError("Bad historical publication date")
+                if row.get("trial_link"):
+                    raise ValueError("Hospital-specific trial links need independently proven center/recruitment evidence; not supported yet")
             if key=="journeys" and (not isinstance(row.get("steps"),list) or not isinstance(row.get("ask"),list)):
                 raise ValueError("Inadequate pathway data")
             if key=="frontiers" and not all(isinstance(row.get(t),str) for t in ("topic","kind","scope","limits")):
                 raise ValueError("Inadequate frontier evidence qualifications")
+    if not isinstance(data.get("glossary"),list) or len(data["glossary"])<8:
+        raise ValueError("Missing patient Chinese glossary")
+    for item in data["glossary"]:
+        if not all(isinstance(item.get(k),str) and item[k] for k in ("term","meaning")):
+            raise ValueError("Incomplete Chinese medical definition")
     blob=json.dumps(data,ensure_ascii=False)
     for suspicious in ("github.com", "GDRIVE_OAUTH_JSON", "refresh_token", "client_secret", "patient_name", "patient_id"):
         if suspicious.lower() in blob.lower():
@@ -87,6 +119,8 @@ def pull(output):
         "hospitals":len(data["hospitals"]),
         "journeys":len(data["journeys"]),
         "frontiers":len(data["frontiers"]),
+        "doctor_profiles":sum(len(h["doctors"]) for h in data["hospitals"]),
+        "glossary":len(data["glossary"]),
         "sha256":hashlib.sha256(path.read_bytes()).hexdigest()
     }
 
@@ -98,7 +132,7 @@ if __name__=="__main__":
     try:
         proof=pull(a.output)
         Path(a.report).write_text(json.dumps(proof,indent=2)+"\n",encoding="utf-8")
-        print("CARE_GUIDE_OK hospitals="+str(proof["hospitals"])+" pathways="+str(proof["journeys"])+" frontiers="+str(proof["frontiers"])+" sha256="+proof["sha256"])
+        print("CARE_GUIDE_OK hospitals="+str(proof["hospitals"])+" doctor_profiles="+str(proof["doctor_profiles"])+" glossary="+str(proof["glossary"])+" sha256="+proof["sha256"])
     except Exception as err:
         print("CARE_GUIDE_FAILED "+type(err).__name__)
         raise SystemExit(1)

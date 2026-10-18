@@ -1,8 +1,8 @@
 'use strict';
 (() => {
   const $=id=>document.getElementById(id);
-  const state={guide:null,research:null,stage:null,region:'all',focus:'all',term:'',compare:new Set()};
-  const APPROVED_HOSTS=new Set(['www.shca.org.cn','www.cicams.ac.cn','www.bjcancer.org','bjcancer.org','www.sysucc.org.cn','xuebao.301hospital.com.cn','www.cancer.gov','www.china-oncology.com','pubmed.ncbi.nlm.nih.gov','clinicaltrials.gov','www.fda.gov']);
+  const state={guide:null,research:null,stage:null,region:'all',type:'all',focus:'all',term:'',compare:new Set()};
+  const APPROVED_HOSTS=new Set(['www.shca.org.cn','www.cicams.ac.cn','www.bjcancer.org','bjcancer.org','www.sysucc.org.cn','sysucc.org.cn','xuebao.301hospital.com.cn','www.cancer.gov','www.china-oncology.com','www.zchospital.com','www.wchscu.cn','wchscu.cn','www.tjmuch.com','tmucih.com','www.nj12320.org','www.haodf.com','www.fmmu.edu.cn','pubmed.ncbi.nlm.nih.gov','clinicaltrials.gov','www.fda.gov']);
   const CATEGORIES={
     screen:'发现异常或考虑筛查',
     diagnosis:'检查和病理结果',
@@ -60,9 +60,12 @@
       ['医院',picks.map(h=>h.name)],
       ['所在地 / 类别',picks.map(h=>h.city+' · '+h.type)],
       ['公开专科方向',picks.map(h=>h.focus.join('、'))],
+      ['可优先询问的问题',picks.map(h=>(h.match||[]).join('；'))],
+      ['预约与就医渠道',picks.map(h=>(h.appointment?.summary||'待核实')+'（'+(h.appointment?.status||'')+'）')],
+      ['已核实的医生资料',picks.map(h=>h.doctors?.length?h.doctors.map(x=>x.name+'：'+x.focus).join('；'):'目前无院方核实的团队名单')],
       ['已查到的资料',picks.map(h=>h.highlight)],
       ['需确认或资料局限',picks.map(h=>h.caution)],
-      ['证据级别',picks.map(h=>h.verified)]
+      ['证据级别',picks.map(h=>h.verified+'；核对于'+(h.checked_at||'未知'))]
     ];
     for(const [label,values] of rows){
       const tr=e('tr');tr.append(e('th','',label));
@@ -76,16 +79,48 @@
     const head=e('div','care-hospital-head');
     const group=e('div');group.append(e('small','care-hospital-label',h.type+' · '+h.city));
     group.append(e('h4','',h.name));head.append(group);
-    const label=e('span','care-verification',h.verified==='官方科室页面'?'医院官网证实':'仅学术记录');head.append(label);
+    const official=/医院官网/.test(h.verified);const label=e('span','care-verification'+(official?'':' pending'),official?'官网资料':'资料待核实');head.append(label);
     card.append(head);
     const focuses=e('div','care-hospital-tags');(h.focus||[]).forEach(x=>focuses.append(e('span','',x)));card.append(focuses);
     card.append(e('h5','','可核实的公开特点'));
     card.append(e('p','',h.highlight));
     card.append(e('h5','care-caution-title','局限与就诊前要核实'));
     card.append(e('p','care-caution',h.caution));
-    card.append(e('small','care-evidence','依据：'+h.evidence+'；'+(h.year_note||'年份未标注')));
+    card.append(e('small','care-evidence','证据等级：'+h.verified+'；来源核查日期 '+(h.checked_at||'未记录')));
+    const suitability=e('div','care-patient-fit');
+    suitability.append(e('h5','','什么情况可以先询问这个专科？'));
+    (h.match||[]).forEach(x=>suitability.append(e('p','', '• '+x)));
+    card.append(suitability);
+    const appointment=e('div','care-booking');
+    appointment.append(e('h5','','怎样走官方渠道咨询或预约？'));
+    appointment.append(e('p','',h.appointment?.summary||'目前无已核实的官方挂号说明。'));
+    appointment.append(e('small','',h.appointment?.status||'就诊前需与医院核实'));
+    if(h.appointment?.url) appointment.append(ext('核对就诊渠道 ↗',h.appointment.url,'care-evidence-link'));
+    card.append(appointment);
+    const people=e('details','care-doctors');
+    people.append(e('summary','',h.doctors?.length?'医生与团队信息（'+h.doctors.length+' 位）':'医生团队资料尚待核实'));
+    const roster=e('div','care-doctor-list');
+    if(h.doctors?.length){
+      h.doctors.forEach(doc=>{
+        const info=e('div','care-doctor');
+        info.append(ext(doc.name,doc.url),e('p','',doc.focus),e('small','','来源：'+doc.source+' · 核对日期 '+doc.checked_at+'；当前排班须重新查证'));
+        roster.append(info);
+      });
+    }else{
+      roster.append(e('p','care-small-print','尚无适合直接展示的已核实医生资料。请通过医院官方门诊查询，不以第三方历史名单作为当前出诊安排。'));
+    }
+    people.append(roster);card.append(people);
+    const provenance=e('details','care-sources');
+    provenance.append(e('summary','','查看来源、发布日期与核对日期'));
+    const sourceList=e('ul');
+    (h.sources||[]).forEach(s=>{
+      const li=e('li');
+      li.append(ext(s.title,s.url),e('span','', ' · '+(s.source_date?'原资料日期 '+s.source_date+'；':'原资料未注明日期；')+'核对于 '+s.checked_at+' · '+s.kind));
+      sourceList.append(li);
+    });
+    provenance.append(sourceList);card.append(provenance);
     const footer=e('div','care-hospital-actions');
-    footer.append(ext('核对科室原始资料 ↗',h.url,'care-evidence-link'));
+    footer.append(ext(official?'访问医院官方科室资料 ↗':'查看现有来源（待院方核实） ↗',h.url,'care-evidence-link'));
     const btn=e('button','care-compare-toggle',state.compare.has(h.id)?'取消对照':'加入对照');
     btn.type='button';btn.setAttribute('aria-pressed',String(state.compare.has(h.id)));
     btn.addEventListener('click',()=>{
@@ -103,12 +138,13 @@
     if(!state.guide)return;
     const hospitals=state.guide.hospitals.filter(h=>
       (state.region==='all'||h.region===state.region)&&
+      (state.type==='all'||h.type===state.type)&&
       (state.focus==='all'||(h.focus||[]).includes(state.focus))&&
       [h.name,h.city,h.type,h.highlight,...(h.focus||[])].join(' ').toLowerCase().includes(state.term));
     const list=$('care-hospital-list');list.replaceChildren();
     hospitals.forEach(h=>list.append(hospitalCard(h)));
     if(!hospitals.length)list.append(e('p','care-empty','当前有可靠出处的医院资料中没有符合筛选条件的记录。请扩大地区或专科条件。'));
-    $('care-hospital-total').textContent='当前有来源档案 '+state.guide.hospitals.length+' 家 · 筛选显示 '+hospitals.length+' 家 · 不排序';
+    $('care-hospital-total').textContent='有资料记录 '+state.guide.hospitals.length+' 家（其中部分仅为待核实线索） · 当前显示 '+hospitals.length+' 家 · 不排行';
   }
   function initHospitalFilters(){
     const h=state.guide.hospitals;
@@ -117,6 +153,7 @@
     for(const val of unique(h.map(x=>x.region)))region.append(new Option(val,val));
     for(const val of unique(h.flatMap(x=>x.focus||[])))focus.append(new Option(val,val));
     region.addEventListener('change',()=>{state.region=region.value;renderHospitals();});
+    $('care-type').addEventListener('change',()=>{state.type=$('care-type').value;renderHospitals();});
     focus.addEventListener('change',()=>{state.focus=focus.value;renderHospitals();});
     $('care-hospital-search').addEventListener('input',event=>{
       state.term=event.target.value.trim().toLowerCase();renderHospitals();
@@ -138,8 +175,16 @@
     if(!d){el.append(e('p','care-empty','云盘近期研究数据暂不可用，请查看上方权威来源。'));return;}
     const docs=(d.articles||[]).filter(x=>x.category==='recent').slice(0,3);
     const trials=(d.trials||[]).slice(0,3);
-    for(const a of docs){const item=e('div','care-research-item');item.append(e('span','care-research-type','PubMed 新增研究'),ext(a.title,a.url),e('small','',a.journal||'研究题录'));el.append(item);}
-    for(const t of trials){const item=e('div','care-research-item');item.append(e('span','care-research-type','临床试验登记'),ext(t.title,t.url),e('small','',t.id+' · '+(t.date||'日期未提供')));el.append(item);}
+    for(const a of docs){
+      const info=window.BCIChinese.describeArticle(a),item=e('div','care-research-item');
+      item.append(e('span','care-research-type','新增医学研究 · 中文主题提示'),ext(info.title,a.url),e('p','',info.summary),e('small','',a.id?'文献编号 '+a.id:'题录需核对'));
+      el.append(item);
+    }
+    for(const t of trials){
+      const info=window.BCIChinese.describeTrial(t),item=e('div','care-research-item');
+      item.append(e('span','care-research-type','临床试验 · 中文主题提示'),ext(info.title,t.url),e('p','',info.summary),e('small','',t.id+' · '+(t.date||'登记日期未提供')));
+      el.append(item);
+    }
     const date=d.collectedAt?new Date(d.collectedAt):null;
     $('care-research-updated').textContent=date&&!Number.isNaN(date.getTime())?
       '云盘研究数据采集时间：'+date.toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'})+'（北京时间）':'未获得可信采集时间';
@@ -168,6 +213,24 @@
     try{await navigator.clipboard.writeText(text);$('care-copy-result').textContent='已复制问题清单，可粘贴到个人笔记中。';}
     catch{$('care-copy-text').select();$('care-copy-result').textContent='请选中文本并使用系统复制操作。';}
   }
+  function renderGlossary(){
+    const list=$('care-glossary-list');
+    if(!list || !Array.isArray(state.guide?.glossary))return;
+    const rows=state.guide.glossary;
+    const render=term=>{
+      list.replaceChildren();
+      const q=term.toLowerCase();
+      const matches=rows.filter(x=>(x.term+' '+x.meaning).toLowerCase().includes(q));
+      matches.forEach(x=>{
+        const detail=e('details','care-glossary-entry');
+        detail.append(e('summary','',x.term),e('p','',x.meaning));
+        list.append(detail);
+      });
+      if(!matches.length)list.append(e('p','care-empty','当前词典里没有找到这个词，建议向接诊医生询问。'));
+    };
+    render('');
+    $('care-glossary-search')?.addEventListener('input',ev=>render(ev.target.value.trim()));
+  }
   function initFAQ(){
     // Native details/summary disclosure is keyboard accessible and does not transmit visitor data.
     document.querySelectorAll('.care-faq details').forEach(d=>d.addEventListener('toggle',()=>{
@@ -183,13 +246,13 @@
       ]);
       if(!guideResponse.ok)throw Error('Guide unavailable');
       const guide=await guideResponse.json();
-      if(guide.schema_version!==1||!Array.isArray(guide.hospitals)||!Array.isArray(guide.journeys)||!Array.isArray(guide.frontiers))throw Error('Bad guide');
+      if(guide.schema_version!==2||!Array.isArray(guide.hospitals)||!Array.isArray(guide.journeys)||!Array.isArray(guide.frontiers))throw Error('Bad guide');
       state.guide=guide;
       if(researchResponse.ok){const d=await researchResponse.json();if(d.schemaVersion===1)state.research=d;}
       initHospitalFilters();renderStage(guide.journeys[0]?.id||'screen');
       document.querySelectorAll('.care-stage-btn').forEach(b=>b.addEventListener('click',()=>renderStage(b.dataset.stage)));
-      renderHospitals();compareRender();renderFrontiers();linkedResearch();
-      $('care-guide-date').textContent='就医导航资料：'+(guide.updated_at_utc||'时间未标注').slice(0,10)+' · 编辑资料，尚未经临床专家审阅';
+      renderHospitals();compareRender();renderFrontiers();linkedResearch();renderGlossary();
+      $('care-guide-date').textContent='公开医疗资料：'+(guide.updated_at_utc||'时间未标注').slice(0,10)+' · 编辑资料，尚未经临床专家审阅';
       $('care-copy-generate').addEventListener('click',buildQuestions);
       $('care-copy-button').addEventListener('click',copyQuestions);
     }catch{

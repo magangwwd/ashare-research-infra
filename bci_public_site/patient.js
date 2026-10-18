@@ -35,30 +35,35 @@
   function addRecovery(parent,item){
     const row=document.createElement('article');row.className='update-card';
     const kicker=document.createElement('div');kicker.className='update-kicker';kicker.textContent='康复研究 · 原文题录';
-    const title=document.createElement('h3');title.append(externalLink(item.title||'查看原文',item.url));
+    const desc=window.BCIChinese.describeArticle(item);
+    const title=document.createElement('h3');title.append(externalLink(desc.title,item.url));
+    const explanation=document.createElement('p');explanation.className='update-meta';explanation.textContent=desc.summary;
     const meta=document.createElement('p');meta.className='update-meta';
     meta.textContent=[item.journal,item.year?'期刊记录年份 '+item.year:'',item.id?'PMID '+item.id:''].filter(Boolean).join(' · ');
-    row.append(kicker,title,meta);parent.append(row);
+    row.append(kicker,title,explanation,meta);parent.append(row);
   }
   function flatten(d){
     const list=[];
     for(const a of d.articles){
       if(!['recent','recovery','case'].includes(a.category))continue;
-      list.push({kind:a.category,title:a.title||'未提供标题',url:a.url,
-        details:[a.journal||'PubMed 公开题录',a.year?'期刊年份 '+a.year:null,a.id?'PMID '+a.id:null],
-        search:[a.title,a.journal,a.doi,a.id].filter(Boolean).join(' ').toLowerCase(),
+      const cn=window.BCIChinese.describeArticle(a);
+      list.push({kind:a.category,title:cn.title,summary:cn.summary,original:cn.original,url:a.url,
+        details:[a.journal||'公开医学研究',a.year?'期刊记录年份 '+a.year:null,a.id?'文献编号 '+a.id:null],
+        search:[a.title,cn.title,cn.summary,a.journal,a.doi,a.id].filter(Boolean).join(' ').toLowerCase(),
         note:a.category==='case'?'公开病例文献索引；不含患者私人病历。':a.category==='recovery'?'仅供研究了解，不能据此选择个人康复方案。':'论文发表不等于已经形成有效治疗。'});
     }
     for(const t of d.trials){
-      list.push({kind:'trials',title:t.title||'试验登记',url:t.url,
+      const cn=window.BCIChinese.describeTrial(t);
+      list.push({kind:'trials',title:cn.title,summary:cn.summary,original:cn.original,url:t.url,
         details:[t.id,t.date?'登记信息更新 '+t.date:null,TRIAL_STATUS[t.status]||t.status||'状态未提供'],
-        search:[t.title,t.id,t.status,...(t.conditions||[])].filter(Boolean).join(' ').toLowerCase(),
+        search:[t.title,cn.title,cn.summary,t.id,t.status,...(t.conditions||[])].filter(Boolean).join(' ').toLowerCase(),
         note:'试验登记与招募状态不能证明治疗获益或在中国可参加。'});
     }
     for(const f of d.fda){
-      list.push({kind:'fda',title:f.title||'监管公告',url:f.url,
-        details:['美国 FDA · 公告索引','具体日期与适应证需进一步核验'],
-        search:[f.title].filter(Boolean).join(' ').toLowerCase(),
+      const cn=window.BCIChinese.describeFDA(f);
+      list.push({kind:'fda',title:cn.title,summary:cn.summary,original:cn.original,url:f.url,
+        details:['美国药品监管公告索引','具体日期与适应证仍需核验'],
+        search:[f.title,cn.title,cn.summary].filter(Boolean).join(' ').toLowerCase(),
         note:'美国监管公告不等于中国 NMPA 已批准。'});
     }
     for(const g of d.guidelines){
@@ -75,10 +80,18 @@
     const category=document.createElement('span');category.className='cloud-record-type';category.textContent=CATEGORIES[item.kind]||'公开医学资料';
     header.append(category);
     const title=document.createElement('h4');title.append(externalLink(item.title,item.url));
+    const plain=document.createElement('p');plain.className='cloud-record-summary';plain.textContent=item.summary||'请从下方原始来源核实内容，不根据标题决定治疗。';
     const details=document.createElement('p');details.className='cloud-record-meta';details.textContent=item.details.filter(Boolean).join(' · ');
     const note=document.createElement('p');note.className='cloud-record-note';note.textContent=item.note;
     const go=externalLink('查看官方或期刊原文 ↗',item.url);go.className='cloud-record-go';
-    card.append(header,title,details,note,go);return card;
+    card.append(header,title,plain,details,note);
+    if(item.original && item.original!==item.title){
+      const fold=document.createElement('details');fold.className='cloud-original';
+      fold.append(document.createElement('summary'));fold.firstChild.textContent='查看英文原标题（仅供核对）';
+      const content=document.createElement('p');content.textContent=item.original;fold.append(content);
+      card.append(fold);
+    }
+    card.append(go);return card;
   }
   function renderFeed(){
     const filtered=state.items.filter(item=>(state.filter==='all'||item.kind===state.filter||

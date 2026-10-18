@@ -21,10 +21,10 @@ jobs:
           mkdir -p "$RUNNER_TEMP/bci_public_check"
           BASE="https://magangwwd.github.io/ashare-research-infra"
           curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/" -o "$RUNNER_TEMP/bci_public_check/patient.html"
-          curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/professional.html" -o "$RUNNER_TEMP/bci_public_check/professional.html"
           curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/data/site-data.json" -o "$RUNNER_TEMP/bci_public_check/site-data.json"
           curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/data/care-guide.json" -o "$RUNNER_TEMP/bci_public_check/care-guide.json"
           curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/care.js" -o "$RUNNER_TEMP/bci_public_check/care.js"
+          curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/research_cn.js" -o "$RUNNER_TEMP/bci_public_check/research_cn.js"
           curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/care.css" -o "$RUNNER_TEMP/bci_public_check/care.css"
       - name: Verify actual public HTML and cloud research records
         env:
@@ -36,22 +36,28 @@ jobs:
           from pathlib import Path
           root=Path(os.environ["SOURCE_PATH"])
           patient=(root/"patient.html").read_text(encoding="utf-8")
-          professional=(root/"professional.html").read_text(encoding="utf-8")
           data=json.loads((root/"site-data.json").read_text(encoding="utf-8"))
           guide=json.loads((root/"care-guide.json").read_text(encoding="utf-8"))
           script=(root/"care.js").read_text(encoding="utf-8")
+          chinese=(root/"research_cn.js").read_text(encoding="utf-8")
           assert 'id="cloud-data"' in patient, "Patient cloud evidence dashboard missing"
+          assert 'id="care-glossary"' in patient
+          assert "professional.html" not in patient
+          assert 'id="care-type"' in patient
           assert 'id="care-hub"' in patient, "Care navigation missing"
           assert 'id="care-hospitals"' in patient, "Sourced hospital comparison missing"
           assert 'id="care-frontiers"' in patient, "Frontier evidence area missing"
           assert 'id="care-copy-text"' in patient, "Doctor visit question list missing"
           assert "care-stage-btn" in patient and "care-compare-toggle" in script
-          assert guide.get("schema_version")==1 and guide.get("review_status")=="editorial_reference_only_not_medically_reviewed"
-          assert len(guide.get("hospitals",[]))>=4 and len(guide.get("journeys",[]))>=4
+          assert guide.get("schema_version")==2 and guide.get("review_status")=="editorial_reference_only_not_medically_reviewed"
+          assert len(guide.get("hospitals",[]))>=12 and len(guide.get("journeys",[]))>=4
+          assert sum(h["type"]=="军队医院" for h in guide["hospitals"])>=5
+          assert sum(len(h["doctors"]) for h in guide["hospitals"])>=10
+          assert all(h.get("appointment",{}).get("checked_at") and h.get("sources") for h in guide["hospitals"])
+          assert len(guide.get("glossary",[]))>=12
+          assert "describeArticle" in chinese and "describeTrial" in chinese
           assert len(guide.get("frontiers",[]))>=3
           assert 'id="cloud-feed"' in patient, "Patient data explorer missing"
-          assert 'id="pro-collected-time"' in professional, "Professional Drive freshness missing"
-          assert 'id="pro-trials-latest"' in professional, "Professional trials panel missing"
           assert data.get("schemaVersion")==1
           assert data.get("snapshotId") and data.get("collectedAt")
           assert len(data["articles"])>=1 and len(data["trials"])>=1
@@ -59,5 +65,7 @@ jobs:
           print("PUBLIC_HTTP_OK","snapshot="+data["snapshotId"],
                 "articles="+str(len(data["articles"])),"trials="+str(len(data["trials"])),
                 "hospital_profiles="+str(len(guide["hospitals"])),
-                "care_stages="+str(len(guide["journeys"])))
+                "care_stages="+str(len(guide["journeys"])),
+                "military="+str(sum(h["type"]=="军队医院" for h in guide["hospitals"])),
+                "doctor_profiles="+str(sum(len(h["doctors"]) for h in guide["hospitals"])))
           PY

@@ -40,11 +40,25 @@ jobs:
           python-version: '3.12'
       - name: Validate public metadata and source selector
         run: python -m unittest discover -s bci_public_site/tests -v
-      - name: Syntax-check both audience scripts
+      - name: Syntax-check Chinese patient website scripts
         run: |
-          node --check bci_public_site/app.js
+          node --check bci_public_site/research_cn.js
           node --check bci_public_site/patient.js
           node --check bci_public_site/care.js
+          node - <<'NODE'
+          const assert=require('assert');
+          global.window={};
+          require('./bci_public_site/research_cn.js');
+          const x=window.BCIChinese.describeArticle({title:'HER2 breast cancer cell line',category:'recent'});
+          assert(x.title.includes('中文')||x.title.includes('HER2'));
+          assert(x.summary.includes('不能直接')||x.summary.includes('不能'));
+          const t=window.BCIChinese.describeTrial({title:'Breast cancer MRI screening',status:'RECRUITING'});
+          assert(t.title.includes('检查')||t.title.includes('影像'));
+          assert(t.summary.includes('中国'));
+          const f=window.BCIChinese.describeFDA({title:'FDA approves drug for HER2 breast cancer'});
+          assert(f.summary.includes('不等于中国'));
+          console.log('CHINESE_RESEARCH_EXPLAINER_OK');
+          NODE
       - name: Refresh website from latest eligible Google Drive snapshot
         if: github.event_name != 'pull_request'
         env:
@@ -70,7 +84,10 @@ jobs:
           d=json.loads(Path('bci_public_site/data/site-data.json').read_text('utf-8'))
           assert d['schemaVersion']==1 and d['articles'] and d['trials']
           guide=json.loads(Path('bci_public_site/data/care-guide.json').read_text('utf-8'))
-          assert guide['schema_version']==1 and guide['hospitals'] and guide['journeys'] and guide['frontiers']
+          assert guide['schema_version']==2 and len(guide['hospitals'])>=10 and guide['journeys'] and guide['frontiers']
+          assert sum(1 for h in guide['hospitals'] if h['type']=='军队医院')>=4
+          assert len(guide['glossary'])>=10
+          assert all(h['sources'] and h['appointment']['checked_at'] and h['checked_at'] for h in guide['hospitals'])
           assert guide['review_status']=='editorial_reference_only_not_medically_reviewed'
           assert all(row.get('url', '').startswith('https://') for row in guide['hospitals'])
           assert all('abstract_for_internal_research_only' not in x for x in d['articles'])
@@ -82,14 +99,15 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p _site/data
-          cp bci_public_site/index.html bci_public_site/professional.html bci_public_site/app.js bci_public_site/patient.js bci_public_site/care.js bci_public_site/styles.css bci_public_site/patient.css bci_public_site/care.css bci_public_site/favicon.svg _site/
+          cp bci_public_site/index.html bci_public_site/patient.js bci_public_site/care.js bci_public_site/research_cn.js bci_public_site/patient.css bci_public_site/care.css bci_public_site/favicon.svg _site/
           cp bci_public_site/.nojekyll _site/.nojekyll
           cp bci_public_site/data/site-data.json bci_public_site/data/care-guide.json _site/data/
           test -s _site/index.html
-          test -s _site/professional.html
+          test ! -e _site/professional.html
           test -s _site/patient.js
           test -s _site/patient.css
           test -s _site/care.css
+          test -s _site/research_cn.js
           test -s _site/care.js
           test -s _site/data/care-guide.json
           test -s _site/data/site-data.json

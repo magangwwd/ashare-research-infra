@@ -12,9 +12,7 @@ class DataFirstWebsiteTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.patient=(ROOT/"index.html").read_text(encoding="utf-8")
-        cls.professional=(ROOT/"professional.html").read_text(encoding="utf-8")
         cls.patient_js=(ROOT/"patient.js").read_text(encoding="utf-8")
-        cls.pro_js=(ROOT/"app.js").read_text(encoding="utf-8")
         cls.workflow=(ROOT.parent/".github"/"workflows"/"bci-pages.yml").read_text(encoding="utf-8")
         cls.collector_workflow=(ROOT.parent/".github"/"workflows"/"bci-drive-collector.yml").read_text(encoding="utf-8")
 
@@ -29,15 +27,13 @@ class DataFirstWebsiteTests(unittest.TestCase):
         self.assertIn("data/site-data.json",self.patient_js)
         self.assertIn("cache:'no-store'",self.patient_js)
 
-    def test_professional_has_drive_update_dashboard(self):
-        self.assertIn('id="pro-collected-time"',self.professional)
-        self.assertIn('id="pro-generated-time"',self.professional)
-        self.assertIn('id="pro-articles-latest"',self.professional)
-        self.assertIn('id="pro-trials-latest"',self.professional)
-        self.assertIn("showDrivePulse",self.pro_js)
+    def test_patient_care_guide_has_more_priority_than_raw_data(self):
+        self.assertLess(self.patient.index('id="care-hub"'),self.patient.index('id="cloud-data"'))
+        self.assertLess(self.patient.index('id="care-hospitals"'),self.patient.index('id="cloud-data"'))
+        self.assertLess(self.patient.index('id="care-glossary"'),self.patient.index('id="cloud-data"'))
 
     def test_no_public_github_or_unlicensed_abstract(self):
-        for text in [self.patient,self.professional,self.patient_js,self.pro_js]:
+        for text in [self.patient,self.patient_js,(ROOT/"care.js").read_text(encoding="utf-8")]:
             self.assertNotIn("github.com",text.lower())
             self.assertNotIn("github actions",text.lower())
             self.assertNotIn("innerHTML",self.patient_js)

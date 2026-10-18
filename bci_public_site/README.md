@@ -1,48 +1,34 @@
-# BC / INSIGHT — 乳腺癌医学证据观察站
+# 乳腺疾病寻医互动科普网站
 
-A public, client-side searchable GitHub Pages site, built from *verified Google Drive evidence archives*. It publishes **only public research metadata** (paper title, PMID, journal, DOI, trial registration information, official regulatory headlines, guideline bibliographic index) and always shows retrieval dates and limitations.
+公开网址：https://magangwwd.github.io/ashare-research-infra/
 
-- Website source: `bci_public_site/`
-- Latest public data: `data/site-data.json`; initial copy generated from the actual 2026-10-18 Drive archive.
-- Rebuild: `python bci_public_site/scripts/build_site.py --zip <verified_googledrive_archived_zip> --out bci_public_site/data/site-data.json`
-- GitHub Pages deployment: `.github/workflows/bci-pages.yml` (only on main).
-- Google Drive refresh: `.github/workflows/bci-pages.yml` reads the newest allowed snapshot file from the **private Drive folder** using repository secret `GDRIVE_OAUTH_JSON` when available, validates checksums and replaces the staging data, then deploys.
-- If the Drive read fails in a push-based initial deployment, the site uses the explicitly labelled last successful snapshot committed to the repository; on scheduled runs, an inaccessible Drive fails before deployment so that a stale dataset is not silently marked as updated.
+**只有一个公开入口，面向普通患者与家属；不再提供医疗专业人员版。**
 
-Security: Never commit OAuth credentials, original private Drive materials, patient data, unlicensed full-text abstracts or clinical advice. The source folder ID is not a token, but the public site never needs it. Restrict deploy actions to the default branch.
+## 面向普通人的功能
+- 按筛查/异常、检查与病理、治疗方案、康复随访四阶段查看常见医疗流程；
+- 按地区、医院性质（含军队医院）、专科、名称查找医院；对照2—3家医院，分别查看有出处的专科说明、适合先咨询的问题、官方预约提示、医生资料与核实日期；
+- 将英文医学论文和临床试验标题以**规则匹配的中文主题解释**呈现，英文原题放折叠区用于核对；没有翻译摘要、推断疗效或冒充临床证据；
+- 用白话医学词典解释常用术语，通过本地网页生成可复制的就诊问题清单；
+- 查看 CACA 中文指南及 NCI 等权威来源，点击跳转原文。
 
-The data are research-only, not medically reviewed, not exhaustive, and must not be used for personal clinical decisions, treatment rankings or inference of efficacy.
+## 数据来自 Google Drive
+- `data/site-data.json`：GitHub Actions 每日采集并存入专用 Drive 目录的公开医学研究快照，基于 SHA-256 校验生成可公开传播的题录元数据；
+- `data/care-guide.json`：Google Drive 独立编辑资料 `BCI_public_care_navigation_v2_全国医院军队医院医生就医中文资料`。正式发布时从 Drive 导出，核实记录结构和日期。
+- 官网核实、第三方线索、历史资料要分层展示。未知的乳腺专科设置、医生排班、收治量或临床疗效一律不推断。
+- 官方来源需要原文链接、**原发布日期（有则填）**、**核查日期**。核查日期不代表原资料发布日期或内容医学审核通过。
+- 没有核实到某家医院的临床试验中心或招募公告时，不把全球登记试验错误关联到该医院。
 
-## Public audience design (October 2026)
+## 隐私与安全
+- 不接收患者姓名、电话、诊断记录、个人基因检测结果、病历或任何上传文件；本地浏览器交互不将用户健康资料上传；
+- 不提供自动确诊、个体治疗建议或住院预约，也不收集付费导诊转介佣金；
+- 信息仅供就诊准备，危急症状须及时线下就医；
+- 论文和试验**按标题关键词提供中文主题解释，不是自动翻译研究结论**，若需了解药物疗效必须审查临床研究全文、指南和境内批准情况。
 
-- `index.html`: default **患者与家属版** (patient/family) with plain-language prevention and screening, questions for diagnosis and treatment discussions, recovery/follow-up, and links to actual NCI patient pages plus the Chinese CACA guideline bibliography. Patient content is educational, not a clinical interpretation, triage or diagnosis.
-- `professional.html`: **医疗专业人员版** with PubMed metadata, ClinicalTrials.gov registrations, FDA announcement links, and bibliography/source views. Research and approval statuses are never clinical recommendations.
-- Reciprocal audience switcher on both pages. Shared public snapshot at `data/site-data.json`, refreshed using the existing workflow; no new data API or patient-data intake.
-- Removed visitor-facing GitHub and source-code links, technical API entry points, and raw HTTP status display. Hosting and private automation remain server-side, not exposed in page navigation.
-- Build/Pages workflow must publish both HTML files, both JS scripts and both CSS files; never expose OAuth secrets, patient records or unlicensed paper full text.
+## 构建与验收
+- `.github/workflows/bci-drive-collector.yml`：约07:30（北京时间）采集和Drive验真，GitHub调度可能迟到。
+- `.github/workflows/bci-pages.yml`：约08:15和成功数据更新后，从Google Drive读取**两份数据源**，构建单页网站。
+- `.github/workflows/bci-public-http-smoke.yml`：从公网读取页面、数据、中文说明脚本和医院数据，检验医院与军队医院、医生档案、中文名词解释。
+- 原专业网页及专属JavaScript/CSS已经删除，不在Pages上传工件中。
+- 运行 `python -m unittest discover -s bci_public_site/tests -v`。
 
-## Google Drive data-first website and unattended update pipeline
-
-The first-screen product on both audience pages is now the **latest verified Google Drive snapshot** (actual timestamp, snapshot ID, category counts, research lists, source hyperlinks and age/staleness warnings). General patient education is intentionally lower on the patient page. The same `data/site-data.json` is used for both audiences, so both pages show an identical snapshot date and record counts.
-
-- Source collector on trusted default branch: `.github/workflows/bci-drive-collector.yml`, daily around **07:30 China/Singapore** (23:30 UTC previous day); PubMed, ClinicalTrials.gov and official-source metadata; original abstract material is **not published**.
-- The collector keeps a temporary GitHub Artifact and uploads a timestamped **immutable ZIP archive** into the existing `Breast_Cancer_Intelligence` Drive folder. Upload is verified by downloading the same bytes and comparing SHA-256. A failed upload causes a failed Action.
-- The public site: `.github/workflows/bci-pages.yml` deploys after a successfully completed collection and also checks at approximately **08:15 China/Singapore** (00:15 UTC). It accesses the latest eligible Drive ZIP through the trusted repository OAuth Secret, checks file hashes and builds **public metadata only**.
-- New evidence is **not invented** if no new Drive snapshot has arrived or one is invalid. The previous published website remains visible with its real historical capture date; in the browser its age warning increases over time.
-- The data are recent, limited search samples and registrations, not an exhaustive historical registry or medical treatment recommendations.
-- GitHub Pages hosting, private OAuth and source code remain backend operations. Visitor-facing pages and the published JSON have no GitHub/source-code/API management links.
-- No personal patient case histories, unlicensed research-paper abstract redistribution, unverified surgeon rankings or invented hospital cure rates.
-
-Acceptance required before claiming unattended updates: verify real main-branch collector GitHub Action, Drive upload receipt and SHA-256 roundtrip, a subsequent Pages Action that read the newest Drive snapshot, and the deployed public JSON reflecting the same snapshot ID. Until then, automated daily capture is *configured but unproven*.
-
-## 2026-10-18: 医患就医导航与云盘医学编辑数据
-
-Public website remains patient-first at `index.html` with the independent professional research index at `professional.html`. New capabilities:
-- Interactive **care pathway** by screening/abnormal finding, examination and biopsy, treatment planning, and survivorship; each stage has questions to discuss with licensed clinicians and original source links.
-- **Hospital specialties**: browse by region, professional focus, or search name; compare up to 3 records side by side. The comparison separates verifiable official specialty characteristics from facts requiring confirmation. It is not a hospital ranking or cure-rate comparison. Military hospital records backed only by retrospective clinical research are clearly labelled as unverified for current appointments and service capacity.
-- **Emerging therapies**: brief evidence-level labels for ADC, endocrine/CDK4/6, selected immunotherapy, ctDNA/MRD research; no "new miracle drug" or individual prescription.
-- **Research connection**: latest title/registry records from immutable PubMed/ClinicalTrials.gov snapshots and links to official medical sites; no submission of private patient information.
-- The independent Google Drive editorial source is the native document `BCI_public_care_navigation_v1_医院诊疗科普结构化数据` in the existing `Breast_Cancer_Intelligence` folder. Its published subset is stored as `bci_public_site/data/care-guide.json`.
-- `.github/workflows/bci-pages.yml` exports and validates the actual Drive Google Doc on every trusted main build; nightly schedule and successful data collection trigger updated Pages content. Hospital official-source assessments are *editorial and not fully clinically reviewed*. Manual review is required to keep healthcare descriptions current, not simply an HTTP 200 response.
-
-The site is a general health education navigation, not a diagnostic tool, clinical decision support system, appointment booking, patient forum with identifiable health disclosures, or rankings. Requests for live consultations, patient uploads and individual recommendations require separate clinical oversight and privacy compliance.
+本网站无医学专家最终审核机制，公开医学资料不代替任何执业医生的诊疗建议。

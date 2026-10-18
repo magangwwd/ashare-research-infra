@@ -1,60 +1,47 @@
-"""Public two-audience site: strict separation, medical disclaimers, no technical interfaces."""
+"""One public site: Chinese patient-friendly medical navigation without developer portals."""
 import pathlib
-import re
 import unittest
+ROOT=pathlib.Path(__file__).resolve().parents[1]
 
-BASE = pathlib.Path(__file__).resolve().parents[1]
-
-class AudienceSplitTests(unittest.TestCase):
+class ChinesePatientOnlySite(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.patient = (BASE / "index.html").read_text(encoding="utf-8")
-        cls.professional = (BASE / "professional.html").read_text(encoding="utf-8")
-        cls.patient_js = (BASE / "patient.js").read_text(encoding="utf-8")
-        cls.pro_js = (BASE / "app.js").read_text(encoding="utf-8")
+        cls.html=(ROOT/"index.html").read_text(encoding="utf-8")
+        cls.care=(ROOT/"care.js").read_text(encoding="utf-8")
+        cls.patient=(ROOT/"patient.js").read_text(encoding="utf-8")
+        cls.explanation=(ROOT/"research_cn.js").read_text(encoding="utf-8")
+    def test_homepage_single_entry(self):
+        for token in ('lang="zh-CN"','href="#main"','id="main"','id="care-hub"','id="care-hospitals"',
+                      'id="care-frontiers"','id="care-glossary"','id="cloud-data"','id="care-region"','id="care-type"'):
+            self.assertIn(token,self.html)
+        self.assertNotIn("professional.html",self.html)
+        self.assertNotIn("医疗专业人员版",self.html)
+        self.assertNotIn("expert-ranking",self.html)
+    def test_no_separate_professional_files(self):
+        for file in ("professional.html","app.js","styles.css"):
+            self.assertFalse((ROOT/file).exists(),file)
+    def test_privacy_and_non_diagnosis(self):
+        for content in (self.html,self.care,self.patient,self.explanation):
+            self.assertNotIn("github.com",content.lower())
+            self.assertNotIn("refresh_token",content)
+            self.assertNotIn("innerHTML",content)
+        self.assertIn("不代替诊断",self.html)
+        self.assertIn("noopener noreferrer",self.care)
+    def test_educational_data_and_scripts(self):
+        for f in ("patient.css","patient.js","care.css","care.js","research_cn.js",
+                  "data/care-guide.json","data/site-data.json"):
+            self.assertTrue((ROOT/f).is_file(),f)
+        self.assertLess(self.html.index("research_cn.js"),self.html.index("patient.js"))
+        self.assertLess(self.html.index("research_cn.js"),self.html.index("care.js"))
+        self.assertIn("./data/care-guide.json",self.care)
+        self.assertIn("./data/site-data.json",self.patient)
+        self.assertIn("cache:'no-store'",self.patient)
+    def test_chinese_explainer_keeps_original_for_verification(self):
+        self.assertIn("describeArticle",self.explanation)
+        self.assertIn("describeTrial",self.explanation)
+        self.assertIn("describeFDA",self.explanation)
+        self.assertIn("中文主题提示",self.explanation)
+        self.assertIn("英文原标题（仅供核对）",self.patient)
+        self.assertIn("不能直接认为",self.explanation)
 
-    def test_patient_is_default_and_accessible(self):
-        self.assertIn('lang="zh-CN"', self.patient)
-        self.assertIn('href="#main"', self.patient)
-        self.assertIn('id="main"', self.patient)
-        self.assertIn('aria-current="page"', self.patient)
-        for anchor in ["screening", "diagnosis", "treatment", "recovery", "resources", "updates"]:
-            self.assertIn('id="'+anchor+'"', self.patient)
-        self.assertIn("患者与家属版", self.patient)
-        self.assertIn("不代替诊断", self.patient)
-
-    def test_professional_is_separate_and_crosslinked(self):
-        self.assertIn('href="./professional.html"', self.patient)
-        self.assertIn('href="./index.html"', self.professional)
-        self.assertIn("医疗专业人员", self.professional)
-        self.assertIn('id="trials-view"', self.professional)
-        self.assertIn('id="articles-view"', self.professional)
-        self.assertIn('id="fda-view"', self.professional)
-        self.assertIn('id="guides-view"', self.professional)
-
-    def test_no_github_code_or_api_tech_links_on_public_pages(self):
-        for document in (self.patient, self.professional, self.patient_js, self.pro_js):
-            self.assertNotIn("github.com", document.lower())
-            self.assertNotIn("github actions", document.lower())
-            self.assertNotIn("源代码", document)
-            self.assertNotIn("代码接口", document)
-            self.assertNotIn("api.github.com", document.lower())
-        self.assertNotIn("httpStatus", self.patient)
-        self.assertNotIn("SHA-256", self.patient)
-
-    def test_patient_sources_and_data_update(self):
-        for url in [
-          "https://www.cancer.gov/types/breast/screening",
-          "https://www.cancer.gov/types/breast/treatment",
-          "https://www.cancer.gov/about-cancer/coping/survivorship/follow-up-care",
-          "https://www.china-oncology.com/zh/article/doi/10.19401/j.cnki.1007-3639.2025.12.009/",
-        ]:
-            self.assertIn(url, self.patient)
-        self.assertIn("./data/site-data.json", self.patient_js)
-        self.assertIn("cache:'no-store'", self.patient_js)
-        self.assertIn("textContent", self.patient_js)
-        self.assertNotIn("innerHTML", self.patient_js)
-
-    def test_assets_exist(self):
-        for path in ["patient.css", "patient.js", "professional.html", "app.js", "styles.css", "data/site-data.json"]:
-            self.assertTrue((BASE/path).is_file(), path)
+if __name__=="__main__":unittest.main()

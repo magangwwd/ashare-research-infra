@@ -93,3 +93,41 @@
 @media(max-width:930px){.care-stage-selector{grid-template-columns:repeat(2,minmax(0,1fr))}.care-hospital-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.care-hospital-filters label:last-child{grid-column:1/-1}.care-path-detail{grid-template-columns:1fr}}
 @media(max-width:700px){.care-hospital-list,.care-frontier-list,.care-research-list{grid-template-columns:1fr}.care-research-heading{display:block}#care-research-updated{white-space:normal}.care-stage-selector{gap:7px}.care-stage-btn{min-height:62px;padding:9px 10px;font-size:11px}.care-path-column,.care-questions-column{padding:20px}.care-hospital-card{padding:17px}.care-hospital-filters{grid-template-columns:1fr}.care-hospital-filters label:last-child{grid-column:auto}}
 @media(max-width:400px){.care-stage-selector{grid-template-columns:1fr}.care-stage-btn{min-height:50px}}
+
+
+/* Patient-only, Chinese-first verified services and private-data-free interactions. */
+.care-main-nav{gap:2px}
+.care-patient-fit,.care-booking{padding:11px 13px;margin:7px 0;border-radius:9px;background:#f1f8f2;border:1px solid #dfecde}
+.care-booking{background:#f5f8fb;border-color:#e1e9ee}
+.care-patient-fit h5,.care-booking h5{margin:2px 0 7px!important;color:#2c755d!important;font-size:12px!important}
+.care-patient-fit p{color:#3e6c60!important;font-size:11px!important;line-height:1.8!important;margin:4px 0!important}
+.care-booking p{font-size:12px!important}
+.care-booking small{display:block;color:#8e7657;font-size:10px;margin:6px 0}
+.care-booking a{display:inline-block;margin-top:6px}
+.care-verification.pending{background:#fff2df;color:#8c632a}
+.care-doctors,.care-sources{border-top:1px solid #e4ece7;margin-top:10px;padding-top:10px;font-size:12px}
+.care-doctors summary,.care-sources summary{font-weight:800;color:#26776c;cursor:pointer;line-height:1.6}
+.care-doctor-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.care-doctor{padding:10px;background:#f5faf7;border-radius:8px;border:1px solid #e2eee6}
+.care-doctor a{color:#1f7669;font-weight:800}
+.care-doctor p{margin:5px 0!important;font-size:11px!important;color:#577a6e!important}
+.care-doctor small{color:#8c9891;font-size:10px}
+.care-sources ul{padding-left:18px}
+.care-sources li{color:#879089;line-height:1.7;margin:7px 0;font-size:10px;overflow-wrap:anywhere}
+.care-sources a{color:#25816b;font-weight:800}
+.care-hospital-filters{grid-template-columns:1fr 1fr 1fr 1.5fr}
+.care-glossary-filter{font-size:13px;color:#56796b;font-weight:800;display:grid;gap:7px;margin:19px 0}
+.care-glossary-filter input{height:44px;padding:9px 13px;font-size:13px;background:#fff;border:1px solid #d1e4d8;border-radius:9px;max-width:460px}
+.care-glossary-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.care-glossary-entry{background:#fff;border:1px solid #e0eee3;border-radius:10px;padding:10px 14px}
+.care-glossary-entry summary{font-size:14px;font-weight:800;color:#276e5c;cursor:pointer;padding:7px}
+.care-glossary-entry p{font-size:12px;color:#607b6e;line-height:1.9;margin:8px 0}
+.care-research-item p{font-size:11px;line-height:1.75;color:#667a71;margin:0}
+.care-research-panel a{word-break:break-word}
+.cloud-record-summary{font-size:12px;color:#496c5f;line-height:1.9;margin:0}
+.cloud-original{margin:8px 0;border-top:1px solid #e4eee5;padding-top:7px;font-size:10px;color:#84938c}
+.cloud-original summary{font-size:11px;color:#548577;cursor:pointer}
+.cloud-original p{font-size:10px;line-height:1.7;overflow-wrap:anywhere}
+@media(max-width:1000px){.care-hospital-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.care-hospital-filters label:last-child{grid-column:auto}}
+@media(max-width:700px){.care-doctor-list,.care-glossary-list{grid-template-columns:1fr}.care-main-nav{overflow-x:auto;max-width:calc(100vw - 170px)}.care-main-nav a{white-space:nowrap}}
+@media(max-width:460px){.care-hospital-filters{grid-template-columns:1fr}.care-main-nav a{font-size:10px!important;padding:6px!important}.brand strong{font-size:13px!important}}
