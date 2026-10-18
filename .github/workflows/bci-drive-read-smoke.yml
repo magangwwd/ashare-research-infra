@@ -1,0 +1,47 @@
+name: BCI Drive source read verification
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bci-drive-read-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-drive-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Google OAuth dependencies
+        run: python -m pip install --disable-pip-version-check 'google-auth>=2.28,<3' 'requests>=2.31,<3'
+      - name: Read actual BCI snapshot from Google Drive with repository secret
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        run: |
+          set -euo pipefail
+          python bci_public_site/scripts/refresh_drive.py \
+            --output "$RUNNER_TEMP/bci-drive-source.zip" \
+            --report "$RUNNER_TEMP/bci-drive-evidence.json"
+          python bci_public_site/scripts/build_site.py \
+            --zip "$RUNNER_TEMP/bci-drive-source.zip" \
+            --out "$RUNNER_TEMP/bci-public-data.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          d=json.loads((Path(os.environ["RUNNER_TEMP"])/"bci-public-data.json").read_text("utf-8"))
+          assert d["counts"]["recent"] and d["counts"]["trials"]
+          print("PUBLIC_DATA_VERIFIED",d["snapshotId"],d["counts"])
+          PY
+      - name: Keep only nonsensitive validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bci-drive-source-verified-${{ github.run_id }}
+          path: ${{ runner.temp }}/bci-drive-evidence.json
+          if-no-files-found: warn
+          retention-days: 7
