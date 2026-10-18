@@ -34,3 +34,15 @@ The first-screen product on both audience pages is now the **latest verified Goo
 - No personal patient case histories, unlicensed research-paper abstract redistribution, unverified surgeon rankings or invented hospital cure rates.
 
 Acceptance required before claiming unattended updates: verify real main-branch collector GitHub Action, Drive upload receipt and SHA-256 roundtrip, a subsequent Pages Action that read the newest Drive snapshot, and the deployed public JSON reflecting the same snapshot ID. Until then, automated daily capture is *configured but unproven*.
+
+## 2026-10-18: 医患就医导航与云盘医学编辑数据
+
+Public website remains patient-first at `index.html` with the independent professional research index at `professional.html`. New capabilities:
+- Interactive **care pathway** by screening/abnormal finding, examination and biopsy, treatment planning, and survivorship; each stage has questions to discuss with licensed clinicians and original source links.
+- **Hospital specialties**: browse by region, professional focus, or search name; compare up to 3 records side by side. The comparison separates verifiable official specialty characteristics from facts requiring confirmation. It is not a hospital ranking or cure-rate comparison. Military hospital records backed only by retrospective clinical research are clearly labelled as unverified for current appointments and service capacity.
+- **Emerging therapies**: brief evidence-level labels for ADC, endocrine/CDK4/6, selected immunotherapy, ctDNA/MRD research; no "new miracle drug" or individual prescription.
+- **Research connection**: latest title/registry records from immutable PubMed/ClinicalTrials.gov snapshots and links to official medical sites; no submission of private patient information.
+- The independent Google Drive editorial source is the native document `BCI_public_care_navigation_v1_医院诊疗科普结构化数据` in the existing `Breast_Cancer_Intelligence` folder. Its published subset is stored as `bci_public_site/data/care-guide.json`.
+- `.github/workflows/bci-pages.yml` exports and validates the actual Drive Google Doc on every trusted main build; nightly schedule and successful data collection trigger updated Pages content. Hospital official-source assessments are *editorial and not fully clinically reviewed*. Manual review is required to keep healthcare descriptions current, not simply an HTTP 200 response.
+
+The site is a general health education navigation, not a diagnostic tool, clinical decision support system, appointment booking, patient forum with identifiable health disclosures, or rankings. Requests for live consultations, patient uploads and individual recommendations require separate clinical oversight and privacy compliance.
