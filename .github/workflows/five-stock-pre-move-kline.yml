@@ -1,0 +1,110 @@
+name: Five-stock pre-big-rise vs pre-big-drop daily Kline study (NO TRADES)
+
+on:
+  pull_request:
+    paths:
+      - 'ai_research/five_stock_pre_move_kline.py'
+      - 'ai_research/tests/test_five_stock_pre_move_kline.py'
+      - '.github/workflows/five-stock-pre-move-kline.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/five_stock_pre_move_kline.py'
+      - '.github/workflows/five-stock-pre-move-kline.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: five-stock-pre-move-kline-study
+  cancel-in-progress: false
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install focused numerical dependencies
+        run: python -m pip install 'numpy>=2,<3' 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+      - name: Enforce pre-event timing / original frozen signal / samples
+        run: python -m unittest -v ai_research.tests.test_five_stock_pre_move_kline
+
+  actual-gold-study:
+    needs: offline-tests
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install local analysis readers and Drive transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install 'numpy>=2,<3' 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Validate historical daily Gold and read same fixed version
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pre_move/gold"
+          root='gdrive:down_data/data/gold/main_board'
+          rclone copyto "$root/manifest.json" "$RUNNER_TEMP/pre_move/gold_manifest.json"
+          rclone copyto "$root/trading_calendar.parquet" "$RUNNER_TEMP/pre_move/gold/trading_calendar.parquet"
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"pre_move/gold_manifest.json"
+          m=json.loads(p.read_text())
+          assert m["as_of_date"]>="2026-10-16"
+          assert m["validation"]["primary_keys_unique"] and m["validation"]["ohlc_valid"]
+          print("Gold manifest validated as-of",m["as_of_date"])
+          PY
+          for dataset in daily_prices adjustment_factors; do
+            rclone copy "$root/$dataset" "$RUNNER_TEMP/pre_move/gold/$dataset" \
+              --include 'year=202[3456]/month=*/data.parquet' --checkers 4 --transfers 6
+            count="$(find "$RUNNER_TEMP/pre_move/gold/$dataset" -name data.parquet | wc -l)"
+            test "$count" -ge 45
+            echo "$dataset files=$count"
+          done
+      - name: Compute entire-five-stock opposite tail labels with past-only 14 fixed Kline features
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.five_stock_pre_move_kline \
+            --gold-root "$RUNNER_TEMP/pre_move/gold" \
+            --gold-manifest "$RUNNER_TEMP/pre_move/gold_manifest.json" \
+            --out "$RUNNER_TEMP/pre_move/report"
+          python - <<'PY'
+          import json,pathlib,os
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"pre_move/report/statistics.json"
+          r=json.loads(p.read_text())
+          assert r["as_of"]=="2026-10-16"
+          assert len(r["stocks"])==5
+          assert r["authorization"]=="RESEARCH_ONLY_NO_TRADING"
+          assert set(r["pooled"])=={"1","5"}
+          assert len(r["rows"])>1000
+          print("LABEL_CHECK",r["pooled"]["5"]["2025"]["labels"])
+          PY
+      - name: Save independent report and verify exact Google Drive bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          dst="gdrive:stock_state_strategy/output/five_stock_pre_move_kline_v1/2026-10-16/run_$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/pre_move/report" "$dst" --immutable --transfers 4
+          rclone check "$RUNNER_TEMP/pre_move/report" "$dst" --one-way
+          echo "FIVE_PRE_MOVE_KLINE_PUBLISHED; frozen signals; paper research only"
