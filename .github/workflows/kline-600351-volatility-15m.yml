@@ -1,0 +1,134 @@
+name: Tushare 600351 15m three-year volatility expansion research (NO ORDERS)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/tushare_600351_minute.py'
+      - 'ai_research/kline_15m_bridge.py'
+      - '.github/workflows/kline-600351-volatility-15m.yml'
+  pull_request:
+    paths:
+      - 'ai_research/tushare_600351_minute.py'
+      - 'ai_research/kline_15m_bridge.py'
+      - 'ai_research/tests/test_tushare_600351_minute.py'
+      - '.github/workflows/kline-600351-volatility-15m.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: single-ticker-volatility-15m-historical
+  cancel-in-progress: false
+
+jobs:
+  offline-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install only needed numerical stack
+        run: python -m pip install 'numpy>=2,<3' 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+      - name: Verify Tushare source permission gates and bridge volatility analysis
+        run: |
+          python -m unittest -v ai_research.tests.test_tushare_600351_minute
+          python -m unittest -v ai_research.tests.test_kline_15m_bridge
+
+  real-tushare-drive-study:
+    if: github.event_name != 'pull_request'
+    needs: offline-qa
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    env:
+      TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+      PIP_NO_CACHE_DIR: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install Tushare/Pandas and existing authenticated Google Drive transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install 'tushare>=1.4' 'numpy>=2,<3' 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          test -n "$TUSHARE_TOKEN" || { echo "::error::TUSHARE_TOKEN is empty"; exit 1; }
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo "::error::Missing Drive credential"; exit 1; }
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Probe actual stk_mins permission and backfill exactly 600351.SH 2023-10 to 2026-10
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/kline15"
+          python -m ai_research.tushare_600351_minute \
+            --output-dir "$RUNNER_TEMP/kline15/source"
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"kline15/source/source_manifest.json"
+          m=json.loads(p.read_text())
+          assert m["source_permission_verified_with_nonempty_probe"] is True
+          assert m["output_partitions"]==37
+          assert m["symbol"]=="600351.SH"
+          assert m["total_raw_bars"]>5000
+          PY
+      - name: Restore validated Daily Gold only after successful real minute backfill
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='gdrive:down_data/data/gold/main_board'
+          mkdir -p "$RUNNER_TEMP/kline15/daily"
+          rclone copyto "$root/manifest.json" "$RUNNER_TEMP/kline15/gold_manifest.json"
+          rclone copyto "$root/trading_calendar.parquet" "$RUNNER_TEMP/kline15/daily/trading_calendar.parquet"
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"kline15/gold_manifest.json"
+          m=json.loads(p.read_text())
+          assert m["as_of_date"]>="2026-10-16"
+          assert m["validation"]["primary_keys_unique"] and m["validation"]["ohlc_valid"]
+          PY
+          for dataset in daily_prices adjustment_factors; do
+            rclone copy "$root/$dataset" "$RUNNER_TEMP/kline15/daily/$dataset" \
+              --include 'year=202[3456]/month=*/data.parquet' --transfers 5 --checkers 4
+            test "$(find "$RUNNER_TEMP/kline15/daily/$dataset" -name data.parquet | wc -l)" -ge 40
+          done
+      - name: Join daily volatility expansion to validated 16-bar intraday and next-day evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.kline_15m_bridge \
+            --minutes-root "$RUNNER_TEMP/kline15/source" \
+            --daily-root "$RUNNER_TEMP/kline15/daily" \
+            --output-dir "$RUNNER_TEMP/kline15/analysis"
+          python - <<'PY'
+          import json,os,pathlib
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"kline15/analysis"
+          r=json.loads((root/"statistics.json").read_text())
+          assert r["authorization"]=="RESEARCH_ONLY_NO_TRADING"
+          assert "volatility_expansion" in r["patterns"]
+          assert r["status"] in ("EXPLORATORY_COVERAGE_PASSED_NOT_PROVEN",
+                                 "INCOMPLETE_MINUTE_COVERAGE_NO_CONCLUSIONS")
+          print("15M_JOIN_STATUS",r["status"],
+                "validated_days",r["minute_valid_days_aligned"],
+                "vol_expansion_events",r["patterns"]["volatility_expansion"]["events_with_verified_minutes"])
+          PY
+      - name: Archive monthly raw research bars and actual evidence with immutable Google Drive checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/kline_600351_volatility_15m_v1/2026-10-16/run_$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/kline15/source" "$dest/source" --immutable --transfers 4
+          rclone check "$RUNNER_TEMP/kline15/source" "$dest/source" --one-way
+          rclone copy "$RUNNER_TEMP/kline15/analysis" "$dest/analysis" --immutable
+          rclone check "$RUNNER_TEMP/kline15/analysis" "$dest/analysis" --one-way
+          echo "VOLUME_EXPANSION_15M_RESEARCH_PUBLISHED; 600351 ONLY; real orders=false"

@@ -21,7 +21,7 @@ from ai_research.kline_three_year import (
 )
 
 VERSION = "KLINE_600351_15M_JOIN_V1"
-WANTED = ("volume_spike_up", "first_close_above_20d_high")
+WANTED = ("volatility_expansion", "volume_spike_up", "first_close_above_20d_high")
 SLOTS = [
     *(f"{h:02d}:{m:02d}" for h in (9, 10, 11)
       for m in (0, 15, 30, 45)
@@ -170,7 +170,10 @@ def compute(daily, minute_raw):
     details, comparisons = [], {}
     future5 = (p["adj_close"].shift(-5) / p["adj_close"] - 1)
     dates = valid_daily_dates
-    next_day = {dates[i]: dates[i+1] for i in range(len(dates)-1)}
+    # Next EXCHANGE day, not next day with valid non-suspended stock OHLC.
+    exchange_dates = p.index
+    next_day = {exchange_dates[i]: exchange_dates[i+1]
+                for i in range(len(exchange_dates)-1)}
     for pattern in WANTED:
         rows = []
         for day in minute_dates:
@@ -235,9 +238,11 @@ def compute(daily, minute_raw):
         "minute_valid_days_aligned":len(minute_dates),
         "minute_daily_coverage":cover, "coverage_by_period":per_period,
         "signal_details": details, "patterns": comparisons,
-        "risk": ["Not a fill simulation; minute signal features only known after day close",
+        "risk": ["Volatility expansion is a daily close-confirmed event (5d volatility > 1.6x trailing 20d volatility); no intraday early signal inferred",
+                 "Not a fill simulation; minute signal features only known after day close",
                  "No backtest inference on days not covered by verified 16-bar source",
                  "Some events share future five days: statistical dependence",
+                 "Event sample 2023-24=15, 2025=10, 2026=6: no positive stability claim",
                  "Thresholds fixed before minute hypothesis review; future OOS essential"],
     }
 
