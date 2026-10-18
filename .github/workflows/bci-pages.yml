@@ -12,6 +12,9 @@ on:
   schedule:
     - cron: '15 0 * * *'  # daily around 08:15 Asia/Singapore (GitHub scheduling is best-effort)
   workflow_dispatch:
+  workflow_run:
+    workflows: ['BCI collect verified source to Drive']
+    types: [completed]
 
 concurrency:
   group: bci-public-pages
@@ -23,6 +26,7 @@ permissions:
 
 jobs:
   build-and-verify:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     permissions:
       contents: read
       actions: read
@@ -41,7 +45,7 @@ jobs:
           node --check bci_public_site/app.js
           node --check bci_public_site/patient.js
       - name: Refresh website from latest eligible Google Drive snapshot
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         env:
           GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
         run: |
@@ -88,7 +92,7 @@ jobs:
           path: _site
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: needs.build-and-verify.result == 'success' && github.event_name != 'pull_request'
     needs: build-and-verify
     runs-on: ubuntu-latest
     permissions:
