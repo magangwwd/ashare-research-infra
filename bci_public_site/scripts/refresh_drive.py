@@ -27,7 +27,14 @@ def eligible_name(name: str) -> bool:
 def choose(files):
     entries = [f for f in files if eligible_name(f.get("name", ""))
                and f.get("mimeType") in ("application/zip", "application/octet-stream")]
-    entries.sort(key=lambda f: (f.get("modifiedTime", ""), f["name"]), reverse=True)
+    # Prefer the capture date embedded in the trusted archive name.
+    # Re-uploading an old file must not make old medical data appear new.
+    def capture_key(file):
+        name = file["name"]
+        date = name[4:12] if name.startswith("BCI_") else name[:8]
+        clock = "000000" if name.startswith("BCI_") else name[9:15]
+        return (date, clock, file.get("modifiedTime", ""), name)
+    entries.sort(key=capture_key, reverse=True)
     return entries[0] if entries else None
 
 
