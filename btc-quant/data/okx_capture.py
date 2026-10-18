@@ -4,7 +4,7 @@ out=pathlib.Path(a.out);out.mkdir(parents=True,exist_ok=True)
 rows=[];errors=[]
 for n in range(3):
  for inst in ("BTC-USDT-SWAP","BTC-USDT"):
-  for kind,path in (("books5",f"/api/v5/market/books?instId={inst}&sz=5"),("trades",f"/api/v5/market/trades?instId={inst}&limit=100"),("ticker",f"/api/v5/market/ticker?instId={inst}")):
+  for kind,path in (("books50",f"/api/v5/market/books?instId={inst}&sz=50"),("trades",f"/api/v5/market/trades?instId={inst}&limit=100"),("ticker",f"/api/v5/market/ticker?instId={inst}")):
    now=dt.datetime.now(dt.timezone.utc).isoformat()
    try:
     with urllib.request.urlopen(urllib.request.Request("https://www.okx.com"+path,headers={"User-Agent":"BTC-quant-research"}),timeout=20) as resp: data=json.load(resp)
