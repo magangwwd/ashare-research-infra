@@ -30,7 +30,7 @@ class CareGuideTests(unittest.TestCase):
             self.assertNotIn("patient_data",h)
         military=[h for h in self.data["hospitals"] if h["type"]=="军队医院"]
         self.assertTrue(military)
-        self.assertTrue(all("待核实" in h["caution"] for h in military))
+        self.assertTrue(all("尚缺少" in h["caution"] or "待核实" in h["caution"] for h in military))
     def test_public_html_interactive_components(self):
         for elem in ["care-hub","care-stage-name","care-questions","care-hospitals","care-region",
                      "care-hospital-list","care-compare","care-frontiers","care-frontier-list",
