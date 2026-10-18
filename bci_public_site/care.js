@@ -1,7 +1,7 @@
 'use strict';
 (() => {
   const $=id=>document.getElementById(id);
-  const state={guide:null,research:null,stage:null,region:'all',focus:'all',term:'',compare:new Set()};
+  const state={guide:null,research:null,stage:null,region:'all',type:'all',focus:'all',term:'',compare:new Set()};
   const APPROVED_HOSTS=new Set(['www.shca.org.cn','www.cicams.ac.cn','www.bjcancer.org','bjcancer.org','www.sysucc.org.cn','xuebao.301hospital.com.cn','www.cancer.gov','www.china-oncology.com','www.zchospital.com','www.wchscu.cn','wchscu.cn','www.tjmuch.com','tmucih.com','www.nj12320.org','www.haodf.com','www.fmmu.edu.cn','pubmed.ncbi.nlm.nih.gov','clinicaltrials.gov','www.fda.gov']);
   const CATEGORIES={
     screen:'发现异常或考虑筛查',
@@ -138,6 +138,7 @@
     if(!state.guide)return;
     const hospitals=state.guide.hospitals.filter(h=>
       (state.region==='all'||h.region===state.region)&&
+      (state.type==='all'||h.type===state.type)&&
       (state.focus==='all'||(h.focus||[]).includes(state.focus))&&
       [h.name,h.city,h.type,h.highlight,...(h.focus||[])].join(' ').toLowerCase().includes(state.term));
     const list=$('care-hospital-list');list.replaceChildren();
@@ -152,6 +153,7 @@
     for(const val of unique(h.map(x=>x.region)))region.append(new Option(val,val));
     for(const val of unique(h.flatMap(x=>x.focus||[])))focus.append(new Option(val,val));
     region.addEventListener('change',()=>{state.region=region.value;renderHospitals();});
+    $('care-type').addEventListener('change',()=>{state.type=$('care-type').value;renderHospitals();});
     focus.addEventListener('change',()=>{state.focus=focus.value;renderHospitals();});
     $('care-hospital-search').addEventListener('input',event=>{
       state.term=event.target.value.trim().toLowerCase();renderHospitals();
