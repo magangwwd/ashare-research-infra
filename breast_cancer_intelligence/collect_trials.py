@@ -16,7 +16,7 @@ def normalize(study):
     p=study.get("protocolSection",{})
     i=p.get("identificationModule",{})
     s=p.get("statusModule",{})
-    return {"nct_id":i.get("nctId"),"title":i.get("briefTitle"),"overall_status":s.get("overallStatus"),"last_update_posted":s.get("studyFirstPostDateStruct",{}).get("date"),"source_url":"https://clinicaltrials.gov/study/"+i["nctId"] if i.get("nctId") else None,"verification_state":"unreviewed"}
+    return {"nct_id":i.get("nctId"),"title":i.get("briefTitle"),"overall_status":s.get("overallStatus"),"last_update_posted":s.get("lastUpdatePostDateStruct",{}).get("date"),"source_url":"https://clinicaltrials.gov/study/"+i["nctId"] if i.get("nctId") else None,"verification_state":"unreviewed"}
 
 def run(output=None):
     with urllib.request.urlopen(urllib.request.Request(build_url(),headers={"User-Agent":"BreastCancerIntelligenceResearch/0.1"}),timeout=30) as r:
