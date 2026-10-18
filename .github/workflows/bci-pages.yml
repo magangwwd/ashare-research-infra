@@ -1,0 +1,95 @@
+name: BCI public research website
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'bci_public_site/**'
+      - '.github/workflows/bci-pages.yml'
+  pull_request:
+    paths:
+      - 'bci_public_site/**'
+      - '.github/workflows/bci-pages.yml'
+  schedule:
+    - cron: '15 0 * * *'  # daily around 08:15 Asia/Singapore (GitHub scheduling is best-effort)
+  workflow_dispatch:
+
+concurrency:
+  group: bci-public-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate public metadata and source selector
+        run: python -m unittest discover -s bci_public_site/tests -v
+      - name: Syntax-check website JavaScript
+        run: node --check bci_public_site/app.js
+      - name: Refresh website from latest eligible Google Drive snapshot
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check 'google-auth>=2.28,<3' 'requests>=2.31,<3'
+          python bci_public_site/scripts/refresh_drive.py \
+            --output "$RUNNER_TEMP/bci-latest.zip" \
+            --report "$RUNNER_TEMP/bci-drive-check.json"
+          python bci_public_site/scripts/build_site.py \
+            --zip "$RUNNER_TEMP/bci-latest.zip" \
+            --out bci_public_site/data/site-data.json
+          python -m unittest discover -s bci_public_site/tests -v
+      - name: Verify generated site is public-metadata-only
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('bci_public_site/data/site-data.json').read_text('utf-8'))
+          assert d['schemaVersion']==1 and d['articles'] and d['trials']
+          assert all('abstract_for_internal_research_only' not in x for x in d['articles'])
+          assert all('patient_name' not in x for x in d['trials'])
+          print('PUBLIC_SITE_OK',d['snapshotId'],d['counts'])
+          PY
+      - name: Create GitHub Pages payload
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euo pipefail
+          mkdir -p _site/data
+          cp bci_public_site/index.html bci_public_site/app.js bci_public_site/styles.css bci_public_site/favicon.svg _site/
+          cp bci_public_site/.nojekyll _site/.nojekyll
+          cp bci_public_site/data/site-data.json _site/data/site-data.json
+          test -s _site/index.html
+          test -s _site/data/site-data.json
+      - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build-and-verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
