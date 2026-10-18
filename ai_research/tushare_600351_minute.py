@@ -125,8 +125,12 @@ def build(api, out: Path, *, sleeper=time.sleep, start=START, end=END):
     out.mkdir(parents=True,exist_ok=True)
     log=[]
     for first,last in windows:
-        bars=probe if (first,last)==(probe_first,probe_last) else query_live(
-            api,first,last,sleeper=sleeper)
+        if (first,last)==(probe_first,probe_last):
+            bars=probe
+        else:
+            # Gentle rate limit, separate from retry backoff.
+            sleeper(0.75)
+            bars=query_live(api,first,last,sleeper=sleeper)
         path=out / f"year={first.year}" / f"month={first.month:02d}" / "data.parquet"
         path.parent.mkdir(parents=True,exist_ok=True)
         bars.to_parquet(path,index=False,compression="zstd")
