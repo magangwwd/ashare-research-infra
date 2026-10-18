@@ -80,7 +80,7 @@ def build(archive, target):
       'snapshotId':manifest['snapshot_id'],'collectedAt':manifest['captured_at_utc'],
       'generatedAt':datetime.now(timezone.utc).isoformat(),
       'archiveSha256':sha(raw), 'nestedSnapshotSha256':sha(inner),
-      'scope':'首批有限样本；非全量数据库，未经过医学专业审核。',
+      'scope':'最近一次云盘有效快照中的有限抽样；非全量医学数据库，资料尚未经专业医学审核。',
       'counts':{'recent':sum(a['category']=='recent' for a in docs),'case':sum(a['category']=='case' for a in docs),
         'recovery':sum(a['category']=='recovery' for a in docs),'trials':len(trials),
         'fda':len(fda),'guidelines':len(guidelines),'sources':len(source_checks)},
@@ -96,8 +96,7 @@ def build(archive, target):
       'coverage':{'pubmed30DayMatches':manifest.get('sources',{}).get('pubmed_recent_articles',{}).get('total_matching'),
         'trialMatches':manifest.get('sources',{}).get('clinical_trials',{}).get('total_matching'),
         'recoveryMissingPmids':manifest.get('sources',{}).get('pubmed_survivorship_reviews',{}).get('unresolved_pmids',[])},
-      'provenance':{'source':'Google Drive 保存的 GitHub Actions 真实采集包',
-        'githubRunUrl':'https://github.com/magangwwd/ashare-research-infra/actions/runs/39088628933',
+      'provenance':{'source':'Google Drive 已核验的公开医学研究快照',
         'reviewed':'not_medically_reviewed'}}
     target=Path(target);target.parent.mkdir(parents=True,exist_ok=True)
     target.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
