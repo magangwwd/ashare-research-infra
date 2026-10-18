@@ -70,6 +70,22 @@ class MinuteGateTests(unittest.TestCase):
         self.assertTrue(out.empty)
         self.assertEqual(meta["accepted_days"],0)
 
+    def test_daily_cross_vendor_close_mismatch_is_not_filled(self):
+        ix=pd.bdate_range("2023-05-02","2026-10-16")
+        n=len(ix)
+        daily=pd.DataFrame({
+            "open":np.full(n,10.0), "high":np.full(n,10.2),
+            "low":np.full(n,9.8), "close":np.full(n,10.0),
+            "adjustment_factor":np.ones(n),
+            "volume_shares":np.full(n,100000.0)},index=ix)
+        raw=single_session("2026-10-15")
+        out=compute(daily,raw)
+        self.assertEqual(out["source_quality"]["daily_close_mismatch_days"],1)
+        self.assertEqual(out["minute_valid_days_aligned"],0)
+        self.assertEqual(out["status"],"INCOMPLETE_MINUTE_COVERAGE_NO_CONCLUSIONS")
+        self.assertEqual(out["source_quality"]["daily_close_mismatch_examples"][0]["date"],
+                         "2026-10-15")
+
     def test_report_output_preserves_no_data_status(self):
         import tempfile
         from pathlib import Path
