@@ -19,17 +19,38 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Capture
-        run: |
-          python btc-quant/data/okx_capture.py --out "$RUNNER_TEMP/okx"
-          python btc-quant/data/okx_history_catalog.py "$RUNNER_TEMP/okx"
-      - name: Configure Drive
+      - name: Install rclone and configure Drive
         run: |
           set -euo pipefail
           test -n "$GDRIVE_RCLONE_CONFIG_B64"
           sudo apt-get update -qq
           sudo apt-get install -y rclone
           (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+      - name: Restore verified history checkpoint and pages
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/okx-history"
+          remote="gdrive:BTC_Quant_System_OKX/market_data/OKX/history_trades/BTC-USDT-SWAP"
+          if rclone --config "$RUNNER_TEMP/rclone.conf" lsf "$remote" >/dev/null 2>&1; then
+            rclone --config "$RUNNER_TEMP/rclone.conf" copy "$remote" "$RUNNER_TEMP/okx-history"
+          else
+            echo "History destination unavailable or absent; verifying parent access"
+            rclone --config "$RUNNER_TEMP/rclone.conf" lsf "gdrive:BTC_Quant_System_OKX/" >/dev/null
+          fi
+      - name: Download next historical trade pages
+        run: |
+          set -euo pipefail
+          python btc-quant/data/okx_history_trades.py --out "$RUNNER_TEMP/okx-history" --instrument BTC-USDT-SWAP --pages 5
+      - name: Capture
+        run: |
+          python btc-quant/data/okx_capture.py --out "$RUNNER_TEMP/okx"
+          python btc-quant/data/okx_history_catalog.py "$RUNNER_TEMP/okx"
+        - name: Upload historical pages and checkpoint, then verify
+        run: |
+          set -euo pipefail
+          remote="gdrive:BTC_Quant_System_OKX/market_data/OKX/history_trades/BTC-USDT-SWAP"
+          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$RUNNER_TEMP/okx-history" "$remote"
+          rclone --config "$RUNNER_TEMP/rclone.conf" check "$RUNNER_TEMP/okx-history" "$remote" --one-way --download
       - name: Immutable upload and verification
         run: |
           set -euo pipefail
