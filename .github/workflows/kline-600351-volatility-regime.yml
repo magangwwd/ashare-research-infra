@@ -1,0 +1,126 @@
+name: 600351 3-year volatility expansion regime attribution (NO TRADES)
+
+on:
+  pull_request:
+    paths:
+      - 'ai_research/kline_volatility_regime.py'
+      - 'ai_research/tests/test_kline_volatility_regime.py'
+      - '.github/workflows/kline-600351-volatility-regime.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/kline_volatility_regime.py'
+      - '.github/workflows/kline-600351-volatility-regime.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: 600351-volatility-regime-attribution
+  cancel-in-progress: false
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install minimal numerical analysis stack
+        run: python -m pip install 'numpy>=2,<3' 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+      - name: Frozen thresholds, outliers, timing, reporting
+        run: python -m unittest -v ai_research.tests.test_kline_volatility_regime
+
+  real-verified-attribution:
+    needs: offline-tests
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install rclone and offline parquet readers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install 'numpy>=2,<3' 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Verify exact earlier Tushare 15m evidence and fixed study date
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/volstudy/minute" "$RUNNER_TEMP/volstudy/daily"
+          source='gdrive:stock_state_strategy/output/kline_600351_volatility_15m_v1/2026-10-16/run_39129188836'
+          rclone copyto "$source/analysis/statistics.json" "$RUNNER_TEMP/volstudy/baseline_statistics.json"
+          rclone copyto "$source/source/source_manifest.json" "$RUNNER_TEMP/volstudy/minute_source_manifest.json"
+          rclone copyto 'gdrive:down_data/data/gold/main_board/manifest.json' "$RUNNER_TEMP/volstudy/gold_manifest.json"
+          python - <<'PY'
+          import os,pathlib,json
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"volstudy"
+          stats=json.loads((root/"baseline_statistics.json").read_text())
+          m=json.loads((root/"minute_source_manifest.json").read_text())
+          gold=json.loads((root/"gold_manifest.json").read_text())
+          assert stats["symbol"]=="600351.SH" and stats["as_of"]=="2026-10-16"
+          assert stats["status"]=="EXPLORATORY_COVERAGE_PASSED_NOT_PROVEN"
+          assert stats["minute_valid_days_aligned"]==728
+          assert len([x for x in stats["signal_details"] if x["pattern"]=="volatility_expansion"])==31
+          assert m["symbol"]=="600351.SH" and m["output_partitions"]==37
+          assert m["source_permission_verified_with_nonempty_probe"] is True
+          assert gold["as_of_date"]>="2026-10-16"
+          assert gold["validation"]["primary_keys_unique"] and gold["validation"]["ohlc_valid"]
+          print("Verified original 31-event packet and validated Gold. No replacement of original manifests.")
+          PY
+      - name: Read immutable archived actual 15m bars, and Gold daily/factors
+        shell: bash
+        run: |
+          set -euo pipefail
+          minute='gdrive:stock_state_strategy/output/kline_600351_volatility_15m_v1/2026-10-16/run_39129188836/source'
+          rclone copy "$minute" "$RUNNER_TEMP/volstudy/minute" \
+            --include 'year=202[3456]/month=*/data.parquet' --checkers 4 --transfers 5
+          test "$(find "$RUNNER_TEMP/volstudy/minute" -name data.parquet | wc -l)" -eq 37
+          gold='gdrive:down_data/data/gold/main_board'
+          rclone copyto "$gold/trading_calendar.parquet" "$RUNNER_TEMP/volstudy/daily/trading_calendar.parquet"
+          for dataset in daily_prices adjustment_factors; do
+            rclone copy "$gold/$dataset" "$RUNNER_TEMP/volstudy/daily/$dataset" \
+              --include 'year=202[3456]/month=*/data.parquet' --checkers 4 --transfers 5
+            test "$(find "$RUNNER_TEMP/volstudy/daily/$dataset" -name data.parquet | wc -l)" -ge 40
+          done
+      - name: Attribute frozen volatility events by past trend, signal direction and next 10AM
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.kline_volatility_regime \
+            --daily-root "$RUNNER_TEMP/volstudy/daily" \
+            --minutes-root "$RUNNER_TEMP/volstudy/minute" \
+            --15m-statistics "$RUNNER_TEMP/volstudy/baseline_statistics.json" \
+            --output-dir "$RUNNER_TEMP/volstudy/report"
+          python - <<'PY'
+          import os,pathlib,json
+          path=pathlib.Path(os.environ["RUNNER_TEMP"])/"volstudy/report/statistics.json"
+          r=json.loads(path.read_text())
+          assert r["source_events"]==31 and r["coverage"]["live_archive_rechecked_days"]==728
+          assert r["status"]=="DESCRIPTIVE_SMALL_SAMPLE_NO_PROMOTABLE_EDGE"
+          assert [r["split"][p]["total"]["n"] for p in ("discovery","validation","test")]==[15,10,6]
+          assert r["authorization"]=="RESEARCH_ONLY_NO_TRADING"
+          PY
+      - name: Publish separate research evidence to Google Drive with checksum verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/kline_600351_volatility_regime_v1/2026-10-16/run_$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/volstudy/report" "$dest" --immutable
+          rclone check "$RUNNER_TEMP/volstudy/report" "$dest" --one-way
+          echo "VOLATILITY_REGIME_RESEARCH_PUBLISHED; independent experiments, trading authorization=false"
