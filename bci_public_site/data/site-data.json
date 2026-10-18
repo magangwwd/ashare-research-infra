@@ -1,0 +1,2840 @@
+{
+  "schemaVersion": 1,
+  "siteName": "乳腺癌医学证据观察站",
+  "snapshotId": "20261018T020217Z_39088628933",
+  "collectedAt": "2026-10-18T02:02:17.410609+00:00",
+  "generatedAt": "2026-10-18T02:27:16.811483+00:00",
+  "archiveSha256": "76576c55826c626b13610d4ea7baa2652060d46646b9244aaccc2472dd770793",
+  "nestedSnapshotSha256": "7fa38e683cc0e8eba5e21839265d716e9be3d58403acf7b4d428f746f97351da",
+  "scope": "首批有限样本；非全量数据库，未经过医学专业审核。",
+  "counts": {
+    "recent": 45,
+    "case": 20,
+    "recovery": 24,
+    "trials": 75,
+    "fda": 18,
+    "guidelines": 1,
+    "sources": 6
+  },
+  "articles": [
+    {
+      "id": "42831172",
+      "category": "recent",
+      "title": "Multi-omics studies identified the molecular network of mitochondrial dysfunction in the pathogenesis of breast cancer.",
+      "journal": "Genes & diseases",
+      "year": "2027",
+      "doi": "10.1016/j.gendis.2026.102243",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42831172/"
+    },
+    {
+      "id": "42787620",
+      "category": "recent",
+      "title": "An endoplasmic reticulum-enriched nanogel couples ferroptotic tumor damage with macrophage reprogramming for triple-negative breast cancer immunotherapy.",
+      "journal": "Bioactive materials",
+      "year": "2027",
+      "doi": "10.1016/j.bioactmat.2026.09.015",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42787620/"
+    },
+    {
+      "id": "42878760",
+      "category": "recent",
+      "title": "Pathway and Kinase Analysis in Proteomics and Phosphoproteomics with rROMA.",
+      "journal": "Methods in molecular biology (Clifton, N.J.)",
+      "year": "2027",
+      "doi": "10.1007/978-1-0716-5519-1_9",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42878760/"
+    },
+    {
+      "id": "42876942",
+      "category": "recent",
+      "title": "Benchmarking deep learning-based reconstruction methods for photoacoustic computed tomography with clinically relevant synthetic datasets.",
+      "journal": "Journal of biomedical optics",
+      "year": "2027",
+      "doi": "10.1117/1.JBO.32.S1.S14903",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42876942/"
+    },
+    {
+      "id": "42859778",
+      "category": "recent",
+      "title": "Prolonging breath-hold duration in radiotherapy using cognitive engagement.",
+      "journal": "Clinical and translational radiation oncology",
+      "year": "2027",
+      "doi": "10.1016/j.ctro.2026.101300",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42859778/"
+    },
+    {
+      "id": "42815653",
+      "category": "recent",
+      "title": "Uncovering the importance of lipofection for aptamer-mediated therapeutic oligonucleotide delivery in a HER2+ SKBR3 breast cancer cell line.",
+      "journal": "Bioorganic & medicinal chemistry letters",
+      "year": "2027",
+      "doi": "10.1016/j.bmcl.2026.130790",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42815653/"
+    },
+    {
+      "id": "42800619",
+      "category": "recent",
+      "title": "Synthesis and discovery of polyisopentenylated acylphloroglucinols with selective antiproliferative activity against breast cancer cells.",
+      "journal": "Bioorganic & medicinal chemistry letters",
+      "year": "2027",
+      "doi": "10.1016/j.bmcl.2026.130785",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42800619/"
+    },
+    {
+      "id": "42763009",
+      "category": "recent",
+      "title": "The antiproliferative and pro-apoptotic effects of 3-deoxy-3α-fluoro-chenodeoxycholic acid and 12β-methyl-3,7-dioxo-17-epi-25-homo-18-nor-5β-cholan-25-oic acid on human breast cancer cell lines.",
+      "journal": "Bioorganic & medicinal chemistry letters",
+      "year": "2027",
+      "doi": "10.1016/j.bmcl.2026.130782",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42763009/"
+    },
+    {
+      "id": "42753957",
+      "category": "recent",
+      "title": "Discovery of potent, selective, and orally bioavailable monocyclic pyridine-based PKMYT1 inhibitors that synergize with CHK1 inhibition in replication-stressed cancer cells.",
+      "journal": "Bioorganic & medicinal chemistry letters",
+      "year": "2027",
+      "doi": "10.1016/j.bmcl.2026.130779",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42753957/"
+    },
+    {
+      "id": "42753582",
+      "category": "recent",
+      "title": "Manganese-doped zinc oxide Nano-agonists activating the cGAS-STING pathway to potentiate anti-tumor immunotherapy and reprogram the immunosuppressive tumor microenvironment.",
+      "journal": "Biomaterials advances",
+      "year": "2027",
+      "doi": "10.1016/j.bioadv.2026.215163",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42753582/"
+    },
+    {
+      "id": "42751413",
+      "category": "recent",
+      "title": "Acute breast edema during 5-fraction ultra-hypofractionated radiotherapy after breast-conserving surgery: A cone-beam CT based evaluation.",
+      "journal": "Clinical and translational radiation oncology",
+      "year": "2027",
+      "doi": "10.1016/j.ctro.2026.101284",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42751413/"
+    },
+    {
+      "id": "42868199",
+      "category": "recent",
+      "title": "Estradiol-associated extracellular signaling in the human breast in vivo identifies mast cells as tumor-supportive stromal mediators.",
+      "journal": "Oncoimmunology",
+      "year": "2026",
+      "doi": "10.1080/2162402X.2026.2746847",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42868199/"
+    },
+    {
+      "id": "42858231",
+      "category": "recent",
+      "title": "RecurIndex-derived molecular features associated with total pathological complete response in triple-negative breast cancer: An exploratory prospective cohort study with single-cell transcriptomic contextualization.",
+      "journal": "Cancer biology & therapy",
+      "year": "2026",
+      "doi": "10.1080/15384047.2026.2743407",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42858231/"
+    },
+    {
+      "id": "42788345",
+      "category": "recent",
+      "title": "Elevated miR-103b in exosomes derived from brain-metastatic triple-negative breast cancer cells remodels the brain pre-metastatic niche (PMN).",
+      "journal": "Cancer biology & therapy",
+      "year": "2026",
+      "doi": "10.1080/15384047.2026.2725357",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42788345/"
+    },
+    {
+      "id": "42850863",
+      "category": "recent",
+      "title": "[IMPLEMENTATION OF A DYNAMIC SURVEILLANCE PROGRAM FOR EARLY CANCER DETECTION IN HEALTHY INDIVIDUALS CARRYING PATHOGENIC VARIANTS].",
+      "journal": "Problemy sotsial'noi gigieny, zdravookhraneniia i istorii meditsiny",
+      "year": "2026",
+      "doi": "10.32687/0869-866X-2026-34-4-911-916",
+      "types": [
+        "English Abstract",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42850863/"
+    },
+    {
+      "id": "42850839",
+      "category": "recent",
+      "title": "[THE ROLE OF AI TECHNOLOGY IN MAMMOGRAPHIC SCREENING OF BREAST CANCER WITH EVALUATION OF EFFICIENCY AND POTENTIAL FOR PRACTICAL HEALTH CARE].",
+      "journal": "Problemy sotsial'noi gigieny, zdravookhraneniia i istorii meditsiny",
+      "year": "2026",
+      "doi": "10.32687/0869-866X-2026-34-4-851-856",
+      "types": [
+        "English Abstract",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42850839/"
+    },
+    {
+      "id": "42798197",
+      "category": "recent",
+      "title": "The role of fibronectin in the tumor microenvironment - implications for immunotherapy.",
+      "journal": "Cell cycle (Georgetown, Tex.)",
+      "year": "2026",
+      "doi": "10.1080/15384101.2026.2735503",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42798197/"
+    },
+    {
+      "id": "42876472",
+      "category": "recent",
+      "title": "Phospholipase A2 enhances the cytotoxic activity of membranolytic peptide Polybia MP1 in some breast epithelial cells.",
+      "journal": "Biochemistry and biophysics reports",
+      "year": "2026",
+      "doi": "10.1016/j.bbrep.2026.102823",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42876472/"
+    },
+    {
+      "id": "42871577",
+      "category": "recent",
+      "title": "High intestinal obstruction secondary to peritoneal metastases from invasive lobular breast carcinoma: A case report of an unusual presentation.",
+      "journal": "Radiology case reports",
+      "year": "2026",
+      "doi": "10.1016/j.radcr.2026.09.022",
+      "types": [
+        "Case Reports",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42871577/"
+    },
+    {
+      "id": "42866666",
+      "category": "recent",
+      "title": "Surviving cancer, managing the heart: Awareness of potential cardiovascular toxicity and barriers to cardiovascular self-management among women with breast cancer: A qualitative descriptive study.",
+      "journal": "Asia-Pacific journal of oncology nursing",
+      "year": "2026",
+      "doi": "10.1016/j.apjon.2026.101030",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42866666/"
+    },
+    {
+      "id": "42866611",
+      "category": "recent",
+      "title": "Engineered exosomes for breast cancer immunotherapy: Emerging strategies and translational potential.",
+      "journal": "Biochemistry and biophysics reports",
+      "year": "2026",
+      "doi": "10.1016/j.bbrep.2026.102822",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42866611/"
+    },
+    {
+      "id": "42866516",
+      "category": "recent",
+      "title": "Response pathways and clinical workflow integration of digital symptom management platforms for breast cancer: A scoping review.",
+      "journal": "Asia-Pacific journal of oncology nursing",
+      "year": "2026",
+      "doi": "10.1016/j.apjon.2026.101029",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42866516/"
+    },
+    {
+      "id": "42861362",
+      "category": "recent",
+      "title": "Photo-induced electron pumping meets nanozyme cascade: Triggering multimodal cell death for potent triple-negative breast cancer immunotherapy.",
+      "journal": "Materials today. Bio",
+      "year": "2026",
+      "doi": "10.1016/j.mtbio.2026.103672",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42861362/"
+    },
+    {
+      "id": "42861317",
+      "category": "recent",
+      "title": "Barriers and facilitators to self-management among patients with breast cancer receiving neoadjuvant chemotherapy: A qualitative study informed by the integrated theory of health behavior change.",
+      "journal": "Asia-Pacific journal of oncology nursing",
+      "year": "2026",
+      "doi": "10.1016/j.apjon.2026.101032",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42861317/"
+    },
+    {
+      "id": "42860957",
+      "category": "recent",
+      "title": "Global disparities in fertility preservation among young breast cancer patients: a systematic review and meta-analysis of utilization rates and associated factors.",
+      "journal": "International journal of nursing studies advances",
+      "year": "2026",
+      "doi": "10.1016/j.ijnsa.2026.100691",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42860957/"
+    },
+    {
+      "id": "42859764",
+      "category": "recent",
+      "title": "Clinical Outcomes of Carbon-Ion Radiotherapy for Unresectable Radiation-Induced Secondary Sarcoma.",
+      "journal": "International journal of particle therapy",
+      "year": "2026",
+      "doi": "10.1016/j.ijpt.2026.101964",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42859764/"
+    },
+    {
+      "id": "42852627",
+      "category": "recent",
+      "title": "PRMT7 at the crossroads of cancer progression and therapeutic targeting (Review).",
+      "journal": "Oncology reports",
+      "year": "2026",
+      "doi": "10.3892/or.2026.9208",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42852627/"
+    },
+    {
+      "id": "42852614",
+      "category": "recent",
+      "title": "Anesthetics and cancer biology: Translational evidence from perioperative modulation to drug repurposing (Review).",
+      "journal": "International journal of molecular medicine",
+      "year": "2026",
+      "doi": "10.3892/ijmm.2026.6007",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42852614/"
+    },
+    {
+      "id": "42849171",
+      "category": "recent",
+      "title": "Novel trans-stilbene-phytophenol conjugates as potent tubulin-targeting antiproliferative agents.",
+      "journal": "Bioorganic & medicinal chemistry",
+      "year": "2026",
+      "doi": "10.1016/j.bmc.2026.118820",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42849171/"
+    },
+    {
+      "id": "42836442",
+      "category": "recent",
+      "title": "The rationale for monitoring both skin and invasive temperatures in locoregional recurrent breast cancer patients treated with postoperative re-irradiation and superficial microwave hyperthermia exceeding 1 cm target depth.",
+      "journal": "International journal of hyperthermia : the official journal of European Society for Hyperthermic Oncology, North American Hyperthermia Group",
+      "year": "2026",
+      "doi": "10.1080/02656736.2026.2732510",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42836442/"
+    },
+    {
+      "id": "42836044",
+      "category": "recent",
+      "title": "Oxygen-augmented erythrocyte-liposome hybrids to overcome paclitaxel resistance in triple-negative breast cancer metastasis via enhanced ferroptosis.",
+      "journal": "Materials today. Bio",
+      "year": "2026",
+      "doi": "10.1016/j.mtbio.2026.103705",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42836044/"
+    },
+    {
+      "id": "42835774",
+      "category": "recent",
+      "title": "Adapting Nurse AMIE for rural oncology populations: A FRAME-guided analysis of a technology-enabled supportive care intervention.",
+      "journal": "Contemporary clinical trials communications",
+      "year": "2026",
+      "doi": "10.1016/j.conctc.2026.101691",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42835774/"
+    },
+    {
+      "id": "42835480",
+      "category": "recent",
+      "title": "Quality improvement in radiation therapy: translating printed patient education pamphlets to audiovisual digital resources.",
+      "journal": "Technical innovations & patient support in radiation oncology",
+      "year": "2026",
+      "doi": "10.1016/j.tipsro.2026.100438",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42835480/"
+    },
+    {
+      "id": "42831227",
+      "category": "recent",
+      "title": "Understanding return to work after breast cancer through real-world data linkage framework: a Luxembourg digital oncology use case.",
+      "journal": "ESMO real world data and digital oncology",
+      "year": "2026",
+      "doi": "10.1016/j.esmorw.2026.100782",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42831227/"
+    },
+    {
+      "id": "42831214",
+      "category": "recent",
+      "title": "Food Insecurity and Overall Survival in Locally Advanced Breast Cancer Patients Receiving Comprehensive Nodal Irradiation: The Food Insecurity-Obesity Paradox.",
+      "journal": "Advances in radiation oncology",
+      "year": "2026",
+      "doi": "10.1016/j.adro.2026.102179",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42831214/"
+    },
+    {
+      "id": "42831209",
+      "category": "recent",
+      "title": "Willingness to contribute monetarily for hereditary breast cancer risk testing and the influencing factors: The first Indonesian exploration in the province with the highest prevalence.",
+      "journal": "Exploratory research in clinical and social pharmacy",
+      "year": "2026",
+      "doi": "10.1016/j.rcsop.2026.100854",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42831209/"
+    },
+    {
+      "id": "42831052",
+      "category": "recent",
+      "title": "The influence of virtual reality on anxiety and pain in breast cancer patients: A systematic review.",
+      "journal": "Technical innovations & patient support in radiation oncology",
+      "year": "2026",
+      "doi": "10.1016/j.tipsro.2026.100436",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42831052/"
+    },
+    {
+      "id": "42830998",
+      "category": "recent",
+      "title": "Membrane-associated HDAC11: A potential new therapeutic targeting compartment in cancer cells.",
+      "journal": "Biochemistry and biophysics reports",
+      "year": "2026",
+      "doi": "10.1016/j.bbrep.2026.102814",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42830998/"
+    },
+    {
+      "id": "42830996",
+      "category": "recent",
+      "title": "Chest wall pain as a late effect following radiotherapy for breast cancer: A systematic review of prevalence and risk factors.",
+      "journal": "Technical innovations & patient support in radiation oncology",
+      "year": "2026",
+      "doi": "10.1016/j.tipsro.2026.100433",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42830996/"
+    },
+    {
+      "id": "42829998",
+      "category": "recent",
+      "title": "Structure-based drug repurposing for CDK6: Molecular docking and molecular dynamics characterization of FDA-approved non-oncological compounds.",
+      "journal": "Journal of molecular graphics & modelling",
+      "year": "2026",
+      "doi": "10.1016/j.jmgm.2026.109591",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42829998/"
+    },
+    {
+      "id": "42824630",
+      "category": "recent",
+      "title": "Cancer Survival at a Comprehensive Cancer Center Compared With Surveillance, Epidemiology, and End Results (SEER) Estimates.",
+      "journal": "American journal of medicine open",
+      "year": "2026",
+      "doi": "10.1016/j.ajmo.2026.100138",
+      "types": [
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42824630/"
+    },
+    {
+      "id": "42821802",
+      "category": "recent",
+      "title": "Statement of Retraction: Diabetes regulated anti-inflammatory lncRNA is overexpressed in triple-negative breast cancer and predicts chemoresistance and tumor recurrence.",
+      "journal": "Bioengineered",
+      "year": "2026",
+      "doi": "10.1080/21655979.2026.2729896",
+      "types": [
+        "Journal Article",
+        "Retraction Notice"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42821802/"
+    },
+    {
+      "id": "42821799",
+      "category": "recent",
+      "title": "Statement of retraction: MicroRNA-409 regulates the proliferation and invasion of breast cancer cell lines by targeting special AT-rich sequence-binding protein 1 (SATB1).",
+      "journal": "Bioengineered",
+      "year": "2026",
+      "doi": "10.1080/21655979.2026.2730805",
+      "types": [
+        "Journal Article",
+        "Retraction Notice"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42821799/"
+    },
+    {
+      "id": "42821772",
+      "category": "recent",
+      "title": "Statement of Retraction: Downregulation of long noncoding RNA breast cancer anti-estrogen resistance 4 inhibits cell proliferation, invasion, and migration in esophageal squamous cell carcinoma by regulating the microRNA-181c-5p/LIM and SH3 protein 1 axis.",
+      "journal": "Bioengineered",
+      "year": "2026",
+      "doi": "10.1080/21655979.2026.2728890",
+      "types": [
+        "Journal Article",
+        "Retraction Notice"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42821772/"
+    },
+    {
+      "id": "42821401",
+      "category": "recent",
+      "title": "Statement of Retraction: LncRNA SNHG10 suppresses the development of doxorubicin resistance by downregulating miR-302b in triple-negative breast cancer.",
+      "journal": "Bioengineered",
+      "year": "2026",
+      "doi": "10.1080/21655979.2026.2728903",
+      "types": [
+        "Journal Article",
+        "Retraction Notice"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42821401/"
+    },
+    {
+      "id": "41858972",
+      "category": "case",
+      "title": "Locoregional recurrence of triple-negative breast cancer with low tumor-infiltrating lymphocytes: a case report.",
+      "journal": "The Pan African medical journal",
+      "year": "2025",
+      "doi": "10.11604/pamj.2025.52.161.50434",
+      "types": [
+        "Case Reports",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/41858972/"
+    },
+    {
+      "id": "42871577",
+      "category": "case",
+      "title": "High intestinal obstruction secondary to peritoneal metastases from invasive lobular breast carcinoma: A case report of an unusual presentation.",
+      "journal": "Radiology case reports",
+      "year": "2026",
+      "doi": "10.1016/j.radcr.2026.09.022",
+      "types": [
+        "Case Reports",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42871577/"
+    },
+    {
+      "id": "42580287",
+      "category": "case",
+      "title": "Breast implant-associated squamous cell carcinoma (BIA-SCC): Clinicopathologic analysis of two cases with radiologic-pathologic correlation and a review of the literature.",
+      "journal": "Annals of diagnostic pathology",
+      "year": "2026",
+      "doi": "10.1016/j.anndiagpath.2026.152700",
+      "types": [
+        "Journal Article",
+        "Case Reports",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42580287/"
+    },
+    {
+      "id": "42853991",
+      "category": "case",
+      "title": "Clavicular Osteoradionecrosis With 99mTc-FAPI-46 Uptake in a Patient With Breast Cancer.",
+      "journal": "Clinical nuclear medicine",
+      "year": "2026",
+      "doi": "10.1097/RLU.0000000000006471",
+      "types": [
+        "Journal Article",
+        "Case Reports"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42853991/"
+    },
+    {
+      "id": "42798849",
+      "category": "case",
+      "title": "Combination of vinorelbine capsules and the small molecule anti-angiogenic drug apatinib for first-line treatment of advanced triple-negative breast cancer with schizophrenia after failure of anthracycline and taxane therapy: A case report.",
+      "journal": "Oncology letters",
+      "year": "2026",
+      "doi": "10.3892/ol.2026.15862",
+      "types": [
+        "Case Reports",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42798849/"
+    },
+    {
+      "id": "42729416",
+      "category": "case",
+      "title": "Ectopic thyroid tissue in the breast mimicking a breast lesion: A rare case report.",
+      "journal": "Radiology case reports",
+      "year": "2026",
+      "doi": "10.1016/j.radcr.2026.07.107",
+      "types": [
+        "Case Reports",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42729416/"
+    },
+    {
+      "id": "42718563",
+      "category": "case",
+      "title": "Breast implant-associated diffuse large cell B-cell lymphoma (BIA-DLBCL) - a case report and a treatment algorithm.",
+      "journal": "JPRAS open",
+      "year": "2026",
+      "doi": "10.1016/j.jpra.2026.08.010",
+      "types": [
+        "Case Reports",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42718563/"
+    },
+    {
+      "id": "42701406",
+      "category": "case",
+      "title": "Novel approach to nipple reconstruction: First male FixNip prosthesis implantation.",
+      "journal": "JPRAS open",
+      "year": "2026",
+      "doi": "10.1016/j.jpra.2026.08.005",
+      "types": [
+        "Case Reports",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42701406/"
+    },
+    {
+      "id": "42165695",
+      "category": "case",
+      "title": "Uterine intra-leiomyoma metastasis originating from primary breast cancer: A rare entity.",
+      "journal": "International journal of gynaecology and obstetrics: the official organ of the International Federation of Gynaecology and Obstetrics",
+      "year": "2026",
+      "doi": "10.1002/ijgo.71069",
+      "types": [
+        "Journal Article",
+        "Case Reports",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42165695/"
+    },
+    {
+      "id": "41960745",
+      "category": "case",
+      "title": "Primary Inflammatory Myofibroblastic Tumour of the Breast: A Potential Diagnostic Pitfall on Aspiration Cytology.",
+      "journal": "Cytopathology : official journal of the British Society for Clinical Cytology",
+      "year": "2026",
+      "doi": "10.1111/cyt.70078",
+      "types": [
+        "Case Reports",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/41960745/"
+    },
+    {
+      "id": "41744281",
+      "category": "case",
+      "title": "Mammary-type Metaplastic Carcinoma Arising From Vulvar Hidradenoma Papilliferum: A Case Report.",
+      "journal": "International journal of gynecological pathology : official journal of the International Society of Gynecological Pathologists",
+      "year": "2026",
+      "doi": "10.1097/PGP.0000000000001157",
+      "types": [
+        "Journal Article",
+        "Case Reports"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/41744281/"
+    },
+    {
+      "id": "42876016",
+      "category": "case",
+      "title": "Primary Intermammary Breast Carcinoma Presenting With Direct Sternal Invasion: A Diagnostic Pitfall of Standard Screening Mammography.",
+      "journal": "The American journal of case reports",
+      "year": "2026",
+      "doi": "10.12659/AJCR.953831",
+      "types": [
+        "Journal Article",
+        "Case Reports"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42876016/"
+    },
+    {
+      "id": "42872284",
+      "category": "case",
+      "title": "Biopsy of Secondary Angiosarcoma Arising in Native Mastectomy Skin of a Reconstructed Breast Without Prior Radiotherapy.",
+      "journal": "Plastic and reconstructive surgery. Global open",
+      "year": "2026",
+      "doi": "10.1097/GOX.0000000000008171",
+      "types": [
+        "Case Reports",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42872284/"
+    },
+    {
+      "id": "42857343",
+      "category": "case",
+      "title": "Robot-assisted Deep Inferior Epigastric Perforator Flap Breast Reconstruction: First Reported Case in the Middle East Gulf Region.",
+      "journal": "Plastic and reconstructive surgery. Global open",
+      "year": "2026",
+      "doi": "10.1097/GOX.0000000000008153",
+      "types": [
+        "Case Reports",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42857343/"
+    },
+    {
+      "id": "42854034",
+      "category": "case",
+      "title": "Emergency treatment of acute massive hemorrhage during transbronchial lung biopsy outside operating room: Case report.",
+      "journal": "Medicine",
+      "year": "2026",
+      "doi": "10.1097/MD.0000000000050952",
+      "types": [
+        "Journal Article",
+        "Case Reports"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42854034/"
+    },
+    {
+      "id": "42866564",
+      "category": "case",
+      "title": "Distinguishing Second Primary Müllerian Cancer from Breast Cancer Recurrence: Immunohistochemical Pitfalls and a Proposed Diagnostic Algorithm: A Case Report and Literature Review.",
+      "journal": "Cancer management and research",
+      "year": "2026",
+      "doi": "10.2147/CMAR.S630391",
+      "types": [
+        "Case Reports",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42866564/"
+    },
+    {
+      "id": "42859477",
+      "category": "case",
+      "title": "Temporal Association Between Aromatase Inhibitor Initiation and New-Onset Atrial Fibrillation: A Case Report.",
+      "journal": "The Journal of pharmacy technology : jPT : official publication of the Association of Pharmacy Technicians",
+      "year": "2026",
+      "doi": "10.1177/87551225261492174",
+      "types": [
+        "Case Reports",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42859477/"
+    },
+    {
+      "id": "42851200",
+      "category": "case",
+      "title": "[Invasive breast carcinoma of no special type with glycogen-rich and signet-ring cell-like morphology: report of a case].",
+      "journal": "Zhonghua bing li xue za zhi = Chinese journal of pathology",
+      "year": "2026",
+      "doi": "10.3760/cma.j.cn112151-20260416-00276",
+      "types": [
+        "Journal Article",
+        "Case Reports"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42851200/"
+    },
+    {
+      "id": "42882392",
+      "category": "case",
+      "title": "Metachronous Metastatic Invasive Breast Carcinoma and Metastatic Small Cell Carcinoma Clinically and Radiologically Favoured to Be of Pulmonary Origin: A Case Report.",
+      "journal": "Diagnostics (Basel, Switzerland)",
+      "year": "2026",
+      "doi": "10.3390/diagnostics16193237",
+      "types": [
+        "Case Reports",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42882392/"
+    },
+    {
+      "id": "42836885",
+      "category": "case",
+      "title": "Mammary secretory carcinoma in a female domestic rabbit (Oryctolagus cuniculus): histopathological and immunohistochemical features.",
+      "journal": "Veterinary research communications",
+      "year": "2026",
+      "doi": "10.1007/s11259-026-11513-9",
+      "types": [
+        "Journal Article",
+        "Case Reports"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42836885/"
+    },
+    {
+      "id": "42703097",
+      "category": "recovery",
+      "title": "Safety and efficacy of Meridian sinew tuina (MST) for post-surgical upper limb lymphedema: a systematic review and meta-analysis.",
+      "journal": "Journal of obstetrics and gynaecology : the journal of the Institute of Obstetrics and Gynaecology",
+      "year": "2026",
+      "doi": "10.1080/01443615.2026.2723314",
+      "types": [
+        "Journal Article",
+        "Systematic Review",
+        "Meta-Analysis"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42703097/"
+    },
+    {
+      "id": "42621244",
+      "category": "recovery",
+      "title": "Complete decongestive therapy for breast cancer-related lymphedema: An evidence summary.",
+      "journal": "Asia-Pacific journal of oncology nursing",
+      "year": "2026",
+      "doi": "10.1016/j.apjon.2026.101011",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42621244/"
+    },
+    {
+      "id": "42823033",
+      "category": "recovery",
+      "title": "Optimizing Musculoskeletal Health in Breast Cancer Patients.",
+      "journal": "Physical medicine and rehabilitation clinics of North America",
+      "year": "2026",
+      "doi": "10.1016/j.pmr.2026.06.008",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42823033/"
+    },
+    {
+      "id": "42685390",
+      "category": "recovery",
+      "title": "The associations between household food insecurity and cancer: A comprehensive systematic review and meta-analysis of observational studies among adults.",
+      "journal": "Social science & medicine (1982)",
+      "year": "2026",
+      "doi": "10.1016/j.socscimed.2026.119756",
+      "types": [
+        "Journal Article",
+        "Meta-Analysis",
+        "Systematic Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42685390/"
+    },
+    {
+      "id": "42868863",
+      "category": "recovery",
+      "title": "The prevalence of cardiac dysfunction among breast cancer survivors: a systematic review and meta-analysis.",
+      "journal": "Cancer epidemiology",
+      "year": "2026",
+      "doi": "10.1016/j.canep.2026.103253",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42868863/"
+    },
+    {
+      "id": "42850372",
+      "category": "recovery",
+      "title": "The impact of the COVID-19 pandemic on breast cancer survivorship: a scoping review.",
+      "journal": "Supportive care in cancer : official journal of the Multinational Association of Supportive Care in Cancer",
+      "year": "2026",
+      "doi": "10.1007/s00520-026-11309-2",
+      "types": [
+        "Scoping Review",
+        "Journal Article"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42850372/"
+    },
+    {
+      "id": "42882937",
+      "category": "recovery",
+      "title": "The Effects of Physical and Mind-Body Exercise on Anxiety Among Patients with Breast Cancer: A Systematic Review and Meta-Analysis of Controlled Trials.",
+      "journal": "Cancers",
+      "year": "2026",
+      "doi": "10.3390/cancers18193244",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42882937/"
+    },
+    {
+      "id": "42882879",
+      "category": "recovery",
+      "title": "Mediterranean Diet Adherence Tools in Post-Treatment Breast Cancer Survivors: A Scoping Review of Measurement Approaches and Associated Outcomes.",
+      "journal": "Cancers",
+      "year": "2026",
+      "doi": "10.3390/cancers18193185",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42882879/"
+    },
+    {
+      "id": "42767056",
+      "category": "recovery",
+      "title": "From Surveillance to Intervention in Breast Cancer-Related Lymphedema: Clinical Thresholds, Longitudinal Monitoring, and Actionable Care Pathways.",
+      "journal": "Clinical breast cancer",
+      "year": "2026",
+      "doi": "10.1016/j.clbc.2026.08.024",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42767056/"
+    },
+    {
+      "id": "42759484",
+      "category": "recovery",
+      "title": "Implications of Mobile Applications for Breast Surgery: A Systematic Review.",
+      "journal": "Clinical breast cancer",
+      "year": "2026",
+      "doi": "10.1016/j.clbc.2026.08.019",
+      "types": [
+        "Journal Article",
+        "Systematic Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42759484/"
+    },
+    {
+      "id": "42540624",
+      "category": "recovery",
+      "title": "Meta-analysis of the effect of sexual health nursing interventions on improving post-treatment sexual dysfunction and partner relationship satisfaction in breast cancer patients.",
+      "journal": "Sexual medicine",
+      "year": "2026",
+      "doi": "10.1093/sexmed/qfag064",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42540624/"
+    },
+    {
+      "id": "42502425",
+      "category": "recovery",
+      "title": "Positive affect and inflammation in women with breast cancer: A systematic review.",
+      "journal": "Brain, behavior, & immunity - health",
+      "year": "2026",
+      "doi": "10.1016/j.bbih.2026.101305",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42502425/"
+    },
+    {
+      "id": "42435900",
+      "category": "recovery",
+      "title": "Should sentinel lymph node biopsy be performed in patients with early-stage breast cancer?",
+      "journal": "Journal of gynecology obstetrics and human reproduction",
+      "year": "2026",
+      "doi": "10.1016/j.jogoh.2026.103243",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42435900/"
+    },
+    {
+      "id": "42320849",
+      "category": "recovery",
+      "title": "Breast cancer disparities and their drivers in the United States.",
+      "journal": "Critical reviews in oncology/hematology",
+      "year": "2026",
+      "doi": "10.1016/j.critrevonc.2026.105444",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42320849/"
+    },
+    {
+      "id": "41759796",
+      "category": "recovery",
+      "title": "Role of physical exercise for the management of arterial hypertension in women.",
+      "journal": "Trends in cardiovascular medicine",
+      "year": "2026",
+      "doi": "10.1016/j.tcm.2026.02.010",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/41759796/"
+    },
+    {
+      "id": "42865382",
+      "category": "recovery",
+      "title": "Topical herbal medicine as treatment for chemotherapy-induced peripheral neuropathy: a systematic review of randomized controlled trials.",
+      "journal": "Frontiers in oncology",
+      "year": "2026",
+      "doi": "10.3389/fonc.2026.1920042",
+      "types": [
+        "Journal Article",
+        "Systematic Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42865382/"
+    },
+    {
+      "id": "42835068",
+      "category": "recovery",
+      "title": "Comparative effectiveness of non-surgical interventions and their combinations for the prevention of breast cancer-related lymphedema: a systematic review and Bayesian network meta-analysis.",
+      "journal": "Frontiers in oncology",
+      "year": "2026",
+      "doi": "10.3389/fonc.2026.1940372",
+      "types": [
+        "Journal Article",
+        "Systematic Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42835068/"
+    },
+    {
+      "id": "42758377",
+      "category": "recovery",
+      "title": "This is not your fault: a reflection on cancer and pregnancy loss.",
+      "journal": "Journal of cancer survivorship : research and practice",
+      "year": "2026",
+      "doi": "10.1007/s11764-026-02121-2",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42758377/"
+    },
+    {
+      "id": "42754095",
+      "category": "recovery",
+      "title": "Navigating uncertainties and evidence gaps in adjuvant therapy for premenopausal women with HR+/HER2- breast cancer.",
+      "journal": "Annals of oncology : official journal of the European Society for Medical Oncology",
+      "year": "2026",
+      "doi": "10.1016/j.annonc.2026.09.005",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42754095/"
+    },
+    {
+      "id": "42819093",
+      "category": "recovery",
+      "title": "Applications of virtual reality technology throughout the perioperative period in breast cancer patients: a scoping review.",
+      "journal": "Frontiers in oncology",
+      "year": "2026",
+      "doi": "10.3389/fonc.2026.1926450",
+      "types": [
+        "Journal Article",
+        "Systematic Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42819093/"
+    },
+    {
+      "id": "42756599",
+      "category": "recovery",
+      "title": "Breast Cancer Care in Ghana: A Review of the Continuum of Care and Progress Toward Universal Health Coverage.",
+      "journal": "International journal of breast cancer",
+      "year": "2026",
+      "doi": "10.1155/ijbc/3787700",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42756599/"
+    },
+    {
+      "id": "42799105",
+      "category": "recovery",
+      "title": "Climate change, environmental exposures, and breast cancer: advancing climate-resilient oncology through sustainable development goal 13.",
+      "journal": "Frontiers in public health",
+      "year": "2026",
+      "doi": "10.3389/fpubh.2026.1841967",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42799105/"
+    },
+    {
+      "id": "42798445",
+      "category": "recovery",
+      "title": "Integrated TCM and Western medicine rehabilitation program after breast cancer surgery: a best evidence summary.",
+      "journal": "Frontiers in medicine",
+      "year": "2026",
+      "doi": "10.3389/fmed.2026.1930722",
+      "types": [
+        "Journal Article",
+        "Systematic Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42798445/"
+    },
+    {
+      "id": "42794901",
+      "category": "recovery",
+      "title": "Delayed Lymphatic Reconstruction for Breast Cancer-Related Lymphedema.",
+      "journal": "Cancers",
+      "year": "2026",
+      "doi": "10.3390/cancers18182934",
+      "types": [
+        "Journal Article",
+        "Review"
+      ],
+      "url": "https://pubmed.ncbi.nlm.nih.gov/42794901/"
+    }
+  ],
+  "trials": [
+    {
+      "id": "NCT05758948",
+      "title": "Detection of Germline and Somatic Pathogenic Variants in Patients With de Novo Metastatic Breast Cancer",
+      "date": "2026-10-16",
+      "status": "COMPLETED",
+      "phases": [],
+      "conditions": [
+        "Metastatic Breast Cancer"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 101,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT05758948"
+    },
+    {
+      "id": "NCT07878377",
+      "title": "Screening and the Future of Enhanced MRI for Early Breast Cancer Detection",
+      "date": "2026-10-16",
+      "status": "NOT_YET_RECRUITING",
+      "phases": [
+        "NA"
+      ],
+      "conditions": [
+        "Breast Cancer Detection",
+        "Breast Cancer",
+        "Screening Strategy"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 2628,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07878377"
+    },
+    {
+      "id": "NCT00034216",
+      "title": "Collection of Blood From Patients With Cancer",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Prostate Cancer",
+        "Breast Cancer",
+        "Colon Cancer",
+        "Lung Cancer",
+        "Liver Cancer"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 1750,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT00034216"
+    },
+    {
+      "id": "NCT07391774",
+      "title": "Testing Whether Hormone Therapy With Ribociclib is as Effective as Chemotherapy Followed by Hormone Therapy With Ribociclib for the Treatment of High Anatomic Stage Breast Cancer With Low Recurrence Risk, The RxFINE-Low Trial",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE3"
+      ],
+      "conditions": [
+        "Anatomic Stage II Breast Cancer AJCC v8",
+        "Anatomic Stage IIIA Breast Cancer AJCC v8",
+        "Anatomic Stage IIIC Breast Cancer AJCC v8",
+        "Estrogen Receptor-Positive Breast Carcinoma",
+        "HER2-Negative Breast Carcinoma"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 1978,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07391774"
+    },
+    {
+      "id": "NCT01992432",
+      "title": "Brain Functional MRI in Older Women With Breast Cancer (Brain fMRI-BC)",
+      "date": "2026-10-16",
+      "status": "ACTIVE_NOT_RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Breast Cancer"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 49,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT01992432"
+    },
+    {
+      "id": "NCT04841148",
+      "title": "Avelumab or Hydroxychloroquine With or Without Palbociclib to Eliminate Dormant Breast Cancer",
+      "date": "2026-10-16",
+      "status": "ACTIVE_NOT_RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 96,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT04841148"
+    },
+    {
+      "id": "NCT02484404",
+      "title": "Phase I/II Study of the Anti-Programmed Death Ligand-1 Durvalumab Antibody (MEDI4736) in Combination With Olaparib and/or Cediranib for Advanced Solid Tumors and Advanced or Recurrent Ovarian, Triple Negative Breast, Lung, Prostate and Colorectal Can...",
+      "date": "2026-10-16",
+      "status": "ACTIVE_NOT_RECRUITING",
+      "phases": [
+        "PHASE1",
+        "PHASE2"
+      ],
+      "conditions": [
+        "Colorectal Neoplasms",
+        "Breast Neoplasms"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 268,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT02484404"
+    },
+    {
+      "id": "NCT06465069",
+      "title": "A Study of LY4052031 in Participants With Advanced or Metastatic Urothelial Cancer or Other Solid Tumors",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE1"
+      ],
+      "conditions": [
+        "Metastatic Solid Tumor",
+        "Recurrent Solid Tumor",
+        "Advanced Solid Tumor",
+        "Urinary Bladder Neoplasm",
+        "Triple Negative Breast Cancer",
+        "Non-small Cell Lung Cancer",
+        "Esophageal Cancer",
+        "Pancreatic Cancer",
+        "Ovarian Cancer",
+        "Cervical Cancer",
+        "Head and Neck Squamous Cell Carcinoma",
+        "Prostate Cancer",
+        "Renal Pelvis Cancer",
+        "Bladder Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 460,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06465069"
+    },
+    {
+      "id": "NCT07878598",
+      "title": "Efficacy of Complete Decongestive Therapy for Limb Lymphedema: Response Profile and Predictive Modeling",
+      "date": "2026-10-16",
+      "status": "COMPLETED",
+      "phases": [],
+      "conditions": [
+        "Lymphedema",
+        "Secondary Lymphedema",
+        "Breast Cancer-Related Lymphedema",
+        "Upper Extremity Lymphedema",
+        "Lower Extremity Lymphedema After Gynecologic Cancer Surgery"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 150,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07878598"
+    },
+    {
+      "id": "NCT04222413",
+      "title": "Metarrestin (ML-246) in Subjects With Metastatic Solid Tumors",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE1"
+      ],
+      "conditions": [
+        "Advanced Solid Tumors",
+        "Metastatic Pancreatic Cancer",
+        "Pediatric Solid Tumor",
+        "Advanced Breast Cancer",
+        "Malignant Peripheral Nerve Sheath Tumor",
+        "Colorectal Neoplasms"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 116,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT04222413"
+    },
+    {
+      "id": "NCT06450873",
+      "title": "Turkey Tail Mushroom for Treating Post-Menopausal Women With HER2-Negative ER-Positive Breast Cancer Undergoing Surgery",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Estrogen Receptor-Positive Breast Carcinoma",
+        "HER2-Negative Breast Carcinoma"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 40,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06450873"
+    },
+    {
+      "id": "NCT02928978",
+      "title": "Ruxolitinib for Premalignant Breast Disease",
+      "date": "2026-10-16",
+      "status": "COMPLETED",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Ductal Carcinoma In Situ",
+        "Atypical Lobular Hyperplasia",
+        "Atypical Ductal Hyperplasia",
+        "Lobular Carcinoma In Situ"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 84,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT02928978"
+    },
+    {
+      "id": "NCT03412877",
+      "title": "Administration of Autologous T-Cells Genetically Engineered to Express T-Cell Receptors Reactive Against Neoantigens in People With Metastatic Cancer",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Endocrine Tumors",
+        "Non-Small Cell Lung Cancer",
+        "Ovarian Cancer",
+        "Breast Cancer",
+        "Gastrointestinal/Genitourinary Cancers",
+        "Neuroendocrine Tumors",
+        "Multiple Myeloma"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 285,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT03412877"
+    },
+    {
+      "id": "NCT07297667",
+      "title": "GCAR1, a Chimeric Antigen Receptor (CAR) T-CELL Therapy for Relapsed/Refractory GPNMB-Expressing Solid Tumours",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE1"
+      ],
+      "conditions": [
+        "Alveolar Soft Part Sarcoma",
+        "Renal Cell Carcinoma",
+        "Triple Negative Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 30,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07297667"
+    },
+    {
+      "id": "NCT00068003",
+      "title": "Harvesting Cells for Experimental Cancer Treatments",
+      "date": "2026-10-16",
+      "status": "ENROLLING_BY_INVITATION",
+      "phases": [],
+      "conditions": [
+        "Melanoma",
+        "Gastrointestinal Cancer",
+        "Metastatic Cancer",
+        "Breast Cancer",
+        "Non-Small Cell Lung Cancer"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 7000,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT00068003"
+    },
+    {
+      "id": "NCT07085442",
+      "title": "Audit of Targeted Sentinel Node Biopsy (TSNB) in Patients With Limited Nodal Disease Undergoing Primary Surgery",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Breast Cancer",
+        "Axillary Lymph Nodes Dissection",
+        "Axillary Metastases",
+        "Sentinel Lymph Node Biopsy (SLNB)",
+        "Node Positive Breast Cancer",
+        "Axilla; Breast",
+        "Axillary Ultrasound"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 400,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07085442"
+    },
+    {
+      "id": "NCT07092254",
+      "title": "Patterns of Care and Outcomes in Locally Recurrent Inoperable or Metastatic Triple-Negative Breast Cancer",
+      "date": "2026-10-16",
+      "status": "ACTIVE_NOT_RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Triple Negative Breast Cancer"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 760,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07092254"
+    },
+    {
+      "id": "NCT06774027",
+      "title": "Prospective Registry of ADC as First- and Second-line Treatment for Breast Cancer",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [],
+      "conditions": [
+        "HER2-negative Breast Cancer",
+        "HER2 Negative Breast Carcinoma",
+        "Metastatic Breast Cancer",
+        "HR+ HER2 Breast Cancer",
+        "Metastatic Triple Negative Breast Cancers",
+        "Metastatic Triple-Negative Breast Carcinoma"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 100,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06774027"
+    },
+    {
+      "id": "NCT06760637",
+      "title": "Study of PF-07220060 With Letrozole in Adults With HR-positive HER2-negative Breast Cancer Who Have Not Received Anticancer Treatment for Advanced/Metastatic Disease",
+      "date": "2026-10-16",
+      "status": "ACTIVE_NOT_RECRUITING",
+      "phases": [
+        "PHASE3"
+      ],
+      "conditions": [
+        "Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 1035,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06760637"
+    },
+    {
+      "id": "NCT03030404",
+      "title": "Hereditary Gastric Cancer Syndromes: An Integrated Genomic and Clinicopathologic Study of the Predisposition to Gastric Cancer",
+      "date": "2026-10-16",
+      "status": "COMPLETED",
+      "phases": [],
+      "conditions": [
+        "Stomach Neoplasms",
+        "Stomach Cancer",
+        "Gastric Adenocarcinoma and Proximal Polyposis of the Stomach (GAPPS)",
+        "Hereditary Diffuse Gastric Cancer (HDGC)",
+        "Familial Diffuse Gastric Cancer"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 733,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT03030404"
+    },
+    {
+      "id": "NCT07137416",
+      "title": "Testing the Safety of the Combination of Anti-Cancer Drugs CX-5461 (Pidnarulex) and Trastuzumab Deruxtecan (T-DXd) for Human Epidermal Growth Factor Receptor 2 (HER2)-Positive Solid Tumors and Breast Cancer",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE1"
+      ],
+      "conditions": [
+        "Anatomic Stage III Breast Cancer AJCC v8",
+        "Anatomic Stage IV Breast Cancer AJCC v8",
+        "Invasive Breast Carcinoma",
+        "Locally Advanced Breast Carcinoma",
+        "Metastatic Breast Carcinoma",
+        "Metastatic HER2-Low Breast Carcinoma",
+        "Metastatic HER2-Positive Breast Carcinoma",
+        "Metastatic Hormone Receptor-Positive Breast Carcinoma",
+        "Metastatic Malignant Solid Neoplasm",
+        "Metastatic Triple-Negative Breast Carcinoma",
+        "Unresectable Breast Carcinoma",
+        "Unresectable HER2-Low Breast Carcinoma",
+        "Unresectable HER2-Positive Breast Carcinoma",
+        "Unresectable Hormone Receptor-Positive Breast Carcinoma",
+        "Unresectable Malignant Solid Neoplasm",
+        "Unresectable Triple-Negative Breast Carcinoma"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 36,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07137416"
+    },
+    {
+      "id": "NCT07532096",
+      "title": "Extended Sentinel Lymph Node Biopsy With Methylene Blue Single Tracer Post-Neoadjuvant Therapy for Node-Positive Breast Cancer",
+      "date": "2026-10-16",
+      "status": "ACTIVE_NOT_RECRUITING",
+      "phases": [
+        "NA"
+      ],
+      "conditions": [
+        "Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 240,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07532096"
+    },
+    {
+      "id": "NCT06417801",
+      "title": "Minimally Interventional Study on Prevalence of Emerging ESR1 Mutations in Liquid Biopsy in Three Cohorts of Patients With Breast Cancer in Comparison With Patient's Baseline ESR1 Mutation Status as Defined by Tissue Profiling.",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Metastatic Breast Cancer"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 170,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06417801"
+    },
+    {
+      "id": "NCT04305834",
+      "title": "Abemaciclib and Endocrine Therapy in Older Patients With Breast Cancer.",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Anatomic Stage IV Breast Cancer AJCC v8",
+        "Hormone Receptor Positive Breast Carcinoma",
+        "Metastatic Breast Carcinoma",
+        "Prognostic Stage IV Breast Cancer AJCC v8"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 43,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT04305834"
+    },
+    {
+      "id": "NCT02747004",
+      "title": "A Study of Abemaciclib (LY2835219) Plus Tamoxifen or Abemaciclib Alone in Women With Metastatic Breast Cancer",
+      "date": "2026-10-16",
+      "status": "COMPLETED",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Metastatic Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 234,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT02747004"
+    },
+    {
+      "id": "NCT07721259",
+      "title": "A Vaccine (STEMVAC) for Improving Survival in Patients With Triple-Negative Breast Cancer and Moderate or Extensive Residual Cancer Burden",
+      "date": "2026-10-16",
+      "status": "NOT_YET_RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Anatomic Stage I Breast Cancer AJCC v8",
+        "Anatomic Stage II Breast Cancer AJCC v8",
+        "Anatomic Stage III Breast Cancer AJCC v8",
+        "Triple-Negative Breast Carcinoma"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 60,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07721259"
+    },
+    {
+      "id": "NCT06253520",
+      "title": "Autologous T-cells Genetically Engineered to Express Receptors Reactive Against KRAS Mutations in Conjunction With a Vaccine Directed Against These Antigens in Participants With Metastatic Cancer",
+      "date": "2026-10-16",
+      "status": "ACTIVE_NOT_RECRUITING",
+      "phases": [
+        "PHASE1"
+      ],
+      "conditions": [
+        "Metastatic Solid Cancers",
+        "Colorectal Cancer",
+        "Breast Cancer",
+        "Non-Small Cell Lung Cancer",
+        "Gastrointestinal Cancer",
+        "Ovarian Cancer",
+        "Genitourinary Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 210,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06253520"
+    },
+    {
+      "id": "NCT07877740",
+      "title": "Feasibility of a Standardized Fascial Plane Block Protocol for Breast Cancer Surgery",
+      "date": "2026-10-16",
+      "status": "NOT_YET_RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Breast Cancer Surgery",
+        "Locoregional Anaesthesia",
+        "Hypnosis",
+        "Fascial Plane Block"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 65,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07877740"
+    },
+    {
+      "id": "NCT07767474",
+      "title": "A Study to Evaluate ATX-898 in Participants With Advanced Solid Tumors",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE1",
+        "PHASE2"
+      ],
+      "conditions": [
+        "Advanced Solid Tumors"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 343,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07767474"
+    },
+    {
+      "id": "NCT05301114",
+      "title": "Social Risk Factors and Discrimination in Cancer Survivorship",
+      "date": "2026-10-16",
+      "status": "COMPLETED",
+      "phases": [
+        "NA"
+      ],
+      "conditions": [
+        "Social Determinants of Health",
+        "Breast Cancer",
+        "Prostate Cancer",
+        "Health Equity",
+        "Disparities"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 506,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT05301114"
+    },
+    {
+      "id": "NCT07843212",
+      "title": "Effects of SPSIP Block on Perioperative Inflammation and TLR4 in Breast Cancer Surgery",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "NA"
+      ],
+      "conditions": [
+        "Serratus Posterior Superior Intercostal Plane Block (SPSIPB)",
+        "Breast Cancer",
+        "Toll-Like Receptors"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 80,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07843212"
+    },
+    {
+      "id": "NCT07764744",
+      "title": "Ovarian Cancer Liquid Biopsy for Early Assessment & Detection in Individuals With BRCA1/2 Pathogenic Variants",
+      "date": "2026-10-16",
+      "status": "NOT_YET_RECRUITING",
+      "phases": [
+        "NA"
+      ],
+      "conditions": [
+        "Ovarian Neoplasms",
+        "BRCA 1 Gene Mutation",
+        "BRCA 2 Gene Mutation",
+        "Serous Tubal Intraepithelial Carcinoma",
+        "Early Detection of Ovarian Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 70,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07764744"
+    },
+    {
+      "id": "NCT06458413",
+      "title": "Utidelone Capsule Plus Capecitabine (CAP) for Metastatic Breast Cancer",
+      "date": "2026-10-16",
+      "status": "ACTIVE_NOT_RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Breast Cancer Recurrent"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 40,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06458413"
+    },
+    {
+      "id": "NCT05296577",
+      "title": "Anlotinib Combination With Vinorelbine in the HER2- Advanced Breast Cancer",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 134,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT05296577"
+    },
+    {
+      "id": "NCT07328516",
+      "title": "Natural History Study of Early Life Exposures in Agriculture (ELEA)",
+      "date": "2026-10-16",
+      "status": "ENROLLING_BY_INVITATION",
+      "phases": [],
+      "conditions": [
+        "Prostate Cancer",
+        "Leukemia",
+        "Breast Cancer",
+        "Melanoma",
+        "Colorectal Cancer"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 64277,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07328516"
+    },
+    {
+      "id": "NCT00469339",
+      "title": "Risk Communication Within Mexican-American Families",
+      "date": "2026-10-16",
+      "status": "COMPLETED",
+      "phases": [],
+      "conditions": [
+        "Breast Cancer",
+        "Diabetes",
+        "Colon Cancer",
+        "Cardiovascular Disease"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 498,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT00469339"
+    },
+    {
+      "id": "NCT06855524",
+      "title": "Fucoidan for Preventing Chemotherapy-Related Fatigue in Patients With Gastrointestinal, Gynecological, Breast, or Lung Cancer",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Malignant Digestive System Neoplasm",
+        "Malignant Female Reproductive System Neoplasm",
+        "Breast Carcinoma",
+        "Lung Carcinoma",
+        "Malignant Solid Neoplasm"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 34,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06855524"
+    },
+    {
+      "id": "NCT06586957",
+      "title": "A Study With NKT3964 for Adults With Advanced/Metastatic Solid Tumors",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE1"
+      ],
+      "conditions": [
+        "Solid Tumor",
+        "Advanced Solid Tumor",
+        "Solid Tumor, Adult",
+        "Metastatic Tumor",
+        "Ovarian Cancer",
+        "Ovarian Neoplasms",
+        "Ovarian Carcinoma",
+        "Metastatic Ovarian Carcinoma",
+        "Endometrial Neoplasms",
+        "Endometrial Diseases",
+        "Metastatic Endometrial Cancer",
+        "Triple Negative Breast Cancer",
+        "Metastatic Endometrial Carcinoma",
+        "Advanced Endometrial Carcinoma",
+        "Advanced Ovarian Carcinoma",
+        "Gastric Cancer",
+        "Advanced Gastric Carcinoma",
+        "Metastatic Gastric Cancer",
+        "Metastatic Gastric Carcinoma",
+        "Small Cell Lung Cancer",
+        "Small Cell Lung Carcinoma",
+        "Triple Negative Breast Neoplasms",
+        "Platinum-resistant Ovarian Cancer",
+        "Platinum-refractory Ovarian Carcinoma",
+        "CCNE1 Amplification",
+        "Hormone Receptor Negative Breast Carcinoma",
+        "Human Epidermal Growth Factor 2 Negative Carcinoma of Breast",
+        "Progesterone-receptor-positive Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 238,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06586957"
+    },
+    {
+      "id": "NCT06663748",
+      "title": "ARX788 in HER2-positive Metastatic Breast Cancer Patients",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "HER2-positive, Metastatic Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 44,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06663748"
+    },
+    {
+      "id": "NCT07877376",
+      "title": "Impact of Cognitive Impairment on Chronic Pain in Breast Cancer",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Breast Cancer"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 182,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07877376"
+    },
+    {
+      "id": "NCT05335473",
+      "title": "Iribrine Plus Tucidinostat in the Treatment of HR+/HER2 Advanced Breast Cancer After CDK4/6 Inhibitor Failure",
+      "date": "2026-10-16",
+      "status": "TERMINATED",
+      "phases": [
+        "PHASE1",
+        "PHASE2"
+      ],
+      "conditions": [
+        "HR Positive HER2 Negative Advanced Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 34,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT05335473"
+    },
+    {
+      "id": "NCT00006421",
+      "title": "Breast Imaging Studies in Women at High Genetic Risk of Breast Cancer: Annual Follow-Up Study",
+      "date": "2026-10-16",
+      "status": "COMPLETED",
+      "phases": [],
+      "conditions": [
+        "Breast Cancer"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 200,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT00006421"
+    },
+    {
+      "id": "NCT02830724",
+      "title": "Administering Peripheral Blood Lymphocytes Transduced With a CD70-Binding Chimeric Antigen Receptor to People With CD70 Expressing Cancers",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE1",
+        "PHASE2"
+      ],
+      "conditions": [
+        "Pancreatic Cancer",
+        "Renal Cell Cancer",
+        "Breast Cancer",
+        "Melanoma",
+        "Ovarian Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 124,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT02830724"
+    },
+    {
+      "id": "NCT05328440",
+      "title": "Treatment of Dalpiciclib Combined With Pyrotinib for Trastuzumab-sensitive HER2+ Advanced Breast Cancer(DAP-Her-02)",
+      "date": "2026-10-16",
+      "status": "ACTIVE_NOT_RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Breast Neoplasms"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 120,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT05328440"
+    },
+    {
+      "id": "NCT05827081",
+      "title": "Phase IIIb Study of Ribociclib + ET in Early Breast Cancer",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE3"
+      ],
+      "conditions": [
+        "Early Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 1444,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT05827081"
+    },
+    {
+      "id": "NCT06773897",
+      "title": "Rutgers University Study of the Genetics of Breast Cancer.",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Breast Cancer Risk",
+        "Breast Cancer Prevention",
+        "Breast Cancer"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 25000,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06773897"
+    },
+    {
+      "id": "NCT07501637",
+      "title": "Mind-Body Group Interventions for Psychological Distress in Young Breast Cancer Survivors",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "NA"
+      ],
+      "conditions": [
+        "Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 30,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07501637"
+    },
+    {
+      "id": "NCT07492641",
+      "title": "BGB-43395 Plus Letrozole Versus CDK4/6i Plus Letrozole for Patients With Advanced or Metastatic HR+/HER2- Breast Cancer Who Have Not Received Prior Treatment for Advanced or Metastatic Disease",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE3"
+      ],
+      "conditions": [
+        "HR+/HER2- Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 1056,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07492641"
+    },
+    {
+      "id": "NCT00475761",
+      "title": "Breast Mammogram and Tissue Study",
+      "date": "2026-10-16",
+      "status": "COMPLETED",
+      "phases": [],
+      "conditions": [
+        "Breast Neoplasms"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 466,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT00475761"
+    },
+    {
+      "id": "NCT06633276",
+      "title": "Fast and Accurate Breast Cancer Diagnosis Using Nanopore Sequencing in Tanzania (Fast-ABCD Sequencing)",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Breast Cancer Invasive"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 100,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06633276"
+    },
+    {
+      "id": "NCT07741968",
+      "title": "A Blended e-Health Intervention to Improve Fear of Progression in Women With Gynecologic or Breast Cancer",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "NA"
+      ],
+      "conditions": [
+        "Anatomic Stage I Breast Cancer AJCC v8",
+        "Anatomic Stage II Breast Cancer AJCC v8",
+        "Anatomic Stage III Breast Cancer AJCC v8",
+        "Anatomic Stage IV Breast Cancer AJCC v8",
+        "Breast Carcinoma",
+        "Breast Mixed Epithelial/Mesenchymal Metaplastic Carcinoma",
+        "Endometrial Carcinoma",
+        "Malignant Female Reproductive System Neoplasm",
+        "Ovarian Carcinoma",
+        "Ovarian Carcinosarcoma",
+        "Stage III Cervical Cancer AJCC v8",
+        "Stage III Vaginal Cancer AJCC v8",
+        "Stage III Vulvar Cancer AJCC v8",
+        "Stage IV Cervical Cancer AJCC v8",
+        "Stage IV Vaginal Cancer AJCC v8",
+        "Stage IV Vulvar Cancer AJCC v8",
+        "Triple-Negative Breast Carcinoma",
+        "Uterine Corpus Carcinosarcoma"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 126,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07741968"
+    },
+    {
+      "id": "NCT07426952",
+      "title": "Weight Management After Cancer for Survivors in Rural Communities",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "NA"
+      ],
+      "conditions": [
+        "Breast Cancer Survivorship",
+        "Weight Management",
+        "Cardiovascular (CV) Risk",
+        "Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 40,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07426952"
+    },
+    {
+      "id": "NCT01441089",
+      "title": "Collection of Blood From Patients With Cancer, Other Tumors, or Tumor Predisposition Syndromes for Genetic Analysis",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Prostate Cancer",
+        "Breast Cancer",
+        "Lung Cancer",
+        "Ovarian Cancer",
+        "Lymphoma"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 1100,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT01441089"
+    },
+    {
+      "id": "NCT05894239",
+      "title": "A Study to Evaluate the Efficacy and Safety of Inavolisib in Combination With Phesgo Versus Placebo in Combination With Phesgo in Participants With PIK3CA-Mutated HER2-Positive Locally Advanced or Metastatic Breast Cancer",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE3"
+      ],
+      "conditions": [
+        "Metastatic Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 230,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT05894239"
+    },
+    {
+      "id": "NCT04561297",
+      "title": "Assessing Tissue Dielectric Constant (TDC) to Differentiate Breast Cancer Breast Cancer From Healthy Breasts",
+      "date": "2026-10-16",
+      "status": "COMPLETED",
+      "phases": [
+        "NA"
+      ],
+      "conditions": [
+        "Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 59,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT04561297"
+    },
+    {
+      "id": "NCT07643584",
+      "title": "De-Escalation of Axillary Management in Advanced Nodal Disease",
+      "date": "2026-10-16",
+      "status": "NOT_YET_RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 120,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07643584"
+    },
+    {
+      "id": "NCT03377387",
+      "title": "Capecitabine 7/7 Schedule With Neratinib in Patients With Metastatic HER2-Positive Breast Cancer",
+      "date": "2026-10-16",
+      "status": "COMPLETED",
+      "phases": [
+        "PHASE1",
+        "PHASE2"
+      ],
+      "conditions": [
+        "Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 34,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT03377387"
+    },
+    {
+      "id": "NCT03955627",
+      "title": "REJOIN Trial for Older Breast Cancer Survivors",
+      "date": "2026-10-16",
+      "status": "COMPLETED",
+      "phases": [
+        "NA"
+      ],
+      "conditions": [
+        "Breast Cancer Female"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 12,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT03955627"
+    },
+    {
+      "id": "NCT06218303",
+      "title": "Prototype DAA/TAA Vaccine Targeting MUC1 for Immune Interception and Prevention in Ductal Carcinoma In Situ",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE1"
+      ],
+      "conditions": [
+        "Ductal Carcinoma in Situ"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 50,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06218303"
+    },
+    {
+      "id": "NCT07619534",
+      "title": "Collection of CSF Samples From Participants With Metastatic Triple Negative Breast Cancer (TNBC) and HER2+ Breast Cancer With no Prior History Nor Active Radiographically Detectable Brain Metastases",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Breast Cancer",
+        "Breast Carcinoma",
+        "Cancer of the Breast",
+        "Malignant Neoplasm of Breast"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 139,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07619534"
+    },
+    {
+      "id": "NCT05561842",
+      "title": "Tablet-based Mobile Health Ultrasound for Point-of-care Breast Cancer Diagnosis in Nigeria (Mobile Health: Technology and Outcomes in Low and Middle-Income Countries)",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Breast Cancer",
+        "Breast Cancer Female"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 900,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT05561842"
+    },
+    {
+      "id": "NCT00451022",
+      "title": "Follow-Up Study of Subjects Previously Enrolled in Poxviral Vector Gene Transfer Studies",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Prostate Cancer",
+        "Liver Cancer",
+        "Breast Cancer",
+        "Colon Cancer",
+        "Lung Cancer"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 750,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT00451022"
+    },
+    {
+      "id": "NCT01174121",
+      "title": "Immunotherapy Using Tumor Infiltrating Lymphocytes for Patients With Metastatic Cancer",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Metastatic Colorectal Cancer",
+        "Metastatic Pancreatic Cancer",
+        "Metastatic Ovarian Cancer",
+        "Metastatic Breast Carcinoma",
+        "Metastatic Endocrine Tumors/ Neuroendocrine Tumors"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 332,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT01174121"
+    },
+    {
+      "id": "NCT06028022",
+      "title": "Reishi Mushroom Extract for Fatigue and/or Arthralgias/Myalgias in Patients With Breast Cancer on Aromatase Inhibitors",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Estrogen Receptor-Positive Breast Carcinoma"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 80,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06028022"
+    },
+    {
+      "id": "NCT06548646",
+      "title": "Ultrasound-guided Thoracic Interfascial Plane Nerve Block Versus Erector Spinae Plane Block for Pain Control After Modified Radical Mastectomy",
+      "date": "2026-10-16",
+      "status": "COMPLETED",
+      "phases": [
+        "NA"
+      ],
+      "conditions": [
+        "Postoperative Pain Following Modified Radical Mastectomy for Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 200,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06548646"
+    },
+    {
+      "id": "NCT00823654",
+      "title": "Serum Biomarkers to Characterize the Effects of Therapy on Ovarian Reserve in Premenopausal Women With Early-stage Breast Cancer or BRCA Mutations",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [],
+      "conditions": [
+        "Breast Cancer"
+      ],
+      "studyType": "OBSERVATIONAL",
+      "enrollment": {
+        "count": 609,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT00823654"
+    },
+    {
+      "id": "NCT07683754",
+      "title": "T-DXd Based Therapy Followed by Endocrine Therapy Plus Dual HER2 Blockade in First-line HER2+/ HR+ Metastatic Breast Cancer and Retreatment With T-DXd",
+      "date": "2026-10-16",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE3"
+      ],
+      "conditions": [
+        "Advanced Breast Cancer",
+        "Metastatic Breast Cancer",
+        "HER2 Positive",
+        "HR Positive"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 200,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07683754"
+    },
+    {
+      "id": "NCT04180371",
+      "title": "Study BT5528-100 in Patients With Advanced Solid Tumors Associated With EphA2 Expression",
+      "date": "2026-10-16",
+      "status": "ACTIVE_NOT_RECRUITING",
+      "phases": [
+        "PHASE1",
+        "PHASE2"
+      ],
+      "conditions": [
+        "Advanced Solid Tumor Historically Known for High EphA2 Expression",
+        "Urothelial Cancer",
+        "Ovarian Cancer",
+        "Non-small Cell Lung Cancer",
+        "Head and Neck Cancer",
+        "Triple Negative Breast Cancer",
+        "Gastric/Upper Gastrointestinal Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 288,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT04180371"
+    },
+    {
+      "id": "NCT07436663",
+      "title": "Comparative Study Between (SGLT-2i) and (DPP-4i) in the Prevention of DIC",
+      "date": "2026-10-15",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE4"
+      ],
+      "conditions": [
+        "Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 150,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07436663"
+    },
+    {
+      "id": "NCT03766009",
+      "title": "Increasing Patients' Engagement in Breast Cancer Surgery Decision-Making",
+      "date": "2026-10-15",
+      "status": "COMPLETED",
+      "phases": [
+        "NA"
+      ],
+      "conditions": [
+        "Breast Cancer Stage 0",
+        "Breast Cancer Stage I",
+        "Breast Cancer Stage II",
+        "Breast Cancer Stage III"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 627,
+        "type": "ACTUAL"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT03766009"
+    },
+    {
+      "id": "NCT06545331",
+      "title": "Study of XB010 in Subjects With Solid Tumors",
+      "date": "2026-10-15",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE1"
+      ],
+      "conditions": [
+        "Locally Advanced or Metastatic Solid Tumors",
+        "Esophageal Squamous Cell Cancer",
+        "Head and Neck Squamous Cell Cancer",
+        "NSCLC (Non-small Cell Lung Cancer)",
+        "Hormone-receptor-positive Breast Cancer",
+        "Triple Negative Breast Cancer (TNBC)"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 396,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06545331"
+    },
+    {
+      "id": "NCT07876557",
+      "title": "A Clinical Study to Evaluate the Efficacy and Safety of JS212 Monotherapy or Combination Therapy in Recurrent or Metastatic Triple-negative Breast Cancer(TNBC)",
+      "date": "2026-10-15",
+      "status": "NOT_YET_RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "Triple-negative Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 184,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07876557"
+    },
+    {
+      "id": "NCT07541105",
+      "title": "Cancer Awareness Among Syrian Migrants",
+      "date": "2026-10-15",
+      "status": "NOT_YET_RECRUITING",
+      "phases": [
+        "NA"
+      ],
+      "conditions": [
+        "Breast Cancer Screening",
+        "Cervical Cancer Screening",
+        "Colorectal Cancer Screening",
+        "Cancer Prevention Behavior"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 30,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07541105"
+    },
+    {
+      "id": "NCT06120283",
+      "title": "BGB-43395 Alone or as Part of Combination Therapies in Participants With Breast Cancer and Other Advanced Solid Tumors",
+      "date": "2026-10-15",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE1"
+      ],
+      "conditions": [
+        "Advanced Solid Tumor",
+        "Advanced Breast Cancer",
+        "Metastatic Breast Cancer",
+        "Hormone-receptor-positive Breast Cancer",
+        "Hormone Receptor Positive Breast Carcinoma",
+        "Hormone Receptor Positive Malignant Neoplasm of Breast",
+        "HER2-negative Breast Cancer",
+        "Hormone Receptor Positive HER-2 Negative Breast Cancer"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 433,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT06120283"
+    },
+    {
+      "id": "NCT07726342",
+      "title": "SMP-656 for HER2-Positive Advanced Breast Cancer",
+      "date": "2026-10-15",
+      "status": "RECRUITING",
+      "phases": [
+        "PHASE2"
+      ],
+      "conditions": [
+        "HER2-positive Breast Cancer",
+        "Metastatic Breast Cancer",
+        "Locally Advanced Breast Cancer (LABC)"
+      ],
+      "studyType": "INTERVENTIONAL",
+      "enrollment": {
+        "count": 60,
+        "type": "ESTIMATED"
+      },
+      "url": "https://clinicaltrials.gov/study/NCT07726342"
+    }
+  ],
+  "fda": [
+    {
+      "title": "FDA approves tucatinib with trastuzumab and pertuzumab for the maintenance treatment of HER2-positive breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-tucatinib-trastuzumab-and-pertuzumab-maintenance-treatment-her2-positive-breast-cancer",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves imlunestrant in combination with abemaciclib for ER-positive, HER2-negative, ESR1-mutated advanced or metastatic breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-imlunestrant-combination-abemaciclib-er-positive-her2-negative-esr1-mutated-advanced-or",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA grants accelerated approval to camizestrant with a CDK4/6 inhibitor for ESR1-Mutated HR-positive, HER2-negative locally advanced or metastatic breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-grants-accelerated-approval-camizestrant-cdk46-inhibitor-esr1-mutated-hr-positive-her2-negative",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves gedatolisib with fulvestrant, with or without palbociclib, for HR-positive, HER2-negative locally advanced or metastatic breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-gedatolisib-fulvestrant-or-without-palbociclib-hr-positive-her2-negative-locally",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves sacituzumab govitecan-hziy as monotherapy and in combination with pembrolizumab for first-line treatment of triple-negative breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-sacituzumab-govitecan-hziy-monotherapy-and-combination-pembrolizumab-first-line",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves palbociclib with trastuzumab, with or without pertuzumab, and endocrine therapy for the maintenance treatment of HR-positive, HER2-positive metastatic breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-palbociclib-trastuzumab-or-without-pertuzumab-and-endocrine-therapy-maintenance",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves datopotamab deruxtecan-dlnk for unresectable or metastatic triple-negative breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-datopotamab-deruxtecan-dlnk-unresectable-or-metastatic-triple-negative-breast-cancer",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves two separate indications for fam-trastuzumab deruxtecan-nxki in HER2-positive early-stage breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-two-separate-indications-fam-trastuzumab-deruxtecan-nxki-her2-positive-early-stage",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves vepdegestrant for ER-positive, HER2-negative, ESR1-mutated advanced or metastatic breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-vepdegestrant-er-positive-her2-negative-esr1-mutated-advanced-or-metastatic-breast",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves fam-trastuzumab deruxtecan-nxki with pertuzumab for unresectable or metastatic HER2-positive breast cancer",
+      "url": "https://www.fda.gov/drugs/drug-approvals-and-databases/fda-approves-fam-trastuzumab-deruxtecan-nxki-pertuzumab-unresectable-or-metastatic-her2-positive",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves imlunestrant for ER-positive, HER2-negative, ESR1-mutated advanced or metastatic breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-imlunestrant-er-positive-her2-negative-esr1-mutated-advanced-or-metastatic-breast",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves fam-trastuzumab deruxtecan-nxki for unresectable or metastatic HR-positive, HER2-low or HER2-ultralow breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-fam-trastuzumab-deruxtecan-nxki-unresectable-or-metastatic-hr-positive-her2-low-or-her2",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves datopotamab deruxtecan-dlnk for unresectable or metastatic, HR-positive, HER2-negative breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-datopotamab-deruxtecan-dlnk-unresectable-or-metastatic-hr-positive-her2-negative-breast",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves inavolisib with palbociclib and fulvestrant for endocrine-resistant, PIK3CA-mutated, HR-positive, HER2-negative, advanced breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-inavolisib-palbociclib-and-fulvestrant-endocrine-resistant-pik3ca-mutated-hr-positive",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves Kisqali with an aromatase inhibitor and Kisqali Femara Co-Pack for early high-risk breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-ribociclib-aromatase-inhibitor-and-ribociclib-and-letrozole-co-pack-early-high-risk",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves capivasertib with fulvestrant for breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-capivasertib-fulvestrant-breast-cancer",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves sacituzumab govitecan-hziy for HR-positive breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-sacituzumab-govitecan-hziy-hr-positive-breast-cancer",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    },
+    {
+      "title": "FDA approves elacestrant for ER-positive, HER2-negative, ESR1-mutated advanced or metastatic breast cancer",
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-elacestrant-er-positive-her2-negative-esr1-mutated-advanced-or-metastatic-breast-cancer",
+      "status": "美国 FDA 官方公告链接，获批日期及适应证尚待逐条核实"
+    }
+  ],
+  "guidelines": [
+    {
+      "title": "中国抗癌协会乳腺癌诊治指南与规范（2026年版）",
+      "doi": "10.19401/j.cnki.1007-3639.2025.12.009",
+      "publisher": "中国抗癌协会乳腺癌专业委员会；中华医学会肿瘤学分会乳腺肿瘤学组",
+      "url": "https://www.china-oncology.com/zh/article/doi/10.19401/j.cnki.1007-3639.2025.12.009/",
+      "note": "指南出版信息；不代表全文授权公开或个体医疗建议"
+    }
+  ],
+  "sources": [
+    {
+      "name": "fda_oncology_approvals",
+      "status": "verified_http_response",
+      "httpStatus": 200,
+      "url": "https://www.fda.gov/drugs/resources-information-approved-drugs/oncology-cancerhematologic-malignancies-approval-notifications"
+    },
+    {
+      "name": "nci_breast_treatment",
+      "status": "verified_http_response",
+      "httpStatus": 200,
+      "url": "https://www.cancer.gov/types/breast/hp/breast-treatment-pdq"
+    },
+    {
+      "name": "nci_breast_prevention",
+      "status": "verified_http_response",
+      "httpStatus": 200,
+      "url": "https://www.cancer.gov/types/breast/hp/breast-prevention-pdq"
+    },
+    {
+      "name": "nci_follow_up",
+      "status": "verified_http_response",
+      "httpStatus": 200,
+      "url": "https://www.cancer.gov/about-cancer/coping/survivorship/follow-up-care"
+    },
+    {
+      "name": "caca_2026_breast_guideline",
+      "status": "verified_http_response",
+      "httpStatus": 200,
+      "url": "https://www.china-oncology.com/zh/article/doi/10.19401/j.cnki.1007-3639.2025.12.009/"
+    },
+    {
+      "name": "esmo_guideline_news",
+      "status": "verified_http_response",
+      "httpStatus": 200,
+      "url": "https://www.esmo.org/guidelines/guidelines-news"
+    }
+  ],
+  "excluded": [
+    "患者个人病历与未授权病例全文",
+    "医院未经核实的年收治量与治疗质量排名",
+    "未经专业审核的个体治疗方案"
+  ],
+  "dataWarnings": [
+    "来自公开官方和文献数据库；内容为研究索引，不构成医疗建议。",
+    "临床试验登记状态不是疗效证明，且不表示在中国可参与。",
+    "FDA公告为美国监管资料，不能代表中国NMPA适应证。",
+    "文献仅展示题录元数据及来源链接；摘要请访问原始来源。",
+    "检索采用有限时间窗及最大返回条数，并非完整历史数据。"
+  ],
+  "coverage": {
+    "pubmed30DayMatches": 1904,
+    "trialMatches": 16913,
+    "recoveryMissingPmids": [
+      "20301790"
+    ]
+  },
+  "provenance": {
+    "source": "Google Drive 保存的 GitHub Actions 真实采集包",
+    "githubRunUrl": "https://github.com/magangwwd/ashare-research-infra/actions/runs/39088628933",
+    "reviewed": "not_medically_reviewed"
+  }
+}
