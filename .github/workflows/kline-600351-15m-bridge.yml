@@ -1,0 +1,140 @@
+name: 600351 daily × 15m quality gate and conditional research (NO ORDERS)
+
+on:
+  pull_request:
+    paths:
+      - 'ai_research/kline_15m_bridge.py'
+      - 'ai_research/tests/test_kline_15m_bridge.py'
+      - '.github/workflows/kline-600351-15m-bridge.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/kline_15m_bridge.py'
+      - '.github/workflows/kline-600351-15m-bridge.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kline-600351-15m-signal-bridge
+  cancel-in-progress: false
+
+jobs:
+  offline-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install standalone numerical dependency set
+        run: python -m pip install 'pandas>=2.2,<3' 'numpy>=2,<3'
+      - name: QA minute timestamps, close-only signal and missing-source semantics
+        run: python -m unittest -v ai_research.tests.test_kline_15m_bridge
+
+  probe-or-research:
+    needs: offline-qa
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install rclone and data science readers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install 'pandas>=2.2,<3' 'numpy>=2,<3' 'pyarrow>=18,<25'
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Check both documented minute Gold repositories, no silent fallbacks
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/15m"
+          selected=""
+          for candidate in \
+            'gdrive:down_data/data/gold/main_board/kline_15m' \
+            'gdrive:ashare_15m_kline/kline_15m'; do
+            n="$(rclone lsf "$candidate" --recursive --files-only --include 'data.parquet' 2>/dev/null | grep -c 'data.parquet$' || true)"
+            echo "Audited minute Parquet partition count for $candidate: $n"
+            if [[ "$n" -gt 0 ]]; then
+              if [[ -n "$selected" ]]; then
+                echo "::error::Two different minute providers found; require explicit operator selection"
+                exit 1
+              fi
+              selected="$candidate"
+            fi
+          done
+          if [[ -z "$selected" ]]; then
+            echo 'data_present=false' >> "$GITHUB_OUTPUT"
+            echo "::warning::NO_15M_DATA; neither documented location has real Parquet. Daily 3Y results remain unchanged."
+          else
+            echo "data_present=true" >> "$GITHUB_OUTPUT"
+            echo "MINUTE_REMOTE=$selected" >> "$GITHUB_ENV"
+          fi
+      - name: Generate truthful no-data readiness report
+        if: steps.source.outputs.data_present == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.kline_15m_bridge \
+            --quality-only --output-dir "$RUNNER_TEMP/15m/output"
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"15m/output/statistics.json"
+          doc=json.loads(p.read_text())
+          assert doc["status"]=="NO_15M_DATA" and doc["patterns"]=={}
+          print("MINUTE_COVERAGE_NOT_READY_BUT_AUDITED")
+          PY
+      - name: Download available 15-minute 2023-2026 data only
+        if: steps.source.outputs.data_present == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rclone copy "$MINUTE_REMOTE" "$RUNNER_TEMP/15m/minutes" \
+            --include 'year=202[3456]/month=*/data.parquet' --transfers 4 --checkers 4
+          test "$(find "$RUNNER_TEMP/15m/minutes" -name 'data.parquet' | wc -l)" -gt 0
+          root='gdrive:down_data/data/gold/main_board'
+          rclone copyto "$root/trading_calendar.parquet" "$RUNNER_TEMP/15m/daily/trading_calendar.parquet"
+          for dataset in daily_prices adjustment_factors; do
+            rclone copy "$root/$dataset" "$RUNNER_TEMP/15m/daily/$dataset" \
+              --include 'year=202[3456]/month=*/data.parquet' --transfers 4
+            test "$(find "$RUNNER_TEMP/15m/daily/$dataset" -name data.parquet | wc -l)" -ge 40
+          done
+      - name: Link 15-minute complete days to frozen daily signals
+        if: steps.source.outputs.data_present == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.kline_15m_bridge \
+            --minutes-root "$RUNNER_TEMP/15m/minutes" \
+            --daily-root "$RUNNER_TEMP/15m/daily" \
+            --output-dir "$RUNNER_TEMP/15m/output"
+          python - <<'PY'
+          import json,os,pathlib
+          r=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"15m/output/statistics.json").read_text())
+          assert r["authorization"]=="RESEARCH_ONLY_NO_TRADING"
+          assert r["status"] in ("EXPLORATORY_COVERAGE_PASSED_NOT_PROVEN",
+                                  "INCOMPLETE_MINUTE_COVERAGE_NO_CONCLUSIONS")
+          PY
+      - name: Archive immutable quality evidence and check cloud bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/kline_600351_15m_quality_v1/2026-10-16/run_$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/15m/output" "$dest" --immutable
+          rclone check "$RUNNER_TEMP/15m/output" "$dest" --one-way
+          echo "15M_QUALITY_AUDIT_PUBLISHED; status is in statistics.json; no order execution."
