@@ -73,11 +73,9 @@ jobs:
           cp bci_public_site/data/site-data.json _site/data/site-data.json
           test -s _site/index.html
           test -s _site/data/site-data.json
-      - name: Configure GitHub Pages and attempt initial enablement
+      - name: Configure existing GitHub Pages site
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v4
