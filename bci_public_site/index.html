@@ -19,7 +19,7 @@
         <span><strong>乳腺健康指南</strong><small>可信信息 · 清晰陪伴</small></span>
       </a>
       <nav class="audience-nav" aria-label="选择浏览版本">
-        <a class="audience-tab active" href="./index.html" aria-current="page">患者与家属版</a>
+        <a class="audience-tab active" href="./index.html" aria-current="page">患者与家属版 · 数据更新</a>
         <a class="audience-tab" href="./professional.html">医疗专业人员版 <span aria-hidden="true">↗</span></a>
       </nav>
     </div>
@@ -27,10 +27,10 @@
   <main id="main">
     <section class="hero wrap">
       <div class="hero-content">
-        <div class="eyebrow"><span class="dot"></span> 面向患者与家属 · 通俗易懂</div>
-        <h1>面对乳腺健康问题，<br><em>从可靠信息开始。</em></h1>
-        <p class="lead">从预防筛查，到理解检查结果、与医生讨论治疗，再到康复随访。我们把值得了解的问题整理清楚，让你更从容地准备下一步。</p>
-        <div class="hero-actions"><a href="#path" class="btn btn-primary">从当前阶段开始 <span aria-hidden="true">→</span></a><a href="#resources" class="btn btn-outline">查看权威医学来源</a></div>
+        <div class="eyebrow"><span class="dot"></span> 患者与家属版 · Google Drive 数据定期同步</div>
+        <h1>乳腺癌医学资讯，<br><em>以真实更新为准。</em></h1>
+        <p class="lead">把已核验的云盘研究数据整理给你：新增文献、康复研究、临床试验、药物公告与指南。每一条都能打开原始医学来源，采集日期透明可见。</p>
+        <div class="hero-actions"><a href="#cloud-data" class="btn btn-primary">浏览云盘数据 <span aria-hidden="true">→</span></a><a href="#path" class="btn btn-outline">查看就诊与康复知识</a></div>
         <p class="hero-note">本网站仅提供医学科普信息，不会根据症状作诊断，也不推荐个体治疗方案。</p>
       </div>
       <div class="hero-visual" aria-hidden="true">
@@ -40,6 +40,46 @@
     </section>
 
     <div class="notice-wrap wrap"><div class="notice"><span aria-hidden="true">ⓘ</span><p><strong>需要尽快就医的情况：</strong>如果出现新的乳房或腋下肿块、乳头异常分泌物、皮肤或乳头明显变化，建议及时到正规医疗机构评估。网上资料无法替代检查。</p></div></div>
+
+    <section class="wrap section cloud-main" id="cloud-data">
+      <div class="section-heading cloud-heading">
+        <div><div class="label">VERIFIED RESEARCH DATA · 云盘数据更新</div><h2>最新收录与数据更新</h2>
+          <p>这里展示已存入 Google Drive、经格式与完整性校验的公开医学资料。不是实时诊疗资讯，也不是经过专家审定的治疗建议。</p></div>
+        <span id="cloud-freshness" class="cloud-freshness" role="status">正在核验数据日期…</span>
+      </div>
+      <div class="cloud-status" role="status" aria-live="polite">
+        <div class="cloud-status-item"><small>数据采集时间</small><strong id="cloud-collected">—</strong></div>
+        <div class="cloud-status-item"><small>网站数据生成时间</small><strong id="cloud-generated">—</strong></div>
+        <div class="cloud-status-item"><small>最新有效快照</small><strong id="cloud-snapshot">—</strong></div>
+      </div>
+      <div class="cloud-metrics" aria-label="各类数据实际收录条数">
+        <button type="button" class="cloud-metric" data-cloud-filter="articles"><small>乳腺癌公开文献</small><strong id="cloud-count-articles">—</strong><span>论文 · 病例索引 · 康复综述 ↗</span></button>
+        <button type="button" class="cloud-metric" data-cloud-filter="trials"><small>国际临床试验</small><strong id="cloud-count-trials">—</strong><span>登记信息，不代表治疗效果 ↗</span></button>
+        <button type="button" class="cloud-metric" data-cloud-filter="fda"><small>美国药物监管公告</small><strong id="cloud-count-fda">—</strong><span>不能代表中国已获批 ↗</span></button>
+        <button type="button" class="cloud-metric" data-cloud-filter="guides"><small>诊疗指南索引</small><strong id="cloud-count-guides">—</strong><span>仅显示有据可查的条目 ↗</span></button>
+      </div>
+      <div class="cloud-explorer">
+        <div class="cloud-toolbar">
+          <div><h3>云盘资料浏览</h3><p>每条资料均提供公开来源链接；仅展示允许公开的题录，不存储患者隐私。</p></div>
+          <label class="cloud-search"><span class="sr-only">搜索云盘医学资料</span><input id="cloud-search" type="search" placeholder="搜索论文标题、PMID、试验编号、药物或指南…" autocomplete="off"></label>
+        </div>
+        <div class="cloud-filter-row" role="group" aria-label="按数据类别筛选">
+          <button type="button" class="cloud-filter active" data-cloud-filter="all" aria-pressed="true">全部</button>
+          <button type="button" class="cloud-filter" data-cloud-filter="recent" aria-pressed="false">近期论文</button>
+          <button type="button" class="cloud-filter" data-cloud-filter="recovery" aria-pressed="false">康复与随访</button>
+          <button type="button" class="cloud-filter" data-cloud-filter="case" aria-pressed="false">公开病例索引</button>
+          <button type="button" class="cloud-filter" data-cloud-filter="trials" aria-pressed="false">临床试验</button>
+          <button type="button" class="cloud-filter" data-cloud-filter="fda" aria-pressed="false">药物公告</button>
+          <button type="button" class="cloud-filter" data-cloud-filter="guides" aria-pressed="false">指南</button>
+        </div>
+        <div class="cloud-results-meta"><span id="cloud-matches">正在载入…</span><span>按云盘实际收录记录显示 · 未作医学价值排名</span></div>
+        <div id="cloud-feed" class="cloud-feed" aria-live="polite"><p class="loading">正在读取最新数据…</p></div>
+        <div class="cloud-pager"><button id="cloud-more" type="button" hidden>查看更多已收录记录 ↓</button></div>
+        <p class="cloud-qualifier" id="cloud-qualifier">数据更新取决于 Google Drive 中是否已保存新的有效快照；网站每日检查，但不保证每天都有新医学研究入库。</p>
+      </div>
+    </section>
+
+    <div class="wrap patient-guide-divider"><span>帮助理解 · 就诊与康复知识</span><p>以下科普内容是辅助阅读；网站最新信息以上方云盘数据及原始医学资料为准。</p></div>
 
     <section class="wrap section" id="path">
       <div class="section-heading"><div class="label">WHERE TO START</div><h2>你现在处在哪个阶段？</h2><p>选择最关心的阶段，先了解该和医生讨论哪些问题。</p></div>
