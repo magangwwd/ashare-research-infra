@@ -5,11 +5,13 @@ on:
     paths:
       - 'ai_research/baostock_600351_minute.py'
       - 'ai_research/tests/test_baostock_600351_minute.py'
+      - 'ai_research/kline_15m_bridge.py'
       - '.github/workflows/kline-600351-baostock-probe.yml'
   push:
     branches: [main]
     paths:
       - 'ai_research/baostock_600351_minute.py'
+      - 'ai_research/kline_15m_bridge.py'
       - '.github/workflows/kline-600351-baostock-probe.yml'
   workflow_dispatch:
 
@@ -58,11 +60,24 @@ jobs:
           (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
           echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
           RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
-      - name: Free single-ticker historical 15-minute data request
+      - name: Restore frozen verified free 15-minute source (no repeat API call)
         shell: bash
         run: |
           set -euo pipefail
-          python -m ai_research.baostock_600351_minute --output-dir "$RUNNER_TEMP/baostock/provider"
+          src='gdrive:stock_state_strategy/output/kline_600351_15m_baostock_experiment_v1/2026-10-16/run_39128602877/provider'
+          rclone copy "$src" "$RUNNER_TEMP/baostock/provider" --checkers 4 --transfers 4
+          rclone check "$RUNNER_TEMP/baostock/provider" "$src" --one-way
+          python - <<'PY'
+          import os,pathlib,json,hashlib
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"baostock/provider"
+          m=json.loads((root/"provider_manifest.json").read_text())
+          assert m["version"]=="BAOSTOCK_600351_15M_PROBE_V1"
+          assert m["symbol"]=="600351.SH" and m["rows"]==11728
+          for relative,expected in m["files_sha256"].items():
+              file=root/relative
+              assert file.is_file() and hashlib.sha256(file.read_bytes()).hexdigest()==expected
+          print("SOURCE_SHAS_MATCH_AND_NO_BAOSTOCK_API_CALL")
+          PY
       - name: Load canonical daily Tushare prices and PIT adjustment factors for cross-check
         shell: bash
         run: |
