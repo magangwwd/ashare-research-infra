@@ -20,3 +20,17 @@ The data are research-only, not medically reviewed, not exhaustive, and must not
 - Reciprocal audience switcher on both pages. Shared public snapshot at `data/site-data.json`, refreshed using the existing workflow; no new data API or patient-data intake.
 - Removed visitor-facing GitHub and source-code links, technical API entry points, and raw HTTP status display. Hosting and private automation remain server-side, not exposed in page navigation.
 - Build/Pages workflow must publish both HTML files, both JS scripts and both CSS files; never expose OAuth secrets, patient records or unlicensed paper full text.
+
+## Google Drive data-first website and unattended update pipeline
+
+The first-screen product on both audience pages is now the **latest verified Google Drive snapshot** (actual timestamp, snapshot ID, category counts, research lists, source hyperlinks and age/staleness warnings). General patient education is intentionally lower on the patient page. The same `data/site-data.json` is used for both audiences, so both pages show an identical snapshot date and record counts.
+
+- Source collector on trusted default branch: `.github/workflows/bci-drive-collector.yml`, daily around **07:30 China/Singapore** (23:30 UTC previous day); PubMed, ClinicalTrials.gov and official-source metadata; original abstract material is **not published**.
+- The collector keeps a temporary GitHub Artifact and uploads a timestamped **immutable ZIP archive** into the existing `Breast_Cancer_Intelligence` Drive folder. Upload is verified by downloading the same bytes and comparing SHA-256. A failed upload causes a failed Action.
+- The public site: `.github/workflows/bci-pages.yml` deploys after a successfully completed collection and also checks at approximately **08:15 China/Singapore** (00:15 UTC). It accesses the latest eligible Drive ZIP through the trusted repository OAuth Secret, checks file hashes and builds **public metadata only**.
+- New evidence is **not invented** if no new Drive snapshot has arrived or one is invalid. The previous published website remains visible with its real historical capture date; in the browser its age warning increases over time.
+- The data are recent, limited search samples and registrations, not an exhaustive historical registry or medical treatment recommendations.
+- GitHub Pages hosting, private OAuth and source code remain backend operations. Visitor-facing pages and the published JSON have no GitHub/source-code/API management links.
+- No personal patient case histories, unlicensed research-paper abstract redistribution, unverified surgeon rankings or invented hospital cure rates.
+
+Acceptance required before claiming unattended updates: verify real main-branch collector GitHub Action, Drive upload receipt and SHA-256 roundtrip, a subsequent Pages Action that read the newest Drive snapshot, and the deployed public JSON reflecting the same snapshot ID. Until then, automated daily capture is *configured but unproven*.
