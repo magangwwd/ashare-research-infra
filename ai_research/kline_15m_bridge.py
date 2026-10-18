@@ -145,9 +145,20 @@ def compute(daily, minute_raw):
     close_match = (joined["raw_last_close"].notna() &
                    (joined["raw_last_close"] - rawclose).abs() <=
                    np.maximum(.015, rawclose.abs()*.001))
-    dropped_mismatch = int((joined["raw_last_close"].notna() & ~close_match).sum())
-    joined.loc[~close_match, :] = np.nan
+    mismatched = joined["raw_last_close"].notna() & ~close_match
+    dropped_mismatch = int(mismatched.sum())
     quality["daily_close_mismatch_days"] = dropped_mismatch
+    bad_dates = valid_daily_dates[mismatched]
+    quality["daily_close_mismatch_by_year"] = {
+        str(year):int(sum(bad_dates.year == year)) for year in sorted(set(bad_dates.year))
+    }
+    quality["daily_close_mismatch_examples"] = [
+        {"date":str(day.date()),"daily_raw":round(float(rawclose.loc[day]),4),
+         "minute_last_raw":round(float(joined.loc[day,"raw_last_close"]),4),
+         "difference_pct":round(float(joined.loc[day,"raw_last_close"] /
+                                      rawclose.loc[day]-1),5)}
+        for day in bad_dates[:20]]
+    joined.loc[~close_match, :] = np.nan
     valid_minute = joined["raw_last_close"].notna()
     minute_dates = valid_daily_dates[valid_minute]
     cover = round(float(valid_minute.mean()), 5)
@@ -169,7 +180,12 @@ def compute(daily, minute_raw):
         for v in per_period.values()))
     details, comparisons = [], {}
     future5 = (p["adj_close"].shift(-5) / p["adj_close"] - 1)
-    dates = valid_daily_dates
+    future5_end = pd.Series(p.index,index=p.index).shift(-5)
+    cutoff_by_period = {
+        "discovery":pd.Timestamp("2024-12-31"),
+        "validation":pd.Timestamp("2025-12-31"),
+        "test":pd.Timestamp("2026-10-16"),
+    }
     # Next EXCHANGE day, not next day with valid non-suspended stock OHLC.
     exchange_dates = p.index
     next_day = {exchange_dates[i]: exchange_dates[i+1]
@@ -181,7 +197,10 @@ def compute(daily, minute_raw):
                 continue
             # Future five-trading-day outcome remains a separate label, not a feature.
             observed = future5.get(day, np.nan)
-            if not np.isfinite(observed):
+            period = ("discovery" if day.date() <= date(2024,12,31) else
+                      "validation" if day.date() <= date(2025,12,31) else "test")
+            if (not np.isfinite(observed) or pd.isna(future5_end.get(day))
+                    or future5_end[day] > cutoff_by_period[period]):
                 continue
             nxday = next_day.get(day)
             x = joined.loc[day]
@@ -196,8 +215,7 @@ def compute(daily, minute_raw):
                 "next_session_first_30m_return": (
                     round(float(nx.first_30m_return), 5)
                     if nx is not None and pd.notna(nx.first_30m_return) else None),
-                "period": "discovery" if day.date() <= date(2024,12,31) else (
-                    "validation" if day.date() <= date(2025,12,31) else "test"),
+                "period": period,
                 "entry_executability": "NOT_TESTED",
             }
             rows.append(record)
