@@ -2,7 +2,7 @@
 (() => {
   const $=id=>document.getElementById(id);
   const state={guide:null,research:null,stage:null,region:'all',type:'all',focus:'all',term:'',compare:new Set()};
-  const APPROVED_HOSTS=new Set(['www.shca.org.cn','www.cicams.ac.cn','www.bjcancer.org','bjcancer.org','www.sysucc.org.cn','xuebao.301hospital.com.cn','www.cancer.gov','www.china-oncology.com','www.zchospital.com','www.wchscu.cn','wchscu.cn','www.tjmuch.com','tmucih.com','www.nj12320.org','www.haodf.com','www.fmmu.edu.cn','pubmed.ncbi.nlm.nih.gov','clinicaltrials.gov','www.fda.gov']);
+  const APPROVED_HOSTS=new Set(['www.shca.org.cn','www.cicams.ac.cn','www.bjcancer.org','bjcancer.org','www.sysucc.org.cn','sysucc.org.cn','xuebao.301hospital.com.cn','www.cancer.gov','www.china-oncology.com','www.zchospital.com','www.wchscu.cn','wchscu.cn','www.tjmuch.com','tmucih.com','www.nj12320.org','www.haodf.com','www.fmmu.edu.cn','pubmed.ncbi.nlm.nih.gov','clinicaltrials.gov','www.fda.gov']);
   const CATEGORIES={
     screen:'发现异常或考虑筛查',
     diagnosis:'检查和病理结果',
