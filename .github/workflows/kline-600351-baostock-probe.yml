@@ -10,6 +10,7 @@ on:
     branches: [main]
     paths:
       - 'ai_research/baostock_600351_minute.py'
+      - 'ai_research/kline_15m_bridge.py'
       - '.github/workflows/kline-600351-baostock-probe.yml'
   workflow_dispatch:
 
@@ -58,11 +59,24 @@ jobs:
           (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
           echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
           RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
-      - name: Free single-ticker historical 15-minute data request
+      - name: Reuse pinned audited 15m source, no second API query
         shell: bash
         run: |
           set -euo pipefail
-          python -m ai_research.baostock_600351_minute --output-dir "$RUNNER_TEMP/baostock/provider"
+          src='gdrive:stock_state_strategy/output/kline_600351_15m_baostock_experiment_v1/2026-10-16/run_39128602877/provider'
+          rclone copy "$src" "$RUNNER_TEMP/baostock/provider" --transfers 4
+          rclone check "$RUNNER_TEMP/baostock/provider" "$src" --one-way
+          python - <<'PY'
+          import json,pathlib,hashlib,os
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"baostock/provider"
+          m=json.loads((root/"provider_manifest.json").read_text())
+          assert m["version"]=="BAOSTOCK_600351_15M_PROBE_V1"
+          assert m["symbol"]=="600351.SH" and m["rows"]==11728
+          for relative,sha in m["files_sha256"].items():
+              p=root/relative
+              assert p.is_file() and hashlib.sha256(p.read_bytes()).hexdigest()==sha
+          print("ORIGINAL_15M_SOURCE_SHA_VALIDATED; no new external source fetch")
+          PY
       - name: Load canonical daily Tushare prices and PIT adjustment factors for cross-check
         shell: bash
         run: |
