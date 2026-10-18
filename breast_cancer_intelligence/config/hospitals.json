@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "verification_state": "candidate_watchlist_not_verified",
+  "hospitals": [
+    {
+      "id": "east_theater_general",
+      "name": "东部战区总医院",
+      "city": "南京",
+      "type": "military",
+      "aliases": [
+        "原南京军区南京总医院"
+      ],
+      "note": "Verify current campus and historical mergers before combining figures"
+    },
+    {
+      "id": "east_theater_qinhuai",
+      "name": "东部战区总医院秦淮医疗区",
+      "city": "南京",
+      "type": "military",
+      "parent_id": "east_theater_general",
+      "aliases": [
+        "原第八一医院"
+      ],
+      "note": "Campus; do not double count parent volumes"
+    },
+    {
+      "id": "pla_general",
+      "name": "中国人民解放军总医院",
+      "city": "北京",
+      "type": "military"
+    },
+    {
+      "id": "pla_fifth",
+      "name": "解放军总医院第五医学中心",
+      "city": "北京",
+      "type": "military",
+      "parent_id": "pla_general"
+    },
+    {
+      "id": "southwest",
+      "name": "陆军军医大学第一附属医院（西南医院）",
+      "city": "重庆",
+      "type": "military"
+    },
+    {
+      "id": "xijing",
+      "name": "空军军医大学西京医院",
+      "city": "西安",
+      "type": "military"
+    },
+    {
+      "id": "changhai",
+      "name": "海军军医大学第一附属医院（长海医院）",
+      "city": "上海",
+      "type": "military"
+    },
+    {
+      "id": "changzheng",
+      "name": "海军军医大学第二附属医院（长征医院）",
+      "city": "上海",
+      "type": "military"
+    },
+    {
+      "id": "cicams",
+      "name": "中国医学科学院肿瘤医院",
+      "city": "北京",
+      "type": "civilian"
+    },
+    {
+      "id": "fudan_cancer",
+      "name": "复旦大学附属肿瘤医院",
+      "city": "上海",
+      "type": "civilian"
+    },
+    {
+      "id": "tianjin_cancer",
+      "name": "天津医科大学肿瘤医院",
+      "city": "天津",
+      "type": "civilian"
+    },
+    {
+      "id": "sysucc",
+      "name": "中山大学肿瘤防治中心",
+      "city": "广州",
+      "type": "civilian"
+    },
+    {
+      "id": "pku_cancer",
+      "name": "北京大学肿瘤医院",
+      "city": "北京",
+      "type": "civilian"
+    },
+    {
+      "id": "zhejiang_cancer",
+      "name": "浙江省肿瘤医院",
+      "city": "杭州",
+      "type": "civilian"
+    },
+    {
+      "id": "jiangsu_provincial",
+      "name": "江苏省人民医院",
+      "city": "南京",
+      "type": "civilian"
+    },
+    {
+      "id": "shandong_cancer",
+      "name": "山东省肿瘤医院",
+      "city": "济南",
+      "type": "civilian"
+    },
+    {
+      "id": "west_china",
+      "name": "四川大学华西医院",
+      "city": "成都",
+      "type": "civilian"
+    },
+    {
+      "id": "hunan_cancer",
+      "name": "湖南省肿瘤医院",
+      "city": "长沙",
+      "type": "civilian"
+    }
+  ]
+}
