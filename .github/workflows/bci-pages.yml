@@ -36,8 +36,10 @@ jobs:
           python-version: '3.12'
       - name: Validate public metadata and source selector
         run: python -m unittest discover -s bci_public_site/tests -v
-      - name: Syntax-check website JavaScript
-        run: node --check bci_public_site/app.js
+      - name: Syntax-check both audience scripts
+        run: |
+          node --check bci_public_site/app.js
+          node --check bci_public_site/patient.js
       - name: Refresh website from latest eligible Google Drive snapshot
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         env:
@@ -68,10 +70,13 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p _site/data
-          cp bci_public_site/index.html bci_public_site/app.js bci_public_site/styles.css bci_public_site/favicon.svg _site/
+          cp bci_public_site/index.html bci_public_site/professional.html bci_public_site/app.js bci_public_site/patient.js bci_public_site/styles.css bci_public_site/patient.css bci_public_site/favicon.svg _site/
           cp bci_public_site/.nojekyll _site/.nojekyll
           cp bci_public_site/data/site-data.json _site/data/site-data.json
           test -s _site/index.html
+          test -s _site/professional.html
+          test -s _site/patient.js
+          test -s _site/patient.css
           test -s _site/data/site-data.json
       - name: Configure existing GitHub Pages site
         if: github.event_name != 'pull_request'
