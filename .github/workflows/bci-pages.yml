@@ -45,6 +45,20 @@ jobs:
           node --check bci_public_site/research_cn.js
           node --check bci_public_site/patient.js
           node --check bci_public_site/care.js
+          node - <<'NODE'
+          const assert=require('assert');
+          global.window={};
+          require('./bci_public_site/research_cn.js');
+          const x=window.BCIChinese.describeArticle({title:'HER2 breast cancer cell line',category:'recent'});
+          assert(x.title.includes('中文')||x.title.includes('HER2'));
+          assert(x.summary.includes('不能直接')||x.summary.includes('不能'));
+          const t=window.BCIChinese.describeTrial({title:'Breast cancer MRI screening',status:'RECRUITING'});
+          assert(t.title.includes('检查')||t.title.includes('影像'));
+          assert(t.summary.includes('中国'));
+          const f=window.BCIChinese.describeFDA({title:'FDA approves drug for HER2 breast cancer'});
+          assert(f.summary.includes('不等于中国'));
+          console.log('CHINESE_RESEARCH_EXPLAINER_OK');
+          NODE
       - name: Refresh website from latest eligible Google Drive snapshot
         if: github.event_name != 'pull_request'
         env:
