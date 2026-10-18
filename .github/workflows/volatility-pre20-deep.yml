@@ -1,0 +1,127 @@
+name: Deep five-stock vol-expansion pre20 bins, Gold intrawindow MAE (NO TRADES)
+
+on:
+  pull_request:
+    paths:
+      - 'ai_research/volatility_pre20_deep.py'
+      - 'ai_research/tests/test_volatility_pre20_deep.py'
+      - '.github/workflows/volatility-pre20-deep.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/volatility_pre20_deep.py'
+      - '.github/workflows/volatility-pre20-deep.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: five-stock-volatility-pre20-deep
+  cancel-in-progress: false
+
+jobs:
+  offline-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install numerical source code dependencies
+        run: python -m pip install 'numpy>=2,<3' 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+      - name: Frozen-bin, timing, observed low and thinning invariants
+        run: python -m unittest -v ai_research.tests.test_volatility_pre20_deep
+
+  real-gold-depth:
+    needs: offline-quality
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install isolated Gold and Drive readers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install 'numpy>=2,<3' 'pandas>=2.2,<3' 'pyarrow>=18,<25'
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Download immutable verified all-days five-stock original packet
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pre20deep/gold"
+          source='gdrive:stock_state_strategy/output/five_stock_pre_move_kline_v1/2026-10-16/run_39134142789'
+          rclone copyto "$source/statistics.json" "$RUNNER_TEMP/pre20deep/source_statistics.json"
+          rclone copyto "$source/manifest.json" "$RUNNER_TEMP/pre20deep/original_manifest.json"
+          python - <<'PY'
+          import json,os,pathlib,hashlib
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"pre20deep"
+          manifest=json.loads((root/"original_manifest.json").read_text())
+          source=(root/"source_statistics.json").read_bytes()
+          assert manifest["files_sha256"]["statistics.json"]==hashlib.sha256(source).hexdigest()
+          x=json.loads(source)
+          assert x["as_of"]=="2026-10-16" and x["authorization"]=="RESEARCH_ONLY_NO_TRADING"
+          assert len(x["stocks"])==5 and len(x["rows"])>7000
+          print("Archived frozen study hash and complete five ticker packet validated")
+          PY
+      - name: Read independently validated 2023–2026 Gold OHLCV and factors
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='gdrive:down_data/data/gold/main_board'
+          rclone copyto "$root/manifest.json" "$RUNNER_TEMP/pre20deep/gold_manifest.json"
+          rclone copyto "$root/trading_calendar.parquet" "$RUNNER_TEMP/pre20deep/gold/trading_calendar.parquet"
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"pre20deep/gold_manifest.json"
+          m=json.loads(p.read_text())
+          assert m["as_of_date"]>="2026-10-16"
+          assert m["validation"]["primary_keys_unique"] and m["validation"]["ohlc_valid"]
+          print("Validated Gold manifest",m["as_of_date"])
+          PY
+          for dataset in daily_prices adjustment_factors; do
+            rclone copy "$root/$dataset" "$RUNNER_TEMP/pre20deep/gold/$dataset" \
+              --include 'year=202[3456]/month=*/data.parquet' --checkers 4 --transfers 6
+            test "$(find "$RUNNER_TEMP/pre20deep/gold/$dataset" -name data.parquet | wc -l)" -ge 45
+          done
+      - name: Audit all five stocks 133 signals and 17 pre20 5–10% cases against true future OHLC
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.volatility_pre20_deep \
+            --input "$RUNNER_TEMP/pre20deep/source_statistics.json" \
+            --gold-manifest "$RUNNER_TEMP/pre20deep/gold_manifest.json" \
+            --gold-root "$RUNNER_TEMP/pre20deep/gold" \
+            --output-dir "$RUNNER_TEMP/pre20deep/report"
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"pre20deep/report/statistics.json"
+          x=json.loads(p.read_text())
+          assert x["version"]=="FIVE_STOCK_VOL_PRE20_BIN_DEEP_V1"
+          assert x["coverage"]["expansion_events"]==133
+          assert x["coverage"]["focus_5_to_10_events"]==17
+          assert x["authorization"]=="RESEARCH_ONLY_NO_TRADING"
+          assert x["grouped"]["all"]["5-10%"]["expansion"]["n"]==17
+          print("AUTHENTIC GOLD INTRAWINDOW CHECKS PASSED")
+          PY
+      - name: Publish immutable independent research and verify stored Drive bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          dst="gdrive:stock_state_strategy/output/five_stock_volatility_pre20_deep_v1/2026-10-16/run_$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/pre20deep/report" "$dst" --immutable --transfers 4
+          rclone check "$RUNNER_TEMP/pre20deep/report" "$dst" --one-way
+          echo "FIVE_STOCK_PRE20_DEEP_GOLD_VALIDATED_NO_TRADES"
