@@ -27,6 +27,9 @@ jobs:
           curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/" -o "$RUNNER_TEMP/bci_public_check/patient.html"
           curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/professional.html" -o "$RUNNER_TEMP/bci_public_check/professional.html"
           curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/data/site-data.json" -o "$RUNNER_TEMP/bci_public_check/site-data.json"
+          curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/data/care-guide.json" -o "$RUNNER_TEMP/bci_public_check/care-guide.json"
+          curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/care.js" -o "$RUNNER_TEMP/bci_public_check/care.js"
+          curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/care.css" -o "$RUNNER_TEMP/bci_public_check/care.css"
       - name: Verify actual public HTML and cloud research records
         env:
           SOURCE_PATH: ${{ runner.temp }}/bci_public_check
@@ -39,7 +42,17 @@ jobs:
           patient=(root/"patient.html").read_text(encoding="utf-8")
           professional=(root/"professional.html").read_text(encoding="utf-8")
           data=json.loads((root/"site-data.json").read_text(encoding="utf-8"))
+          guide=json.loads((root/"care-guide.json").read_text(encoding="utf-8"))
+          script=(root/"care.js").read_text(encoding="utf-8")
           assert 'id="cloud-data"' in patient, "Patient cloud evidence dashboard missing"
+          assert 'id="care-hub"' in patient, "Care navigation missing"
+          assert 'id="care-hospitals"' in patient, "Sourced hospital comparison missing"
+          assert 'id="care-frontiers"' in patient, "Frontier evidence area missing"
+          assert 'id="care-copy-text"' in patient, "Doctor visit question list missing"
+          assert "care-stage-btn" in patient and "care-compare-toggle" in script
+          assert guide.get("schema_version")==1 and guide.get("review_status")=="editorial_reference_only_not_medically_reviewed"
+          assert len(guide.get("hospitals",[]))>=4 and len(guide.get("journeys",[]))>=4
+          assert len(guide.get("frontiers",[]))>=3
           assert 'id="cloud-feed"' in patient, "Patient data explorer missing"
           assert 'id="pro-collected-time"' in professional, "Professional Drive freshness missing"
           assert 'id="pro-trials-latest"' in professional, "Professional trials panel missing"
@@ -48,5 +61,7 @@ jobs:
           assert len(data["articles"])>=1 and len(data["trials"])>=1
           assert "github.com" not in (root/"site-data.json").read_text(encoding="utf-8").lower()
           print("PUBLIC_HTTP_OK","snapshot="+data["snapshotId"],
-                "articles="+str(len(data["articles"])),"trials="+str(len(data["trials"])))
+                "articles="+str(len(data["articles"])),"trials="+str(len(data["trials"])),
+                "hospital_profiles="+str(len(guide["hospitals"])),
+                "care_stages="+str(len(guide["journeys"])))
           PY

@@ -44,6 +44,7 @@ jobs:
         run: |
           node --check bci_public_site/app.js
           node --check bci_public_site/patient.js
+          node --check bci_public_site/care.js
       - name: Refresh website from latest eligible Google Drive snapshot
         if: github.event_name != 'pull_request'
         env:
@@ -57,6 +58,9 @@ jobs:
           python bci_public_site/scripts/build_site.py \
             --zip "$RUNNER_TEMP/bci-latest.zip" \
             --out bci_public_site/data/site-data.json
+          python bci_public_site/scripts/refresh_care_guide.py \
+            --output bci_public_site/data/care-guide.json \
+            --report "$RUNNER_TEMP/bci-care-guide-check.json"
           python -m unittest discover -s bci_public_site/tests -v
       - name: Verify generated site is public-metadata-only
         run: |
@@ -65,6 +69,10 @@ jobs:
           from pathlib import Path
           d=json.loads(Path('bci_public_site/data/site-data.json').read_text('utf-8'))
           assert d['schemaVersion']==1 and d['articles'] and d['trials']
+          guide=json.loads(Path('bci_public_site/data/care-guide.json').read_text('utf-8'))
+          assert guide['schema_version']==1 and guide['hospitals'] and guide['journeys'] and guide['frontiers']
+          assert guide['review_status']=='editorial_reference_only_not_medically_reviewed'
+          assert all(row.get('url', '').startswith('https://') for row in guide['hospitals'])
           assert all('abstract_for_internal_research_only' not in x for x in d['articles'])
           assert all('patient_name' not in x for x in d['trials'])
           print('PUBLIC_SITE_OK',d['snapshotId'],d['counts'])
@@ -74,13 +82,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p _site/data
-          cp bci_public_site/index.html bci_public_site/professional.html bci_public_site/app.js bci_public_site/patient.js bci_public_site/styles.css bci_public_site/patient.css bci_public_site/favicon.svg _site/
+          cp bci_public_site/index.html bci_public_site/professional.html bci_public_site/app.js bci_public_site/patient.js bci_public_site/care.js bci_public_site/styles.css bci_public_site/patient.css bci_public_site/care.css bci_public_site/favicon.svg _site/
           cp bci_public_site/.nojekyll _site/.nojekyll
-          cp bci_public_site/data/site-data.json _site/data/site-data.json
+          cp bci_public_site/data/site-data.json bci_public_site/data/care-guide.json _site/data/
           test -s _site/index.html
           test -s _site/professional.html
           test -s _site/patient.js
           test -s _site/patient.css
+          test -s _site/care.css
+          test -s _site/care.js
+          test -s _site/data/care-guide.json
           test -s _site/data/site-data.json
       - name: Configure existing GitHub Pages site
         if: github.event_name != 'pull_request'
