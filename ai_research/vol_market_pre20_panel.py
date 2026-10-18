@@ -98,7 +98,7 @@ def choose_universe(root):
         "selection_rule":FIXED_PANEL_SHA,
         "selected_symbols_sha256":hashlib.sha256(
             "\n".join(selected).encode()).hexdigest(),
-        "selected_symbols":selected}
+        "selected_symbol_list":selected}
 
 
 def load_gold_panel(root,selected):
@@ -134,12 +134,14 @@ def load_gold_panel(root,selected):
 
 
 def build_market_proxy(stock_frames,chosen,calendar):
-    close=pd.DataFrame(index=calendar)
-    for symbol in chosen:
-        frame=stock_frames.get(symbol)
-        if frame is None:
-            raise ValueError(f"Missing precommitted panel symbol {symbol}")
-        close[symbol]=(frame["close"]*frame["adjustment_factor"]).reindex(calendar)
+    missing=[symbol for symbol in chosen if symbol not in stock_frames]
+    if missing:
+        raise ValueError(f"Missing precommitted panel symbol {missing[:3]}")
+    close=pd.concat({
+        symbol:(stock_frames[symbol]["close"]*
+                 stock_frames[symbol]["adjustment_factor"]).reindex(calendar)
+        for symbol in chosen
+    },axis=1)
     daily=close.pct_change(fill_method=None)
     active=daily.notna().sum(axis=1)
     min_active=int(np.ceil(len(chosen)*0.65))
