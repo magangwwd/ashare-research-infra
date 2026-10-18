@@ -30,13 +30,14 @@ def read_inputs(root: Path, symbol: str, as_of: date):
         raise ValueError("Monthly source parquet partitions missing")
     cols = ["vendor_symbol", "trade_date", "open", "high", "low", "close",
             "volume_shares", "is_quality_valid"]
-    frame = pd.concat(
-        (part for p in p_files if not (part := pd.read_parquet(p, columns=cols)
-          .query("vendor_symbol == @symbol")).empty), ignore_index=True)
-    factors = pd.concat(
-        (part for p in f_files if not (part := pd.read_parquet(
-          p, columns=["vendor_symbol", "trade_date", "adjustment_factor"])
-          .query("vendor_symbol == @symbol")).empty), ignore_index=True)
+    def select(path, columns):
+        piece = pd.read_parquet(path, columns=columns)
+        # Avoid DataFrame.query scope capture inside a generator expression.
+        return piece.loc[piece["vendor_symbol"].eq(symbol)]
+    frame = pd.concat((select(p, cols) for p in p_files), ignore_index=True)
+    factors = pd.concat((select(p, ["vendor_symbol", "trade_date",
+                                     "adjustment_factor"]) for p in f_files),
+                        ignore_index=True)
     frame["trade_date"] = pd.to_datetime(frame["trade_date"])
     factors["trade_date"] = pd.to_datetime(factors["trade_date"])
     if frame.trade_date.duplicated().any() or factors.trade_date.duplicated().any():
