@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 
 from ai_research.kline_three_year import END, START, TARGET, indicators, read_inputs
+from ai_research.kline_15m_bridge import read_minute_partitions, analyze_intraday_minute_rows
 
 VERSION = "KLINE_600351_VOL_REGIME_ATTRIBUTION_V1"
 PERIODS = ("discovery", "validation", "test")
@@ -68,7 +69,7 @@ def nonoverlap(rows, spacing=5):
     return picked
 
 
-def analyze(daily, baseline):
+def analyze(daily, baseline, raw_minutes):
     if baseline.get("authorization")!="RESEARCH_ONLY_NO_TRADING":
         raise ValueError("Unknown evidence packet or trading authorization")
     if baseline.get("symbol")!=TARGET or baseline.get("as_of")!=str(END):
@@ -86,6 +87,15 @@ def analyze(daily, baseline):
     if {p:sum(r["period"]==p for r in events) for p in PERIODS} != {
             "discovery":15,"validation":10,"test":6}:
         raise ValueError("Unrecognized original temporal events")
+    minute, qa=analyze_intraday_minute_rows(raw_minutes)
+    if len(minute)!=728 or qa["rejected_days"] or qa["duplicate_bars"]:
+        raise ValueError("Detailed minute source no longer covers all 728 validated days")
+    rows_10=raw_minutes.loc[raw_minutes["ts_code"].eq(TARGET)].copy()
+    rows_10["ts"]=pd.to_datetime(rows_10["trade_time"])
+    rows_10=rows_10.loc[rows_10.ts.dt.strftime("%H:%M").eq("10:00")]
+    if rows_10["ts"].dt.normalize().duplicated().any() or len(rows_10)!=728:
+        raise ValueError("Missing/duplicate verified 10:00 bar-end price")
+    price_10=rows_10.set_index(rows_10.ts.dt.normalize())["close"].astype(float)
     p,marks=indicators(daily)
     sessions=list(p.index)
     index={d:i for i,d in enumerate(sessions)}
@@ -117,7 +127,13 @@ def analyze(daily, baseline):
         # The first standard 15m bar begins at the exchange opening auction
         # price. For the research-only 10:00 proxy use the observed first30
         # growth relative to 09:45 bar open, NOT the daily close.
-        nx_at10=nx_open*(1+float(nx_first30))
+        if nxt not in minute.index or nxt not in price_10.index:
+            raise ValueError("Missing verified next session minute 10:00 price")
+        source_first_open=float(minute.loc[nxt,"first_open"])
+        expected_return=float(price_10.loc[nxt]/source_first_open-1)
+        if abs(expected_return-float(nx_first30))>0.00002:
+            raise ValueError("Actual 10:00 close differs from archived next-day return")
+        nx_at10=float(price_10.loc[nxt])*float(p.loc[nxt,"adjustment_factor"])
         future5=float(outlook.loc[d])
         rd=float(day_return.loc[d])
         rt=float(trend20.loc[d])
@@ -138,6 +154,8 @@ def analyze(daily, baseline):
             "future5_close_close":round(future5,6),
             "future5_next_open_to_t5_close":round(close_t5/nx_open-1,6),
             "future5_next_10am_to_t5_close_proxy":round(close_t5/nx_at10-1,6),
+            "next_open_vs_first_standard_15m_open_pct":round(nx_open/
+                  (source_first_open*float(p.loc[nxt,"adjustment_factor"]))-1,6),
             "future5_min_low_vs_next_open":round(
                 float(p.adj_low.iloc[i+1:i+6].min())/nx_open-1,6),
             "same_day_afternoon_volume_share":event["afternoon_vol_share"],
@@ -173,7 +191,8 @@ def analyze(daily, baseline):
         "status":"DESCRIPTIVE_SMALL_SAMPLE_NO_PROMOTABLE_EDGE",
         "source_events":len(rows),"coverage":{
             "minute_verified_days":baseline["minute_valid_days_aligned"],
-            "minute_coverage":baseline["minute_daily_coverage"]},
+            "minute_coverage":baseline["minute_daily_coverage"],
+            "live_archive_rechecked_days":len(minute)},
         "frozen_event_regime_thresholds":{
             "prior20_completed_session_return":"<=-5%, >=+5%, otherwise flat",
             "same_session_adjusted_close_to_close":"<=-2%, >=+2%, otherwise neutral",
@@ -182,7 +201,7 @@ def analyze(daily, baseline):
         "methodology":[
             "All 31 signal dates come from archived frozen daily volatility_expansion",
             "Regime uses closes T-21 through T-1; same-day direction known at T close",
-            "Next day 10:00 grouping only with 10:00-to-T+5-price proxy, never with T-close entry",
+            "Next day 10:00 grouping only with actual observed 10:00 minute bar-end price; price-to-T+5 close is NOT an executable trade",
             "Three years have already been inspected; 2025/2026 are retrospective checks, NOT untouched OOS",
             "Trading fees/slippage/A-share T+1/limit up-down not simulated",
             "Time-overlapping labels de-correlated descriptively via greedy 5-session spacing",
@@ -253,16 +272,21 @@ def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--daily-root",type=Path,required=True)
     parser.add_argument("--15m-statistics",type=Path,required=True)
+    parser.add_argument("--minutes-root",type=Path,required=True)
     parser.add_argument("--output-dir",type=Path,required=True)
     args=parser.parse_args()
     prior=json.loads(args.__dict__["15m_statistics"].read_text(encoding="utf-8"))
     daily, meta=read_inputs(args.daily_root,TARGET,END)
-    out=analyze(daily,prior)
+    minutes, parts=read_minute_partitions(args.minutes_root)
+    if parts!=37:
+        raise SystemExit(f"Original 37 minute partitions missing: found {parts}")
+    out=analyze(daily,prior,minutes)
     out["source_provenance"]={
         "prior_minute_analysis_sha256":hashlib.sha256(
             args.__dict__["15m_statistics"].read_bytes()).hexdigest(),
         "daily_source_partitions":meta["source_price_partitions"],
-        "daily_factor_partitions":meta["source_factor_partitions"]}
+        "daily_factor_partitions":meta["source_factor_partitions"],
+        "15m_verified_partitions":parts}
     write(out,args.output_dir)
     print(json.dumps({"status":out["status"],
         "events":out["source_events"],
