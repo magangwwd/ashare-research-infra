@@ -12,3 +12,11 @@ A public, client-side searchable GitHub Pages site, built from *verified Google 
 Security: Never commit OAuth credentials, original private Drive materials, patient data, unlicensed full-text abstracts or clinical advice. The source folder ID is not a token, but the public site never needs it. Restrict deploy actions to the default branch.
 
 The data are research-only, not medically reviewed, not exhaustive, and must not be used for personal clinical decisions, treatment rankings or inference of efficacy.
+
+## Public audience design (October 2026)
+
+- `index.html`: default **患者与家属版** (patient/family) with plain-language prevention and screening, questions for diagnosis and treatment discussions, recovery/follow-up, and links to actual NCI patient pages plus the Chinese CACA guideline bibliography. Patient content is educational, not a clinical interpretation, triage or diagnosis.
+- `professional.html`: **医疗专业人员版** with PubMed metadata, ClinicalTrials.gov registrations, FDA announcement links, and bibliography/source views. Research and approval statuses are never clinical recommendations.
+- Reciprocal audience switcher on both pages. Shared public snapshot at `data/site-data.json`, refreshed using the existing workflow; no new data API or patient-data intake.
+- Removed visitor-facing GitHub and source-code links, technical API entry points, and raw HTTP status display. Hosting and private automation remain server-side, not exposed in page navigation.
+- Build/Pages workflow must publish both HTML files, both JS scripts and both CSS files; never expose OAuth secrets, patient records or unlicensed paper full text.

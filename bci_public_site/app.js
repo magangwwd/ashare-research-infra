@@ -1,7 +1,7 @@
 'use strict';
 const state={data:null,view:'overview',category:'all'};
 const $=id=>document.getElementById(id);
-const label={overview:'研究总览',articles:'医学文献',trials:'临床试验',fda:'药物监管',guides:'指南与来源'};
+const label={overview:'专业研究总览',articles:'医学文献',trials:'临床试验',fda:'药物监管',guides:'指南与来源'};
 const typeLabels={recent:'近期研究',case:'公开病例',recovery:'康复与随访'};
 const typeClasses={recent:'',case:'blue-chip',recovery:'violet-chip'};
 const trialStatus={RECRUITING:'招募中',NOT_YET_RECRUITING:'尚未招募',ACTIVE_NOT_RECRUITING:'进行中 · 不招募',COMPLETED:'已完成',TERMINATED:'已终止',SUSPENDED:'暂停',WITHDRAWN:'撤回',ENROLLING_BY_INVITATION:'邀请入组',UNKNOWN:'状态未知'};
@@ -20,9 +20,9 @@ function setView(name,category){if(!label[name])return;state.view=name;if(catego
  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===name+'-view'));
  document.querySelectorAll('.nav-link').forEach(v=>v.classList.toggle('active',v.dataset.view===name));
  $('breadcrumb-current').textContent=label[name];$('page-title').textContent='';
- const mainTitle={overview:['乳腺癌医学证据','观察站'],articles:['最新医学文献','检索'],trials:['全球临床试验','追踪'],fda:['药物监管动态','索引'],guides:['指南与数据','溯源']};
+ const mainTitle={overview:['乳腺癌专业研究','资料库'],articles:['最新医学文献','检索'],trials:['全球临床试验','追踪'],fda:['药物监管动态','索引'],guides:['指南与数据','溯源']};
  $('page-title').append(document.createTextNode(mainTitle[name][0]),element('span','',mainTitle[name][1]));
- const subtitle={overview:'汇集权威公开研究，追踪临床进展与循证医学趋势。',articles:'公开医学文献元数据查询 · 论文摘要请前往原始来源。',trials:'ClinicalTrials.gov 已注册试验，登记状态不代表治疗获益。',fda:'美国 FDA 乳腺癌相关监管公告索引，需注意适用国家差异。',guides:'学术指南目录与官方来源状态，所有记录可核查来源。'};
+ const subtitle={overview:'供临床医师与研究人员检索公开论文、临床试验、指南与监管资料；尚未经医学专业审核。',articles:'公开医学文献元数据查询 · 论文摘要请前往原始来源。',trials:'ClinicalTrials.gov 已注册试验，登记状态不代表治疗获益。',fda:'美国 FDA 乳腺癌相关监管公告索引，需注意适用国家差异。',guides:'学术指南目录与官方来源状态，所有记录可核查来源。'};
  $('page-subtitle').textContent=subtitle[name];
  if(name==='articles'&&category){$('article-filter').value=category;renderArticles();}
  if(name==='trials')renderTrials();if(name==='fda')renderFda();if(name==='guides')renderGuides();
@@ -58,11 +58,11 @@ function renderFda(){const d=state.data;if(!d)return;const q=$('fda-search').val
  filtered.forEach((a,i)=>result.append(card('fda',a.title,a.url,[{name:'FDA 美国',cls:'coral-chip'},{name:'待逐条审查'}],[a.status],i+1)));
 }
 function renderGuides(){const d=state.data;if(!d)return;const list=$('guides-list');list.replaceChildren();d.guidelines.forEach((g,i)=>list.append(card('guides',g.title,g.url,[{name:'正式出版索引'}],[g.publisher,g.doi?'DOI '+g.doi:'',g.note],i+1)));
- const sources=$('sources-list');sources.replaceChildren();d.sources.forEach(s=>{const row=element('div','source-item'),lhs=element('div');lhs.append(link(s.name,s.url),element('small','',s.url));lhs.firstChild.style.fontWeight='700';const good=s.status==='verified_http_response';append(row,lhs,element('span','source-status'+(good?'':' bad'),good?'HTTP '+s.httpStatus:'待核实'));sources.append(row);});
+ const sources=$('sources-list');sources.replaceChildren();const sourceNames={fda_oncology_approvals:'美国 FDA 肿瘤药物审批公告',nci_breast_treatment:'NCI 乳腺癌治疗循证资料',nci_breast_prevention:'NCI 乳腺癌风险预防资料',nci_follow_up:'NCI 治疗后随访与康复',caca_2026_breast_guideline:'中国抗癌协会 2026 版乳腺癌指南',esmo_guideline_news:'欧洲肿瘤内科学会指南动态'};d.sources.forEach(s=>{const row=element('div','source-item'),lhs=element('div');const sourceName=sourceNames[s.name]||'官方医学资料';lhs.append(link(sourceName,s.url),element('small','','点击查看机构原文'));lhs.firstChild.style.fontWeight='700';append(row,lhs,element('span','source-status','查看原文 ↗'));sources.append(row);});
  const notes=$('data-notes');notes.replaceChildren(element('h3','','数据限制和质量说明'));
  d.dataWarnings.forEach(x=>notes.append(element('p','', '• '+x)));
  const unresolved=d.coverage?.recoveryMissingPmids||[];if(unresolved.length)notes.append(element('p','','• 康复综述存在未能从 PubMed XML 解析的标识符：'+unresolved.join('、')+'，没有伪造记录。'));
- notes.append(element('p','','• 基础数据由 GitHub Actions 获取并存放于 Google Drive；网站展示仅为可公开传播的精简题录信息。'));
+ notes.append(element('p','','• 本站展示可公开传播的研究题录与原始医学来源链接；数据收录不等于医学结论已经独立审核。'));
 }
 function fillHeader(){const d=state.data;if(!d)return;const iso=d.collectedAt||'';const date=iso.slice(0,10);$('snapshot-date').textContent=date||'未知';
  const diff=Math.floor((Date.now()-new Date(iso).getTime())/(86400*1000));$('snapshot-age').textContent=diff>7?'距上次采集 '+diff+' 天 · 数据可能过期':diff>0?'距上次采集 '+diff+' 天':'最近一次采集';
@@ -77,6 +77,6 @@ async function init(){document.querySelectorAll('[data-view]').forEach(node=>nod
    const d=await res.json();if(d.schemaVersion!==1||!Array.isArray(d.articles)||!Array.isArray(d.trials)||!Array.isArray(d.fda))throw new Error('数据格式不兼容');
    state.data=d;fillHeader();renderOverview();renderArticles();renderTrials();renderFda();renderGuides();
    const target=location.hash.slice(1);setView(label[target]?target:'overview');
- }catch(err){$('overview-list').replaceChildren(element('div','empty','数据暂时无法读取。请稍后重试，或前往 GitHub 项目核查最新发布情况。'));
+ }catch(err){$('overview-list').replaceChildren(element('div','empty','研究数据暂时无法读取。请稍后重试或打开官方医学来源查询。'));
  $('snapshot-age').textContent='数据加载失败';const t=$('toast');t.textContent='数据载入失败：'+err.message;t.classList.add('show');}}
 init();
