@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 from ai_research.kline_three_year import START, END, indicators
-from ai_research.five_stock_pre_move_kline import STOCKS
+from ai_research.five_stock_pre_move_kline import STOCKS, features_from_gold
 
 VERSION="VOL_MARKET_DAY_PRE20_PANEL_V1"
 EXTRA_SAMPLE_SIZE=240
@@ -161,6 +161,7 @@ def build_market_proxy(stock_frames,chosen,calendar):
 def events_by_symbol(frame,calendar,symbol,market):
     prices=frame.reindex(calendar)
     p,labels=indicators(prices)
+    original_features,_,_=features_from_gold(prices)
     c=p.adj_close
     prev20=c.shift(1)/c.shift(21)-1
     incl20=c/c.shift(20)-1
@@ -168,7 +169,7 @@ def events_by_symbol(frame,calendar,symbol,market):
     future=c.shift(-5)/c-1
     records=[]
     for idx in np.flatnonzero(labels["volatility_expansion"].to_numpy()):
-        if idx+5>=len(calendar):
+        if idx+5>=len(calendar) or original_features.iloc[idx].isna().any():
             continue
         d=calendar[idx]
         if d.date()<START or d.date()>END or when(d)!=when(calendar[idx+5]):
