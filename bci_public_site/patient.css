@@ -107,3 +107,56 @@ button,a{outline-offset:3px}
 @media(max-width:700px){.wrap,.header-inner{width:calc(100% - 32px)}.header-inner{min-height:72px;gap:8px}.brand{gap:8px}.brand strong{font-size:14px}.brand small{font-size:9px}.brand-icon{width:36px;height:36px;font-size:21px;border-radius:9px}.audience-tab{font-size:11px;padding:6px 9px}.hero{margin-top:17px;grid-template-columns:1fr;min-height:0}.hero-content{padding:38px 26px}.hero-visual{display:none}.hero h1{font-size:31px}.lead{font-size:13px}.hero-actions{align-items:stretch}.btn{padding:11px 14px}.section{padding-top:53px}.section-heading h2,.topic-intro h2{font-size:25px}.topic-layout{grid-template-columns:1fr;gap:12px;padding:27px 20px}.topic-info{padding:20px}.update-head{display:block}.date-pill{display:inline-block;margin-top:16px}.update-grid{grid-template-columns:1fr}.more-panel{margin-top:55px;margin-bottom:30px;padding:28px;display:block}.more-panel .btn{margin-top:17px}.notice{padding:13px}}
 @media(max-width:450px){.audience-tab{font-size:10px;padding:6px}.brand small{display:none}.path-grid,.resource-grid{grid-template-columns:1fr}.path-card{min-height:220px}.hero-actions{display:grid}.btn{width:100%}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+
+
+/* Primary product is the immutable Google Drive evidence snapshot, never static marketing content. */
+.cloud-main{padding-top:46px}
+.cloud-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:22px}
+.cloud-heading .section-heading{margin:0}
+.cloud-heading p{max-width:720px}
+.cloud-freshness{display:inline-flex;white-space:nowrap;align-items:center;background:#dff3e9;border:1px solid #b9deca;color:#26765e;padding:8px 13px;border-radius:999px;font-size:12px;font-weight:700}
+.cloud-freshness.stale{background:#fff3df;border-color:#f1d4a3;color:#8f632c}
+.cloud-status{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:12px;margin:23px 0 15px}
+.cloud-status-item{display:flex;flex-direction:column;gap:5px;background:white;border:1px solid #e4ede6;border-radius:12px;padding:15px 19px;min-width:0}
+.cloud-status-item small{color:#738b86;font-size:11px}
+.cloud-status-item strong{font-size:12px;color:#355b58;overflow-wrap:anywhere;line-height:1.6}
+.cloud-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:0 0 18px}
+.cloud-metric{display:flex;min-width:0;flex-direction:column;text-align:left;align-items:flex-start;border:1px solid #dcece3;border-radius:14px;background:#fff;cursor:pointer;padding:19px 18px;box-shadow:0 2px 10px #21483206;transition:transform .14s,border-color .14s}
+.cloud-metric:hover,.cloud-metric:focus-visible{border-color:#90c6b0;transform:translateY(-2px)}
+.cloud-metric small{font-size:12px;color:#6c8380;font-weight:700}
+.cloud-metric strong{font-size:38px;line-height:1.45;color:#227b6d;letter-spacing:-.035em}
+.cloud-metric span{font-size:10px;color:#879b96;line-height:1.6}
+.cloud-explorer{background:white;border:1px solid #dceae2;border-radius:17px;padding:24px;box-shadow:0 3px 20px #254a3610}
+.cloud-toolbar{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.cloud-toolbar h3{margin:0;font-size:19px}
+.cloud-toolbar p{color:#7c8e89;font-size:12px;margin:4px 0 0}
+.cloud-search{width:min(100%,380px);flex-shrink:0}
+.cloud-search input{width:100%;background:#f8fbf9;border:1px solid #dce9df;border-radius:10px;padding:12px 14px;font:inherit;font-size:13px;line-height:1.5;color:#284a44}
+.cloud-search input:focus{outline:2px solid #75a994;outline-offset:1px}
+.cloud-filter-row{display:flex;gap:7px;flex-wrap:wrap;margin:19px 0 20px;padding-bottom:18px;border-bottom:1px solid #e7eee8}
+.cloud-filter{border:1px solid #dceae2;border-radius:999px;background:#f6faf7;padding:8px 13px;color:#5b7772;font-size:12px;font-weight:700;cursor:pointer}
+.cloud-filter.active,.cloud-filter:hover{background:#227c70;color:white;border-color:#227c70}
+.cloud-results-meta{font-size:11px;color:#92a09c;display:flex;justify-content:space-between;align-items:center;gap:13px;margin-bottom:13px}
+.cloud-results-meta span:first-child{font-size:12px;color:#365c54;font-weight:800}
+.cloud-feed{display:grid;gap:10px}
+.cloud-record{padding:20px;border:1px solid #e7eee9;border-radius:12px;background:#fcfefd;display:grid;gap:9px;min-width:0}
+.cloud-record-head{display:flex;gap:8px;align-items:center}
+.cloud-record-type{display:inline-block;border-radius:5px;background:#eaf5ed;color:#287a67;font-weight:800;font-size:10px;padding:3px 8px}
+.cloud-record h4{font-size:15px;line-height:1.7;margin:0;color:#254a48;word-break:break-word}
+.cloud-record h4 a:hover{color:#177961;text-decoration:underline}
+.cloud-record-meta{font-size:11px;color:#718a86;margin:0;line-height:1.75;overflow-wrap:anywhere}
+.cloud-record-note{font-size:11px;color:#889991;margin:0}
+.cloud-record-go{font-size:12px;color:#207e71;font-weight:800;justify-self:start}
+.cloud-record-go:hover{text-decoration:underline}
+.cloud-pager{text-align:center;margin-top:17px}
+.cloud-pager button{background:#e9f5ee;border:1px solid #c4dfd2;border-radius:9px;color:#226e63;padding:11px 20px;font-weight:800;font-size:12px;cursor:pointer}
+.cloud-pager button[hidden]{display:none}
+.cloud-pager button:hover{background:#d8ebdd}
+.cloud-qualifier{font-size:11px;line-height:1.9;color:#869a90;border-top:1px solid #e5efe7;padding-top:13px;margin:21px 0 0}
+.patient-guide-divider{margin-top:75px;padding:20px 26px;border-left:4px solid #65aa91;background:#eaf5ed;border-radius:0 10px 10px 0}
+.patient-guide-divider span{font-size:18px;font-weight:850;color:#275d54}
+.patient-guide-divider p{color:#6e837b;font-size:12px;margin:2px 0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:1000px){.cloud-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.cloud-status{grid-template-columns:repeat(2,minmax(0,1fr))}.cloud-status-item:last-child{grid-column:1/-1}}
+@media(max-width:700px){.cloud-main{padding-top:37px}.cloud-heading,.cloud-toolbar{display:block}.cloud-freshness{margin-top:15px;white-space:normal}.cloud-search{display:block;margin-top:14px;width:100%}.cloud-explorer{padding:16px}.cloud-results-meta{align-items:flex-start;flex-direction:column;gap:4px}.cloud-filter-row{gap:6px}.cloud-filter{font-size:11px;padding:6px 9px}.cloud-record{padding:15px}.cloud-record h4{font-size:13px}.patient-guide-divider{margin-top:56px;padding:15px 18px}}
+@media(max-width:460px){.cloud-status{grid-template-columns:1fr}.cloud-status-item:last-child{grid-column:auto}.cloud-metrics{gap:9px}.cloud-metric{padding:14px 12px}.cloud-metric strong{font-size:29px}.cloud-metric span{font-size:9px}}

@@ -1,0 +1,65 @@
+name: BCI collect verified source to Drive
+on:
+  schedule:
+    - cron: '30 23 * * *' # 07:30 China/Singapore; best-effort
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/bci-drive-collector.yml'
+permissions:
+  contents: read
+concurrency:
+  group: bci-drive-collector
+  cancel-in-progress: false
+jobs:
+  public-collection:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Google Drive client dependencies
+        run: python -m pip install --disable-pip-version-check 'google-auth>=2.28,<3' 'requests>=2.31,<3'
+      - name: Validate public site and collector
+        run: python -m unittest discover -s bci_public_site/tests -v
+      - name: Collect public PubMed, ClinicalTrials.gov and official notices
+        run: python bci_public_site/scripts/collect_public_intelligence.py --out "$RUNNER_TEMP/bci_snapshots"
+      - name: Verify exactly one verified ZIP exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          archives=("$RUNNER_TEMP"/bci_snapshots/*.zip)
+          test "${#archives[@]}" -eq 1
+          printf 'BCI_ARCHIVE=%s\n' "${archives[0]}" >> "$GITHUB_ENV"
+      - name: Retain research archive and verification metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bci-evidence-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/bci_snapshots/*.zip
+            ${{ runner.temp }}/bci_snapshots/*/manifest.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Write verified snapshot into dedicated Google Drive folder
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python bci_public_site/scripts/publish_drive.py \
+            --input "$BCI_ARCHIVE" \
+            --report "$RUNNER_TEMP/bci-drive-publish.json"
+      - name: Preserve verified cloud storage receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bci-drive-receipt-${{ github.run_id }}
+          path: ${{ runner.temp }}/bci-drive-publish.json
+          if-no-files-found: warn
+          retention-days: 30
