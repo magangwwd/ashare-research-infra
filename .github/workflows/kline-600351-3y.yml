@@ -1,0 +1,122 @@
+name: Kline three-year 600351 exploratory statistics (paper only)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'ai_research/kline_three_year.py'
+      - '.github/workflows/kline-600351-3y.yml'
+  pull_request:
+    paths:
+      - 'ai_research/kline_three_year.py'
+      - 'ai_research/tests/test_kline_three_year.py'
+      - '.github/workflows/kline-600351-3y.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oneoff-kline-600351-three-years
+  cancel-in-progress: false
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install local numerical analysis dependencies
+        run: python -m pip install 'pandas>=2.2,<3' 'numpy>=2,<3'
+      - name: Test candlestick event timing and no-lookahead
+        run: python -m unittest -v ai_research.tests.test_kline_three_year
+
+  actual-drive-study:
+    needs: offline-tests
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      FIXED_STUDY_END: '2026-10-16'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install offline statistics and rclone
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install 'pandas>=2.2,<3' 'numpy>=2,<3' 'pyarrow>=18,<25'
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+      - name: Verify existing cloud credential without printing it
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Check actual Gold and COMPLETE historical monthly manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/kline/source"
+          rclone copyto 'gdrive:down_data/data/gold/main_board/manifest.json' "$RUNNER_TEMP/kline/gold_manifest.json"
+          rclone copyto 'gdrive:down_data/data/manifests/tushare/main_board_history/last_run_summary.json' "$RUNNER_TEMP/kline/history_status.json"
+          rclone copyto 'gdrive:down_data/data/gold/main_board/trading_calendar.parquet' "$RUNNER_TEMP/kline/source/trading_calendar.parquet"
+          python - <<'PY'
+          import os,pathlib,json
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"kline"
+          gold=json.loads((root/"gold_manifest.json").read_text())
+          hist=json.loads((root/"history_status.json").read_text())
+          assert gold["as_of_date"] >= os.environ["FIXED_STUDY_END"]
+          assert gold["validation"]["primary_keys_unique"] and gold["validation"]["ohlc_valid"]
+          assert hist["status"]=="COMPLETE" and hist["partial_months"]==[]
+          assert hist["ended_range"] >= os.environ["FIXED_STUDY_END"].replace("-","")
+          PY
+      - name: Download 2023 through 2026 year-partition source OHLCV and split factors
+        shell: bash
+        run: |
+          set -euo pipefail
+          root='gdrive:down_data/data/gold/main_board'
+          for dataset in daily_prices adjustment_factors; do
+            for year in 2023 2024 2025 2026; do
+              rclone copy "$root/$dataset/year=$year" "$RUNNER_TEMP/kline/source/$dataset/year=$year" \
+                --include 'month=*/data.parquet' --checkers 4 --transfers 5 --retries 3
+            done
+            test "$(find "$RUNNER_TEMP/kline/source/$dataset" -name data.parquet | wc -l)" -ge 42
+          done
+      - name: Compute immutable descriptive 3-year experiment, 3 chronological periods
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m ai_research.kline_three_year \
+            --data-root "$RUNNER_TEMP/kline/source" \
+            --history-status "$RUNNER_TEMP/kline/history_status.json" \
+            --gold-manifest "$RUNNER_TEMP/kline/gold_manifest.json" \
+            --as-of "$FIXED_STUDY_END" \
+            --output-dir "$RUNNER_TEMP/kline/report"
+          python - <<'PY'
+          import os,pathlib,json
+          p=pathlib.Path(os.environ["RUNNER_TEMP"])/"kline/report/statistics.json"
+          o=json.loads(p.read_text())
+          assert o["authorization"]=="RESEARCH_ONLY_NO_TRADING"
+          assert o["symbol"]=="600351.SH" and o["as_of"]=="2026-10-16"
+          assert len(o["patterns"])==6
+          assert o["valid_trade_sessions"]>500
+          PY
+      - name: Publish run-scoped report with Drive check (never overwrite)
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/kline_600351_3y_exploratory_v1/2026-10-16/run_$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/kline/report" "$dest" --immutable --checkers 4
+          rclone check "$RUNNER_TEMP/kline/report" "$dest" --one-way
+          echo "KLINE_THREE_YEAR_STUDY_PUBLISHED paper_only=true no_lookahead=true"
