@@ -1,9 +1,10 @@
 {
-  "schema_version": 1,
-  "editorial_title": "乳腺疾病寻医与研究证据导航",
+  "schema_version": 2,
   "review_status": "editorial_reference_only_not_medically_reviewed",
-  "updated_at_utc": "2026-10-18T03:40:00Z",
-  "source_policy": "Hospital service claims require dated hospital official pages; research-only military evidence does not prove current capacity. No cure rates/rankings, no patient-identifiable data.",
+  "title": "乳腺疾病寻医中文互动资料库",
+  "updated_at_utc": "2026-10-18T04:00:00Z",
+  "checked_at": "2026-10-18",
+  "source_policy": "专家岗位、门诊出诊、药物获批和试验入组可能随时变化。只有院方官网或正式预约平台可作为官方渠道；第三方资料须标明待核实。历史数据不得外推。这里不排名、不推荐指定医生、不提供诊断。",
   "hospitals": [
     {
       "id": "fudan",
@@ -13,17 +14,63 @@
       "type": "地方医院",
       "focus": [
         "乳腺外科",
-        "多学科会诊",
         "乳房重建",
+        "多学科会诊",
         "临床研究"
       ],
-      "highlight": "官方科室资料显示设有乳腺外科、整复整形及综合治疗团队，开展多学科管理与临床研究。",
-      "caution": "跨地区就诊的费用、候诊、医保与个体疗效需自行核实；历史手术量不代表现在的患者数或治愈率。",
-      "evidence": "官网科室介绍",
-      "url": "https://www.shca.org.cn/department/intro/id/317/pid/15.shtml",
-      "secondary_url": "https://www.shca.org.cn/home/department/index/id/317.shtml",
-      "verified": "官方科室页面",
-      "year_note": "官网网页核对日期2026-10-18；部分业务量为历史年度"
+      "highlight": "医院公开资料介绍乳腺外科、诊断、临床研究、综合治疗与康复等团队；有专病和专家团队诊疗信息。",
+      "caution": "官网资料涵盖不同年份，不能直接推出2026年等候时间或个人治疗效果；徐汇、浦东院区和门诊地点须看挂号页面。",
+      "url": "https://www.shca.org.cn/Home/doctor/",
+      "verified": "医院官网已核实",
+      "evidence": "医院医师列表与专科介绍",
+      "year_note": "资料核查日期 2026-10-18，服务和出诊以医院最新通知为准",
+      "match": [
+        "已确诊乳腺癌需外科方案讨论",
+        "保乳或乳房重建咨询",
+        "希望了解多学科会诊"
+      ],
+      "appointment": {
+        "summary": "通过医院官网医师页面进入具体专家的预约入口；关注医院认证微信公众号，确认院区和最新排班。",
+        "url": "https://www.shca.org.cn/Home/doctor/",
+        "status": "官方网页已核对",
+        "checked_at": "2026-10-18"
+      },
+      "doctors": [
+        {
+          "name": "邵志敏",
+          "focus": "乳腺肿瘤诊疗、综合管理与科研",
+          "url": "https://www.shca.org.cn/Expert?code=0878",
+          "source": "医院官网",
+          "checked_at": "2026-10-18"
+        },
+        {
+          "name": "吴炅",
+          "focus": "乳腺外科及保乳、整形重建等相关临床工作",
+          "url": "https://www.shca.org.cn/Home/doctor/",
+          "source": "医院官网",
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "sources": [
+        {
+          "title": "医院医师列表与专科介绍",
+          "url": "https://www.shca.org.cn/Home/doctor/",
+          "kind": "hospital_official",
+          "source_date": null,
+          "checked_at": "2026-10-18"
+        },
+        {
+          "title": "乳腺中心团队资料",
+          "url": "https://www.shca.org.cn/Home/news/content/id/297/pid/25893",
+          "kind": "hospital_official",
+          "source_date": "2024-02-29",
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "trial_link": null,
+      "checked_at": "2026-10-18",
+      "actual_patient_count": null,
+      "clinical_outcome_comparison": null
     },
     {
       "id": "cicams",
@@ -33,15 +80,39 @@
       "type": "地方医院",
       "focus": [
         "乳腺外科",
-        "保乳及前哨淋巴结技术",
-        "良恶性乳腺疾病"
+        "良恶性乳腺疾病",
+        "保乳与重建"
       ],
-      "highlight": "官网乳腺外科覆盖良恶性肿瘤、乳腺增生性病变，介绍保乳、前哨淋巴结及乳房再造等诊疗技术研究。",
-      "caution": "院方公开页面不能单独证明对所有病理分型的疗效优势；当前排班、是否需要转诊、费用须以医院为准。",
-      "evidence": "官网乳腺外科简介",
+      "highlight": "医院官网乳腺外科介绍良、恶性乳腺疾病及部分保乳、前哨淋巴结、重建相关服务。",
+      "caution": "本次未核实到该科最新所有医生出诊表和实际号源；无法依据科室宣传资料比较疗效或等待时长。",
       "url": "https://www.cicams.ac.cn/dzb/navigation/ru.html",
-      "verified": "官方科室页面",
-      "year_note": "官网网页核对日期2026-10-18"
+      "verified": "医院官网科室资料",
+      "evidence": "乳腺外科科室导航",
+      "year_note": "资料核查日期 2026-10-18，服务和出诊以医院最新通知为准",
+      "match": [
+        "乳腺肿块或病理确诊后的外科评估",
+        "乳房手术方式和重建问题"
+      ],
+      "appointment": {
+        "summary": "进入医院官网乳腺外科科室页面，再从医院官方就诊平台核对挂号方式；本站暂不提供未经核实的直接预约链接。",
+        "url": "https://www.cicams.ac.cn/dzb/navigation/ru.html",
+        "status": "科室官网已核对，预约细节待核实",
+        "checked_at": "2026-10-18"
+      },
+      "doctors": [],
+      "sources": [
+        {
+          "title": "乳腺外科科室导航",
+          "url": "https://www.cicams.ac.cn/dzb/navigation/ru.html",
+          "kind": "hospital_official",
+          "source_date": null,
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "trial_link": null,
+      "checked_at": "2026-10-18",
+      "actual_patient_count": null,
+      "clinical_outcome_comparison": null
     },
     {
       "id": "pku",
@@ -52,15 +123,68 @@
       "focus": [
         "乳腺肿瘤内科",
         "进展期乳腺癌",
-        "精准药物治疗",
-        "临床试验"
+        "药物治疗",
+        "临床研究"
       ],
-      "highlight": "官网乳腺肿瘤内科明确以进展期乳腺癌综合治疗及临床研究为重点，涉及内分泌、靶向、免疫等药物治疗。",
-      "caution": "对于单纯良性乳腺症状、外科手术或康复需求，应核实对应科室；临床试验资格需团队评估。",
-      "evidence": "官网乳腺肿瘤内科科室资料",
-      "url": "https://www.bjcancer.org/Html/Departments/Main/Index_21221.html",
-      "verified": "官方科室页面",
-      "year_note": "官网网页核对日期2026-10-18"
+      "highlight": "官网乳腺肿瘤内科明确主要开展进展期乳腺癌的药物综合治疗、精准治疗和临床研究。",
+      "caution": "偏重乳腺肿瘤内科；单纯良性乳腺结节或保乳手术需求应先核实合适的其他科室。",
+      "url": "https://www.bjcancer.org/Html/Departments/Main/Detail_1221.html",
+      "verified": "医院官网科室资料",
+      "evidence": "乳腺肿瘤内科官方简介",
+      "year_note": "资料核查日期 2026-10-18，服务和出诊以医院最新通知为准",
+      "match": [
+        "确诊后讨论化疗、内分泌、靶向等药物治疗",
+        "复发或转移性乳腺癌诊疗与第二意见"
+      ],
+      "appointment": {
+        "summary": "从医院乳腺肿瘤内科官网查看最新门诊排班和专家列表；排班可能临时调整。",
+        "url": "https://www.bjcancer.org/Departments/Main/Schedulings?SiteId=21221",
+        "status": "官方网页已核对",
+        "checked_at": "2026-10-18"
+      },
+      "doctors": [
+        {
+          "name": "李惠平",
+          "focus": "复发转移及进展期乳腺癌的药物治疗",
+          "url": "https://www.bjcancer.org/Html/Departments/Main/DoctorTeam_1221.html?siteId=21221",
+          "source": "医院官网",
+          "checked_at": "2026-10-18"
+        },
+        {
+          "name": "宋国红",
+          "focus": "乳腺癌综合治疗",
+          "url": "https://www.bjcancer.org/Html/Departments/Main/DoctorTeam_1221.html?siteId=21221",
+          "source": "医院官网",
+          "checked_at": "2026-10-18"
+        },
+        {
+          "name": "姜晗昉",
+          "focus": "乳腺癌药物治疗、个体化综合管理",
+          "url": "https://www.bjcancer.org/Html/Departments/Main/DoctorTeam_1221.html?siteId=21221",
+          "source": "医院官网",
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "sources": [
+        {
+          "title": "乳腺肿瘤内科官方简介",
+          "url": "https://www.bjcancer.org/Html/Departments/Main/Detail_1221.html",
+          "kind": "hospital_official",
+          "source_date": null,
+          "checked_at": "2026-10-18"
+        },
+        {
+          "title": "乳腺肿瘤内科专家列表",
+          "url": "https://www.bjcancer.org/Html/Departments/Main/DoctorTeam_1221.html?siteId=21221",
+          "kind": "hospital_official",
+          "source_date": null,
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "trial_link": null,
+      "checked_at": "2026-10-18",
+      "actual_patient_count": null,
+      "clinical_outcome_comparison": null
     },
     {
       "id": "sysucc",
@@ -70,33 +194,446 @@
       "type": "地方医院",
       "focus": [
         "乳腺科",
-        "多学科诊疗",
-        "乳腺肿瘤外科",
+        "乳腺癌综合治疗",
+        "多学科会诊",
         "临床研究"
       ],
-      "highlight": "官网乳腺科介绍覆盖良恶性乳腺疾病、临床治疗与研究，并说明有多学科联合门诊等服务。",
-      "caution": "官网页面含不同历史时期的数据，不能当作最新收治人数；院区、专家出诊和新技术可及性须重新核对。",
-      "evidence": "官网乳腺科简介",
+      "highlight": "官网乳腺科介绍良恶性乳腺疾病诊疗、综合治疗及多学科团队，并公开现有专科专家列表。",
+      "caution": "某些科室介绍包含2008年等早期历史数据，不能当作当年收治量；门诊地点和专家排班要重新核对。",
       "url": "https://www.sysucc.org.cn/rxk",
-      "verified": "官方科室页面",
-      "year_note": "官网网页核对日期2026-10-18；历史业务量不可直接外推"
+      "verified": "医院官网科室资料",
+      "evidence": "乳腺科与现行专家列表",
+      "year_note": "资料核查日期 2026-10-18，服务和出诊以医院最新通知为准",
+      "match": [
+        "乳腺疾病专科检查和确诊",
+        "多学科讨论与综合治疗"
+      ],
+      "appointment": {
+        "summary": "在医院公众版官网选择“就医指南—预约挂号”，再核对乳腺科和院区。",
+        "url": "https://sysucc.org.cn/home",
+        "status": "官方网页已核对",
+        "checked_at": "2026-10-18"
+      },
+      "doctors": [
+        {
+          "name": "谢小明",
+          "focus": "乳腺肿瘤外科与临床研究",
+          "url": "https://www.sysucc.org.cn/rxk",
+          "source": "医院官网",
+          "checked_at": "2026-10-18"
+        },
+        {
+          "name": "王曦",
+          "focus": "乳腺疾病诊治和乳腺癌综合研究",
+          "url": "https://www.sysucc.org.cn/rxk",
+          "source": "医院官网",
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "sources": [
+        {
+          "title": "乳腺科与现行专家列表",
+          "url": "https://www.sysucc.org.cn/rxk",
+          "kind": "hospital_official",
+          "source_date": null,
+          "checked_at": "2026-10-18"
+        },
+        {
+          "title": "公众版就医和预约导航",
+          "url": "https://sysucc.org.cn/home",
+          "kind": "hospital_official",
+          "source_date": null,
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "trial_link": null,
+      "checked_at": "2026-10-18",
+      "actual_patient_count": null,
+      "clinical_outcome_comparison": null
     },
     {
       "id": "pla301",
-      "name": "中国人民解放军总医院第一医学中心",
+      "name": "解放军总医院第一医学中心",
       "city": "北京",
       "region": "华北",
       "type": "军队医院",
       "focus": [
-        "公开乳腺癌临床研究",
-        "乳腺外科相关学术资料"
+        "公开乳腺癌研究线索"
       ],
-      "highlight": "《解放军医学院学报》公开发表该中心乳腺癌临床研究，可核实其相关学术活动。",
-      "caution": "现行乳腺专科设置、社会患者预约渠道、完整治疗范围及收治人数尚缺少本项目核实的官方现行资料；暂仅列研究线索，不作实力对比。",
-      "evidence": "军队医学期刊发表记录（非现行科室证明）",
+      "highlight": "公开的军队医学期刊包含本中心乳腺癌临床研究记录，说明存在相关学术研究活动。",
+      "caution": "尚缺少已核实的现行乳腺专科接诊能力、社会患者预约渠道和完整医生团队信息；仅供查证，不代表推荐就医。",
       "url": "https://xuebao.301hospital.com.cn/cn/article/doi/10.12435/j.issn.2095-5227.2024.029",
-      "verified": "学术来源；医院服务待核实",
-      "year_note": "研究记录所涉患者为历史回顾性研究，不代表2026年的临床业务量"
+      "verified": "仅研究论文佐证，服务待核实",
+      "evidence": "军队医学期刊临床研究",
+      "year_note": "资料核查日期 2026-10-18，服务和出诊以医院最新通知为准",
+      "match": [
+        "需要核对解放军总医院各医学中心的具体乳腺诊疗科室"
+      ],
+      "appointment": {
+        "summary": "请通过解放军总医院官方渠道先确认所属医学中心、乳腺专科设置及是否接诊社会患者。",
+        "url": "https://xuebao.301hospital.com.cn/cn/article/doi/10.12435/j.issn.2095-5227.2024.029",
+        "status": "不是预约入口，待核实",
+        "checked_at": "2026-10-18"
+      },
+      "doctors": [],
+      "sources": [
+        {
+          "title": "军队医学期刊临床研究",
+          "url": "https://xuebao.301hospital.com.cn/cn/article/doi/10.12435/j.issn.2095-5227.2024.029",
+          "kind": "peer_reviewed_research",
+          "source_date": "2024",
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "trial_link": null,
+      "checked_at": "2026-10-18",
+      "actual_patient_count": null,
+      "clinical_outcome_comparison": null
+    },
+    {
+      "id": "zhejiang",
+      "name": "浙江省肿瘤医院",
+      "city": "杭州",
+      "region": "华东",
+      "type": "地方医院",
+      "focus": [
+        "乳腺外科",
+        "保乳与重建",
+        "淋巴水肿康复",
+        "多学科会诊"
+      ],
+      "highlight": "医院官网乳腺外科页面明确介绍保乳、乳房重建、新辅助治疗、淋巴水肿训练及多学科诊疗。",
+      "caution": "页面提到的2019年手术量只是历史年度数据，不代表2026年收治人数或就医效果。",
+      "url": "https://www.zchospital.com/cn/department/3924",
+      "verified": "医院官网科室资料",
+      "evidence": "乳腺外科介绍及专家",
+      "year_note": "资料核查日期 2026-10-18，服务和出诊以医院最新通知为准",
+      "match": [
+        "保乳或乳房整形重建咨询",
+        "手术后淋巴水肿或康复问题",
+        "综合诊疗与术前治疗咨询"
+      ],
+      "appointment": {
+        "summary": "官网专家页面有“我要预约挂号”及认证公众号、电话、现场渠道；以当前医院排班为准。",
+        "url": "https://www.zchospital.com/cn/expert/133",
+        "status": "官方网页已核对",
+        "checked_at": "2026-10-18"
+      },
+      "doctors": [
+        {
+          "name": "俞洋",
+          "focus": "乳腺外科、保乳与重建、综合治疗",
+          "url": "https://www.zchospital.com/cn/expert/133",
+          "source": "医院官网",
+          "checked_at": "2026-10-18"
+        },
+        {
+          "name": "丁雨钦",
+          "focus": "乳腺良恶性肿瘤与乳房整形重建、康复管理",
+          "url": "https://www.zchospital.com/cn/expert/312",
+          "source": "医院官网",
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "sources": [
+        {
+          "title": "乳腺外科介绍及专家",
+          "url": "https://www.zchospital.com/cn/department/3924",
+          "kind": "hospital_official",
+          "source_date": null,
+          "checked_at": "2026-10-18"
+        },
+        {
+          "title": "俞洋专科与预约渠道",
+          "url": "https://www.zchospital.com/cn/expert/133",
+          "kind": "hospital_official",
+          "source_date": null,
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "trial_link": null,
+      "checked_at": "2026-10-18",
+      "actual_patient_count": null,
+      "clinical_outcome_comparison": null
+    },
+    {
+      "id": "westchina",
+      "name": "四川大学华西医院",
+      "city": "成都",
+      "region": "西南",
+      "type": "地方医院",
+      "focus": [
+        "乳腺疾病中心",
+        "良恶性乳腺疾病",
+        "多学科会诊",
+        "康复与全程管理"
+      ],
+      "highlight": "官网乳腺疾病中心介绍乳腺良恶性疾病诊疗、外科及多学科协作、治疗后随访与管理。",
+      "caution": "介绍包含不同历史阶段的业务量，不是当前独立收治患者人数；初诊路线和科室号源需实时查验。",
+      "url": "https://wchscu.cn/department_rxwk.html",
+      "verified": "医院官网科室资料",
+      "evidence": "乳腺疾病中心官方简介",
+      "year_note": "资料核查日期 2026-10-18，服务和出诊以医院最新通知为准",
+      "match": [
+        "乳腺炎、良性肿瘤及乳腺癌相关综合检查",
+        "乳腺癌手术与多学科讨论",
+        "治疗后复查和长期康复"
+      ],
+      "appointment": {
+        "summary": "医院医生页面提示通过四川大学华西医院公众号或“华医通”应用预约，具体以最新官方规则为准。",
+        "url": "https://www.wchscu.cn/expertlist/detail/68800.html",
+        "status": "官方网页已核对",
+        "checked_at": "2026-10-18"
+      },
+      "doctors": [
+        {
+          "name": "陈洁",
+          "focus": "乳腺疾病早期诊断、外科和乳房重建",
+          "url": "https://www.wchscu.cn/expertlist/detail/68555.html",
+          "source": "医院官网",
+          "checked_at": "2026-10-18"
+        },
+        {
+          "name": "李宏江",
+          "focus": "乳腺良恶性疾病、炎性疾病与微创诊疗",
+          "url": "https://www.wchscu.cn/expertlist/detail/68800.html",
+          "source": "医院官网",
+          "checked_at": "2026-10-18"
+        },
+        {
+          "name": "罗婷",
+          "focus": "乳腺癌药物综合治疗及临床研究",
+          "url": "https://wchscu.cn/expertlist/detail/69664.html",
+          "source": "医院官网",
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "sources": [
+        {
+          "title": "乳腺疾病中心官方简介",
+          "url": "https://wchscu.cn/department_rxwk.html",
+          "kind": "hospital_official",
+          "source_date": null,
+          "checked_at": "2026-10-18"
+        },
+        {
+          "title": "乳腺疾病全程管理就诊资料",
+          "url": "https://wchscu.cn/public/department/yzyz/detail/32339.html",
+          "kind": "hospital_official",
+          "source_date": null,
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "trial_link": null,
+      "checked_at": "2026-10-18",
+      "actual_patient_count": null,
+      "clinical_outcome_comparison": null
+    },
+    {
+      "id": "tianjin",
+      "name": "天津医科大学肿瘤医院",
+      "city": "天津",
+      "region": "华北",
+      "type": "地方医院",
+      "focus": [
+        "乳腺外科",
+        "乳腺肿瘤内科",
+        "乳房重建",
+        "乳腺影像与病理"
+      ],
+      "highlight": "院方公开科室目录明确列有乳腺肿瘤外科、乳腺内科、乳房再造、乳腺影像与乳腺病理等部门。",
+      "caution": "不同院区提供的科室、接诊服务和实际号源可能不同。官网部分英文页面与历史统计须核对适用年份。",
+      "url": "https://www.tjmuch.com/gzb.shtml",
+      "verified": "医院官网科室与就医服务",
+      "evidence": "天津市肿瘤医院公众版科室专家与预约",
+      "year_note": "资料核查日期 2026-10-18，服务和出诊以医院最新通知为准",
+      "match": [
+        "已确诊需乳腺外科或综合药物治疗讨论",
+        "乳腺影像、病理及重建问题"
+      ],
+      "appointment": {
+        "summary": "医院公众版官网设“预约挂号”“出诊信息”“科室专家”，按院区核对；本站不展示未经实时核实的号源。",
+        "url": "https://www.tjmuch.com/gzb.shtml",
+        "status": "官方网页已核对",
+        "checked_at": "2026-10-18"
+      },
+      "doctors": [],
+      "sources": [
+        {
+          "title": "天津市肿瘤医院公众版科室专家与预约",
+          "url": "https://www.tjmuch.com/gzb.shtml",
+          "kind": "hospital_official",
+          "source_date": null,
+          "checked_at": "2026-10-18"
+        },
+        {
+          "title": "院方临床科室目录",
+          "url": "https://tmucih.com/index/clinical/departments.html",
+          "kind": "hospital_official",
+          "source_date": null,
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "trial_link": null,
+      "checked_at": "2026-10-18",
+      "actual_patient_count": null,
+      "clinical_outcome_comparison": null
+    },
+    {
+      "id": "eastqinhuai",
+      "name": "东部战区总医院秦淮医疗区",
+      "city": "南京",
+      "region": "华东",
+      "type": "军队医院",
+      "focus": [
+        "市级预约平台乳腺肿瘤相关普外科记录"
+      ],
+      "highlight": "南京市公共预约挂号平台列有秦淮医疗区普外科专家资料，其中历史专业介绍包含乳腺肿瘤诊疗。",
+      "caution": "市级平台部分个人简介涉及原第八一医院时期，现行乳腺专科、专家在岗、排班、号源与社会患者接诊能力均须再次确认。",
+      "url": "https://www.nj12320.org/njres/reservation/doc_detail.do?docid=214139",
+      "verified": "市级挂号平台历史专家资料",
+      "evidence": "南京市12320秦淮医疗区专家信息",
+      "year_note": "资料核查日期 2026-10-18，服务和出诊以医院最新通知为准",
+      "match": [
+        "希望了解秦淮医疗区普外科乳腺疾病相关服务时先核对医院"
+      ],
+      "appointment": {
+        "summary": "可从南京市12320预约平台查询秦淮医疗区及当前科室；该专家页面不代表实时有号。",
+        "url": "https://www.nj12320.org/njres/reservation/doc_detail.do?docid=214139",
+        "status": "市级渠道，现行服务待核实",
+        "checked_at": "2026-10-18"
+      },
+      "doctors": [],
+      "sources": [
+        {
+          "title": "南京市12320秦淮医疗区专家信息",
+          "url": "https://www.nj12320.org/njres/reservation/doc_detail.do?docid=214139",
+          "kind": "municipal_booking",
+          "source_date": "历史信息",
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "trial_link": null,
+      "checked_at": "2026-10-18",
+      "actual_patient_count": null,
+      "clinical_outcome_comparison": null
+    },
+    {
+      "id": "southwest",
+      "name": "陆军军医大学第一附属医院（西南医院）",
+      "city": "重庆",
+      "region": "西南",
+      "type": "军队医院",
+      "focus": [
+        "第三方乳腺甲状腺外科医师线索"
+      ],
+      "highlight": "第三方医生平台展示西南医院乳腺甲状腺外科医生及乳腺良恶性疾病治疗的个人擅长描述，可作进一步查证的线索。",
+      "caution": "本项目尚未核实到最新医院官方科室原文、专家排班或官方乳腺预约入口；第三方擅长介绍不等同于院方确认。",
+      "url": "https://www.haodf.com/doctor/131962.html",
+      "verified": "第三方医生资料，院方待核实",
+      "evidence": "第三方医生个人简介",
+      "year_note": "资料核查日期 2026-10-18，服务和出诊以医院最新通知为准",
+      "match": [
+        "乳腺和甲状腺相关门诊需求，必须先核对当前医院官网"
+      ],
+      "appointment": {
+        "summary": "请通过西南医院官方就医渠道确认“乳腺甲状腺外科”和当前预约规则；第三方页面不作为正式挂号入口。",
+        "url": "https://www.haodf.com/doctor/131962.html",
+        "status": "第三方资料，不是官方预约",
+        "checked_at": "2026-10-18"
+      },
+      "doctors": [],
+      "sources": [
+        {
+          "title": "第三方医生个人简介",
+          "url": "https://www.haodf.com/doctor/131962.html",
+          "kind": "third_party",
+          "source_date": "更新日期不明",
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "trial_link": null,
+      "checked_at": "2026-10-18",
+      "actual_patient_count": null,
+      "clinical_outcome_comparison": null
+    },
+    {
+      "id": "changhai",
+      "name": "海军军医大学第一附属医院（长海医院）",
+      "city": "上海",
+      "region": "华东",
+      "type": "军队医院",
+      "focus": [
+        "第三方甲乳外科医生线索"
+      ],
+      "highlight": "第三方医生资料介绍了长海医院甲乳外科的乳腺病变检查、保乳及乳房重建相关工作，可作为向医院核实的起点。",
+      "caution": "现行甲乳外科专业配置、医生出诊与正式预约渠道未取得本项目的医院官方资料，不能据此承诺提供某项治疗。",
+      "url": "https://www.haodf.com/doctor/300557.html",
+      "verified": "第三方医生资料，院方待核实",
+      "evidence": "第三方医生个人简介",
+      "year_note": "资料核查日期 2026-10-18，服务和出诊以医院最新通知为准",
+      "match": [
+        "乳腺疾病检查、保乳与乳房重建方向须先由院方确认"
+      ],
+      "appointment": {
+        "summary": "联系海军军医大学第一附属医院官方门诊与甲乳外科，确认专科、医生排班及预约渠道。",
+        "url": "https://www.haodf.com/doctor/300557.html",
+        "status": "非官方预约，待核实",
+        "checked_at": "2026-10-18"
+      },
+      "doctors": [],
+      "sources": [
+        {
+          "title": "第三方医生个人简介",
+          "url": "https://www.haodf.com/doctor/300557.html",
+          "kind": "third_party",
+          "source_date": "更新日期不明",
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "trial_link": null,
+      "checked_at": "2026-10-18",
+      "actual_patient_count": null,
+      "clinical_outcome_comparison": null
+    },
+    {
+      "id": "xijing",
+      "name": "空军军医大学西京医院",
+      "city": "西安",
+      "region": "西北",
+      "type": "军队医院",
+      "focus": [
+        "医院身份与门诊总渠道已确认；乳腺专科待核实"
+      ],
+      "highlight": "空军军医大学官网列出西京医院机构、官网和联系电话，能够核实医院身份及其官方访问入口。",
+      "caution": "本次仅核对了医院身份，尚未从医院官网核实当期乳腺外科/乳腺内科团队和诊疗技术，不宜当作已证实的乳腺专科。",
+      "url": "https://www.fmmu.edu.cn/ylfw/xjyy1.htm",
+      "verified": "大学官网确认医院身份；乳腺专科待核实",
+      "evidence": "空军军医大学西京医院介绍及官网入口",
+      "year_note": "资料核查日期 2026-10-18，服务和出诊以医院最新通知为准",
+      "match": [
+        "希望了解西京医院乳腺疾病门诊时请从医院官方科室导航核对"
+      ],
+      "appointment": {
+        "summary": "通过空军军医大学官网中的“西京医院”门户进入，核实乳腺相关科室及预约方式。",
+        "url": "https://www.fmmu.edu.cn/ylfw/xjyy1.htm",
+        "status": "仅医院身份已核实",
+        "checked_at": "2026-10-18"
+      },
+      "doctors": [],
+      "sources": [
+        {
+          "title": "空军军医大学西京医院介绍及官网入口",
+          "url": "https://www.fmmu.edu.cn/ylfw/xjyy1.htm",
+          "kind": "university_official",
+          "source_date": "页面可能包含历史简介",
+          "checked_at": "2026-10-18"
+        }
+      ],
+      "trial_link": null,
+      "checked_at": "2026-10-18",
+      "actual_patient_count": null,
+      "clinical_outcome_comparison": null
     }
   ],
   "journeys": [
@@ -199,9 +736,79 @@
       "source_url": "https://www.cancer.gov/about-cancer/treatment/types/biomarker-testing-cancer-treatment"
     }
   ],
+  "glossary": [
+    {
+      "term": "乳腺结节",
+      "meaning": "检查发现乳房内有一个小团块或异常区域。多数结节不是癌症，但具体要结合医生的评估和必要检查。"
+    },
+    {
+      "term": "BI-RADS",
+      "meaning": "乳腺影像报告使用的分类系统，帮助医生描述发现及后续检查建议。数字本身不是癌症确诊书。"
+    },
+    {
+      "term": "穿刺活检",
+      "meaning": "取少量乳腺组织交给病理医生检查，以明确可疑病变性质。是否需要由医生决定。"
+    },
+    {
+      "term": "病理报告",
+      "meaning": "在显微镜下检查组织后形成的诊断报告。若确诊癌症，报告通常还包含影响治疗选择的信息。"
+    },
+    {
+      "term": "ER/PR",
+      "meaning": "乳腺癌细胞是否具有雌激素/孕激素受体，帮助医生判断部分内分泌治疗是否可能适合。"
+    },
+    {
+      "term": "HER2",
+      "meaning": "与某些乳腺癌生长相关的一种蛋白标记，检测结果会影响是否考虑特定靶向治疗。"
+    },
+    {
+      "term": "保乳手术",
+      "meaning": "在满足条件时切除肿瘤并尽量保留乳房的手术。是否合适与病灶范围、放疗条件等有关。"
+    },
+    {
+      "term": "多学科会诊（MDT）",
+      "meaning": "外科、肿瘤内科、影像、病理、放疗等多个科室一起讨论较复杂的诊疗问题。"
+    },
+    {
+      "term": "新辅助治疗",
+      "meaning": "部分患者在手术前先接受药物等治疗，目的和适用条件需要医生按分期、分型来判断。"
+    },
+    {
+      "term": "靶向治疗",
+      "meaning": "针对肿瘤的某些分子特点使用的药物，不是所有乳腺癌都适用。"
+    },
+    {
+      "term": "ADC（抗体偶联药物）",
+      "meaning": "把靶向识别肿瘤的抗体与药物连接起来的一类治疗药物，可能有特定风险，需按适应证使用。"
+    },
+    {
+      "term": "临床试验",
+      "meaning": "在严格伦理和科学规范下研究治疗或检测方法；登记试验不代表该方法已被证实有效。"
+    },
+    {
+      "term": "ctDNA",
+      "meaning": "在血液中检测与肿瘤有关的遗传物质，是重要的研究方向，但不能随意代替规范随访。"
+    }
+  ],
+  "educational_notes": [
+    {
+      "topic": "选择医院先看专科是否匹配",
+      "text": "首次发现乳腺结节、已确诊需要手术、复发转移需要药物治疗、术后康复，是不同的就诊需求。不要只看医院总排名。"
+    },
+    {
+      "topic": "查看医生团队",
+      "text": "优先依据医院官方医生页面看诊疗方向，预约前核实该医生是否仍在该院、是否出诊及是否接诊相关病情。"
+    },
+    {
+      "topic": "了解新药",
+      "text": "先问清楚自己的病理分型、疾病阶段和既往治疗，再区分科研论文、临床试验与中国大陆实际批准的适应证。"
+    }
+  ],
   "red_flags": [
     "出现新的乳房或腋下肿块、血性乳头溢液、皮肤或乳头明显变化，应尽快到正规医院评估。",
     "明显发热伴乳房红肿疼痛、全身情况急剧恶化等情况应及时获得线下医疗评估。"
   ],
-  "legal_note": "病理分型、分期、就医路线及用药选择须由具备资质的医疗团队结合完整资料判断；医院展示不是排名或背书。"
+  "legal_note": "病理分型、分期、就医路线及用药选择须由具备资质的医疗团队结合完整资料判断；医院展示不是排名或背书。",
+  "patient_information_policy": "不收集用户真实姓名、电话号码、病历、检查报告或诊断结果；互动只在本地浏览器筛选公开信息。",
+  "clinical_trial_policy": "公共试验登记用于科普。医院关联试验必须有研究登记地点或医院官方招募公告才能展示为该院项目。"
 }
