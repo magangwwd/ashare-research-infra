@@ -1,0 +1,60 @@
+name: BCI daily verified public data to Drive
+on:
+  schedule:
+    - cron: '30 23 * * *' # 07:30 Asia/Shanghai / Asia/Singapore
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: bci-daily-snapshot
+  cancel-in-progress: false
+jobs:
+  daily-research-snapshot:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Drive OAuth client requirements
+        run: python -m pip install --disable-pip-version-check 'google-auth>=2.28,<3' 'requests>=2.31,<3'
+      - name: Run unit tests
+        run: python -m unittest discover -s breast_cancer_intelligence/tests -v
+      - name: Collect timestamped public source snapshots
+        run: python breast_cancer_intelligence/collect_public_intelligence.py
+      - name: Select exactly one immutable ZIP snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          snapshots=(breast_cancer_intelligence/data_snapshots/*.zip)
+          test "${#snapshots[@]}" -eq 1
+          printf "BCI_SNAPSHOT=%s\n" "${snapshots[0]}" >> "$GITHUB_ENV"
+      - name: Store durable GitHub evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: bci-daily-${{ github.run_id }}
+          path: |
+            breast_cancer_intelligence/data_snapshots/*.zip
+            breast_cancer_intelligence/data_snapshots/*/manifest.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Write archive to Drive then read back checksum
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python breast_cancer_intelligence/publish_drive.py \
+            --input "$BCI_SNAPSHOT" \
+            --report breast_cancer_intelligence/drive_publish_report.json
+      - name: Retain safe storage evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bci-drive-report-${{ github.run_id }}
+          path: breast_cancer_intelligence/drive_publish_report.json
+          if-no-files-found: warn
+          retention-days: 30
