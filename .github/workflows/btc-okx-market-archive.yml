@@ -1,0 +1,47 @@
+name: BTC OKX sparse archive
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '7 */4 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: btc-okx-market-archive
+  cancel-in-progress: false
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Capture
+        run: |
+          python btc-quant/data/okx_capture.py --out "$RUNNER_TEMP/okx"
+          python btc-quant/data/okx_history_catalog.py "$RUNNER_TEMP/okx"
+      - name: Configure Drive
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+      - name: Immutable upload and verification
+        run: |
+          set -euo pipefail
+          dest="gdrive:BTC_Quant_System_OKX/market_data/OKX/sparse_snapshots/run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$RUNNER_TEMP/okx" "$dest" --immutable
+          rclone --config "$RUNNER_TEMP/rclone.conf" check "$RUNNER_TEMP/okx" "$dest" --one-way --download
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: okx-snapshot-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/okx/
+          retention-days: 14
+          if-no-files-found: ignore
+      - if: always()
+        run: rm -f "$RUNNER_TEMP/rclone.conf"
