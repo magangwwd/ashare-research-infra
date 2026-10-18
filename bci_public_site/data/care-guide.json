@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "editorial_title": "乳腺疾病寻医与研究证据导航",
+  "review_status": "editorial_reference_only_not_medically_reviewed",
+  "updated_at_utc": "2026-10-18T03:40:00Z",
+  "source_policy": "Hospital service claims require dated hospital official pages; research-only military evidence does not prove current capacity. No cure rates/rankings, no patient-identifiable data.",
+  "hospitals": [
+    {
+      "id": "fudan",
+      "name": "复旦大学附属肿瘤医院",
+      "city": "上海",
+      "region": "华东",
+      "type": "地方医院",
+      "focus": [
+        "乳腺外科",
+        "多学科会诊",
+        "乳房重建",
+        "临床研究"
+      ],
+      "highlight": "官方科室资料显示设有乳腺外科、整复整形及综合治疗团队，开展多学科管理与临床研究。",
+      "caution": "跨地区就诊的费用、候诊、医保与个体疗效需自行核实；历史手术量不代表现在的患者数或治愈率。",
+      "evidence": "官网科室介绍",
+      "url": "https://www.shca.org.cn/department/intro/id/317/pid/15.shtml",
+      "secondary_url": "https://www.shca.org.cn/home/department/index/id/317.shtml",
+      "verified": "官方科室页面",
+      "year_note": "官网网页核对日期2026-10-18；部分业务量为历史年度"
+    },
+    {
+      "id": "cicams",
+      "name": "中国医学科学院肿瘤医院",
+      "city": "北京",
+      "region": "华北",
+      "type": "地方医院",
+      "focus": [
+        "乳腺外科",
+        "保乳及前哨淋巴结技术",
+        "良恶性乳腺疾病"
+      ],
+      "highlight": "官网乳腺外科覆盖良恶性肿瘤、乳腺增生性病变，介绍保乳、前哨淋巴结及乳房再造等诊疗技术研究。",
+      "caution": "院方公开页面不能单独证明对所有病理分型的疗效优势；当前排班、是否需要转诊、费用须以医院为准。",
+      "evidence": "官网乳腺外科简介",
+      "url": "https://www.cicams.ac.cn/dzb/navigation/ru.html",
+      "verified": "官方科室页面",
+      "year_note": "官网网页核对日期2026-10-18"
+    },
+    {
+      "id": "pku",
+      "name": "北京大学肿瘤医院",
+      "city": "北京",
+      "region": "华北",
+      "type": "地方医院",
+      "focus": [
+        "乳腺肿瘤内科",
+        "进展期乳腺癌",
+        "精准药物治疗",
+        "临床试验"
+      ],
+      "highlight": "官网乳腺肿瘤内科明确以进展期乳腺癌综合治疗及临床研究为重点，涉及内分泌、靶向、免疫等药物治疗。",
+      "caution": "对于单纯良性乳腺症状、外科手术或康复需求，应核实对应科室；临床试验资格需团队评估。",
+      "evidence": "官网乳腺肿瘤内科科室资料",
+      "url": "https://www.bjcancer.org/Html/Departments/Main/Index_21221.html",
+      "verified": "官方科室页面",
+      "year_note": "官网网页核对日期2026-10-18"
+    },
+    {
+      "id": "sysucc",
+      "name": "中山大学肿瘤防治中心",
+      "city": "广州",
+      "region": "华南",
+      "type": "地方医院",
+      "focus": [
+        "乳腺科",
+        "多学科诊疗",
+        "乳腺肿瘤外科",
+        "临床研究"
+      ],
+      "highlight": "官网乳腺科介绍覆盖良恶性乳腺疾病、临床治疗与研究，并说明有多学科联合门诊等服务。",
+      "caution": "官网页面含不同历史时期的数据，不能当作最新收治人数；院区、专家出诊和新技术可及性须重新核对。",
+      "evidence": "官网乳腺科简介",
+      "url": "https://www.sysucc.org.cn/rxk",
+      "verified": "官方科室页面",
+      "year_note": "官网网页核对日期2026-10-18；历史业务量不可直接外推"
+    },
+    {
+      "id": "pla301",
+      "name": "中国人民解放军总医院第一医学中心",
+      "city": "北京",
+      "region": "华北",
+      "type": "军队医院",
+      "focus": [
+        "公开乳腺癌临床研究",
+        "乳腺外科相关学术资料"
+      ],
+      "highlight": "《解放军医学院学报》公开发表该中心乳腺癌临床研究，可核实其相关学术活动。",
+      "caution": "现行乳腺专科设置、社会患者预约渠道、完整治疗范围及收治人数尚缺少本项目核实的官方现行资料；暂仅列研究线索，不作实力对比。",
+      "evidence": "军队医学期刊发表记录（非现行科室证明）",
+      "url": "https://xuebao.301hospital.com.cn/cn/article/doi/10.12435/j.issn.2095-5227.2024.029",
+      "verified": "学术来源；医院服务待核实",
+      "year_note": "研究记录所涉患者为历史回顾性研究，不代表2026年的临床业务量"
+    }
+  ],
+  "journeys": [
+    {
+      "id": "screen",
+      "title": "筛查或发现乳腺变化",
+      "brief": "先由正规医疗机构评估风险与症状，不根据网络问答自我诊断。",
+      "steps": [
+        "梳理症状、出现时间、个人和家族史。",
+        "与医生讨论是否需要体检、超声、钼靶或其他影像。",
+        "结果异常时按报告与专科意见明确是否需要进一步检查。"
+      ],
+      "ask": [
+        "我目前需要检查还是随访？",
+        "不同影像检查的用途是什么？",
+        "哪些变化需要尽快复诊？"
+      ],
+      "source_url": "https://www.cancer.gov/types/breast/screening"
+    },
+    {
+      "id": "diagnosis",
+      "title": "影像异常、活检与病理确诊",
+      "brief": "影像提示异常并不等于已经确诊癌症；确诊及后续路径依赖必要时的组织病理。",
+      "steps": [
+        "带上既往影像、检查报告及服药史。",
+        "由医生判断是否需要穿刺活检或其他检查。",
+        "如确诊恶性，核对病理类型、ER/PR、HER2及分期评估。"
+      ],
+      "ask": [
+        "BI-RADS结果应如何解读？",
+        "是否需要病理复核？",
+        "病理中的ER、PR、HER2代表什么？"
+      ],
+      "source_url": "https://www.cancer.gov/types/breast/diagnosis/breast-cancer-biomarker-tests"
+    },
+    {
+      "id": "plan",
+      "title": "确定治疗计划与多学科讨论",
+      "brief": "治疗取决于疾病分期、分子分型、既往用药、合并疾病及个人偏好，不存在通用最佳方案。",
+      "steps": [
+        "核对分期、分型、身体状况和治疗目标。",
+        "与医疗团队讨论局部治疗（手术/放疗）与全身治疗的必要性及顺序。",
+        "对复杂或进展期情况可询问MDT与第二诊疗意见。"
+      ],
+      "ask": [
+        "本方案的证据、可能收益与风险是什么？",
+        "还有哪些标准治疗选择？",
+        "哪些因素会改变后续治疗？"
+      ],
+      "source_url": "https://www.cancer.gov/types/breast/treatment"
+    },
+    {
+      "id": "recovery",
+      "title": "康复、随访与长期管理",
+      "brief": "随访频率和康复计划取决于治疗经历与风险，不把网上统一清单当作医嘱。",
+      "steps": [
+        "与团队制定书面复诊、药物与异常症状联络计划。",
+        "评估肩臂功能、淋巴水肿、疲劳、睡眠和情绪。",
+        "针对持续不适咨询康复或支持治疗团队。"
+      ],
+      "ask": [
+        "我应何时复诊及做哪些检查？",
+        "哪些新症状需要提前联系医生？",
+        "如何安全开展术后活动及处理副作用？"
+      ],
+      "source_url": "https://www.cancer.gov/about-cancer/coping/survivorship/follow-up-care"
+    }
+  ],
+  "frontiers": [
+    {
+      "id": "adc",
+      "topic": "抗体偶联药物（ADC）",
+      "kind": "已有临床应用及持续研究（以适应证为准）",
+      "scope": "与HER2表达等生物标志物有关，具体药物、分期和既往治疗要求不同。",
+      "limits": "重点关注间质性肺病等治疗风险；境内是否获批需核对NMPA。",
+      "source_url": "https://www.cancer.gov/types/breast/treatment"
+    },
+    {
+      "id": "cdk",
+      "topic": "HR阳性/HER2阴性乳腺癌的CDK4/6及其他靶向策略",
+      "kind": "部分已建立临床用途，更多组合仍在研究",
+      "scope": "内分泌与靶向药物方案常需结合分期、既往用药、基因/分子检测和耐药情况。",
+      "limits": "不是所有人需要或适合靶向药，应核对具体获批适应证和不良反应。",
+      "source_url": "https://www.cancer.gov/types/breast/hp/breast-treatment-pdq"
+    },
+    {
+      "id": "immuno",
+      "topic": "三阴性乳腺癌的免疫治疗",
+      "kind": "特定临床情境已有获批选择，持续研究",
+      "scope": "是否适用取决于分期、病理、免疫标志物及具体治疗线次。",
+      "limits": "免疫相关副作用可能严重；不因一篇研究或单一标志物自行用药。",
+      "source_url": "https://www.cancer.gov/types/breast/treatment"
+    },
+    {
+      "id": "ctdna",
+      "topic": "ctDNA / 微小残留病灶（MRD）监测",
+      "kind": "研究前沿：临床用途仍需充分验证",
+      "scope": "探索利用循环肿瘤DNA辅助判断残留病灶和复发风险。",
+      "limits": "不能把试验性检测直接作为更改治疗或代替规范影像、随访的依据。",
+      "source_url": "https://www.cancer.gov/about-cancer/treatment/types/biomarker-testing-cancer-treatment"
+    }
+  ],
+  "red_flags": [
+    "出现新的乳房或腋下肿块、血性乳头溢液、皮肤或乳头明显变化，应尽快到正规医院评估。",
+    "明显发热伴乳房红肿疼痛、全身情况急剧恶化等情况应及时获得线下医疗评估。"
+  ],
+  "legal_note": "病理分型、分期、就医路线及用药选择须由具备资质的医疗团队结合完整资料判断；医院展示不是排名或背书。"
+}
