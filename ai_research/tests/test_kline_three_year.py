@@ -1,9 +1,19 @@
 """Pure synthetic invariants for the non-trading three-year candlestick study."""
 import unittest
-import numpy as np
-import pandas as pd
-from ai_research.kline_three_year import (START, END, HORIZONS,
-                                         TARGET, indicators, numbers, render)
+
+# General repo-wide unittest discovery runs without numerical optional dependencies.
+# The dedicated kline workflow installs them and executes every test below.
+try:
+    import numpy as np
+    import pandas as pd
+    from ai_research.kline_three_year import (START, END, HORIZONS,
+                                             TARGET, indicators, numbers, render)
+except ModuleNotFoundError as exc:
+    if exc.name not in ("pandas", "numpy"):
+        raise
+    np = pd = None
+
+
 
 
 def fake_frame():
@@ -17,6 +27,7 @@ def fake_frame():
         "adjustment_factor":np.ones(len(ix))},index=ix)
 
 
+@unittest.skipIf(pd is None, 'Optional pandas/numpy only installed in Kline specialized CI')
 class KlineTests(unittest.TestCase):
     def test_all_six_patterns_and_five_forward_windows(self):
         result,baseline=numbers(fake_frame(),None)
