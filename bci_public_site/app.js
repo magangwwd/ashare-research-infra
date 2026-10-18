@@ -29,10 +29,38 @@ function setView(name,category){if(!label[name])return;state.view=name;if(catego
  $('sidebar').classList.remove('open');window.scrollTo({top:0,behavior:'instant'});
  try{history.replaceState(null,'','#'+name);}catch{}
 }
+function showDrivePulse(d){
+ const date=value=>{if(!value)return '未知';const dt=new Date(value);return Number.isNaN(dt.getTime())?'未知':dt.toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'Asia/Shanghai',hour12:false})+'（北京时间）'};
+ $('pro-collected-time').textContent=date(d.collectedAt);
+ $('pro-generated-time').textContent=date(d.generatedAt);
+ $('pro-snapshot-id').textContent=d.snapshotId||'未标记';
+ const ms=Date.now()-new Date(d.collectedAt).getTime();
+ const age=Number.isFinite(ms)?Math.max(0,Math.floor(ms/86400000)):null;
+ $('pro-data-age').textContent=age===null?'无法核实采集时间':age===0?'今天有有效快照':age<=2?'距上次采集 '+age+' 天':'距上次采集 '+age+' 天 · 注意时效';
+ $('pro-data-age').classList.toggle('stale',age===null||age>7);
+ const articles=$('pro-articles-latest');articles.replaceChildren();
+ for(const a of d.articles.filter(a=>a.category==='recent').slice(0,5)){
+   const row=element('div','pro-recent-row');
+   row.append(link(a.title,a.url),element('span','',[(a.journal||''),a.id?'PMID '+a.id:''].filter(Boolean).join(' · ')));
+   articles.append(row);
+ }
+ if(!articles.childNodes.length)articles.append(element('p','pro-empty','暂无最近收录的研究题录。'));
+ const trials=$('pro-trials-latest');trials.replaceChildren();
+ for(const t of d.trials.slice(0,5)){
+   const row=element('div','pro-recent-row');
+   row.append(link(t.title||t.id,t.url),element('span','',[(t.date?'更新 '+t.date:''),t.id,trialStatus[t.status]||t.status].filter(Boolean).join(' · ')));
+   trials.append(row);
+ }
+ if(!trials.childNodes.length)trials.append(element('p','pro-empty','暂无已核实的临床试验记录。'));
+ const src=d.counts||{};
+ $('pro-cloud-scope').textContent='当前云盘有限样本：'+((src.recent||0)+(src.case||0)+(src.recovery||0))+' 条论文/病例/康复题录、'+(src.trials||0)+' 条试验、'+(src.fda||0)+' 条 FDA 公告索引、'+(src.guidelines||0)+' 条指南索引。仅为公开研究信息，尚未经独立医学审核；网站刷新不代表上游每天都有新数据。';
+}
+
 function renderOverview(){const d=state.data;if(!d)return;
  $('metric-articles').textContent=d.counts.recent;$('metric-trials').textContent=d.counts.trials;
  $('metric-fda').textContent=d.counts.fda;$('metric-recovery').textContent=d.counts.recovery;
  $('side-articles').textContent=d.articles.length;$('side-trials').textContent=d.trials.length;$('side-fda').textContent=d.fda.length;
+ showDrivePulse(d);
  const ul=$('overview-list');ul.replaceChildren();for(const [i,a] of d.articles.filter(a=>a.category==='recent').slice(0,4).entries())ul.append(articleCard(a,i+1));
 }
 function articleCard(a,i){const tags=[{name:typeLabels[a.category]||'公开文献',cls:typeClasses[a.category]||''}];if(a.types&&a.types.includes('Systematic Review'))tags.push({name:'系统评价',cls:'blue-chip'});
