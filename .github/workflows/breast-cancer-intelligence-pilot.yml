@@ -1,15 +1,34 @@
 name: Breast cancer intelligence pilot
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'breast_cancer_intelligence/**'
+      - '.github/workflows/breast-cancer-intelligence-pilot.yml'
 permissions:
   contents: read
 jobs:
-  test:
+  test-public-research-apis:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m unittest discover -s breast_cancer_intelligence/tests
-      - run: python breast_cancer_intelligence/collect_pubmed.py --dry-run
+      - name: Local data and URL unit tests
+        run: python -m unittest discover -s breast_cancer_intelligence/tests -v
+      - name: PubMed URL dry run
+        run: python breast_cancer_intelligence/collect_pubmed.py --dry-run
+      - name: ClinicalTrials.gov URL dry run
+        run: python breast_cancer_intelligence/collect_trials.py --dry-run
+      - name: Real public API connectivity and response schema
+        run: python breast_cancer_intelligence/smoke_real_apis.py
+      - name: Save validation evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bci-public-api-smoke-${{ github.run_id }}
+          path: breast_cancer_intelligence/smoke_report.json
+          if-no-files-found: warn
+          retention-days: 7
