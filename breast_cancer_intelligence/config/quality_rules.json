@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "patient_count_policy": "Only explicitly reported unique breast cancer patients; never infer from procedures, visits, or trial counts",
+  "hospital_alias_policy": "Hospital campuses and historical aliases must not be double counted",
+  "review_policy": "Medical interpretation requires qualified human review before patient-facing publication",
+  "privacy_policy": "Do not collect identifiable patient data",
+  "freshness": {
+    "pubmed_max_hours": 48,
+    "clinical_trials_max_hours": 48,
+    "hospital_profile_recheck_days": 90
+  },
+  "status": "rules_defined_not_activated"
+}
