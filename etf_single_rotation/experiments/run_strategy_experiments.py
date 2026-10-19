@@ -74,7 +74,7 @@ def build_monthly_targets(prices, strategy):
                     target, regime = GOLD, "DEFENSIVE_GOLD"
                 else:
                     regime = "CASH"
-        elif strategy == "regime_switch":
+        elif strategy in {"regime_switch", "regime_switch_lowvol"}:
             broad = [s for s in ["510300.SH", "510500.SH", "510050.SH"] if s in hist.columns]
             above = []
             for sym in STOCKS:
@@ -98,7 +98,8 @@ def build_monthly_targets(prices, strategy):
                 target = max(scores, key=scores.get)
             if target is not None and target != GOLD:
                 v = float(vol_daily.loc[d, target]) if target in vol_daily.columns and pd.notna(vol_daily.loc[d, target]) else np.nan
-                exposure = min(1.0, VOL_TARGET / v) if np.isfinite(v) and v > 0 else 1.0
+                vol_target = 0.08 if strategy == "regime_switch_lowvol" else VOL_TARGET
+                exposure = min(1.0, vol_target / v) if np.isfinite(v) and v > 0 else 1.0
         if target is not None:
             # Signal made at this close. It becomes active next observed session only.
             effective = prices.index[prices.index.get_loc(d) + 1] if prices.index.get_loc(d) + 1 < len(prices.index) else None
@@ -135,7 +136,7 @@ def main():
         raise SystemExit("Empty or unusable ETF panel.")
     prices = prices.ffill()  # valuation returns only; data gaps are separately flagged and acceptance remains preliminary.
     OUT.mkdir(parents=True, exist_ok=True)
-    strategy_names = ["trend_filter", "volatility_control", "cross_asset_defensive", "regime_switch"]
+    strategy_names = ["trend_filter", "volatility_control", "cross_asset_defensive", "regime_switch", "regime_switch_lowvol"]
     summaries, curves, signals_all, weights_all = [], [], [], []
     for strategy in strategy_names:
         summary, equity, weights, signals = run_one(prices, strategy)
@@ -164,7 +165,8 @@ def main():
             "Current adjusted-price total-return semantics are not independently verified.",
             "Missing dates are forward-filled for valuation only and remain under data-quality review.",
             "No hyperparameter optimization or walk-forward test is performed in this phase.",
-            "ETF-level max drawdown does not guarantee portfolio drawdown control; every result remains preliminary."
+            "ETF-level max drawdown does not guarantee portfolio drawdown control; every result remains preliminary.",
+            "regime_switch_lowvol is a predeclared lower-volatility sensitivity test (8% target versus 12%), not an accepted strategy."
         ],
         "acceptance": "NOT_FOR_TRADING"
     }
