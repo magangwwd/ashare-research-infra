@@ -48,6 +48,8 @@ python -m pip install -r requirements.txt
 python -m pytest -q
 ```
 
+依赖已锁定：`requirements.txt` 及 `requirements/`、`astock-quant/*/requirements.txt` 是由对应 `.in` 文件生成、带哈希的锁文件，工作流用 `pip install --require-hashes` 安装，保证每次运行的依赖完全一致。要升级依赖，先改 `.in` 里的范围，再运行 `scripts/lock_requirements.sh`（需要 `pip install uv`），审阅差异后一并提交。所有第三方 Action 均固定到 commit SHA，由 Dependabot 每周更新。
+
 通过环境 Secrets 或安全的本地环境注入 `TUSHARE_TOKEN`，不要写入源代码、YAML、日志、Artifact 或聊天。没有 Token，真实任务会失败退出。
 
 ```bash

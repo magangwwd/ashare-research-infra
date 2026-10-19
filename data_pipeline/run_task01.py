@@ -474,7 +474,10 @@ class Pipeline:
         state_path = self.store.metadata / "intraday.json"
         state = read_json(state_path)
         cursor = state.get("history_cursor", 0) % len(requests)
-        fetched = bars = examined = 0
+        error_limit = settings.get("max_errors_before_abort", 5)
+        fetched = bars = examined = streak = errors = streak_start = 0
+        last_error = None
+        aborted = False
         while examined < len(requests) and fetched < budget:
             params = requests[(cursor + examined) % len(requests)]
             examined += 1
@@ -482,16 +485,36 @@ class Pipeline:
                 continue
             try:
                 bars += self.fetch_minutes(params)
-            except Exception:
-                pass
+                streak = 0
+            except Exception as exc:
+                # fetch_minutes has already recorded the Gap. Count consecutive
+                # failures so a revoked permission or provider outage stops the run
+                # instead of burning the whole request budget (and its retry sleeps).
+                errors += 1
+                if streak == 0:
+                    streak_start = examined - 1
+                streak += 1
+                last_error = self.client.redact(exc)
+                if streak >= error_limit:
+                    aborted = True
+                    fetched += 1
+                    print(f"WARNING stk_mins history backfill stopped after {streak} consecutive errors: "
+                          f"{last_error[:300]}")
+                    break
             fetched += 1
+        # After an abort, resume at the first request of the failing streak rather
+        # than skipping past requests that never succeeded.
+        advance = streak_start if aborted else examined
         completed = sum(1 for params in requests if self.complete("stk_mins", params))
         pending = len(requests) - completed
         complete_ratio = completed / len(requests) if requests else 1.0
         state.update({
-            "history_cursor": (cursor + examined) % len(requests),
+            "history_cursor": (cursor + advance) % len(requests),
             "history_requests_fetched": fetched,
             "history_bars_fetched": bars,
+            "history_errors": errors,
+            "history_aborted_on_errors": aborted,
+            "history_last_error": last_error[:300] if last_error else None,
             "history_requests_examined": examined,
             "history_request_universe": len(requests),
             "history_complete_requests": completed,
