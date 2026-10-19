@@ -100,11 +100,12 @@ def build_monthly_targets(prices, strategy):
                 v = float(vol_daily.loc[d, target]) if target in vol_daily.columns and pd.notna(vol_daily.loc[d, target]) else np.nan
                 vol_target = 0.06 if strategy == "regime_switch_ultralow" else (0.08 if strategy == "regime_switch_lowvol" or strategy.startswith("regime_dd_guard") else VOL_TARGET)
                 exposure = min(1.0, vol_target / v) if np.isfinite(v) and v > 0 else 1.0
-        if target is not None:
-            # Signal made at this close. It becomes active next observed session only.
-            effective = prices.index[prices.index.get_loc(d) + 1] if prices.index.get_loc(d) + 1 < len(prices.index) else None
-            if effective is not None:
-                targets.loc[effective:, :] = 0.0
+        # Every monthly signal must replace the prior target, including CASH.
+        # Signal made at this close; the new target becomes active next observed session.
+        effective = prices.index[prices.index.get_loc(d) + 1] if prices.index.get_loc(d) + 1 < len(prices.index) else None
+        if effective is not None:
+            targets.loc[effective:, :] = 0.0
+            if target is not None:
                 targets.loc[effective:, target] = exposure
         signals.append({"signal_date": d.date().isoformat(), "strategy": strategy, "target": target or "CASH",
                         "exposure": exposure if target is not None else 0.0, "regime": regime})
@@ -121,11 +122,15 @@ def run_one(prices, strategy):
     actual_rows, ret_values, equity_values = [], [], []
     prev_w = pd.Series(0.0, index=returns.columns)
     equity_value, peak_value, cooldown = 1.0, 1.0, 0
+    guard_armed = True
     for i, date in enumerate(returns.index):
         if i > 0:
             prev_dd = equity_value / peak_value - 1.0 if peak_value else 0.0
-            if guard_threshold is not None and prev_dd <= -guard_threshold:
-                cooldown = max(cooldown, 20)
+            if guard_threshold is not None and guard_armed and prev_dd <= -guard_threshold:
+                cooldown = 20
+                guard_armed = False
+            elif guard_threshold is not None and not guard_armed and prev_dd > -(guard_threshold * 0.5):
+                guard_armed = True
         if cooldown > 0:
             current_w = pd.Series(0.0, index=returns.columns)
             cooldown -= 1
@@ -155,9 +160,11 @@ def out_of_sample_metrics(prices, strategy, start_date):
         return {"strategy": strategy, "test_start": start_date, "status": "INSUFFICIENT_TEST_SESSIONS"}
     eq = equity.loc[mask].copy()
     eq = eq / float(eq.iloc[0])
-    daily = returns.loc[mask]
+    # Score the realized equity path, including the same modeled turnover costs
+    # used by the backtest, rather than recomputing gross returns from price weights.
+    test_returns = eq.pct_change(fill_method=None).fillna(0.0)
     w = weights.loc[mask]
-    result = metrics(eq, daily.mul(w).sum(axis=1), w, strategy)
+    result = metrics(eq, test_returns, w, strategy)
     result["test_start"] = start_date
     result["test_end"] = eq.index[-1].date().isoformat()
     result["status"] = "OOS_PRELIMINARY"
