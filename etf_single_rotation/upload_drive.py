@@ -10,10 +10,16 @@ FILES = [
     Path("etf_single_rotation/data/prices.csv"),
     Path("etf_single_rotation/data/trade_calendar.csv"),
     Path("etf_single_rotation/results/data_quality.csv"),
+    Path("etf_single_rotation/results/data_quality_gaps.csv"),
     Path("etf_single_rotation/results/data_quality_summary.json"),
     Path("etf_single_rotation/results/equity_curve.csv"),
     Path("etf_single_rotation/results/trades.csv"),
     Path("etf_single_rotation/results/summary.json"),
+    Path("etf_single_rotation/results/strategy_comparison.csv"),
+    Path("etf_single_rotation/results/strategy_equity_curves.csv"),
+    Path("etf_single_rotation/results/strategy_monthly_signals.csv"),
+    Path("etf_single_rotation/results/strategy_daily_weights.csv"),
+    Path("etf_single_rotation/results/strategy_experiment_manifest.json"),
 ]
 def main():
     raw = os.environ.get("GDRIVE_OAUTH_JSON", "")
