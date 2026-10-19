@@ -1,6 +1,11 @@
 name: ETF single rotation research
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/etf-single-rotation-v1
+    paths:
+      - etf_single_rotation/.run_data_audit
 permissions:
   contents: read
 jobs:
