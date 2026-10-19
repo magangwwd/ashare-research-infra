@@ -112,8 +112,7 @@ def run(path=DATA):
         portfolio_peak = max(portfolio_peak, equity)
         dd = equity / portfolio_peak - 1 if portfolio_peak else 0
         rows.append({"date": d.date().isoformat(), "equity": equity, "held": held or "CASH",
-                     "drawdown": dd, "alert_15pct": dd <= -ALERT_DD,
-                     "position_stop_12pct": False})
+                     "drawdown": dd, "alert_15pct": dd <= -ALERT_DD})
     curve = pd.DataFrame(rows)
     curve["daily_return"] = curve.equity.pct_change().replace([np.inf, -np.inf], np.nan).fillna(0)
     years = max((pd.to_datetime(curve.date.iloc[-1]) - pd.to_datetime(curve.date.iloc[0])).days / 365.25, 1/365.25)
