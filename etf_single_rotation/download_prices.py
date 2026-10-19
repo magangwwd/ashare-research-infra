@@ -1,6 +1,8 @@
 """Download a reproducible ETF price panel from Tushare Pro."""
 from __future__ import annotations
 import os
+import subprocess
+import sys
 from pathlib import Path
 import pandas as pd
 import tushare as ts
@@ -55,6 +57,9 @@ def main():
     if failures:
         print("INCOMPLETE ETF POOL: " + "; ".join(failures))
         raise SystemExit("One or more ETF requests failed; refusing to publish performance results")
+    # Compatibility with earlier workflow reruns, whose step list is immutable.
+    # The current workflow also audits explicitly; duplicate audits are harmless.
+    subprocess.run([sys.executable, str(Path(__file__).with_name("audit_data.py"))], check=True)
 
 if __name__ == "__main__":
     main()
