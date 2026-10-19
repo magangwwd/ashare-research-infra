@@ -16,6 +16,7 @@ FILES = [
     Path("etf_single_rotation/results/trades.csv"),
     Path("etf_single_rotation/results/summary.json"),
     Path("etf_single_rotation/results/strategy_comparison.csv"),
+    Path("etf_single_rotation/results/walk_forward_oos_comparison.csv"),
     Path("etf_single_rotation/results/strategy_equity_curves.csv"),
     Path("etf_single_rotation/results/strategy_monthly_signals.csv"),
     Path("etf_single_rotation/results/strategy_daily_weights.csv"),
