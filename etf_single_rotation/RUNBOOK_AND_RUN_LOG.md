@@ -59,7 +59,7 @@
 
 ## 下一阶段实验方案（2026-10-19）
 - 基准冻结文件：`etf_single_rotation/experiments/baseline_backtest_frozen_20261019.py`，冻结来源 SHA `ee30daa360ac16525e714d842bbad7419a417ed0`，冻结提交 `b3e7d32b1c2b754ffe1a9bd115a8b1e57f5bfb6c`。后续不覆盖该文件。
-- 实验范围固定为现有 8 只 ETF：510300.SH、510500.SH、159915.SZ、510050.SH、510880.SH、518880.SH、512100.SH、512690.SZ（注意：代码池真实代码为 512690.SH；如发现文档差异以下载脚本为准）。
+- 实验范围固定为现有 8 只 ETF：510300.SH、510500.SH、159915.SZ、510050.SH、510880.SH、518880.SH、512100.SH、512690.SH。
 - 四组实验统一使用同一价格面板与成本代理（每 100% 权重变化按 5bp 费用 + 5bp 滑点，即 0.10% turnover cost）：
   1. `trend_filter`：120 日均线趋势过滤 + 1/3/6 个月加权动量，月度轮动；
   2. `volatility_control`：同一趋势动量选基，20 日年化波动率目标 12%，仓位最高 100%；
@@ -68,3 +68,5 @@
 - 每次实验输出：`strategy_comparison.csv`、`strategy_equity_curves.csv`、`strategy_monthly_signals.csv`、`strategy_daily_weights.csv`、`strategy_experiment_manifest.json`。全部与数据质量明细、缺口列表一起保存至 Actions Artifact 和 Google Drive。
 - 数据审计已加强：同时下载 SSE/SZSE 交易日历；输出 `data_quality_gaps.csv`，逐项列出缺失交易日及 >20% 调整后价格跳变。复权因子匹配与“完整总收益语义验证”明确分开；缺口仍需确认是停牌、上市历史边界还是供应商缺失。
 - 本阶段不调参、不使用未来数据、不启用定时任务、不进行真实交易。所有新策略结果都是探索性结果；任何回撤超过 20%、数据审计未关闭或缺乏样本外验证的方案均不通过验收。
+
+- 本轮启动：通过 GitHub 插件 `rerun_workflow_job(118035806755)` 发起；run 39234376712，最新 job 118040847004。当前正在执行依赖安装，尚未获得新回测结果；结束后根据实际日志补录，不把排队/执行中视为成功。
