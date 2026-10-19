@@ -76,3 +76,12 @@
 - 原因：实验脚本位于 `experiments/` 子目录，错误地将该目录当作 ETF 项目根目录，导致查找 `experiments/data/prices.csv` 而非 `data/prices.csv`。
 - 修复提交：`33368e9a3ffd76b3effbdb379bd5eb39d4aa7381`，将数据和结果路径改为 ETF 项目根目录。
 - 已使用已验证的 GitHub 插件 `rerun_workflow_job(118040847004)` 重新运行；新 attempt job 118044813146。当时记录状态为行情下载中，尚无实验结果。严禁把第一次失败误记为成功。
+
+## 四组策略实验第一轮结果（2026-10-19）
+- run 39234376712 / job 118044813146：全部步骤成功；Tushare 下载 21,398 行、8 只 ETF，数据质量仍 `REVIEW_REQUIRED`（5 个 ETF-交易日缺口；复权因子匹配不等于已验证完整总收益）。Actions Artifact 已保存，Google Drive 已确认上传数据缺口与四组实验输出。
+- trend_filter：CAGR 2.36%，最大回撤 -48.24%，Sharpe 0.222；不合格。
+- volatility_control（12% 波动目标）：CAGR 5.41%，最大回撤 -25.02%，Sharpe 0.500；不合格。
+- cross_asset_defensive：CAGR 1.86%，最大回撤 -54.80%，Sharpe 0.202；不合格。
+- regime_switch（12% 波动目标）：CAGR 7.50%，最大回撤 -23.15%，Sharpe 0.607；四者中最好，但仍未达到最大回撤 20% 的验收目标。
+- 本轮代码/逻辑修正后基准回测：CAGR 6.61%，最大回撤 -43.25%，Sharpe 0.428；不合格。
+- 下一轮预先声明的敏感性实验：新增 `regime_switch_lowvol`，将风险开启时的波动率目标由 12% 降至 8%，用于测试是否能在保留合理收益的同时把最大回撤压到 20% 以下。不是参数寻优，仍需样本外验证。随后通过 `rerun_workflow_job(118044813146)` 启动复跑，等待结果。
