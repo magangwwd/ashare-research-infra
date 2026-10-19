@@ -93,15 +93,19 @@ def main():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     panel.to_csv(OUT, index=False)
 
-    calendar = pro.trade_cal(exchange="SSE", start_date=START, end_date=END,
-                             fields="exchange,cal_date,is_open")
-    if calendar is None or calendar.empty:
-        raise SystemExit("SSE trade calendar unavailable; refusing to certify coverage")
-    calendar = calendar[calendar["is_open"].astype(str) == "1"].copy()
-    calendar["date"] = pd.to_datetime(calendar["cal_date"], format="%Y%m%d").dt.strftime("%Y-%m-%d")
-    calendar[["date", "exchange", "is_open"]].sort_values("date").to_csv(CALENDAR_OUT, index=False)
+    calendar_parts = []
+    for exchange in ["SSE", "SZSE"]:
+        cal_part = pro.trade_cal(exchange=exchange, start_date=START, end_date=END,
+                                 fields="exchange,cal_date,is_open")
+        if cal_part is None or cal_part.empty:
+            raise SystemExit(f"{exchange} trade calendar unavailable; refusing to certify coverage")
+        cal_part = cal_part[cal_part["is_open"].astype(str) == "1"].copy()
+        cal_part["date"] = pd.to_datetime(cal_part["cal_date"], format="%Y%m%d").dt.strftime("%Y-%m-%d")
+        calendar_parts.append(cal_part[["date", "exchange", "is_open"]])
+    calendar = pd.concat(calendar_parts, ignore_index=True).drop_duplicates(["date", "exchange"])
+    calendar[["date", "exchange", "is_open"]].sort_values(["date", "exchange"]).to_csv(CALENDAR_OUT, index=False)
     print(f"Downloaded {len(panel)} adjusted rows, {panel.symbol.nunique()} ETFs, "
-          f"{panel.date.min()} to {panel.date.max()}; SSE open sessions={len(calendar)}")
+          f"{panel.date.min()} to {panel.date.max()}; SSE/SZSE calendar rows={len(calendar)}")
 
     # Legacy workflow reruns do not include a separate audit step; run it here as well.
     subprocess.run([sys.executable, str(Path(__file__).with_name("audit_data.py"))], check=True)
