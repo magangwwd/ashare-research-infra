@@ -39,6 +39,7 @@ jobs:
           name: etf-single-rotation-research
           path: |
             etf_single_rotation/data/prices.csv
+            etf_single_rotation/data/trade_calendar.csv
             etf_single_rotation/results/
           retention-days: 30
           if-no-files-found: warn
