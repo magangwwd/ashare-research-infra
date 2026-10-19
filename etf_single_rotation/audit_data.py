@@ -23,7 +23,8 @@ def main():
     cal = pd.read_csv(CALENDAR, parse_dates=["date"])
     if cal.empty or "date" not in cal.columns or "exchange" not in cal.columns:
         raise SystemExit("Exchange calendar is empty or malformed.")
-    exchange_dates = pd.DatetimeIndex(sorted(cal["date"].dropna().unique()))
+    exchange_dates_by_market = {ex: pd.DatetimeIndex(sorted(part["date"].dropna().unique()))
+                                for ex, part in cal.groupby("exchange")}
     if df.empty:
         raise SystemExit("Empty price panel")
     OUT.mkdir(parents=True, exist_ok=True)
@@ -43,6 +44,8 @@ def main():
                          "status": "MISSING_ETF"})
             continue
         first, last = group.date.min(), group.date.max()
+        exchange = "SSE" if str(symbol).endswith(".SH") else "SZSE"
+        exchange_dates = exchange_dates_by_market.get(exchange, pd.DatetimeIndex([]))
         expected = exchange_dates[(exchange_dates >= first) & (exchange_dates <= last)]
         observed = pd.DatetimeIndex(group.date.dropna().unique())
         missing = expected.difference(observed)
@@ -93,7 +96,7 @@ def main():
         "missing_symbols": missing_etfs,
         "first_date": str(df.date.min().date()),
         "last_date": str(df.date.max().date()),
-        "calendar_source": "Tushare Pro trade_cal; SSE and SZSE open sessions combined by unique date",
+        "calendar_source": "Tushare Pro trade_cal; each ETF audited only against its listing exchange calendar (SSE for .SH, SZSE for .SZ)",
         "missing_etf_session_records": missing_total,
         "gap_issue_rows": int(len(gap_df)),
         "adjustment_factor_status": "MATCHED_TO_PRICE_ROWS_ONLY_TOTAL_RETURN_SEMANTICS_UNVERIFIED" if adjustment_matched else "NOT_MATCHED",
