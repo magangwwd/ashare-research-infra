@@ -1,6 +1,6 @@
 """Monthly one-ETF momentum rotation with explicit position stop and safe price marking."""
 from __future__ import annotations
-import argparse, json
+import argparse, json, subprocess, sys
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -154,3 +154,5 @@ if __name__ == "__main__":
     parser.add_argument("csv", nargs="?", default=str(DATA))
     args = parser.parse_args()
     run(Path(args.csv))
+    # The existing workflow's backtest step also runs the new exploratory comparison harness.
+    subprocess.run([sys.executable, str(Path(__file__).with_name("experiments") / "run_strategy_experiments.py")], check=True)
