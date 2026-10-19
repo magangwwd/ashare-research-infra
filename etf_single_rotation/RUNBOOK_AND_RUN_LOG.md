@@ -115,3 +115,10 @@
 - 修正数据审计：每只 ETF 仅与其所属交易所日历比较（`.SH`→SSE、`.SZ`→SZSE），避免把另一交易所独有的开市日期误判为缺失。
 - 策略数值验收阈值已统一为最大回撤 25%；正式通过仍需数据审计和样本外表现同时满足要求。
 - 已将样本外报告加入 Google Drive 上传清单；本轮需检查真实运行日志、审计缺口数、样本外报告与上传结果。
+
+## 固定样本外评估与交易所日历修正运行（2026-10-19 21:21 北京时间）
+- 直接通过 GitHub 插件重跑 job 118066068403；新 job 118082150896，运行成功。下载 21,398 行、8 ETF，2015-01-05 至 2026-10-19；数据审计仍 REVIEW_REQUIRED，正确交易所日历下仍有 5 条缺失 ETF-交易日记录：159915.SZ 2021-02-08；510500.SH 2015-04-13/14；512100.SH 2022-09-02；512690.SH 2021-05-14。未发现重复/非正价格行；调整因子逐行匹配但完整总收益语义仍未独立验证。
+- 全样本：regime_switch_ultralow CAGR 6.55%、MDD -21.69%、Sharpe 0.655；regime_dd_guard15 CAGR 3.97%、MDD -16.30%、Sharpe 0.522；regime_dd_guard20 CAGR 6.16%、MDD -21.69%、Sharpe 0.597。
+- 固定样本外起点 2021-01-01：regime_switch_ultralow CAGR 4.14%、MDD -21.69%、Sharpe 0.452；regime_dd_guard15 CAGR -1.94%、MDD -16.30%、Sharpe -0.277；regime_dd_guard20 CAGR 2.32%、MDD -21.69%、Sharpe 0.314。
+- 固定样本外起点 2023-01-01：regime_switch CAGR 8.93%、MDD -21.69%、Sharpe 0.688；regime_switch_lowvol CAGR 7.75%、MDD -21.69%、Sharpe 0.651；regime_switch_ultralow CAGR 7.47%、MDD -21.69%、Sharpe 0.649；regime_dd_guard15 在该窗口全程现金（0%收益），显示熔断冷静期实现需要进一步复核。
+- 数据审计报告、缺口清单、样本外比较 CSV、策略清单均确认上传 Drive；Artifact 保存成功。该固定 holdout 只是初步稳健性检查，尚非严格逐段 walk-forward；当前所有策略仍 NOT_FOR_TRADING。
