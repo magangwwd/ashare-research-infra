@@ -74,7 +74,7 @@ def build_monthly_targets(prices, strategy):
                     target, regime = GOLD, "DEFENSIVE_GOLD"
                 else:
                     regime = "CASH"
-        elif strategy in {"regime_switch", "regime_switch_lowvol", "regime_switch_ultralow", "regime_dd_guard15", "regime_dd_guard20"}:
+        elif strategy in {"regime_switch", "regime_switch_lowvol", "regime_switch_ultralow", "regime_dd_guard15", "regime_dd_guard20", "regime_switch_midvol", "regime_switch_cap75"}:
             broad = [s for s in ["510300.SH", "510500.SH", "510050.SH"] if s in hist.columns]
             above = []
             for sym in STOCKS:
@@ -98,8 +98,10 @@ def build_monthly_targets(prices, strategy):
                 target = max(scores, key=scores.get)
             if target is not None and target != GOLD:
                 v = float(vol_daily.loc[d, target]) if target in vol_daily.columns and pd.notna(vol_daily.loc[d, target]) else np.nan
-                vol_target = 0.06 if strategy == "regime_switch_ultralow" else (0.08 if strategy == "regime_switch_lowvol" or strategy.startswith("regime_dd_guard") else VOL_TARGET)
+                vol_target = 0.06 if strategy == "regime_switch_ultralow" else (0.10 if strategy == "regime_switch_midvol" else (0.08 if strategy in {"regime_switch_lowvol", "regime_switch_cap75"} or strategy.startswith("regime_dd_guard") else VOL_TARGET))
                 exposure = min(1.0, vol_target / v) if np.isfinite(v) and v > 0 else 1.0
+                if strategy == "regime_switch_cap75":
+                    exposure = min(0.75, exposure)
         # Every monthly signal must replace the prior target, including CASH.
         # Signal made at this close; the new target becomes active next observed session.
         effective = prices.index[prices.index.get_loc(d) + 1] if prices.index.get_loc(d) + 1 < len(prices.index) else None
@@ -185,7 +187,7 @@ def main():
         raise SystemExit("Empty or unusable ETF panel.")
     prices = prices.ffill()  # valuation returns only; data gaps are separately flagged and acceptance remains preliminary.
     OUT.mkdir(parents=True, exist_ok=True)
-    strategy_names = ["trend_filter", "volatility_control", "cross_asset_defensive", "regime_switch", "regime_switch_lowvol", "regime_switch_ultralow", "regime_dd_guard15", "regime_dd_guard20"]
+    strategy_names = ["trend_filter", "volatility_control", "cross_asset_defensive", "regime_switch", "regime_switch_lowvol", "regime_switch_ultralow", "regime_dd_guard15", "regime_dd_guard20", "regime_switch_midvol", "regime_switch_cap75"]
     summaries, curves, signals_all, weights_all = [], [], [], []
     for strategy in strategy_names:
         summary, equity, weights, signals = run_one(prices, strategy)
@@ -224,6 +226,8 @@ def main():
             "ETF-level max drawdown does not guarantee portfolio drawdown control; every result remains preliminary.",
             "regime_switch_lowvol is a predeclared lower-volatility sensitivity test (8% target versus 12%), not an accepted strategy.",
             "regime_switch_ultralow is a predeclared 6% volatility-target sensitivity test; all outputs remain preliminary.",
+            "regime_switch_midvol is a predeclared 10% volatility-target sensitivity test.",
+            "regime_switch_cap75 uses an 8% volatility target and caps ETF exposure at 75%; outputs remain preliminary.",
             "regime_dd_guard15 and regime_dd_guard20 apply portfolio drawdown circuit breakers with 20-session cash cooldowns; these are not hard drawdown guarantees."
         ],
         "acceptance": "NOT_FOR_TRADING"
