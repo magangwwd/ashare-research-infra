@@ -180,6 +180,7 @@ def main():
     manifest = {
         "purpose": "exploratory comparison only; not an accepted investment strategy",
         "strategies": strategy_names, "etf_count": int(prices.shape[1]),
+        "maximum_drawdown_acceptance_target": 0.25,
         "data_quality_acceptance": audit.get("acceptance", "NOT_AVAILABLE"),
         "data_gaps_present": audit.get("calendar_missing_sessions_detected", None),
         "cost_model": "0.10% per 100% change in portfolio weight (5bp fee + 5bp slippage proxy)",
