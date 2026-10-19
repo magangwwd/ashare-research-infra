@@ -59,17 +59,19 @@ def run(path=DATA):
     trade_rows = []
     previous_equity = 1.0
     for i, d in enumerate(dates):
+        stopped_today = False
         # Previous close equity triggers protection; execution happens at today's open.
-        if i > 0 and previous_equity > 0 and previous_equity / peak - 1 <= -EXIT_DD:
-            if held is not None:
-                px = opens.at[d, held] if held in opens.columns else np.nan
-                if pd.notna(px) and px > 0:
-                    cash += shares * float(px) * (1 - SLIPPAGE) * (1 - FEE)
-                    trade_rows.append({"date":d.date().isoformat(),"action":"STOP_EXIT","symbol":held,"price":float(px)})
-                    shares, held = 0.0, None
-            stop_until_rebalance = True
-        # Month-end signal generated after previous close; trade next session at today's open.
-        if i > 0 and dates[i-1] in signals:
+        if i > 0 and held is not None and previous_equity > 0 and previous_equity / peak - 1 <= -EXIT_DD:
+            px = opens.at[d, held] if held in opens.columns else np.nan
+            if pd.notna(px) and px > 0:
+                cash += shares * float(px) * (1 - SLIPPAGE) * (1 - FEE)
+                trade_rows.append({"date":d.date().isoformat(),"action":"STOP_EXIT","symbol":held,"price":float(px)})
+                shares, held = 0.0, None
+                stop_until_rebalance = True
+                stopped_today = True
+        # Month-end signal is executed next session. A stop exit takes precedence that day;
+        # remain in cash until the next monthly rebalance signal.
+        if i > 0 and dates[i-1] in signals and not stopped_today:
             target = signals[dates[i-1]]
             stop_until_rebalance = False
             if target != held:
@@ -114,8 +116,8 @@ def run(path=DATA):
                "max_drawdown":maxdd,"annualized_volatility":vol,"sharpe_rf0":sharpe,
                "trade_events":len(trades),"fees_per_side":FEE,"slippage_per_side":SLIPPAGE,
                "alert_drawdown":ALERT_DD,"exit_drawdown":EXIT_DD,
-               "limitations":["No distributions adjustment verified; ETF prices use provider close fields.",
-                              "Drawdown stop is evaluated on close and filled at next available open.",
+               "limitations":["Prices are scaled with Tushare fund_adj factors; verify factor semantics against distribution events and an independent total-return benchmark.",
+                              "Drawdown stop is evaluated on prior close and filled at next available open; gap risk can exceed the threshold.",
                               "No benchmark comparison or walk-forward split yet; do not treat as final acceptance."]}
     (OUT/"summary.json").write_text(json.dumps(summary,indent=2),encoding="utf-8")
     print(json.dumps(summary,indent=2))
