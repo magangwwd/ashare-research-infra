@@ -74,7 +74,7 @@ def build_monthly_targets(prices, strategy):
                     target, regime = GOLD, "DEFENSIVE_GOLD"
                 else:
                     regime = "CASH"
-        elif strategy in {"regime_switch", "regime_switch_lowvol", "regime_switch_ultralow"}:
+        elif strategy in {"regime_switch", "regime_switch_lowvol", "regime_switch_ultralow", "regime_dd_guard15", "regime_dd_guard20"}:
             broad = [s for s in ["510300.SH", "510500.SH", "510050.SH"] if s in hist.columns]
             above = []
             for sym in STOCKS:
@@ -98,7 +98,7 @@ def build_monthly_targets(prices, strategy):
                 target = max(scores, key=scores.get)
             if target is not None and target != GOLD:
                 v = float(vol_daily.loc[d, target]) if target in vol_daily.columns and pd.notna(vol_daily.loc[d, target]) else np.nan
-                vol_target = 0.06 if strategy == "regime_switch_ultralow" else (0.08 if strategy == "regime_switch_lowvol" else VOL_TARGET)
+                vol_target = 0.06 if strategy == "regime_switch_ultralow" else (0.08 if strategy == "regime_switch_lowvol" or strategy.startswith("regime_dd_guard") else VOL_TARGET)
                 exposure = min(1.0, vol_target / v) if np.isfinite(v) and v > 0 else 1.0
         if target is not None:
             # Signal made at this close. It becomes active next observed session only.
@@ -112,14 +112,37 @@ def build_monthly_targets(prices, strategy):
 
 def run_one(prices, strategy):
     targets, signals = build_monthly_targets(prices, strategy)
-    # Signals are lagged by construction. Costs charged on changes in exposure.
     returns = prices.pct_change(fill_method=None).replace([np.inf, -np.inf], np.nan).fillna(0.0)
-    weights = targets.reindex_like(returns).fillna(0.0)
-    prev_weights = weights.shift(1).fillna(0.0)
-    turnover = (weights - prev_weights).abs().sum(axis=1)
-    portfolio_ret = (prev_weights * returns).sum(axis=1) - turnover * FEE_SLIPPAGE_PER_SIDE
-    equity = (1.0 + portfolio_ret).cumprod()
-    return metrics(equity, portfolio_ret, prev_weights, strategy), equity, prev_weights, signals
+    desired = targets.reindex_like(returns).fillna(0.0)
+    # Predeclared portfolio-level circuit breaker. Trigger uses only the prior close;
+    # the next day's target is held in cash for 20 sessions, then normal monthly
+    # regime signals may resume. This is an experiment, not a guaranteed drawdown cap.
+    guard_threshold = 0.15 if strategy == "regime_dd_guard15" else (0.20 if strategy == "regime_dd_guard20" else None)
+    actual_rows, ret_values, equity_values = [], [], []
+    prev_w = pd.Series(0.0, index=returns.columns)
+    equity_value, peak_value, cooldown = 1.0, 1.0, 0
+    for i, date in enumerate(returns.index):
+        if i > 0:
+            prev_dd = equity_value / peak_value - 1.0 if peak_value else 0.0
+            if guard_threshold is not None and prev_dd <= -guard_threshold:
+                cooldown = max(cooldown, 20)
+        if cooldown > 0:
+            current_w = pd.Series(0.0, index=returns.columns)
+            cooldown -= 1
+        else:
+            current_w = desired.iloc[i].copy()
+        turnover = float((current_w - prev_w).abs().sum())
+        daily_ret = float((prev_w * returns.iloc[i]).sum() - turnover * FEE_SLIPPAGE_PER_SIDE)
+        equity_value *= (1.0 + daily_ret)
+        peak_value = max(peak_value, equity_value)
+        actual_rows.append(current_w)
+        ret_values.append(daily_ret)
+        equity_values.append(equity_value)
+        prev_w = current_w
+    actual_weights = pd.DataFrame(actual_rows, index=returns.index, columns=returns.columns)
+    portfolio_ret = pd.Series(ret_values, index=returns.index)
+    equity = pd.Series(equity_values, index=returns.index)
+    return metrics(equity, portfolio_ret, actual_weights.shift(1).fillna(0.0), strategy), equity, actual_weights.shift(1).fillna(0.0), signals
 
 def main():
     source = DATA_DIR / "prices.csv"
@@ -136,7 +159,7 @@ def main():
         raise SystemExit("Empty or unusable ETF panel.")
     prices = prices.ffill()  # valuation returns only; data gaps are separately flagged and acceptance remains preliminary.
     OUT.mkdir(parents=True, exist_ok=True)
-    strategy_names = ["trend_filter", "volatility_control", "cross_asset_defensive", "regime_switch", "regime_switch_lowvol", "regime_switch_ultralow"]
+    strategy_names = ["trend_filter", "volatility_control", "cross_asset_defensive", "regime_switch", "regime_switch_lowvol", "regime_switch_ultralow", "regime_dd_guard15", "regime_dd_guard20"]
     summaries, curves, signals_all, weights_all = [], [], [], []
     for strategy in strategy_names:
         summary, equity, weights, signals = run_one(prices, strategy)
@@ -167,7 +190,8 @@ def main():
             "No hyperparameter optimization or walk-forward test is performed in this phase.",
             "ETF-level max drawdown does not guarantee portfolio drawdown control; every result remains preliminary.",
             "regime_switch_lowvol is a predeclared lower-volatility sensitivity test (8% target versus 12%), not an accepted strategy.",
-            "regime_switch_ultralow is a predeclared 6% volatility-target sensitivity test; all outputs remain preliminary."
+            "regime_switch_ultralow is a predeclared 6% volatility-target sensitivity test; all outputs remain preliminary.",
+            "regime_dd_guard15 and regime_dd_guard20 apply portfolio drawdown circuit breakers with 20-session cash cooldowns; these are not hard drawdown guarantees."
         ],
         "acceptance": "NOT_FOR_TRADING"
     }
