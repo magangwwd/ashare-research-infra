@@ -355,7 +355,9 @@ function renderQQ(){
     container.hidden=true;return;
   }
   const items=Array.isArray(qq.leads)?qq.leads.filter(x=>!x.deadline||daysBetween(x.deadline)>=0):[];
-  status.textContent='已读取授权的腾讯表格归档，扫描 '+qq.rows_examined+' 行、匹配 '+items.length+' 条非过期招聘线索；报名资格仍待核实。';
+  const sourceType=qq.source_freshness==='direct_authorized_export'?'本次已授权的腾讯原始导出':'以前保存到云盘的授权导出副本';
+  const sourceDate=qq.source_export_modified_at?'，源文件存档时间 '+qq.source_export_modified_at.slice(0,10):'';
+  status.textContent='已读取'+sourceType+sourceDate+'；扫描 '+qq.rows_examined+' 行、筛出 '+items.length+' 条非过期招聘线索。未验证腾讯表格当前是否已更新，报名条件请核对官网。';
   $('qq-shortlist-count').textContent=items.length+' 条';
   const el=$('qq-shortlist-list');el.replaceChildren();
   items.slice(0,100).forEach(job=>{
