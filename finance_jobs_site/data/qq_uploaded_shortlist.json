@@ -196,9 +196,9 @@
     },
     {
       "id": "qq-upload-240",
-      "title": "财务管理岗",
+      "title": "华润化学材料2027届财务管理岗（常州）",
       "company": "华润化学材料",
-      "work_city": "无锡、常州等（岗位地点待核）",
+      "work_city": "江苏常州",
       "deadline": null,
       "source_sheet": "总表",
       "source_row": 240,
@@ -208,13 +208,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
-      "role_confirmed": false,
+      "review_state": "2027秋招简章公开岗位表列有常州财务管理岗：硕士及以上，会计、财务管理、财政、审计相关专业；海外硕士毕业时点与具体开放状态仍须在用人单位官方页面核对。",
+      "role_confirmed": true,
       "source_label": "来源：腾讯文档《27届秋招汇总表格》",
       "verification": {
-        "status": "pending_detailed_verification",
+        "status": "employer_announced_specific_role_secondary_copy",
         "checked_at": "2026-10-20",
-        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+        "evidence_url": "https://anhui.fenbi.com/zhaokao/detail/2894/469864941641728",
+        "explanation": "2027秋招简章公开岗位表列有常州财务管理岗：硕士及以上，会计、财务管理、财政、审计相关专业；海外硕士毕业时点与具体开放状态仍须在用人单位官方页面核对。"
       }
     },
     {
@@ -242,9 +243,9 @@
     },
     {
       "id": "qq-upload-342",
-      "title": "财务岗",
+      "title": "深圳村田科技2027届财务专员（深圳坪山）",
       "company": "深圳村田科技有限公司",
-      "work_city": "深圳",
+      "work_city": "深圳市坪山区",
       "deadline": null,
       "source_sheet": "总表",
       "source_row": 342,
@@ -254,13 +255,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
-      "role_confirmed": false,
+      "review_state": "广东工业大学和广东外语外贸大学就业平台均列出财务专员，财务相关专业、本科及以上，参考月薪约9千至1万元；任职还提及日语N2或英语四级。官网报名入口真实，仍须核对当前能否提交。",
+      "role_confirmed": true,
       "source_label": "来源：腾讯文档《27届秋招汇总表格》",
       "verification": {
-        "status": "pending_detailed_verification",
+        "status": "university_posted_specific_role",
         "checked_at": "2026-10-20",
-        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+        "evidence_url": "https://career.gdut.edu.cn/teachin/view/id/191616",
+        "explanation": "广东工业大学和广东外语外贸大学就业平台均列出财务专员，财务相关专业、本科及以上，参考月薪约9千至1万元；任职还提及日语N2或英语四级。官网报名入口真实，仍须核对当前能否提交。"
       }
     },
     {
@@ -429,9 +431,9 @@
     },
     {
       "id": "qq-upload-616",
-      "title": "财务管理类、风控法务类",
+      "title": "杭州城投2027届财务管理类招聘方向",
       "company": "杭州城投",
-      "work_city": "杭州",
+      "work_city": "杭州等（具体财会岗位地点待核）",
       "deadline": "2026-11-15",
       "source_sheet": "总表",
       "source_row": 616,
@@ -441,13 +443,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
+      "review_state": "2027校招汇总显示财务管理类、11月15日截止；目前未独立取得雇主官网财务单岗与学历、海外资格，继续作为待核方向。",
       "role_confirmed": false,
       "source_label": "来源：腾讯文档《27届秋招汇总表格》",
       "verification": {
-        "status": "pending_detailed_verification",
+        "status": "secondary_announced_role_category",
         "checked_at": "2026-10-20",
-        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+        "evidence_url": "https://www.jdjianli.com/campus/78388",
+        "explanation": "2027校招汇总显示财务管理类、11月15日截止；目前未独立取得雇主官网财务单岗与学历、海外资格，继续作为待核方向。"
       }
     },
     {
