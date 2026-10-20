@@ -1,0 +1,55 @@
+name: BTC OKX official historical L2 metadata probe (read only)
+
+on:
+  push:
+    branches: [main, feature/okx-official-l2-catalog-20261020]
+    paths:
+      - '.github/workflows/btc-okx-official-catalog.yml'
+      - 'btc-quant/data/okx_official_catalog.py'
+      - 'btc-quant/tests/test_okx_official_catalog.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: btc-okx-official-l2-catalog-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Prove strict no-download official catalog tests
+        run: python -m unittest discover -s btc-quant/tests -p 'test_okx_official_catalog.py' -v
+      - name: Query one historical UTC day and module 4 (no ZIP download)
+        run: |
+          python btc-quant/data/okx_official_catalog.py \
+            --utc-day 2026-10-10 --module 4 --out "$RUNNER_TEMP/okx_official_catalog"
+      - name: Preserve original official response summary as Actions artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: okx-official-l2-catalog-${{ github.run_id }}
+          path: ${{ runner.temp }}/okx_official_catalog/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Upload immutable catalog to existing Google Drive
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          dest="gdrive:BTC_Quant_System_OKX/market_data/OKX/official_portal/catalog/run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$RUNNER_TEMP/okx_official_catalog" "$dest" --immutable
+          rclone --config "$RUNNER_TEMP/rclone.conf" check "$RUNNER_TEMP/okx_official_catalog" "$dest" --one-way --download
+      - name: Erase temporary Drive configuration
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rclone.conf"
