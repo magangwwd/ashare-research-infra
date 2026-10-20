@@ -100,11 +100,11 @@ def sync_issue(healthy, details):
     existing = next((x for x in issues if x.get("title") == ISSUE_TITLE and "pull_request" not in x), None)
     if healthy:
         if existing is not None:
-            request_json(f"/issues/{existing['number']}", "PATCH", {"state": "closed"})
-        return
+            return request_json(f"/issues/{existing['number']}", "PATCH", {"state": "closed"})
+        return None
     if existing is not None:
-        return  # deduplicate; unchanged issue remains active until healthy
-    request_json("/issues", "POST", {
+        return existing  # deduplicate; unchanged issue remains active until healthy
+    return request_json("/issues", "POST", {
         "title": ISSUE_TITLE,
         "body": "## BTC OKX 数据采集独立告警\n\n" + details[:1500] +
                 "\n\n检测包括成功工作流时间、Drive 文件存在性、真实 SHA256 和快照时间戳。"
