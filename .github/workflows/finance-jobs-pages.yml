@@ -8,6 +8,7 @@ on:
       - 'finance_jobs_site/styles.css'
       - 'finance_jobs_site/tests/**'
       - '.github/workflows/finance-jobs-pages.yml'
+      - '.github/workflows/finance-jobs-public-smoke.yml'
   pull_request:
     paths:
       - 'finance_jobs_site/**'
