@@ -81,6 +81,10 @@ def inspect_v5_january(v5: dict, minute: pd.DataFrame, missing_partition_count: 
                  "exit_date":t["exit_date"],"exit_reason":t["exit_reason"],
                  "entry_bars":0 if entry is None else len(entry),
                  "exit_bars":0 if exit_ is None else len(exit_),
+                 "entry_bar_times": [] if entry is None else sorted(
+                     z.strftime("%H:%M") for z in entry["trade_time"]),
+                 "exit_bar_times": [] if exit_ is None else sorted(
+                     z.strftime("%H:%M") for z in exit_["trade_time"]),
                  "complete_entry_exit":bool(eok and xok),
                  "verified_fill":False, "bar_trigger_consistent":None}
             if eok and xok and not t.get("corporate_action_proxy"):
