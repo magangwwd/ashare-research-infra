@@ -1,0 +1,59 @@
+name: Temporary A-share minute feed live probe
+
+on:
+  push:
+    branches: [fix/task01-cutoff-minute-probe-20261020]
+    paths: ['.github/workflows/task01-minute-real-probe.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-minute-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install provider SDK
+        run: python -m pip install --disable-pip-version-check tushare
+      - name: Probe latest settled session using real provider credential
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+          import tushare as ts
+
+          token = os.environ.get("TUSHARE_TOKEN", "")
+          if not token:
+              print("MINUTE_PROBE TOKEN_MISSING")
+              sys.exit(2)
+          pro = ts.pro_api(token)
+          passed = 0
+          for frequency in ("5min", "15min"):
+              try:
+                  frame = pro.query(
+                      "stk_mins", ts_code="600000.SH",
+                      start_date="2026-10-19 09:00:00",
+                      end_date="2026-10-19 16:00:00",
+                      freq=frequency,
+                  )
+                  if frame is None:
+                      raise RuntimeError("provider returned None")
+                  rows = len(frame)
+                  have = sorted(set(frame.columns))
+                  valid = rows > 0 and {"ts_code", "trade_time", "open", "close"}.issubset(have)
+                  print(f"MINUTE_PROBE freq={frequency} rows={rows} valid={valid} columns={','.join(have)}")
+                  if valid:
+                      passed += 1
+              except Exception as exc:
+                  detail = " ".join(str(exc).replace(token, "[REDACTED]").split())[:200]
+                  print(f"MINUTE_PROBE freq={frequency} ERROR {type(exc).__name__}: {detail}")
+          print(f"MINUTE_PROBE_RESULT passed={passed}/2")
+          sys.exit(0 if passed == 2 else 1)
+          PY
