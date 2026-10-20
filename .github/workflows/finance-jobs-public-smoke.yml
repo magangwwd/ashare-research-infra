@@ -84,7 +84,8 @@ jobs:
           assert qq.get("schema")==1 and qq.get("source_url")=="https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2"
           assert isinstance(qq.get("leads"),list) and all(not item.get("role_confirmed") for item in qq["leads"])
           assert qq.get("status") in ("export_required","authorized_export_imported","import_error")
-          assert "private_export_folder_id" not in qq and "resume" not in str(qq).lower()
+          assert "private_export_folder_id" not in qq
+          assert not any(key in str(qq).lower() for key in ("resume_original", "resume_file", "resume_text", "candidate_phone", "candidate_email"))
           assert 'id="qq-feed-status"' in page and 'id="qq-shortlist"' in page
           assert "docs.qq.com/sheet/DS210WHFxVXdHcWJS" in page
           assert "categoryOf" in js and "renderChanges" in js
