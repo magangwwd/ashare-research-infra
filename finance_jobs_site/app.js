@@ -9,7 +9,7 @@ const SAFE_HOSTS=new Set([
  'psbc2027.zhaopin.com','campus.chinahr.com','job.bankcomm.com','zhcpa.zhiye.com','zp.czbank.com.cn','sdg.zhaopin.com','zhaopin.cscec3b.com.cn','hr.jsbchina.cn','career.hebut.edu.cn','career.nankai.edu.cn','sgdt.iguopin.com','job.tiangong.edu.cn'
 ]);
 const state={feed:null,search:'',region:'all',type:'all',status:'all',overseas:false,rolesOnly:false,qs:'',
-  visible:8,monitor:null,category:'all',ledger:null};
+  visible:10,monitor:null,category:'all',ledger:null,sort:'recommended',selectedId:null,lastCardFocus:null};
 const cnTime=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'});
 function today(){const ps=cnTime.formatToParts(new Date());const x=Object.fromEntries(ps.map(p=>[p.type,p.value]));return x.year+'-'+x.month+'-'+x.day;}
 function daysBetween(day){return Math.round((Date.parse(day+'T00:00:00Z')-Date.parse(today()+'T00:00:00Z'))/86400000);}
@@ -72,6 +72,20 @@ function compareSort(a,b){
   for(let i=0;i<x.length;i++)if(x[i]!==y[i])return x[i]-y[i];
   return String(a.title).localeCompare(String(b.title),'zh-CN');
 }
+function sortJobs(a,b){
+  const sa=briefStatus(a),sb=briefStatus(b);
+  const aClosed=sa.key==='closed'?1:0,bClosed=sb.key==='closed'?1:0;
+  if(aClosed!==bClosed)return aClosed-bClosed;
+  if(state.sort==='deadline'){
+    const av=sa.days===null?Infinity:sa.days,bv=sb.days===null?Infinity:sb.days;
+    if(av!==bv)return av-bv;
+  }
+  if(state.sort==='newest'){
+    const av=Date.parse(a.published||'1970-01-01'),bv=Date.parse(b.published||'1970-01-01');
+    if(av!==bv)return bv-av;
+  }
+  return compareSort(a,b);
+}
 function valueLine(label,val){
   const div=n('div','detail-row');
   div.append(n('dt','',label),n('dd','',val===undefined||val===null||val===''?'官方暂未明确':val));
@@ -113,41 +127,115 @@ function detailGroup(job){
   return details;
 }
 function jobCard(job){
-  const status=briefStatus(job);
-  const card=n('article','job-card'+(status.key==='urgent'?' near-deadline':''));
+  const status=briefStatus(job),group=categoryOf(job),selected=state.selectedId===job.id;
+  const card=n('article','job-card'+(status.key==='urgent'?' near-deadline':'')+(selected?' selected':''));
+  card.dataset.jobId=job.id;
+  card.tabIndex=0;
+  card.setAttribute('aria-label','查看 '+job.title+' 的岗位详情');
+  card.setAttribute('aria-current',selected?'true':'false');
   const top=n('div','job-card-top');
   const badges=n('div','job-tags');
-  const group=categoryOf(job);
   badges.append(n('span','tag '+(group==='core'?'actual':group==='related'?'related':'pending'),categoryLabel(group)));
-  if(job.priority_tier===1)badges.append(n('span','tag priority','重点关注'));
   if(job.type==='国家电网')badges.append(n('span','tag focus','国家电网'));
+  if(job.priority_tier===1)badges.append(n('span','tag priority','重点关注'));
   badges.append(n('span','tag '+(status.key==='closed'?'closed':status.key==='urgent'?'warning':'muted'),status.tag));
   top.append(badges,n('span','type-name',job.type));
   card.append(top);
   card.append(n('h3','job-title',job.title),n('p','company',job.company));
-  const location=String(job.work_city||(job.regions||[]).join('、')+'（需核实）');
-  const brief=n('p','job-description',String(job.summary||'').slice(0,155)+(String(job.summary||'').length>155?'…':''));
-  card.append(brief);
-  const columns=n('div','job-info');
-  columns.append(valueTile('工作地点',location.length>58?location.slice(0,55)+'…':location),
-    valueTile('学历要求',String(job.min_degree||'以岗位公告为准').slice(0,35)),
-    valueTile('目标方向',(job.roles||[]).slice(0,3).join(' / ')),
-    valueTile('报名截止',job.deadline?job.deadline+(status.days>=0?' · 剩'+status.days+'天':' · 本批结束'):'截止日期待核实',
+  const location=String(job.work_city||(job.regions||[]).join('、')+'（城市待核实）');
+  const degree=String(job.min_degree||'学历以公告为准');
+  const body=n('p','job-description',String(job.summary||'').slice(0,92)+(String(job.summary||'').length>92?'…':''));
+  card.append(body);
+  const facts=n('div','job-info');
+  facts.append(valueTile('工作城市',location.length>30?location.slice(0,29)+'…':location),
+    valueTile('学历要求',degree.length>21?degree.slice(0,20)+'…':degree),
+    valueTile('专业方向',(job.roles||[]).slice(0,3).join(' / ')),
+    valueTile('截止时间',job.deadline?(job.deadline+(status.days>=0?' · 剩'+status.days+'天':' · 已截止')):'未核实',
       status.key==='urgent'?'highlight':status.key==='closed'?'past':''));
-  card.append(columns);
-  const note=n('p','evidence-note',(job.role_confirmed?'✓ ':'! ')+levelText(job)+' · 核对日期 '+(job.checked_at||'未标注'));
-  card.append(note);
-  if(job.checked_at){
-    const days=daysBetween(job.checked_at);
-    if(days < -10)card.append(n('p','stale-note','该职位核心条件已超过10天未人工复核；请优先查看最新官方公告。'));
-  }
-  const crit=n('p','critical-note',(status.key==='urgent'?'【请尽快核对报名】':'注意：')+(job.critical||job.notes));
-  card.append(crit);
-  const bottom=n('div','job-links');
-  bottom.append(anchor('查看原公告 ↗',job.source_url,'source-link'),
-    anchor('官方招聘入口 ↗',job.apply_url,'source-link'));
-  card.append(bottom,detailGroup(job));
+  card.append(facts);
+  card.append(n('p','evidence-note',(job.role_confirmed?'✓ 已核实职位名称':'◇ 招聘专业或入口待核实')+' · 资料核查 '+(job.checked_at||'未知')));
+  if(job.checked_at&&daysBetween(job.checked_at)<-10)card.append(n('p','stale-note','这条职位条件超过10天未人工复核；请核实最新公告。'));
+  const see=n('button','job-card-action','查看岗位详情 →');see.type='button';
+  see.setAttribute('aria-label','查看 '+job.title+' 的完整要求');
+  see.addEventListener('click',()=>selectJob(job.id,{openMobile:true}));
+  card.append(see);
+  card.addEventListener('click',ev=>{
+    if(ev.target.closest('button,a,details,summary'))return;
+    selectJob(job.id,{openMobile:true});
+  });
+  card.addEventListener('keydown',ev=>{
+    if(ev.target!==card)return;
+    if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();selectJob(job.id,{openMobile:true});}
+  });
   return card;
+}
+function showDetailOnMobile(){
+  return typeof window.matchMedia==='function'&&window.matchMedia('(max-width: 860px)').matches;
+}
+function closeMobileDetail(restoreFocus=true){
+  $('job-detail-pane').classList.remove('mobile-open');
+  $('detail-backdrop').hidden=true;
+  if(restoreFocus){
+    const card=state.lastCardFocus||document.querySelector('.job-card.selected');
+    if(card&&typeof card.focus==='function')card.focus();
+  }
+}
+function selectJob(jobId,{openMobile=false}={}){
+  if(!state.feed)return;
+  const job=state.feed.listings.find(x=>x.id===jobId);if(!job)return;
+  state.selectedId=jobId;
+  state.lastCardFocus=document.querySelector('.job-card[data-job-id="'+jobId+'"]');
+  const pane=$('job-detail-pane'),dest=$('job-detail');
+  pane.scrollTop=0;dest.replaceChildren();
+  const status=briefStatus(job),group=categoryOf(job);
+  const head=n('div','detail-company-top');
+  const monogram=n('div','company-monogram',String(job.company||'财').trim()[0]||'财');
+  const info=n('div','detail-company-info');
+  info.append(n('small','',job.type+' · '+(job.graduate_batch||'校招')),
+    n('h3','',job.title),n('p','detail-company-name',job.company));
+  head.append(monogram,info);
+  dest.append(head);
+  const badges=n('div','detail-tags');
+  badges.append(n('span','tag '+(group==='core'?'actual':group==='related'?'related':'pending'),categoryLabel(group)));
+  badges.append(n('span','tag '+(status.key==='urgent'?'warning':status.key==='closed'?'closed':'muted'),status.tag));
+  if(job.priority_tier===1)badges.append(n('span','tag priority','重点关注'));
+  dest.append(badges);
+  const keyFacts=n('div','detail-keyfacts');
+  keyFacts.append(
+    valueTile('工作地点',job.work_city||(job.regions||[]).join('、')+'；具体地市待核实'),
+    valueTile('学历要求',job.min_degree||'以具体岗位为准'),
+    valueTile('专业类别',(job.majors_exact||[]).slice(0,3).join('、')||'具体以职位专业表为准'),
+    valueTile('报名截止',job.deadline?(job.deadline+(status.key==='closed'?' · 本批已截止':status.key==='urgent'?' · 请尽快确认':' · 见公告')):'截止日期未核实',status.key==='urgent'?'highlight':'')
+  );
+  dest.append(keyFacts);
+  const truth=n('p','detail-notice',job.role_confirmed
+     ?'岗位名称有资料支持，但网申是否仍可投递、资格与人数须以该单位最新页面确认。'
+     :'这是一条招聘公告、专业类别或单位跟踪记录，尚未核实它对应目前可投递的财务岗位。');
+  dest.append(truth);
+  const desc=n('section','detail-section');
+  desc.append(n('h4','','职位简介'),n('p','',job.summary||'请查看原始招聘公告。'));dest.append(desc);
+  const important=n('section','detail-section');
+  important.append(n('h4','','投递前请特别注意'),n('p','',job.critical||job.notes||'先核实该单位实际岗位开放状态。'));dest.append(important);
+  const actions=n('div','detail-actions');
+  actions.append(anchor('查看公告原文 ↗',job.source_url,'action-link'),
+    anchor(status.key==='closed'?'查看官方历史招聘入口 ↗':'打开官方报名入口 ↗',job.apply_url,'action-link primary-link'));
+  dest.append(actions);
+  const groupDetails=detailGroup(job);
+  groupDetails.open=true;
+  dest.append(groupDetails);
+  const stamp=n('p','audit-explainer','职位资料核查：'+(job.checked_at||'未标注')+
+    ' · 招聘平台可能晚于本站更新 · 最新存档：'+(state.feed.collected_at||'未核实'));
+  dest.append(stamp);
+  document.querySelectorAll('.job-card').forEach(card=>{
+    const current=card.dataset.jobId===jobId;
+    card.classList.toggle('selected',current);
+    card.setAttribute('aria-current',current?'true':'false');
+  });
+  if(openMobile&&showDetailOnMobile()){
+    pane.classList.add('mobile-open');
+    $('detail-backdrop').hidden=false;
+    $('close-detail').focus();
+  }
 }
 function valueTile(label,value,cls=''){
   const item=n('div','info-item'+(cls?' '+cls:''));item.append(n('span','',label),n('strong','',value));return item;
@@ -174,17 +262,20 @@ function renderJobs(){
    const yes=button.dataset.category===state.category;button.classList.toggle('selected',yes);
    button.setAttribute('aria-pressed',String(yes));
  });
- const arr=state.feed.listings.filter(jobSearchMatch).sort(compareSort);
+ const arr=state.feed.listings.filter(jobSearchMatch).sort(sortJobs);
  $('job-total').textContent=arr.length+' 条匹配';
  $('job-filter-count').textContent='符合条件 '+arr.length+' 条 · 已显示 '+Math.min(state.visible,arr.length)+' 条';
  const target=$('jobs-list');target.replaceChildren();
  arr.slice(0,state.visible).forEach(job=>target.append(jobCard(job)));
+ if(!arr.some(job=>job.id===state.selectedId))state.selectedId=arr[0]?.id||null;
+ if(state.selectedId)selectJob(state.selectedId,{openMobile:false});
+ else {$('job-detail').replaceChildren(n('p','loading','没有符合当前条件的招聘记录，请调整筛选。'));closeMobileDetail(false);}
  if(!arr.length)target.append(n('p','loading','没有匹配的官方记录，可放宽条件。网站不虚构工作岗位或QS资格。'));
  const more=$('jobs-more');more.hidden=state.visible>=arr.length;
  if(!more.hidden)more.textContent='再看 '+Math.min(8,arr.length-state.visible)+' 条详细公告 ↓';
  const rank=Number(state.qs);
  $('qs-message').textContent=state.qs&&Number.isInteger(rank)&&rank>0?
-   '你输入了 QS '+rank+'。当前已核实招聘信息没有通用QS排名门槛；网站不据此自动判定有资格或筛除岗位，请逐条打开原文核对。':
+   '你输入了 QS '+rank+'。当前已核实招聘信息没有通用QS排名门槛；本站不能据此自动判定有资格或筛除岗位，请逐条打开原文核对。':
    'QS排名仅供自我规划。官方没有写QS门槛的公告，不会被错误筛掉或判定符合要求。';
 }
 function renderUrgent(){
@@ -271,20 +362,41 @@ function changeUI(){
  state.region=$('filter-region').value;state.type=$('filter-type').value;
  state.status=$('filter-status').value;
  state.overseas=$('filter-overseas').checked;state.rolesOnly=$('filter-role').checked;
- state.qs=$('filter-qs').value.trim();state.visible=8;renderJobs();
+ state.qs=$('filter-qs').value.trim();state.sort=$('filter-sort').value;state.visible=10;
+ $('hero-region').value=state.region;
+ if(document.activeElement!==$('hero-search'))$('hero-search').value=$('filter-text').value;
+ closeMobileDetail(false);renderJobs();
 }
 function initControls(){
- for(const id of ['filter-text','filter-region','filter-type','filter-status','filter-overseas','filter-role','filter-qs']){
+ for(const id of ['filter-text','filter-region','filter-type','filter-status','filter-overseas','filter-role','filter-qs','filter-sort']){
    $(id).addEventListener(id==='filter-text'||id==='filter-qs'?'input':'change',changeUI);
  }
  document.querySelectorAll('[data-category]').forEach(button=>button.addEventListener('click',()=>{
-   state.category=button.dataset.category;state.visible=8;renderJobs();
+   state.category=button.dataset.category;state.visible=10;closeMobileDetail(false);renderJobs();
  }));
+ $('hero-search-go').addEventListener('click',()=>{
+   $('filter-text').value=$('hero-search').value;
+   $('filter-region').value=$('hero-region').value;
+   changeUI();
+   $('jobs').scrollIntoView?.({behavior:'smooth',block:'start'});
+ });
+ $('hero-search').addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();$('hero-search-go').click();}});
+ document.querySelectorAll('[data-quick-region]').forEach(button=>button.addEventListener('click',()=>{
+   const region=button.dataset.quickRegion;
+   $('hero-region').value=region;
+   $('filter-region').value=region;
+   changeUI();
+   $('jobs').scrollIntoView?.({behavior:'smooth',block:'start'});
+ }));
+ $('close-detail').addEventListener('click',()=>closeMobileDetail());
+ $('detail-backdrop').addEventListener('click',()=>closeMobileDetail());
+ document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&$('job-detail-pane').classList.contains('mobile-open'))closeMobileDetail();});
  $('reset-filters').addEventListener('click',()=>{
    $('filter-text').value='';$('filter-region').value='all';$('filter-type').value='all';$('filter-status').value='all';
-   $('filter-overseas').checked=false;$('filter-role').checked=false;$('filter-qs').value='';state.category='all';changeUI();
+   $('filter-overseas').checked=false;$('filter-role').checked=false;$('filter-qs').value='';$('filter-sort').value='recommended';
+   $('hero-search').value='';$('hero-region').value='all';state.category='all';changeUI();
  });
- $('jobs-more').addEventListener('click',()=>{state.visible+=8;renderJobs();});
+ $('jobs-more').addEventListener('click',()=>{state.visible+=10;renderJobs();});
 }
 async function fetchJSON(path){
  const response=await fetch(path,{cache:'no-store'});
