@@ -6,7 +6,7 @@ const SAFE_HOSTS=new Set([
  'www.boc.cn','job.icbc.com.cn','www.chinapost.com.cn','chinapost2027.zhaopin.com',
  'zhaopin.chng.com.cn','wap.sasac.gov.cn','jshrss.jiangsu.gov.cn','rsj.sh.gov.cn',
  'hrss.sz.gov.cn','jyw.mastc.edu.cn','picc.zhiye.com','www.psbc.com',
- 'psbc2027.zhaopin.com','campus.chinahr.com','job.bankcomm.com'
+ 'psbc2027.zhaopin.com','campus.chinahr.com','job.bankcomm.com','zhcpa.zhiye.com'
 ]);
 const state={feed:null,search:'',region:'all',type:'all',status:'all',overseas:false,rolesOnly:false,qs:'',
   visible:8,monitor:null};
