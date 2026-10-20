@@ -23,9 +23,9 @@ jobs:
           curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/" -o "$RUNNER_TEMP/bci_public_check/patient.html"
           curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/data/site-data.json" -o "$RUNNER_TEMP/bci_public_check/site-data.json"
           curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/data/care-guide.json" -o "$RUNNER_TEMP/bci_public_check/care-guide.json"
-          curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/care.js" -o "$RUNNER_TEMP/bci_public_check/care.js"
+          curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/guide.js" -o "$RUNNER_TEMP/bci_public_check/guide.js"
           curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/research_cn.js" -o "$RUNNER_TEMP/bci_public_check/research_cn.js"
-          curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/care.css" -o "$RUNNER_TEMP/bci_public_check/care.css"
+          curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 "$BASE/guide.css" -o "$RUNNER_TEMP/bci_public_check/guide.css"
       - name: Verify actual public HTML and cloud research records
         env:
           SOURCE_PATH: ${{ runner.temp }}/bci_public_check
@@ -38,17 +38,23 @@ jobs:
           patient=(root/"patient.html").read_text(encoding="utf-8")
           data=json.loads((root/"site-data.json").read_text(encoding="utf-8"))
           guide=json.loads((root/"care-guide.json").read_text(encoding="utf-8"))
-          script=(root/"care.js").read_text(encoding="utf-8")
+          script=(root/"guide.js").read_text(encoding="utf-8")
+          css=(root/"guide.css").read_text(encoding="utf-8")
           chinese=(root/"research_cn.js").read_text(encoding="utf-8")
-          assert 'id="cloud-data"' in patient, "Patient cloud evidence dashboard missing"
-          assert 'id="care-glossary"' in patient
+          for section in ("where","hospitals","treatments","dictionary","research","faq"):
+              assert 'id="'+section+'"' in patient, "Missing patient section: "+section
           assert "professional.html" not in patient
-          assert 'id="care-type"' in patient
-          assert 'id="care-hub"' in patient, "Care navigation missing"
-          assert 'id="care-hospitals"' in patient, "Sourced hospital comparison missing"
-          assert 'id="care-frontiers"' in patient, "Frontier evidence area missing"
-          assert 'id="care-copy-text"' in patient, "Doctor visit question list missing"
-          assert "care-stage-btn" in patient and "care-compare-toggle" in script
+          assert 'id="hospital-list"' in patient
+          assert 'id="comparison"' in patient
+          assert 'id="term-list"' in patient
+          assert 'id="stage-title"' in patient
+          assert 'id="copy-questions"' in patient
+          assert 'id="research-list"' in patient
+          assert "hospitalMatch" in script and "comparisonRender" in script
+          assert "glossaryRender" in script and "copyQuestions" in script
+          assert "researchRender" in script
+          assert "noopener noreferrer" in script and "innerHTML" not in script
+          assert "prefers-reduced-motion" in css
           assert guide.get("schema_version")==2 and guide.get("review_status")=="editorial_reference_only_not_medically_reviewed"
           assert len(guide.get("hospitals",[]))>=12 and len(guide.get("journeys",[]))>=4
           assert sum(h["type"]=="军队医院" for h in guide["hospitals"])>=5
@@ -57,7 +63,6 @@ jobs:
           assert len(guide.get("glossary",[]))>=12
           assert "describeArticle" in chinese and "describeTrial" in chinese
           assert len(guide.get("frontiers",[]))>=3
-          assert 'id="cloud-feed"' in patient, "Patient data explorer missing"
           assert data.get("schemaVersion")==1
           assert data.get("snapshotId") and data.get("collectedAt")
           assert len(data["articles"])>=1 and len(data["trials"])>=1
