@@ -354,7 +354,7 @@ function renderQQ(){
     status.textContent='当前状态：表格仅可查看，未取得授权导出的完整单元格数据；已保留链接并每日核查。最近检查 '+when+' UTC。';
     container.hidden=true;return;
   }
-  const items=Array.isArray(qq.leads)?qq.leads.filter(x=>!x.deadline||daysBetween(x.deadline)>=0):[];
+  const items=Array.isArray(qq.leads)?qq.leads.filter(x=>(!x.deadline||daysBetween(x.deadline)>=0)&&x.verification?.status!=='no_visible_jobs'&&x.verification?.status!=='campus_vacancy_not_confirmed'):[];
   const sourceType=qq.source_freshness==='uploaded_authorized_export'?'2026年10月20日上传的腾讯文档表格副本':qq.source_freshness==='direct_authorized_export'?'本次已授权的腾讯原始导出':'以前保存到云盘的授权导出副本';
   const sourceDate=qq.source_export_modified_at?'，源文件存档时间 '+qq.source_export_modified_at.slice(0,10):'';
   status.textContent='已读取'+sourceType+sourceDate+'；扫描 '+qq.rows_examined+' 行、筛出 '+items.length+' 条非过期招聘线索。未验证腾讯表格当前是否已更新，报名条件请核对官网。';
@@ -362,11 +362,11 @@ function renderQQ(){
   const el=$('qq-shortlist-list');el.replaceChildren();
   items.slice(0,100).forEach(job=>{
     const row=n('article','qq-lead');
-    row.append(n('span','qq-lead-tag','来源：腾讯文档《27届秋招汇总表格》 · 待官网核实'));
+    row.append(n('span','qq-lead-tag','来源：腾讯文档《27届秋招汇总表格》 · '+(job.verification?.status==='official_recruitment_page_confirmed'?'已确认官网招聘专题，具体岗位待核':'表格线索，待岗位核实')));
     row.append(n('strong','',job.title),n('p','',job.company+' · '+job.work_city+
       (job.deadline?' · 截止（待官方确认）'+job.deadline:' · 截止时间未核实')));
     const reasons=n('p','qq-lead-reasons',(job.match_reasons||[]).join(' · '));
-    row.append(reasons,anchor('查看原始腾讯表格 ↗',job.third_party_url||qq.source_url,'source-link'));
+    row.append(reasons,n('p','qq-lead-reasons',job.review_state||'本条岗位须以官网实时信息为准'),anchor('查看原始腾讯表格 ↗',job.third_party_url||qq.source_url,'source-link'));
     const original=job.original_link;
     if(original&&SAFE_HOSTS.has((()=>{try{return new URL(original).hostname}catch{return ''}})())){
       row.append(anchor('核对单位链接 ↗',original,'source-link'));
