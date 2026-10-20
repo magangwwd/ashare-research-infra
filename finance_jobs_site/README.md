@@ -65,3 +65,20 @@
 - 监测网页的正式报名时间如有明确HH:MM，北京时间当天超过该时刻自动标为截止；没有正式截止时刻不推断。
 
 真实验收：`python -m unittest discover -s finance_jobs_site/tests -v`、`NODE_PATH=... node finance_jobs_site/tests/test_ui.cjs`；GitHub Actions 从历史云盘快照完成变更核对和新快照SHA256读回后触发Pages部署；公网检查包含 `changes.json`。
+
+
+## 2026-10-20 第三阶段：参考全球主流招聘平台重做界面
+
+在不引用任何招聘平台商标、受版权保护版式代码或未授权图像的前提下，采用 LinkedIn/Indeed 等招聘站点常见、已被用户验证的浏览模式：
+
+- **搜索优先**：首页大搜索框 + 目标城市下拉 + 热门地区快捷按钮；与下面的详细筛选表同步。
+- **列表 / 详情分栏**：桌面端左侧显示精简岗位卡片，右侧保持选中职位的详细资料；选中不同岗位无需跳转、无需反复展开长卡片。
+- **移动优先**：手机点击卡片弹出完整详情抽屉，可用关闭按钮、背景点击或 Escape 返回岗位列表。
+- **分层证据**：绿色标示具体验证的财会岗位名称；银行/金融相关岗位与一般招聘公告分开；过期公告灰色，临近截止的记录加粗。
+- **五字段先读**：单位和岗位、城市、学历、专业方向、报名截止；其余申请步骤、海外学历、QS、材料、原始资料隐藏于详情。
+- **可用的真实交互**：搜索、地区快捷按钮、岗位分类、招聘主体、截止状态、留学生资格、已核实职位、按推荐/截止日/发布日期排序、键盘回车打开、手机抽屉关闭。
+- **准确性不倒退**：界面只读取既有 `data/latest.json`、`data/monitor.json`、`data/changes.json`；不改动每日云盘采集；超10天未复核的招聘档案提供醒目提示，QS未知不能判定资格。
+- 允许在主分支更新网页代码时自动触发 `finance-jobs-pages.yml` 发布已存储到 Google Drive 的真实最新招聘快照，无需等次日巡检。旧医学工作流继续暂停。
+
+检查：`python -m unittest discover -s finance_jobs_site/tests -v`，`node --check finance_jobs_site/app.js`，
+`NODE_PATH=... node finance_jobs_site/tests/test_ui.cjs`，随后从公网独立读取站点HTML/JS/CSS和Drive产生的三份JSON做验收。
