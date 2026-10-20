@@ -8,8 +8,10 @@ const page=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
 const curated=JSON.parse(fs.readFileSync(path.join(ROOT,'data/opportunities.json'),'utf8'));
 const data={...curated,collected_at:'2026-10-20T08:00:00Z',data_as_of:curated.as_of};
 const monitor={schema:1,checked_at:'2026-10-20T08:00:00Z',sources:[],potential_new_announcements:[]};
+const changes={events:[{kind:'new_curated_record',id:'j1',title:'新收录记录',source:'https://zhaopin.sgcc.com.cn',note:'入库，不代表今天才发布'}],
+  total_events:1,counts:{new_curated_record:1},previous_collected_at:'2026-10-19T08:00:00Z'};
 const dom=new JSDOM(page,{url:'https://example.test/ashare-research-infra/',runScripts:'outside-only'});
-dom.window.fetch=async url=>({ok:true,json:async()=>String(url).includes('monitor.json')?monitor:data});
+dom.window.fetch=async url=>({ok:true,json:async()=>String(url).includes('monitor.json')?monitor:String(url).includes('changes.json')?changes:data});
 dom.window.eval(fs.readFileSync(path.join(ROOT,'app.js'),'utf8'));
 const $=id=>dom.window.document.getElementById(id);
 function trigger(id,type){$(id).dispatchEvent(new dom.window.Event(type,{bubbles:true}));}
@@ -21,6 +23,20 @@ function trigger(id,type){$(id).dispatchEvent(new dom.window.Event(type,{bubbles
  assert.ok($('sources-list').querySelectorAll('.source-card').length>=10);
  assert.ok($('sync-text').textContent.includes('Google Drive'));
  assert.ok($('jobs-list').textContent.includes('岗位'));
+ assert.ok(Number($('category-count-all').textContent)>=50);
+ assert.ok(Number($('category-count-core').textContent)>0);
+ assert.ok(Number($('category-count-related').textContent)>0);
+ assert.ok(Number($('category-count-watch').textContent)>0);
+ assert.ok($('audit-status').textContent.includes('新入库档案 1 条'));
+ assert.ok($('changes-list').textContent.includes('新收录记录'));
+ const coreTab=dom.window.document.querySelector('[data-category="core"]');
+ coreTab.click();
+ assert.equal(coreTab.getAttribute('aria-pressed'),'true');
+ assert.ok($('jobs-list').textContent.includes('财务')||$('jobs-list').textContent.includes('审计'));
+ const watchTab=dom.window.document.querySelector('[data-category="watch"]');
+ watchTab.click();
+ assert.ok($('jobs-list').textContent.includes('招聘')||$('jobs-list').textContent.includes('财务'));
+ dom.window.document.querySelector('[data-category="all"]').click();
  // Selecting state grid really filters, not just decorates labels.
  $('filter-type').value='国家电网';trigger('filter-type','change');
  assert.ok($('jobs-list').textContent.includes('国家电网'));
