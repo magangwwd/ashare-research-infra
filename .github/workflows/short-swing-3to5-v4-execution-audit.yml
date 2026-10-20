@@ -1,0 +1,29 @@
+name: A-share V4 execution audit offline tests
+
+on:
+  push:
+    branches: ['feat/mainboard-short-swing-3to5-paper-20261020']
+    paths:
+      - '.github/workflows/short-swing-3to5-v4-execution-audit.yml'
+  pull_request:
+    paths:
+      - 'astock-quant/stock_state_strategy/short_swing_3to5_v4_execution_audit.py'
+      - 'astock-quant/stock_state_strategy/test_short_swing_3to5_v4_execution_audit.py'
+      - '.github/workflows/short-swing-3to5-v4-execution-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Run V4 assumption accounting adversarial tests
+        working-directory: astock-quant/stock_state_strategy
+        run: python -m unittest -v test_short_swing_3to5_v4_execution_audit.py
