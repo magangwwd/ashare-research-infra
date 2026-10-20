@@ -365,10 +365,10 @@ class Pipeline:
                       "minute_source_healthy": False,
                       "daily_source": "tushare_daily",
                       "updated_at": utcnow(), "reason": reason,
-                      "source_status": "DEGRADED" if previous.get("activated") else "NOT_ACTIVATED"}
+                      "source_status": "DEGRADED"}
             atomic_json(state_path, status)
             self.store.gap("stk_mins", {"trade_date": str(self.sessions[-1])}, reason)
-            print(f"WARNING minute feed unavailable; validated daily fallback required: {reason}")
+            print(f"WARNING mainboard minute feed unavailable; independent daily source remains: {reason}")
             return
 
         day = self.sessions[-1]
@@ -377,6 +377,27 @@ class Pipeline:
             self.suspension_probed.add(day)
         expected = sorted(clean.intraday_mainboard_codes(
             self.master, day, suspension_codes(self.stage, day), self.open_exchanges(day)))
+        # Persist the exact provider-derived acquisition roster for audit.
+        # This is Tushare metadata, NOT a claim of official SSE/SZSE reconciliation.
+        roster = self.master.loc[self.master["ts_code"].isin(expected)].sort_values("ts_code")
+        atomic_json(self.store.metadata / "intraday_universe.json", {
+            "trade_date": str(day),
+            "source": "Tushare stock_basic (L/D/P); provider market/exchange metadata",
+            "scope": "SSE_SZSE_MAIN_A_SHARE",
+            "official_exchange_reconciled": False,
+            "eligible_count": len(expected),
+            "market_summary": {
+                "SSE": int(roster["exchange"].eq("SSE").sum()),
+                "SZSE": int(roster["exchange"].eq("SZSE").sum()),
+            },
+            "codes": expected,
+            "roster_sha256": hashlib.sha256("\\n".join(expected).encode("utf-8")).hexdigest(),
+            "checked_at": utcnow(),
+        })
+        print(f"TASK01_MAINBOARD_UNIVERSE session={day} eligible={len(expected)} "
+              f"SSE={int(roster['exchange'].eq('SSE').sum())} "
+              f"SZSE={int(roster['exchange'].eq('SZSE').sum())} "
+              "source=tushare_stock_basic official_reconciled=false")
         budget = settings["recent_requests_per_run"]
         fetched = bars = empty_streak = 0
         errors = []
@@ -431,8 +452,8 @@ class Pipeline:
             "activated": activated,
             "minute_source_healthy": coverage >= settings["min_security_coverage"],
             "source_status": ("HEALTHY" if coverage >= settings["min_security_coverage"]
-                              else ("DEGRADED" if activated else "NOT_ACTIVATED")),
-            "activation_date": previous.get("activation_date") or (str(day) if activated else None),
+                              else "DEGRADED"),
+            "activation_date": None,
             "daily_source": "tushare_daily",
             "derived_daily": derived,
             "updated_at": utcnow(),
