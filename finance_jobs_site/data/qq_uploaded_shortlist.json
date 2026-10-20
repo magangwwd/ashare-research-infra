@@ -22,9 +22,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-44",
@@ -40,9 +45,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "尚未从招聘官网独立确认财务运营岗详情及城市对应关系。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "explanation": "尚未从招聘官网独立确认财务运营岗详情及城市对应关系。",
+        "checked_at": "2026-10-20"
+      }
     },
     {
       "id": "qq-upload-107",
@@ -58,9 +68,15 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "上海城投校招页可打开，但当前搜索可见页面暂无职位；已发现社招财务岗，不应混为2027校招。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "campus_vacancy_not_confirmed",
+        "explanation": "上海城投校招页可打开，但当前搜索可见页面暂无职位；已发现社招财务岗，不应混为2027校招。",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://chengtou.zhiye.com/xiaoyuan/?PageIndex=1&c=3100&d=-1&p=1%5E-1%2C3%5E-1"
+      }
     },
     {
       "id": "qq-upload-136",
@@ -76,9 +92,15 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "中创新航官网有校园招聘入口，未独立确认财务岗位当前开放。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "employer_portal_confirmed_only",
+        "explanation": "中创新航官网有校园招聘入口，未独立确认财务岗位当前开放。",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://calbjs.zhiye.com/"
+      }
     },
     {
       "id": "qq-upload-80",
@@ -94,9 +116,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-79",
@@ -112,9 +139,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-181",
@@ -130,9 +162,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-227",
@@ -148,9 +185,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-240",
@@ -166,9 +208,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-261",
@@ -184,9 +231,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-342",
@@ -202,9 +254,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-376",
@@ -220,9 +277,15 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "首创集团2027校招真实官网包含首创证券板块，仍需逐岗核对内控岗具体页面和资格。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "official_recruitment_page_confirmed",
+        "explanation": "首创集团2027校招真实官网包含首创证券板块，仍需逐岗核对内控岗具体页面和资格。",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://campus.51job.com/bjcapital2027/job.html"
+      }
     },
     {
       "id": "qq-upload-406",
@@ -238,9 +301,15 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "官方校园招聘列表显示0个岗位，不能认定财务管培生正在招聘。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "no_visible_jobs",
+        "explanation": "官方校园招聘列表显示0个岗位，不能认定财务管培生正在招聘。",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://xiandaimuye.zhiye.com/campus/jobs"
+      }
     },
     {
       "id": "qq-upload-468",
@@ -256,9 +325,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-473",
@@ -274,9 +348,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-478",
@@ -292,9 +371,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-536",
@@ -310,9 +394,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-593",
@@ -328,9 +417,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-616",
@@ -346,9 +440,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-640",
@@ -364,9 +463,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-668",
@@ -382,9 +486,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-674",
@@ -400,9 +509,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-148",
@@ -418,9 +532,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-347",
@@ -436,9 +555,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-486",
@@ -454,9 +578,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-43",
@@ -472,9 +601,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     },
     {
       "id": "qq-upload-167",
@@ -490,10 +624,16 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
       "role_confirmed": false,
-      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》",
+      "verification": {
+        "status": "pending_detailed_verification",
+        "checked_at": "2026-10-20",
+        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+      }
     }
   ],
-  "warning": "来源：腾讯文档《27届秋招汇总表格》（2026-10-20上传副本）；未逐岗核实招聘状态，截止日期空白不代表开放。"
+  "warning": "来源为上传的腾讯文档汇总表。网页明确区分表格线索与独立核实单岗；不承诺当前开放。",
+  "verification_count": 1
 }
