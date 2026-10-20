@@ -34,6 +34,21 @@ jobs:
           python finance_jobs_site/scripts/read_drive.py \
             --output "$RUNNER_TEMP/finance-previous.json" \
             --receipt "$RUNNER_TEMP/finance-previous-receipt.json"
+      - name: PRIORITY - read legally exported Tencent 2027 recruitment sheet from private Drive
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        run: |
+          python finance_jobs_site/scripts/qq_sheet_sync.py --output "$RUNNER_TEMP/qq-sheet-feed.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          d=json.loads((Path(os.environ["RUNNER_TEMP"])/"qq-sheet-feed.json").read_text("utf-8"))
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as f:
+            f.write("### 腾讯27届秋招汇总表（优先来源）\\n")
+            f.write("状态: **"+d["status"]+"** · 有授权导出后筛选: **"+str(d["qualified_count"])+"条**\\n\\n")
+            if d["status"]!="authorized_export_imported":
+              f.write("**注意：本次未获合法可读的表格副本，未同步表格单元格。**\\n\\n")
+          PY
       - name: Check monitored recruiting sources, keeping unverified links separate
         run: python finance_jobs_site/scripts/update_sources.py --config finance_jobs_site/data/opportunities.json --out "$RUNNER_TEMP/source-monitor.json"
       - name: Build immutable detailed finance recruiting JSON
@@ -44,6 +59,7 @@ jobs:
             --config finance_jobs_site/data/opportunities.json \
             --monitor "$RUNNER_TEMP/source-monitor.json" \
             --previous "$RUNNER_TEMP/finance-previous.json" \
+            --qq-feed "$RUNNER_TEMP/qq-sheet-feed.json" \
             --outdir "$RUNNER_TEMP/finance_snapshots" --run-id "$RUN_ID"
       - name: Confirm exactly one snapshot
         shell: bash
@@ -67,6 +83,7 @@ jobs:
           name: finance-evidence-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/source-monitor.json
+            ${{ runner.temp }}/qq-sheet-feed.json
             ${{ runner.temp }}/finance-previous-receipt.json
             ${{ runner.temp }}/finance_snapshots/finance_*.json
             ${{ runner.temp }}/finance-drive-receipt.json
