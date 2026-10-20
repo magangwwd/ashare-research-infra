@@ -1,0 +1,53 @@
+name: A-share V4 15m five-case Baostock sample PAPER
+
+on:
+  push:
+    branches: ['feat/mainboard-short-swing-3to5-paper-20261020']
+    paths:
+      - '.github/workflows/short-swing-v4-minute-sample.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  minute-sample-offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validate minute bar assumptions without network
+        working-directory: astock-quant/stock_state_strategy
+        run: python -m unittest -v test_short_swing_3to5_v4_minute_sample_probe.py
+
+  sample-real-provider:
+    needs: minute-sample-offline-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install public research-only minute provider
+        run: python -m pip install baostock==0.8.9
+      - name: Download 5 historic executed-stock entry/exit minute windows
+        shell: bash
+        run: |
+          set -euo pipefail
+          python astock-quant/stock_state_strategy/short_swing_3to5_v4_minute_sample_probe.py --output-dir "$RUNNER_TEMP/v4-5-symbol-minute-sample"
+      - name: Upload immutable raw evidence and completeness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v4-five-case-minute-evidence
+          path: ${{ runner.temp }}/v4-5-symbol-minute-sample/
+          retention-days: 14
+          if-no-files-found: warn
