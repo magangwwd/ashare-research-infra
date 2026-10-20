@@ -341,6 +341,39 @@ function renderSources(){
      n('small','','待人工核验岗位专业/截止时间/资格；不能当作开放职位'));leads.append(row);
  });
 }
+function qqSourceLink(text,link){
+ const a=n('a','source-link',text);
+ try{
+  const u=new URL(String(link||''));
+  if(u.protocol!=='https:'||!u.hostname||u.username||u.password||/^(localhost|127\\.|10\\.|192\\.168\\.)/.test(u.hostname))throw Error('unsafe');
+  a.href=u.href;a.target='_blank';a.rel='noopener noreferrer nofollow';
+ }catch{a.title='链接尚不可安全打开，请查看来源表格';}
+ return a;
+}
+function renderQQArchive(){
+ const wrap=$('qq-archive'),list=$('qq-archive-list'),count=$('qq-archive-count'),notice=$('qq-archive-notice');
+ if(!wrap||!list||!count||!notice)return;
+ const leads=Array.isArray(state.qq?.raw_leads)?state.qq.raw_leads:[];
+ wrap.hidden=!leads.length;
+ if(!leads.length)return;
+ const term=($('qq-archive-search')?.value||'').trim().toLowerCase();
+ const filtered=leads.filter(x=>(!x.deadline||daysBetween(x.deadline)>=0)&&
+  (!term||[x.company,x.title,x.work_city,x.source_sheet].join(' ').toLowerCase().includes(term)))
+  .sort((a,b)=>(Number(b.resume_match_score)||0)-(Number(a.resume_match_score)||0));
+ count.textContent=filtered.length+' / '+leads.length+' 条';
+ list.replaceChildren();
+ filtered.slice(0,100).forEach(j=>{
+  const card=n('article','qq-archive-item');
+  card.append(n('span','qq-archive-status','腾讯汇总表初筛 · 未核实开放状态'));
+  card.append(n('strong','',j.company+' · '+j.title));
+  card.append(n('p','',j.work_city+(j.deadline?' · 表格截止日 '+j.deadline:' · 截止日期待核')));
+  card.append(n('p','','相关度 '+(j.resume_match_score??'待核')+' · '+(j.match_reasons||[]).slice(0,2).join('；')));
+  if(j.original_link)card.append(qqSourceLink('核对原始招聘链接 ↗',j.original_link));
+  card.append(anchor('查看来源汇总表 ↗',j.third_party_url||state.qq.source_url,'source-link'));
+  list.append(card);
+ });
+ notice.textContent=filtered.length>100?'展示当前最匹配的100条；输入公司、岗位或城市可检索其余线索。':'以上均为初筛线索，需以用人单位实时招聘页面为准。';
+}
 function renderQQ(){
   const status=$('qq-feed-status'),container=$('qq-shortlist');
   if(!status||!container)return;
@@ -369,12 +402,11 @@ function renderQQ(){
     row.append(reasons,n('p','qq-match',(job.resume_match_reasons||[]).join('；')||'财务审计方向相关，具体资格待核'),n('p','qq-lead-reasons','注意：'+(job.fit_caution||job.review_state||'实际网申状态待核')),anchor('查看原始腾讯表格 ↗',job.third_party_url||qq.source_url,'source-link'));
     if(job.verification?.evidence_url){const ev=job.verification.evidence_url;try{const u=new URL(ev);if(u.protocol==='https:'&&!u.username&&!u.password&&u.hostname){const e=n('a','source-link','查看核查证据 ↗');e.href=u.href;e.target='_blank';e.rel='noopener noreferrer nofollow';row.append(e);}}catch{}}
     const original=job.original_link;
-    if(original&&SAFE_HOSTS.has((()=>{try{return new URL(original).hostname}catch{return ''}})())){
-      row.append(anchor('核对单位链接 ↗',original,'source-link'));
-    }
+    if(original)row.append(qqSourceLink('核对单位链接 ↗',original));
     el.append(row);
   });
   container.hidden=items.length===0;
+  renderQQArchive();
 }
 function renderChanges(){
  const el=$('changes-list');el.replaceChildren();
@@ -418,6 +450,7 @@ function changeUI(){
  closeMobileDetail(false);renderJobs();
 }
 function initControls(){
+ $('qq-archive-search')?.addEventListener('input',renderQQArchive);
  for(const id of ['filter-text','filter-region','filter-type','filter-status','filter-overseas','filter-role','filter-qs','filter-sort']){
    $(id).addEventListener(id==='filter-text'||id==='filter-qs'?'input':'change',changeUI);
  }
