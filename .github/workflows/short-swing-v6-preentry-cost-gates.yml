@@ -32,7 +32,7 @@ jobs:
       - run: python -m pip install 'pandas>=2.2,<4' 'pyarrow>=18'
       - name: Offline checks V6 signal-time 2-gates and untouched V1/V2/V5
         working-directory: astock-quant/stock_state_strategy
-        run: python -m unittest -v test_short_swing_3to5_v1.py test_short_swing_3to5_v2_research.py test_short_swing_3to5_v6_preentry_cost_gatesing.py test_short_swing_v6_preentry_cost_gates.py
+        run: python -m unittest -v test_short_swing_3to5_v1.py test_short_swing_3to5_v2_research.py test_short_swing_3to5_v5_causal_ranking.py test_short_swing_v6_preentry_cost_gates.py
 
   gold-v6-conservative-compare:
     if: >-
