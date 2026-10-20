@@ -155,6 +155,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     run(Path(args.csv))
     # Stop the workflow if core accounting / cash / exposure invariants regress.
-    subprocess.run([sys.executable, "-m", "unittest", "etf_single_rotation.experiments.test_strategy_regressions", "-v"], check=True)
+    subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "etf_single_rotation/experiments", "-p", "test_*.py", "-v"], check=True)
     # The existing workflow's backtest step also runs the new exploratory comparison harness.
     subprocess.run([sys.executable, str(Path(__file__).with_name("experiments") / "run_strategy_experiments.py")], check=True)
