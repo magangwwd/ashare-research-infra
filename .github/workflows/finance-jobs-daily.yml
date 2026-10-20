@@ -27,7 +27,14 @@ jobs:
         run: python -m pip install --disable-pip-version-check 'google-auth>=2.28,<3' 'requests>=2.31,<3' 'beautifulsoup4>=4.12,<5'
       - name: Validate curated records
         run: python -m unittest discover -s finance_jobs_site/tests -v
-      - name: Check official recruitment sources without inventing vacancies
+      - name: Download previous finance snapshot from Google Drive for immutable change journal
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        run: |
+          python finance_jobs_site/scripts/read_drive.py \
+            --output "$RUNNER_TEMP/finance-previous.json" \
+            --receipt "$RUNNER_TEMP/finance-previous-receipt.json"
+      - name: Check monitored recruiting sources, keeping unverified links separate
         run: python finance_jobs_site/scripts/update_sources.py --config finance_jobs_site/data/opportunities.json --out "$RUNNER_TEMP/source-monitor.json"
       - name: Build immutable detailed finance recruiting JSON
         env:
@@ -36,6 +43,7 @@ jobs:
           python finance_jobs_site/scripts/create_snapshot.py \
             --config finance_jobs_site/data/opportunities.json \
             --monitor "$RUNNER_TEMP/source-monitor.json" \
+            --previous "$RUNNER_TEMP/finance-previous.json" \
             --outdir "$RUNNER_TEMP/finance_snapshots" --run-id "$RUN_ID"
       - name: Confirm exactly one snapshot
         shell: bash
@@ -59,6 +67,7 @@ jobs:
           name: finance-evidence-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/source-monitor.json
+            ${{ runner.temp }}/finance-previous-receipt.json
             ${{ runner.temp }}/finance_snapshots/finance_*.json
             ${{ runner.temp }}/finance-drive-receipt.json
           if-no-files-found: warn
