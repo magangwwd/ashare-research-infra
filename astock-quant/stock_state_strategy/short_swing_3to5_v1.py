@@ -369,7 +369,7 @@ def run_cli() -> None:
     if args.minute_source_root is not None:
         from short_swing_15m_audit import audit_source
         report["minute_shadow_audit"] = audit_source(
-            args.minute_source_root, panel, signals, report["trades"])
+            args.minute_source_root, panel, signals, report["trades"], start=args.start)
     else:
         report["minute_shadow_audit"] = {
             "mode": "NOT_REQUESTED", "incremental_15m_profitability_proven": False}
