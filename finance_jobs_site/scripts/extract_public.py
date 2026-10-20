@@ -5,7 +5,7 @@ from update_sources import validate_curated
 
 def export_snapshot(source,publicdir):
     raw=pathlib.Path(source).read_bytes()
-    if not 100<len(raw)<3_000_000:raise ValueError("unexpected snapshot size")
+    if not 100<len(raw)<8_000_000:raise ValueError("unexpected snapshot size")
     data=json.loads(raw)
     validate_curated(data)
     monitor=data.get("source_monitor")
@@ -30,7 +30,7 @@ def export_snapshot(source,publicdir):
             "warning":"此份历史云盘快照未包含腾讯表格授权导出资料。"}
     elif qq.get("source_id")!="qq_2027_master":
         raise ValueError("Unexpected recruitment sheet identifier")
-    if len(qq.get("leads",[]))>300:
+    if len(qq.get("leads",[]))>1500:
         raise ValueError("Third-party candidate list too large")
     sanitized={
         "schema":1,"source_url":qq.get("source_url"),
