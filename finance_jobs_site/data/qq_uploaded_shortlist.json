@@ -362,9 +362,9 @@
     },
     {
       "id": "qq-upload-478",
-      "title": "财务管理储备岗、风控储备岗",
+      "title": "远洋商业2027届财务管理储备岗（上海总部）",
       "company": "远洋商业",
-      "work_city": "上海、宿迁等",
+      "work_city": "上海",
       "deadline": null,
       "source_sheet": "总表",
       "source_row": 478,
@@ -374,13 +374,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
-      "role_confirmed": false,
+      "review_state": "2027届扬帆生招聘简章明确财务管理储备岗为上海总部岗位，硕士及以上（优秀985/211本科可纳入），海外学历根据留服认证毕业时间认定。未发现统一截止日，需以官方报名页面核对可投状态。",
+      "role_confirmed": true,
       "source_label": "来源：腾讯文档《27届秋招汇总表格》",
       "verification": {
-        "status": "pending_detailed_verification",
+        "status": "employer_announced_specific_role_secondary_copy",
         "checked_at": "2026-10-20",
-        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+        "evidence_url": "https://www.fenbi.com/page/fenxiaozhaokaodetail/25/2130/469639226743809",
+        "explanation": "2027届扬帆生招聘简章明确财务管理储备岗为上海总部岗位，硕士及以上（优秀985/211本科可纳入），海外学历根据留服认证毕业时间认定。未发现统一截止日，需以官方报名页面核对可投状态。"
       }
     },
     {
@@ -502,10 +503,10 @@
     },
     {
       "id": "qq-upload-674",
-      "title": "财务管理、审计风控",
+      "title": "物产中大金属集团2027届财务管理 / 审计风控岗（杭州）",
       "company": "物产中大金属集团",
-      "work_city": "杭州、上海等",
-      "deadline": null,
+      "work_city": "杭州",
+      "deadline": "2026-11-30",
       "source_sheet": "总表",
       "source_row": 674,
       "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
@@ -514,13 +515,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
-      "role_confirmed": false,
+      "review_state": "高校就业平台2027简章明确列出杭州财务管理与审计风控岗，本科及以上，财务、会计、审计相关专业；财务管理岗入职一年后需服从约三年外派。11月30日截止（招满可能提前结束），单岗位人数和留学生资格须在官网核对。",
+      "role_confirmed": true,
       "source_label": "来源：腾讯文档《27届秋招汇总表格》",
       "verification": {
-        "status": "pending_detailed_verification",
+        "status": "university_posted_specific_role",
         "checked_at": "2026-10-20",
-        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+        "evidence_url": "https://www.91wllm.cn/campusUnion/view/id/1006124",
+        "explanation": "高校就业平台2027简章明确列出杭州财务管理与审计风控岗，本科及以上，财务、会计、审计相关专业；财务管理岗入职一年后需服从约三年外派。11月30日截止（招满可能提前结束），单岗位人数和留学生资格须在官网核对。"
       }
     },
     {
