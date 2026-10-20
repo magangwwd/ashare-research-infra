@@ -11,7 +11,7 @@ from google.oauth2.credentials import Credentials
 FOLDER_ID="1_-tsriPoUm2KosCuC8xHIuzAwZLvweub"
 API="https://www.googleapis.com/drive/v3/files"
 NAME=re.compile(r"^finance_\d{8}T\d{6}Z_\d+\.json$")
-MAX_BYTES=3_000_000
+MAX_BYTES=8_000_000
 
 def auth():
     raw=os.environ.get("GDRIVE_OAUTH_JSON")
