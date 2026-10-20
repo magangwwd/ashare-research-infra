@@ -265,9 +265,9 @@
     },
     {
       "id": "qq-upload-376",
-      "title": "内控岗",
+      "title": "2027年校招内控岗（J11247）",
       "company": "首创证券",
-      "work_city": "北京、上海等",
+      "work_city": "北京",
       "deadline": "2026-11-30",
       "source_sheet": "总表",
       "source_row": 376,
@@ -277,14 +277,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "首创集团2027校招真实官网包含首创证券板块，仍需逐岗核对内控岗具体页面和资格。",
-      "role_confirmed": false,
+      "review_state": "首创证券官方校招岗位列表明确列出内控岗J11247，工作地北京，2026年9月30日发布；招聘计划称11月30日截止。城市不属于首选江浙沪深；海外学历逐岗核对。",
+      "role_confirmed": true,
       "source_label": "来源：腾讯文档《27届秋招汇总表格》",
       "verification": {
-        "status": "official_recruitment_page_confirmed",
-        "explanation": "首创集团2027校招真实官网包含首创证券板块，仍需逐岗核对内控岗具体页面和资格。",
+        "status": "official_specific_role_confirmed",
         "checked_at": "2026-10-20",
-        "evidence_url": "https://campus.51job.com/bjcapital2027/job.html"
+        "evidence_url": "https://sczq.zhiye.com/campus/?PageIndex=1&c=1100",
+        "explanation": "首创证券官方校招岗位列表明确列出内控岗J11247，工作地北京，2026年9月30日发布；招聘计划称11月30日截止。城市不属于首选江浙沪深；海外学历逐岗核对。"
       }
     },
     {
@@ -336,9 +336,9 @@
     },
     {
       "id": "qq-upload-473",
-      "title": "财务管理",
+      "title": "2027校招财务管理—集团公司（南京）",
       "company": "江苏省规划设计集团",
-      "work_city": "南京、苏州等",
+      "work_city": "南京",
       "deadline": "2026-10-31",
       "source_sheet": "总表",
       "source_row": 473,
@@ -348,13 +348,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
-      "role_confirmed": false,
+      "review_state": "2027招聘简章列出南京财务管理岗位，硕士、财务管理/会计学/审计学相关专业，10月31日截止；原文规定本科和硕士须为普通高等教育，海外学历是否符合须咨询人事。招聘网页重定向，故以招聘简章为依据。",
+      "role_confirmed": true,
       "source_label": "来源：腾讯文档《27届秋招汇总表格》",
       "verification": {
-        "status": "pending_detailed_verification",
+        "status": "employer_announced_specific_role_secondary_copy",
         "checked_at": "2026-10-20",
-        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+        "evidence_url": "https://hera-webapp.fenbi.com/api/article/detail?app=web&id=469725217575936",
+        "explanation": "2027招聘简章列出南京财务管理岗位，硕士、财务管理/会计学/审计学相关专业，10月31日截止；原文规定本科和硕士须为普通高等教育，海外学历是否符合须咨询人事。招聘网页重定向，故以招聘简章为依据。"
       }
     },
     {
@@ -474,9 +475,9 @@
     },
     {
       "id": "qq-upload-668",
-      "title": "财务审计类岗位",
+      "title": "中国出口信用保险公司2027届财务审计类岗位（总部）",
       "company": "中国出口信用保险公司",
-      "work_city": "上海、江苏、浙江、安徽等",
+      "work_city": "总部（地点须进一步确认）",
       "deadline": "2026-11-05",
       "source_sheet": "总表",
       "source_row": 668,
@@ -486,13 +487,14 @@
         "表格明确列有财会、审计或相关管理方向",
         "原始报名入口来自上传的2027届秋招汇总表格"
       ],
-      "review_state": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。",
+      "review_state": "公司2027校招公告明确列出总部财务审计类岗位，11月5日24点截止。留学生须2026年8月—2027年7月毕业，入职前取得海外学历认证；2026年12月毕业在公告窗口内，具体专业及所在城市仍须逐岗核查。",
       "role_confirmed": false,
       "source_label": "来源：腾讯文档《27届秋招汇总表格》",
       "verification": {
-        "status": "pending_detailed_verification",
+        "status": "employer_announced_role_category",
         "checked_at": "2026-10-20",
-        "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
+        "evidence_url": "https://career.nankai.edu.cn/correcruit/content/id/119757.html",
+        "explanation": "公司2027校招公告明确列出总部财务审计类岗位，11月5日24点截止。留学生须2026年8月—2027年7月毕业，入职前取得海外学历认证；2026年12月毕业在公告窗口内，具体专业及所在城市仍须逐岗核查。"
       }
     },
     {
@@ -635,5 +637,7 @@
     }
   ],
   "warning": "来源为上传的腾讯文档汇总表。网页明确区分表格线索与独立核实单岗；不承诺当前开放。",
-  "verification_count": 1
+  "verification_count": 1,
+  "verified_independent_positions": 1,
+  "verification_note": "网站上的独立岗位与第三方表格概述分别表示；只有有雇主逐岗证据才能写'官网确认具体岗位'。"
 }
