@@ -6,10 +6,10 @@ const SAFE_HOSTS=new Set([
  'www.boc.cn','job.icbc.com.cn','www.chinapost.com.cn','chinapost2027.zhaopin.com',
  'zhaopin.chng.com.cn','wap.sasac.gov.cn','jshrss.jiangsu.gov.cn','rsj.sh.gov.cn',
  'hrss.sz.gov.cn','jyw.mastc.edu.cn','picc.zhiye.com','www.psbc.com',
- 'psbc2027.zhaopin.com','campus.chinahr.com','job.bankcomm.com','zhcpa.zhiye.com','zp.czbank.com.cn','sdg.zhaopin.com','zhaopin.cscec3b.com.cn','hr.jsbchina.cn','career.hebut.edu.cn','career.nankai.edu.cn','sgdt.iguopin.com','job.tiangong.edu.cn'
+ 'psbc2027.zhaopin.com','campus.chinahr.com','job.bankcomm.com','zhcpa.zhiye.com','zp.czbank.com.cn','sdg.zhaopin.com','zhaopin.cscec3b.com.cn','hr.jsbchina.cn','career.hebut.edu.cn','career.nankai.edu.cn','sgdt.iguopin.com','job.tiangong.edu.cn','docs.qq.com'
 ]);
 const state={feed:null,search:'',region:'all',type:'all',status:'all',overseas:false,rolesOnly:false,qs:'',
-  monitor:null,category:'all',ledger:null,sort:'recommended',selectedId:null,lastCardFocus:null};
+  monitor:null,category:'all',ledger:null,sort:'recommended',selectedId:null,lastCardFocus:null,qq:null};
 const cnTime=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'});
 function today(){const ps=cnTime.formatToParts(new Date());const x=Object.fromEntries(ps.map(p=>[p.type,p.value]));return x.year+'-'+x.month+'-'+x.day;}
 function daysBetween(day){return Math.round((Date.parse(day+'T00:00:00Z')-Date.parse(today()+'T00:00:00Z'))/86400000);}
@@ -72,6 +72,19 @@ function compareSort(a,b){
   for(let i=0;i<x.length;i++)if(x[i]!==y[i])return x[i]-y[i];
   return String(a.title).localeCompare(String(b.title),'zh-CN');
 }
+function resumeDirectionScore(j){
+  // Broad non-identifying priorities only. The private original resume is NEVER in public JS.
+  const roles=[...(j.roles||[]),...(j.majors_exact||[]),j.title||''].join(' ');
+  const cities=[...(j.regions||[]),j.work_city||''].join(' ');
+  let v=0;
+  if(/财务|会计|审计|税务|预算|内控|经营分析|资金管理/.test(roles))v+=8;
+  else if(/银行|金融|风险|财会/.test(roles))v+=4;
+  if(/上海|江苏|浙江|深圳|马鞍山|安徽/.test(cities))v+=5;
+  if(j.overseas==='explicit')v+=3;
+  if(j.role_confirmed)v+=3;
+  if(j.type==='国家电网'||j.type==='银行'||j.type==='事业单位')v+=2;
+  return v;
+}
 function sortJobs(a,b){
   const sa=briefStatus(a),sb=briefStatus(b);
   const aClosed=sa.key==='closed'?1:0,bClosed=sb.key==='closed'?1:0;
@@ -83,6 +96,10 @@ function sortJobs(a,b){
   if(state.sort==='newest'){
     const av=Date.parse(a.published||'1970-01-01'),bv=Date.parse(b.published||'1970-01-01');
     if(av!==bv)return bv-av;
+  }
+  if(state.sort==='recommended'){
+    const am=resumeDirectionScore(a),bm=resumeDirectionScore(b);
+    if(am!==bm)return bm-am;
   }
   return compareSort(a,b);
 }
@@ -324,6 +341,38 @@ function renderSources(){
      n('small','','待人工核验岗位专业/截止时间/资格；不能当作开放职位'));leads.append(row);
  });
 }
+function renderQQ(){
+  const status=$('qq-feed-status'),container=$('qq-shortlist');
+  if(!status||!container)return;
+  const qq=state.qq;
+  if(!qq){
+    status.textContent='腾讯文档是首要外部招聘来源；当前未取得可验证的表格行数据，无法自动导入岗位。';
+    container.hidden=true;return;
+  }
+  const when=(qq.checked_at_utc||'未知').slice(0,19).replace('T',' ');
+  if(qq.status!=='authorized_export_imported'){
+    status.textContent='当前状态：表格仅可查看，未取得授权导出的完整单元格数据；已保留链接并每日核查。最近检查 '+when+' UTC。';
+    container.hidden=true;return;
+  }
+  const items=Array.isArray(qq.leads)?qq.leads.filter(x=>!x.deadline||daysBetween(x.deadline)>=0):[];
+  status.textContent='已读取授权的腾讯表格归档，扫描 '+qq.rows_examined+' 行、匹配 '+items.length+' 条非过期招聘线索；报名资格仍待核实。';
+  $('qq-shortlist-count').textContent=items.length+' 条';
+  const el=$('qq-shortlist-list');el.replaceChildren();
+  items.slice(0,100).forEach(job=>{
+    const row=n('article','qq-lead');
+    row.append(n('span','qq-lead-tag','第三方汇总 · 待官网核实'));
+    row.append(n('strong','',job.title),n('p','',job.company+' · '+job.work_city+
+      (job.deadline?' · 截止（待官方确认）'+job.deadline:' · 截止时间未核实')));
+    const reasons=n('p','qq-lead-reasons',(job.match_reasons||[]).join(' · '));
+    row.append(reasons,anchor('查看原始腾讯表格 ↗',job.third_party_url||qq.source_url,'source-link'));
+    const original=job.original_link;
+    if(original&&SAFE_HOSTS.has((()=>{try{return new URL(original).hostname}catch{return ''}})())){
+      row.append(anchor('核对单位链接 ↗',original,'source-link'));
+    }
+    el.append(row);
+  });
+  container.hidden=items.length===0;
+}
 function renderChanges(){
  const el=$('changes-list');el.replaceChildren();
  const log=state.ledger;
@@ -412,12 +461,14 @@ async function init(){
    catch{$('leads-count').textContent='（本次检测未更新）';}
    try{const log=await fetchJSON('./data/changes.json');if(Array.isArray(log.events))state.ledger=log;}
    catch{state.ledger=null;}
-   renderUrgent();renderJobs();renderSources();renderChanges();
+   try{const q=await fetchJSON('./data/qq_feed.json');if(q.schema===1&&q.source_url?.startsWith('https://docs.qq.com/sheet/'))state.qq=q;}
+   catch{state.qq=null;}
+   renderUrgent();renderJobs();renderSources();renderChanges();renderQQ();
  }catch{
    ['jobs-list','urgent-list','sources-list'].forEach(id=>$(id).replaceChildren(n('p','loading','云盘最新招聘数据暂不可用。不能据旧信息认定报名仍开放，请直接访问国家电网等官方招聘网站。')));
    $('sync-text').textContent='云盘数据校验失败，暂停展示未核实的招聘记录';
    $('footer-update').textContent='数据状态暂不可用';
-   renderChanges();
+   renderChanges();renderQQ();
  }
 }
 init();
