@@ -63,9 +63,10 @@ jobs:
           public=dict(src,collected_at=src["as_of"]+"T00:00:00Z",data_as_of=src["as_of"])
           Path("_site/data/latest.json").write_text(json.dumps(public,ensure_ascii=False))
           Path("_site/data/monitor.json").write_text(json.dumps(dict(schema=1,checked_at=None,sources=[],potential_new_announcements=[])))
+          Path("_site/data/changes.json").write_text(json.dumps(dict(events=[],counts={},total_events=0,baseline=True,previous_collected_at=None,disclaimer="CI sample fixture; never published")))
           PY
           else
-            cp finance_jobs_site/data/public/latest.json finance_jobs_site/data/public/monitor.json _site/data/
+            cp finance_jobs_site/data/public/latest.json finance_jobs_site/data/public/monitor.json finance_jobs_site/data/public/changes.json _site/data/
           fi
           python - <<'PY'
           import json
@@ -78,7 +79,10 @@ jobs:
           assert "乳腺疾病" not in html and "乳腺癌" not in html
           d=json.loads((site/"data/latest.json").read_text("utf-8"))
           m=json.loads((site/"data/monitor.json").read_text("utf-8"))
-          assert d["schema"]==1 and len(d["listings"])>=12 and m["schema"]==1
+          audit=json.loads((site/"data/changes.json").read_text("utf-8"))
+          assert isinstance(audit.get("events"),list) and "total_events" in audit
+          assert 'id="changes"' in html and 'id="category-count-core"' in html
+          assert d["schema"]==1 and len(d["listings"])>=45 and m["schema"]==1
           assert all(x["deadline"] is None or x["deadline"][:4]=="2026" for x in d["listings"])
           assert "zhaopin.sgcc.com.cn" in html
           print("FINANCE_SITE_OK listings="+str(len(d["listings"]))+" sources="+str(len(d["sources"]))+" collected_at="+str(d.get("collected_at")))

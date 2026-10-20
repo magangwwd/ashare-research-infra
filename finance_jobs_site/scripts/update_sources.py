@@ -21,7 +21,9 @@ ALLOWED = {
     "wap.sasac.gov.cn", "jshrss.jiangsu.gov.cn", "rsj.sh.gov.cn",
     "hrss.sz.gov.cn", "jyw.mastc.edu.cn", "picc.zhiye.com", "www.psbc.com",
     "psbc2027.zhaopin.com", "campus.chinahr.com", "chinapost2027.zhaopin.com",
-    "job.bankcomm.com", "zhcpa.zhiye.com"
+    "job.bankcomm.com", "zhcpa.zhiye.com", "zp.czbank.com.cn", "sdg.zhaopin.com",
+    "zhaopin.cscec3b.com.cn", "hr.jsbchina.cn", "career.hebut.edu.cn",
+    "career.nankai.edu.cn", "sgdt.iguopin.com", "job.tiangong.edu.cn"
 }
 def safe_url(url):
     try:
@@ -39,9 +41,15 @@ def validate_curated(doc):
         assert p["title"] and p["company"] and p["regions"] and p["roles"]
         assert safe_url(p["source_url"]) and safe_url(p["apply_url"]),p["id"]
         assert p["evidence"] and p["checked_at"]
+        datetime.date.fromisoformat(p["checked_at"])
+        assert isinstance(p.get("role_confirmed"),bool)
+        if p.get("role_confirmed"): assert p.get("verified_from"),p["id"]
         assert p["qs_threshold"] is None or isinstance(p["qs_threshold"],int)
         if p["deadline"]:datetime.date.fromisoformat(p["deadline"])
+    source_ids=set()
     for s in doc["sources"]:
+        assert s["id"] not in source_ids,s["id"]
+        source_ids.add(s["id"])
         assert safe_url(s["url"]),s["id"]
         assert s["name"] and s["id"]
     return doc
@@ -49,13 +57,16 @@ def validate_curated(doc):
 def fetch_one(s):
     row={"id":s["id"],"name":s["name"],"url":s["url"],"type":s["type"],
          "status":"无法自动读取，请打开官网","http_status":None,"digest":None,
-         "discovered_count":0}
+         "discovered_count":0,
+         "checked_at_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+         "page_title":None,"final_url":None,"content_bytes":None}
     leads=[]
     try:
         with requests.Session() as session:
             response=session.get(s["url"],headers={"User-Agent":"FinanceCampusJobSourceMonitor/1.0 (public announcements only)"},
                 timeout=TIMEOUT,stream=True,allow_redirects=True)
             row["http_status"]=response.status_code
+            row["final_url"]=response.url
             if not safe_url(response.url):
                 row["status"]="重定向到未核实域名，跳过";return row,leads
             if response.status_code != 200:
@@ -68,9 +79,12 @@ def fetch_one(s):
                 if len(content)>MAX_BYTES:
                     row["status"]="页面过大，跳过解析";return row,leads
             row["digest"]=hashlib.sha256(content).hexdigest()
-            row["status"]="官网页面响应正常（不代表招聘仍开放）"
-            if not s.get("discover"):return row,leads
+            row["content_bytes"]=len(content)
+            row["status"]="来源网页响应正常（不代表招聘仍开放）"
             soup=BeautifulSoup(content,"html.parser")
+            if soup.title:
+                row["page_title"]=" ".join(soup.title.stripped_strings)[:150]
+            if not s.get("discover"):return row,leads
             found=set()
             for anchor in soup.select("a[href]"):
                 text=" ".join(anchor.stripped_strings)
@@ -83,7 +97,9 @@ def fetch_one(s):
                 found.add(link)
                 leads.append({"source_id":s["id"],"title":text[:160],"url":link,
                     "review_state":"待人工核对","role_confirmed":False,
-                    "application_confirmed":False})
+                    "application_confirmed":False,
+                    "discovered_at_utc":row["checked_at_utc"],
+                    "confidence":"仅关键词与官网链接相关，尚未核实岗位"})
                 if len(leads)>=8:break
             row["discovered_count"]=len(leads)
     except requests.RequestException:
