@@ -7,6 +7,8 @@ on:
       - '.github/workflows/btc-okx-l2-schema-audit.yml'
       - 'btc-quant/data/okx_l2_schema_probe.py'
       - 'btc-quant/tests/test_okx_l2_schema_probe.py'
+      - 'btc-quant/data/okx_l2_event_quality.py'
+      - 'btc-quant/tests/test_okx_l2_event_quality.py'
   workflow_dispatch:
 
 permissions:
@@ -15,7 +17,7 @@ permissions:
 jobs:
   audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     env:
       GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
     steps:
@@ -24,7 +26,9 @@ jobs:
         with:
           python-version: '3.13'
       - name: Validate schema-only probe without any real market data
-        run: python -m unittest discover -s btc-quant/tests -p 'test_okx_l2_schema_probe.py' -v
+        run: |
+          python -m unittest discover -s btc-quant/tests -p 'test_okx_l2_schema_probe.py' -v
+          python -m unittest discover -s btc-quant/tests -p 'test_okx_l2_event_quality.py' -v
       - name: Restore approved private official 2026-10-10 archive
         run: |
           set -euo pipefail
@@ -39,6 +43,11 @@ jobs:
           python btc-quant/data/okx_l2_schema_probe.py \
             --archive "$RUNNER_TEMP/approved_day.tar.gz" \
             --out "$RUNNER_TEMP/quality/l2_schema_probe_2026-10-10.json"
+      - name: Audit complete 2026-10-10 JSONL file without publishing tick records
+        run: |
+          python btc-quant/data/okx_l2_event_quality.py \
+            --archive "$RUNNER_TEMP/approved_day.tar.gz" \
+            --out "$RUNNER_TEMP/quality/l2_full_day_quality_2026-10-10.json"
       - name: Save non-raw report in GitHub Artifact
         uses: actions/upload-artifact@v4
         with:
