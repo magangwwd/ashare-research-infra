@@ -362,11 +362,12 @@ function renderQQ(){
   const el=$('qq-shortlist-list');el.replaceChildren();
   items.slice(0,100).forEach(job=>{
     const row=n('article','qq-lead');
-    row.append(n('span','qq-lead-tag','来源：腾讯文档《27届秋招汇总表格》 · '+(job.verification?.status==='official_recruitment_page_confirmed'?'已确认官网招聘专题，具体岗位待核':'表格线索，待岗位核实')));
+    row.append(n('span','qq-lead-tag','来源：腾讯文档《27届秋招汇总表格》 · '+(job.verification?.status==='official_specific_role_confirmed'?'已核实官网具体岗位':(job.verification?.status==='university_posted_specific_role'||job.verification?.status==='employer_announced_specific_role_secondary_copy'?'已核实具体岗位公告':job.verification?.status==='official_recruitment_page_confirmed'?'已确认招聘专题，单岗待核':'表格线索，待岗位核实'))));
     row.append(n('strong','',job.title),n('p','',job.company+' · '+job.work_city+
       (job.deadline?' · 截止（待官方确认）'+job.deadline:' · 截止时间未核实')));
     const reasons=n('p','qq-lead-reasons',(job.match_reasons||[]).join(' · '));
     row.append(reasons,n('p','qq-lead-reasons',job.review_state||'本条岗位须以官网实时信息为准'),anchor('查看原始腾讯表格 ↗',job.third_party_url||qq.source_url,'source-link'));
+    if(job.verification?.evidence_url){const ev=job.verification.evidence_url;try{const u=new URL(ev);if(u.protocol==='https:'&&!u.username&&!u.password&&u.hostname){const e=n('a','source-link','查看核查证据 ↗');e.href=u.href;e.target='_blank';e.rel='noopener noreferrer nofollow';row.append(e);}}catch{}}
     const original=job.original_link;
     if(original&&SAFE_HOSTS.has((()=>{try{return new URL(original).hostname}catch{return ''}})())){
       row.append(anchor('核对单位链接 ↗',original,'source-link'));
