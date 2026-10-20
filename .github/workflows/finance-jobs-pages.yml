@@ -5,6 +5,7 @@ on:
     paths:
       - 'finance_jobs_site/index.html'
       - 'finance_jobs_site/app.js'
+      - 'finance_jobs_site/data/qq_uploaded_shortlist.json'
       - 'finance_jobs_site/styles.css'
       - 'finance_jobs_site/tests/**'
       - '.github/workflows/finance-jobs-pages.yml'
@@ -77,6 +78,7 @@ jobs:
           PY
           else
             cp finance_jobs_site/data/public/latest.json finance_jobs_site/data/public/monitor.json finance_jobs_site/data/public/changes.json finance_jobs_site/data/public/qq_feed.json _site/data/
+            cp finance_jobs_site/data/qq_uploaded_shortlist.json _site/data/qq_uploaded_shortlist.json
           fi
           python - <<'PY'
           import json
