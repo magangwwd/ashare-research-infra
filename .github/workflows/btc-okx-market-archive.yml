@@ -1,7 +1,7 @@
 name: BTC OKX sparse archive
 on:
   push:
-    branches: [feature/okx-market-data-archive-20261018]
+    branches: [main, feature/okx-market-data-archive-20261018]
     paths:
       - '.github/workflows/btc-okx-market-archive.yml'
       - 'btc-quant/data/okx_*.py'
