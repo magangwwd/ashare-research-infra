@@ -18,6 +18,12 @@ function trigger(id,type){$(id).dispatchEvent(new dom.window.Event(type,{bubbles
 (async()=>{
  await new Promise(r=>setTimeout(r,80));
  assert.equal($('stat-items').textContent,String(curated.listings.length));
+ // All jobs must be visible immediately, not behind a load-more button.
+ assert.equal($('jobs-list').querySelectorAll('.job-card').length,curated.listings.length);
+ assert.ok($('job-filter-count').textContent.includes('已全部展示'));
+ assert.equal($('jobs-more'),null);
+ assert.equal($('back-to-top').getAttribute('href'),'#home');
+ assert.equal($('back-to-top').textContent.trim(),'回到首行 ↑');
  assert.ok($('jobs-list').querySelectorAll('.job-card').length>0);
  assert.ok($('job-detail').querySelector('.expanded .detail-matrix dd'));
  assert.ok($('jobs-list').querySelectorAll('.job-card-action').length>0);
@@ -36,10 +42,13 @@ function trigger(id,type){$(id).dispatchEvent(new dom.window.Event(type,{bubbles
  coreTab.click();
  assert.equal(coreTab.getAttribute('aria-pressed'),'true');
  assert.ok($('jobs-list').textContent.includes('财务')||$('jobs-list').textContent.includes('审计'));
+ const nCore=Number($('category-count-core').textContent);
+ assert.equal($('jobs-list').querySelectorAll('.job-card').length,nCore);
  const watchTab=dom.window.document.querySelector('[data-category="watch"]');
  watchTab.click();
  assert.ok($('jobs-list').textContent.includes('招聘')||$('jobs-list').textContent.includes('财务'));
  dom.window.document.querySelector('[data-category="all"]').click();
+ assert.equal($('jobs-list').querySelectorAll('.job-card').length,curated.listings.length);
  // A job card opens its own complete detail without routing to an unrelated page.
  const cards=$('jobs-list').querySelectorAll('.job-card');
  assert.ok(cards.length>=2);
@@ -75,6 +84,8 @@ function trigger(id,type){$(id).dispatchEvent(new dom.window.Event(type,{bubbles
  dom.window.matchMedia=()=>({matches:false,media:'(max-width: 860px)'});
  // Selecting state grid really filters, not just decorates labels.
  $('filter-type').value='国家电网';trigger('filter-type','change');
+ const gridCount=Number($('job-total').textContent.match(/\d+/)[0]);
+ assert.equal($('jobs-list').querySelectorAll('.job-card').length,gridCount);
  assert.ok($('jobs-list').textContent.includes('国家电网'));
  assert.ok(!$('jobs-list').textContent.includes('中国银行2027'));
  $('filter-type').value='all';trigger('filter-type','change');
