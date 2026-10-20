@@ -127,7 +127,7 @@ def inspect_v5_january(v5: dict, minute: pd.DataFrame, missing_partition_count: 
             "limitations":["Full published snapshot may contain missing file IDs: absence is NOT evidence of complete bars",
                "Only January 2026 trades whose entry AND exit are in Jan are assessed",
                "V5 trades in 2024 and 2025 cannot be verified from published 2026-only minute files",
-               "Even 16 valid minute bars cannot prove actual execution, order book, auction, or intrabar sequencing",
+               "Even 17 Tushare records (09:30 plus 16 regular bars) cannot prove actual execution, order book, auction, or intrabar sequencing",
                "2026 was already a studied history; no independent OOS strategy profit validation"]}
 
 
@@ -153,7 +153,7 @@ def main():
     print("V5_TUSHARE_JAN_15M_RESEARCH_ONLY",json.dumps({
         "partitions":len(sources),"missing_partitions":len(missing),
         "trades":out["january_completed_trade_variants"],
-        "both_days_16_bars":out["both_entry_exit_dates_16_bars"],
+        "both_days_17_records":out["both_entry_exit_dates_17_tushare_records"],
         "checked_triggers":out["trigger_checked"],
         "inconsistent_triggers":out["trigger_inconsistent"],
         "actual_fills_verified":0},ensure_ascii=False))
