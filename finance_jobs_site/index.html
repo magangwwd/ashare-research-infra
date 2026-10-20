@@ -1,103 +1,168 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#f7f9fd">
-<meta name="description" content="江浙沪、深圳、安徽马鞍山财务、会计、审计、金融校招信息；重点国家电网、银行、国企事业单位，留学生、QS条件、报名截止日期及官方链接，每日核对云盘更新。">
-<title>财会校招情报站｜2027届国家电网 · 银行 · 事业单位</title>
-<link rel="stylesheet" href="./styles.css">
-<script defer src="./app.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <meta name="description" content="2027届财会、会计、审计及金融类应届校招。重点国家电网、银行、央国企和事业单位；江浙沪、深圳、安徽马鞍山。详细岗位要求、留学生资格、报名截止和官方来源。">
+  <title>财会校招情报站｜江浙沪 · 深圳 · 马鞍山</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./app.js"></script>
 </head>
 <body>
-<a class="skip" href="#main">跳过导航</a>
-<header class="site-header">
-  <div class="wrap header-inner">
-    <a href="./" class="brand"><span class="brand-icon">财</span><span><strong>财会校招情报站</strong><small>国网 · 银行 · 国企 · 事业单位</small></span></a>
-    <nav class="nav" aria-label="页面导航"><a href="#urgent">报名提醒</a><a href="#jobs">详细岗位</a><a href="#focus">重点关注</a><a href="#changes">更新记录</a><a href="#guide">留学资格</a></nav>
-    <span class="top-edition">2027届 · 官方来源</span>
-  </div>
-</header>
-<main id="main">
- <div class="wrap">
-   <section class="hero">
-     <div class="hero-copy">
-       <div class="kicker"><span class="pulse" aria-hidden="true"></span> 公开招聘公告 · 每日核对</div>
-       <h1>财务、会计、审计校招<br><em>不错过值得投的机会</em></h1>
-       <p>重点找国家电网、银行、央国企和事业单位；覆盖<strong>上海、江苏、浙江、深圳、安徽马鞍山</strong>。优先展示实际公告、应届生要求和留学生资格，官方没写的绝不猜。</p>
-       <div class="hero-actions"><a class="button primary" href="#urgent">先看近期截止 <span aria-hidden="true">→</span></a><a class="button secondary" href="#jobs">按条件找招聘</a></div>
-       <div class="sync-line"><span class="signal">●</span><span id="sync-text">正在读取 Google Drive 招聘信息…</span></div>
-     </div>
-     <div class="hero-aside">
-       <div class="hero-symbol"><span>¥</span></div>
-       <div class="hero-aside-note">公告原文为准<br><strong>不把招聘入口当成可报名岗位</strong></div>
-     </div>
-   </section>
-   <section class="stats" aria-label="数据库概况">
-     <div><strong id="stat-items">—</strong><span>已收录的公告/入口</span></div>
-     <div><strong id="stat-urgent">—</strong><span>7天内截止的线索</span></div>
-     <div><strong id="stat-sources">—</strong><span>重点官方监测入口</span></div>
-     <div><strong id="stat-update">—</strong><span>数据最近存档日期</span></div>
-   </section>
-   <section id="urgent" class="section urgent-section">
-     <div class="section-heading"><div><span class="eyebrow">报名时效优先</span><h2>先看这些，需要及时确认报名</h2><p>距截止不足7天的公告会<strong>加粗提醒</strong>。报名是否开放仍须进入对应单位的官方页面核对。</p></div><span class="legend"><span class="dot amber"></span> 临近截止优先</span></div>
-     <div id="urgent-list" class="urgent-grid" aria-live="polite"><p class="loading">正在核实报名日期…</p></div>
-   </section>
-   <section id="jobs" class="section jobs-section">
-     <div class="section-heading"><div><span class="eyebrow">可搜索 · 可筛选 · 有公告来源</span><h2>财务招聘详细信息</h2><p>先看职位名称、工作地、学历、截止日及证据级别；展开后再看海外学历、QS条件、招聘人数、笔试流程、申请材料和正式报名入口。</p></div><span id="job-total" class="result-count">—</span></div>
-     <div class="job-category-tabs" role="group" aria-label="按岗位核实程度快速筛选">
-       <button class="category-tab selected" type="button" data-category="all" aria-pressed="true"><strong>全部招聘信息</strong><span id="category-count-all">…</span></button>
-       <button class="category-tab" type="button" data-category="core" aria-pressed="false"><strong>明确财务会计审计岗</strong><span id="category-count-core">…</span></button>
-       <button class="category-tab" type="button" data-category="related" aria-pressed="false"><strong>银行、金融及管培岗</strong><span id="category-count-related">…</span></button>
-       <button class="category-tab" type="button" data-category="watch" aria-pressed="false"><strong>官方公告 / 待核实</strong><span id="category-count-watch">…</span></button>
-     </div>
-     <div class="filters">
-       <label class="search-label">关键词搜索<input id="filter-text" type="search" placeholder="输入 国网 / 财务 / 审计 / 马鞍山 / 华能" autocomplete="off"></label>
-       <label>工作地区<select id="filter-region"><option value="all">全部目标地区</option><option value="上海">上海</option><option value="江苏">江苏</option><option value="浙江">浙江</option><option value="深圳">深圳</option><option value="马鞍山">马鞍山</option><option value="安徽">安徽其他</option><option value="全国">全国性公告</option></select></label>
-       <label>单位类型<select id="filter-type"><option value="all">全部单位</option><option value="国家电网">国家电网</option><option value="银行">银行</option><option value="央企国企">央国企</option><option value="事业单位">事业单位</option><option value="保险国企">保险国企</option><option value="会计师事务所">会计师事务所</option><option value="招聘活动">招聘会</option></select></label>
-       <label>报名状态<select id="filter-status"><option value="all">全部（分开标注）</option><option value="open">截止未到的公告</option><option value="unknown">日期未确认/持续跟踪</option><option value="closed">已截止</option></select></label>
-     </div>
-     <div class="secondary-filters">
-       <label class="check"><input type="checkbox" id="filter-overseas"> 优先留学生明确可申请</label>
-       <label class="check"><input type="checkbox" id="filter-role"> 只看已核实岗位名称</label>
-       <label class="qs-filter">本人学校 QS 排名（选填）<input type="number" id="filter-qs" min="1" max="2000" placeholder="如 85" inputmode="numeric"></label>
-       <button id="reset-filters" class="reset" type="button">清空筛选</button>
-     </div>
-     <p class="qs-warning" id="qs-message">QS排名仅供自我规划，只有招聘原文明确写出门槛时才能判断。没有写QS要求的公告，不会被错误筛掉或判定合格。</p>
-     <div class="list-head"><span id="job-filter-count">正在读取…</span><span>招聘公告 ≠ 具体空缺 · 过期后置 · 截止时刻以官网为准</span></div>
-     <div id="jobs-list" class="jobs-list" aria-live="polite"><p class="loading">正在加载 Google Drive 详细招聘档案…</p></div>
-     <div class="show-more"><button type="button" id="jobs-more" class="button secondary" hidden>加载更多公告 ↓</button></div>
-   </section>
-   <section id="focus" class="section">
-     <div class="section-heading"><div><span class="eyebrow">官方入口监控</span><h2>国家电网与重点招聘来源</h2><p>包括你指定的国家电网公告链接。每日检查来源页面，遇到新公告只先记为“待核实线索”，不会直接冒充已经开放的财会岗位。</p></div></div>
-     <div class="sgcc-block">
-       <div><span class="focus-flag">优先关注 · 国家电网</span><h3>国家电网有限公司2027届招聘公告</h3><p>重点关注<strong>财务会计、金融、管理类</strong>及江浙沪皖各单位的后续招聘批次；核对岗位表、毕业时间、专业、志愿限制与报名截止。</p><p class="small-muted">提前批多为电气等专业，不能把集团已公布的招聘公告当作财务岗当前空缺。</p></div>
-       <div class="sgcc-actions"><a class="button primary" href="https://zhaopin.sgcc.com.cn/sgcchr/static/unitPart.html?bullet_id=dcefb56d04714dc4b488d0a7a204bf76" target="_blank" rel="noopener noreferrer">打开指定官方公告 ↗</a><a class="button secondary" href="https://zhaopin.sgcc.com.cn" target="_blank" rel="noopener noreferrer">进入国家电网招聘平台 ↗</a></div>
-     </div>
-     <div id="sources-list" class="source-grid" aria-live="polite"><p class="loading">正在读取监测清单…</p></div>
-     <details class="leads" id="leads-panel"><summary>自动发现的公告线索（必须人工核对） <span id="leads-count"></span></summary><div id="leads-list">每日监测中，尚无可信线索。</div></details>
-   </section>
-   <section id="changes" class="section">
-     <div class="section-heading">
-       <div><span class="eyebrow">云盘快照 · 核验台账</span><h2>每天查了哪些来源？哪些信息有变化？</h2>
-       <p>保存上一份和今天的独立云盘快照，分开记录<strong>新增档案、修改的招聘字段、招聘来源网页变化、待人工核对的公告链接</strong>。网页内容变化不代表出现新招聘。</p></div>
-       <span id="changes-total" class="result-count">读取中…</span>
-     </div>
-     <div class="audit-status" id="audit-status" role="status">正在读取 Google Drive 变化台账…</div>
-     <div id="changes-list" class="changes-list" aria-live="polite"><p class="loading">读取历史对照中…</p></div>
-     <p class="audit-explainer">留意：每天扫描不会重新验证每个岗位的全部报名要求。“来源巡检时间”与“具体岗位资格最近人工核实日期”是两回事；旧资料须返回招聘单位官网核对。</p>
-   </section>
-   <section id="guide" class="section">
-     <div class="section-heading"><div><span class="eyebrow">留学生 · 应届毕业</span><h2>投递前先核对四件事</h2><p>特别是QS排名、毕业日期和留服认证，不能用其他单位的招聘规则套到自己身上。</p></div></div>
-     <div class="guide-grid">
-       <article><span>01</span><h3>毕业时间</h3><p>“2027届”并不等于所有海外毕业时间都适用。例：国家电网直属单位校园宣讲材料中，海外应届毕业窗口为2026年7月1日至2027年6月30日，具体看应聘单位。</p></article>
-       <article><span>02</span><h3>学历与留服认证</h3><p>核对是否接受海外学历、教育部留学服务中心认证期限，以及是否要求“初次就业”。不同单位规则可能不同。</p></article>
-       <article><span>03</span><h3>QS学校排名</h3><p>一些岗位可能指定院校或学科条件，但<strong>没有公开QS门槛就不能替雇主设定QS前100/200</strong>。网站把已核实门槛与未知分开。</p></article>
-       <article><span>04</span><h3>实际财会岗位</h3><p>财务、会计、审计、税务、资金管理、风险合规与银行运营不完全一样。优先阅读<strong>具体职位名称和专业表</strong>，再判断是否值得投。</p></article>
-     </div>
-     <p class="notice">安全提示：本站不收取报名费、不采集个人简历或身份证；报名资料只提交到已核实的招聘官网。岗位是否仍开放，以官方招聘系统实时状态为准。</p>
-   </section>
- </div>
-</main>
-<footer class="footer"><div class="wrap foot"><div><strong>财会校招情报站</strong><p>官方招聘信息索引 · 数据存储 Google Drive · 仅用于求职参考，不代表用人单位承诺录用。</p></div><span id="footer-update">来源更新时间正在核验</span></div></footer>
+  <a class="skip" href="#main">跳到招聘信息</a>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="#home" aria-label="财会校招情报站首页">
+        <span class="brand-icon" aria-hidden="true">财</span>
+        <span><strong>财会校招<span class="brand-accent">情报站</span></strong><small>2027届 · 官方招聘信息导航</small></span>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a href="#jobs">找工作</a>
+        <a href="#urgent">报名提醒</a>
+        <a href="#focus">重点企业</a>
+        <a href="#changes">每日更新</a>
+        <a href="#guide">留学生指南</a>
+      </nav>
+      <a class="header-cta" href="#jobs">查看岗位 <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+  <main id="main">
+    <div class="wrap">
+      <section class="hero" id="home">
+        <div class="hero-copy">
+          <div class="kicker"><span class="pulse" aria-hidden="true"></span> JOB DISCOVERY · 2027届应届生</div>
+          <h1>找到更适合你的<br><em>第一份财会工作。</em></h1>
+          <p>聚合国家电网、银行、央国企、事业单位的招聘资料。<strong>岗位信息直接看重点</strong>，从搜索到投递少走弯路。</p>
+          <div class="hero-search" role="search" aria-label="快速搜索招聘">
+            <label class="hero-query" for="hero-search"><span class="search-symbol" aria-hidden="true">⌕</span><input type="search" id="hero-search" placeholder="搜索职位 / 公司 / 专业（如：会计、国网）" autocomplete="off"></label>
+            <label class="hero-location" for="hero-region"><span class="location-symbol" aria-hidden="true">⌖</span><select id="hero-region" aria-label="快速选择地区">
+              <option value="all">所有地区</option><option value="上海">上海</option><option value="江苏">江苏</option><option value="浙江">浙江</option><option value="深圳">深圳</option><option value="马鞍山">马鞍山</option><option value="安徽">安徽其他</option><option value="全国">全国</option>
+            </select></label>
+            <button class="button primary hero-search-button" id="hero-search-go" type="button">搜索职位 <span aria-hidden="true">→</span></button>
+          </div>
+          <div class="quick-regions" role="group" aria-label="热门工作地区"><span>热门地区</span>
+            <button type="button" data-quick-region="上海">上海</button>
+            <button type="button" data-quick-region="江苏">江苏</button>
+            <button type="button" data-quick-region="浙江">浙江</button>
+            <button type="button" data-quick-region="深圳">深圳</button>
+            <button type="button" data-quick-region="马鞍山">马鞍山</button>
+          </div>
+        </div>
+        <div class="hero-aside" aria-hidden="true">
+          <span class="floating-ellipse one"></span><span class="floating-ellipse two"></span>
+          <div class="hero-illustration">
+            <div class="illustration-cap"><span class="mini-star">✦</span> 校招机会</div>
+            <div class="illustration-icon">↗</div>
+            <strong>Career starts here.</strong>
+            <div class="illustration-line"><span></span><span></span><span></span></div>
+            <div class="illustration-mini"><span>财务</span><span>审计</span><span>金融</span></div>
+          </div>
+        </div>
+      </section>
+      <div class="status-strip">
+        <span class="strip-dot" aria-hidden="true"></span>
+        <span id="sync-text">正在核对 Google Drive 招聘快照…</span>
+        <a href="#changes">查看更新记录 →</a>
+      </div>
+      <section class="stats" aria-label="招聘数据库概要">
+        <div><strong id="stat-items">—</strong><span>收录招聘档案</span></div>
+        <div><strong id="stat-urgent">—</strong><span>7天内截止的公告记录</span></div>
+        <div><strong id="stat-sources">—</strong><span>招聘来源巡检</span></div>
+        <div><strong id="stat-update">—</strong><span>最近存档日期</span></div>
+      </section>
+
+      <section id="jobs" class="section jobs-section">
+        <div class="section-heading">
+          <div><span class="eyebrow">EXPLORE OPPORTUNITIES</span><h2>精选校招机会</h2>
+          <p>先看岗位是否明确，再核对城市、学历、截止时间。<strong>公告不等于有实际空缺</strong>；所有岗位以官方招聘系统为准。</p></div>
+          <span class="result-count" id="job-total">正在加载…</span>
+        </div>
+        <div class="job-category-tabs" role="group" aria-label="快速切换招聘类别">
+          <button class="category-tab selected" type="button" data-category="all" aria-pressed="true"><span class="category-name">全部机会</span><span id="category-count-all">—</span></button>
+          <button class="category-tab" type="button" data-category="core" aria-pressed="false"><span class="category-name">明确财会岗位</span><span id="category-count-core">—</span></button>
+          <button class="category-tab" type="button" data-category="related" aria-pressed="false"><span class="category-name">银行 / 金融相关</span><span id="category-count-related">—</span></button>
+          <button class="category-tab" type="button" data-category="watch" aria-pressed="false"><span class="category-name">待核实公告</span><span id="category-count-watch">—</span></button>
+        </div>
+        <div class="filter-panel">
+          <div class="filters">
+            <label class="search-label">关键词<input id="filter-text" type="search" placeholder="岗位、公司、专业关键词" autocomplete="off"></label>
+            <label>地区<select id="filter-region"><option value="all">全部地区</option><option value="上海">上海</option><option value="江苏">江苏</option><option value="浙江">浙江</option><option value="深圳">深圳</option><option value="马鞍山">马鞍山</option><option value="安徽">安徽其他</option><option value="全国">全国性公告</option></select></label>
+            <label>企业类型<select id="filter-type"><option value="all">全部类型</option><option value="国家电网">国家电网</option><option value="银行">银行</option><option value="央企国企">央国企</option><option value="事业单位">事业单位</option><option value="保险国企">保险国企</option><option value="会计师事务所">事务所</option><option value="招聘活动">招聘会</option></select></label>
+            <label>报名状态<select id="filter-status"><option value="all">所有状态</option><option value="open">尚未到截止日</option><option value="unknown">日期未核实</option><option value="closed">已截止</option></select></label>
+            <label>排序<select id="filter-sort"><option value="recommended">优先推荐</option><option value="deadline">截止日最近</option><option value="newest">公告日期最新</option></select></label>
+          </div>
+          <div class="secondary-filters">
+            <label class="check"><input id="filter-overseas" type="checkbox"> 明确接受留学生</label>
+            <label class="check"><input id="filter-role" type="checkbox"> 已核实岗位名称</label>
+            <label class="qs-filter">我的 QS 名次 <input id="filter-qs" type="number" inputmode="numeric" min="1" max="2000" placeholder="如 85" aria-label="我的 QS 学校排名"></label>
+            <button type="button" class="reset" id="reset-filters">重置条件 ↺</button>
+          </div>
+          <p class="qs-warning" id="qs-message">学校 QS 排名只供规划，不自动判定是否符合资格；仅以用人单位公开条件为准。</p>
+        </div>
+
+        <div class="list-head"><span id="job-filter-count">正在读取云盘岗位信息…</span><span>点击职位 · 右侧查看详细要求</span></div>
+        <div class="jobs-workspace">
+          <div class="jobs-column">
+            <div id="jobs-list" class="jobs-list" aria-live="polite"><p class="loading">正在加载招聘信息…</p></div>
+            <div class="show-more"><button type="button" id="jobs-more" class="button secondary" hidden>加载更多职位 ↓</button></div>
+          </div>
+          <aside class="job-detail-pane" id="job-detail-pane" aria-label="当前选中职位的完整介绍" aria-live="polite">
+            <button id="close-detail" class="detail-close" type="button" aria-label="关闭职位详情">×</button>
+            <div id="job-detail" class="job-detail-content">
+              <div class="detail-placeholder"><span class="placeholder-icon" aria-hidden="true">▣</span><h3>选一个感兴趣的职位</h3><p>这里会显示岗位要求、毕业年份、留学生政策、截止日期与官方报名地址。</p></div>
+            </div>
+          </aside>
+        </div>
+        <button id="detail-backdrop" class="detail-backdrop" type="button" aria-label="返回职位列表" hidden></button>
+        <p class="jobs-disclaimer">说明：“已核实岗位名称”并不表示现在仍可投递。招聘人数、学历与QS不详时明确标记未知；任何报名请以企业官网为准。</p>
+      </section>
+
+      <section id="urgent" class="section urgent-section">
+        <div class="section-heading"><div><span class="eyebrow">DON'T MISS THE DEADLINE</span><h2>即将截止，值得现在核对</h2>
+          <p>仅展示有明确截止日期的公告线索。特别紧急的日期<strong>加粗显示</strong>，但报名状态仍需回官网核实。</p></div>
+          <span class="legend"><span class="dot amber" aria-hidden="true"></span> 截止提醒</span></div>
+        <div id="urgent-list" class="urgent-grid" aria-live="polite"><p class="loading">正在核对截止时间…</p></div>
+      </section>
+
+      <section id="focus" class="section focus-section">
+        <div class="section-heading"><div><span class="eyebrow">OFFICIAL SOURCES</span><h2>重点单位招聘官网</h2>
+          <p>优先关注国家电网、银行和国企招聘系统。无法自动读取的页面仍提供官方链接，不把页面访问成功当作职位开放。</p></div></div>
+        <div class="sgcc-block">
+          <div><span class="focus-flag">★ 重点关注 · 国家电网</span><h3>国家电网 2027 届招聘</h3>
+          <p>跟踪财务会计、金融及管理类岗位，重点查找江苏、浙江、上海、安徽地区的省公司与直属单位。</p>
+          <p class="small-muted">提前批往往以电气专业为主；集团招聘公告不等于财会岗现正开放。</p></div>
+          <div class="sgcc-actions">
+            <a class="button primary" href="https://zhaopin.sgcc.com.cn/sgcchr/static/unitPart.html?bullet_id=dcefb56d04714dc4b488d0a7a204bf76" target="_blank" rel="noopener noreferrer">查看指定国网公告 ↗</a>
+            <a class="button secondary" href="https://zhaopin.sgcc.com.cn" target="_blank" rel="noopener noreferrer">进入招聘平台 ↗</a>
+          </div>
+        </div>
+        <div id="sources-list" class="source-grid" aria-live="polite"><p class="loading">正在加载招聘来源…</p></div>
+        <details class="leads" id="leads-panel"><summary>待人工核实的新公告线索 <span id="leads-count">—</span></summary><div id="leads-list"></div></details>
+      </section>
+
+      <section id="changes" class="section changes-section">
+        <div class="section-heading"><div><span class="eyebrow">VERIFIED ACTIVITY</span><h2>招聘信息更新记录</h2>
+          <p>每日对照两份 Google Drive 快照。<strong>修改过的招聘条件</strong>与网页内容变化、待确认线索分开记录。</p></div>
+          <span id="changes-total" class="result-count">读取中…</span></div>
+        <div class="audit-status" id="audit-status" role="status">正在读取历史变化…</div>
+        <div id="changes-list" class="changes-list" aria-live="polite"><p class="loading">读取云盘记录中…</p></div>
+        <p class="audit-explainer">每日监测时间不等于每条岗位人工核实时间。来源网页有更新，不代表出现新岗位或截止时间改变。</p>
+      </section>
+
+      <section id="guide" class="section guide-section">
+        <div class="section-heading"><div><span class="eyebrow">OVERSEAS GRADUATES</span><h2>留学生投递前，看清这四点</h2>
+        <p>同样是2027届，毕业窗口、学历认证和QS门槛在不同招聘单位可能完全不同。</p></div></div>
+        <div class="guide-grid">
+          <article><span>01 / GRADUATION</span><h3>毕业时间</h3><p>不同批次对境外毕业日期要求不同；“2027届”不等于所有2026—2027年毕业生都符合。</p></article>
+          <article><span>02 / CREDENTIALS</span><h3>留服认证</h3><p>确认是否接受境外学位、认证截止时间、是否要求首次就业或规定学制。</p></article>
+          <article><span>03 / RANKING</span><h3>QS学校排名</h3><p>没有公开QS数值条件的岗位，不凭“QS前100/200”擅自作资格判断。</p></article>
+          <article><span>04 / ROLE FIT</span><h3>实际岗位名称</h3><p>财务会计、审计、银行综合培养、金融分析不完全相同；看专业表与岗位说明后再投。</p></article>
+        </div>
+        <p class="notice">本站只提供来源可追溯的公开求职信息，不收集简历、身份证或学历证明，不承诺岗位仍开放。任何个人资料仅在确认真实的单位官方平台后提交。</p>
+      </section>
+    </div>
+  </main>
+  <footer class="footer"><div class="wrap foot"><div><strong>财会校招情报站</strong><p>独立公开信息索引 · Google Drive 留存历史 · 招聘公告与录用结果以用人单位官方说明为准。</p></div><span id="footer-update">正在核对来源时间…</span></div></footer>
 </body>
 </html>
