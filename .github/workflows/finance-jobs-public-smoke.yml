@@ -54,6 +54,9 @@ jobs:
           assert "categoryOf" in js and "renderChanges" in js
           assert "selectJob" in js and "closeMobileDetail" in js and "sortJobs" in js
           assert "jobs-workspace" in css and "job-detail-pane" in css
+          assert "--bg:#f8f8f6" in css and "--blue:#28596f" in css
+          assert "aside-steps" in page and "寻找匹配的岗位" in page
+          assert 'content="#f8f8f6"' in page
           assert "@media(max-width:620px)" in css and "prefers-reduced-motion" in css
           assert all(x.get("checked_at") and x.get("source_url") and x.get("posting_level") for x in d["listings"])
           print("FINANCE_PUBLIC_HTTP_OK listings="+str(len(d["listings"]))+" sources="+str(len(m["sources"]))+
