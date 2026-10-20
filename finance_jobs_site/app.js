@@ -354,10 +354,10 @@ function renderQQ(){
     status.textContent='当前状态：表格仅可查看，未取得授权导出的完整单元格数据；已保留链接并每日核查。最近检查 '+when+' UTC。';
     container.hidden=true;return;
   }
-  const items=Array.isArray(qq.leads)?qq.leads.filter(x=>(!x.deadline||daysBetween(x.deadline)>=0)&&x.verification?.status!=='no_visible_jobs'&&x.verification?.status!=='campus_vacancy_not_confirmed'&&!x.exclude_from_featured).sort((a,b)=>{const score=x=>x.verification?.status==='official_specific_role_confirmed'?0:['university_posted_specific_role','employer_announced_specific_role_secondary_copy'].includes(x.verification?.status)?1:x.verification?.status==='employer_announced_role_category'?2:3;return score(a)-score(b)||(a.deadline||'9999').localeCompare(b.deadline||'9999')||String(a.company).localeCompare(String(b.company),'zh-CN');}):[];
+  const items=Array.isArray(qq.leads)?qq.leads.filter(x=>(!x.deadline||daysBetween(x.deadline)>=0)&&['official_specific_role_confirmed','university_posted_specific_role','employer_announced_specific_role_secondary_copy'].includes(x.verification?.status)&&!x.exclude_from_featured).sort((a,b)=>{const score=x=>x.verification?.status==='official_specific_role_confirmed'?0:['university_posted_specific_role','employer_announced_specific_role_secondary_copy'].includes(x.verification?.status)?1:x.verification?.status==='employer_announced_role_category'?2:3;return score(a)-score(b)||(a.deadline||'9999').localeCompare(b.deadline||'9999')||String(a.company).localeCompare(String(b.company),'zh-CN');}):[];
   const sourceType=qq.source_freshness==='uploaded_authorized_export'?'2026年10月20日上传的腾讯文档表格副本':qq.source_freshness==='direct_authorized_export'?'本次已授权的腾讯原始导出':'以前保存到云盘的授权导出副本';
   const sourceDate=qq.source_export_modified_at?'，源文件存档时间 '+qq.source_export_modified_at.slice(0,10):'';
-  status.textContent='已读取'+sourceType+sourceDate+'；扫描 '+qq.rows_examined+' 行、筛出 '+items.length+' 条非过期招聘线索。未验证腾讯表格当前是否已更新，报名条件请核对官网。';
+  status.textContent='已读取'+sourceType+sourceDate+'；扫描 '+qq.rows_examined+' 行、初筛 '+qq.leads.length+' 条、其中 '+items.length+' 条已找到具体岗位证据（可能存在城市或海外资格待核条件）。其他记录继续存档待查；原始汇总表不会自动实时更新。';
   $('qq-shortlist-count').textContent=items.length+' 条';
   const el=$('qq-shortlist-list');el.replaceChildren();
   items.slice(0,100).forEach(job=>{
