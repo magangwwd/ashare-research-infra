@@ -168,3 +168,64 @@ def test_failed_official_daily_does_not_pass_minute_fallback(tmp_path, config, c
     with pytest.raises(ValidationError, match="daily"):
         pipeline.critical_recent()
     assert not read_session(pipeline.stage, "daily", pipeline.sessions[-1]).shape[0]
+
+
+def test_mainboard_feed_skips_non_mainboard_stocks(tmp_path, config, client, provider, as_of):
+    # Mixed real exchange/board metadata; never decide board from code prefixes.
+    extra = [
+        ("300001.SZ", "创业板", "SZSE"),
+        ("688001.SH", "科创板", "SSE"),
+        ("830001.BJ", "北交所", "BSE"),
+        ("000001.SZ", "主板", "SZSE"),
+    ]
+    for code, market, exchange in extra:
+        row = provider.stocks.iloc[0].copy()
+        row["ts_code"] = code
+        row["symbol"] = code.split(".")[0]
+        row["market"] = market
+        row["exchange"] = exchange
+        row["name"] = market + code
+        provider.stocks = pd.concat([provider.stocks, pd.DataFrame([row])], ignore_index=True)
+
+    config["intraday"].update(enabled=True, recent_requests_per_run=100,
+                              history_requests_per_run=0, daily_validation_sample=0)
+    pipeline = Pipeline(tmp_path, config, client, as_of)
+    pipeline.bootstrap()
+    pipeline.intraday_recent()
+    recent_calls = [p["ts_code"] for name, p in provider.calls if name == "stk_mins"]
+    assert "000001.SZ" in recent_calls  # SZSE mainboard must be included
+    assert "600000.SH" in recent_calls  # SSE mainboard must be included
+    assert "300001.SZ" not in recent_calls
+    assert "688001.SH" not in recent_calls
+    assert "830001.BJ" not in recent_calls
+    state = read_json(tmp_path / "metadata/manifest/intraday.json")
+    assert state["expected_securities"] == len(provider.stocks) - 3
+    assert state["coverage"] == pytest.approx(1.0)
+    assert state["activated"] is False
+    assert state["daily_source"] == "tushare_daily"
+
+    history_codes = {p["ts_code"] for p in pipeline.intraday_history_requests()}
+    assert "000001.SZ" in history_codes
+    assert "300001.SZ" not in history_codes
+    assert "688001.SH" not in history_codes
+    assert "830001.BJ" not in history_codes
+
+
+def test_mainboard_historical_delisted_is_included_only_in_its_listing_window(tmp_path, config, client, provider, as_of):
+    row = provider.stocks.iloc[0].copy()
+    row["ts_code"] = "600999.SH"
+    row["symbol"] = "600999"
+    row["list_status"] = "D"
+    row["list_date"] = "20170101"
+    row["delist_date"] = "20250101"
+    provider.stocks = pd.concat([provider.stocks, pd.DataFrame([row])], ignore_index=True)
+    pipeline = Pipeline(tmp_path, config, client, as_of)
+    pipeline.bootstrap()
+    from data_pipeline.clean import intraday_mainboard_codes
+    assert "600999.SH" not in intraday_mainboard_codes(pipeline.master, as_of)
+    assert "600999.SH" in intraday_mainboard_codes(pipeline.master, date(2024, 10, 2))
+    assert "600999.SH" not in intraday_mainboard_codes(pipeline.master, date(2025, 10, 2))
+    history = [p for p in pipeline.intraday_history_requests() if p["ts_code"] == "600999.SH"]
+    assert history
+    assert all(p["start_date"] >= "2020-01-01 09:00:00" for p in history)
+    assert all(p["start_date"] < "2026-01-01 09:00:00" for p in history)
