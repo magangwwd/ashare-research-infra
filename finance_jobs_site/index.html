@@ -86,8 +86,19 @@
         </div>
       </section>
       <div id="qq-shortlist" class="qq-shortlist" aria-live="polite" hidden>
-        <div class="qq-shortlist-head"><strong>从已授权的表格副本筛出的招聘线索</strong><span id="qq-shortlist-count"></span></div>
+        <div class="qq-shortlist-head"><strong>优先推荐 · 已找到具体岗位证据（按简历匹配度排序）</strong><span id="qq-shortlist-count"></span></div>
+        <p class="qq-source-caption">推荐理由结合财管本科、应用会计硕士、审计/财务实习及数据分析技能；不代表已经确认接受境外学历或仍能网申。</p>
         <div id="qq-shortlist-list" class="qq-shortlist-list"></div>
+      </div>
+
+      <div id="qq-archive" class="qq-shortlist qq-archive" hidden>
+        <div class="qq-shortlist-head"><strong>全量表格初筛库 · 待官网逐岗核实</strong><span id="qq-archive-count">—</span></div>
+        <p class="qq-source-caption">以下是已授权导出中的自动初筛线索，不是已确认的在招岗位。可按企业、岗位、城市搜索，排名仅代表与财会简历的方向相关度。</p>
+        <label class="qq-archive-search-label" for="qq-archive-search">搜索线索
+          <input type="search" id="qq-archive-search" placeholder="例如：审计 / 南京 / 财务分析 / 事务所" autocomplete="off">
+        </label>
+        <div id="qq-archive-list" class="qq-archive-list"></div>
+        <p id="qq-archive-notice" class="qq-source-caption"></p>
       </div>
 
       <section id="jobs" class="section jobs-section">
