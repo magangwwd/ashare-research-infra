@@ -216,7 +216,14 @@
         "checked_at": "2026-10-20",
         "evidence_url": "https://anhui.fenbi.com/zhaokao/detail/2894/469864941641728",
         "explanation": "2027秋招简章公开岗位表列有常州财务管理岗：硕士及以上，会计、财务管理、财政、审计相关专业；海外硕士毕业时点与具体开放状态仍须在用人单位官方页面核对。"
-      }
+      },
+      "resume_match_score": 87,
+      "resume_match_reasons": [
+        "硕士学历、财管专业和基础报表分析经验可直接对接财务管理岗；工作地常州为关注区域。"
+      ],
+      "fit_caution": "留学生资格及专业精确匹配需向招聘方核实。",
+      "priority_tier": "B",
+      "eligible_status": "匹配方向合理，需确认特定限制"
     },
     {
       "id": "qq-upload-261",
@@ -263,7 +270,14 @@
         "checked_at": "2026-10-20",
         "evidence_url": "https://career.gdut.edu.cn/teachin/view/id/191616",
         "explanation": "广东工业大学和广东外语外贸大学就业平台均列出财务专员，财务相关专业、本科及以上，参考月薪约9千至1万元；任职还提及日语N2或英语四级。官网报名入口真实，仍须核对当前能否提交。"
-      }
+      },
+      "resume_match_score": 86,
+      "resume_match_reasons": [
+        "财务部实习、银行三方对账和英文环境符合基础财务专员工作；深圳为关注城市。"
+      ],
+      "fit_caution": "需要注意官网具体外语要求（部分信息提到日语N2或英语要求），财务专员是否仍开放需确认。",
+      "priority_tier": "B",
+      "eligible_status": "匹配方向合理，需确认特定限制"
     },
     {
       "id": "qq-upload-376",
@@ -359,7 +373,14 @@
         "checked_at": "2026-10-20",
         "evidence_url": "https://hera-webapp.fenbi.com/api/article/detail?app=web&id=469725217575936",
         "explanation": "2027招聘简章列出南京财务管理岗位，硕士、财务管理/会计学/审计学相关专业，10月31日截止；原文规定本科和硕士须为普通高等教育，海外学历是否符合须咨询人事。招聘网页重定向，故以招聘简章为依据。"
-      }
+      },
+      "resume_match_score": 73,
+      "resume_match_reasons": [
+        "南京财务管理岗位与财务专业及硕士学历相关，审计实习和费用分析可以作为面试案例。"
+      ],
+      "fit_caution": "简章对普通高等教育经历有要求，境外硕士可否报名不明；优先核对学历限制。",
+      "priority_tier": "C",
+      "eligible_status": "匹配方向合理，需确认特定限制"
     },
     {
       "id": "qq-upload-478",
@@ -383,7 +404,14 @@
         "checked_at": "2026-10-20",
         "evidence_url": "https://www.fenbi.com/page/fenxiaozhaokaodetail/25/2130/469639226743809",
         "explanation": "2027届扬帆生招聘简章明确财务管理储备岗为上海总部岗位，硕士及以上（优秀985/211本科可纳入），海外学历根据留服认证毕业时间认定。未发现统一截止日，需以官方报名页面核对可投状态。"
-      }
+      },
+      "resume_match_score": 85,
+      "resume_match_reasons": [
+        "财务管理本科、会计硕士以及对账核销、费用分析经历与总部财务储备岗位相符；上海为意向地区。"
+      ],
+      "fit_caution": "招聘简章有关本科院校分类的限制与海外硕士认定需逐岗确认。",
+      "priority_tier": "B",
+      "eligible_status": "匹配方向合理，需确认特定限制"
     },
     {
       "id": "qq-upload-536",
@@ -524,7 +552,14 @@
         "checked_at": "2026-10-20",
         "evidence_url": "https://www.91wllm.cn/campusUnion/view/id/1006124",
         "explanation": "高校就业平台2027简章明确列出杭州财务管理与审计风控岗，本科及以上，财务、会计、审计相关专业；财务管理岗入职一年后需服从约三年外派。11月30日截止（招满可能提前结束），单岗位人数和留学生资格须在官网核对。"
-      }
+      },
+      "resume_match_score": 93,
+      "resume_match_reasons": [
+        "财务管理与审计风控双方向匹配，立信事务所审计和Excel异常分析经验可直接举例；杭州目标城市。"
+      ],
+      "fit_caution": "财务岗公告提示入职一年后服从约三年外派，需关注个人接受度。",
+      "priority_tier": "A",
+      "eligible_status": "专业/地点高匹配，资格仍待核"
     },
     {
       "id": "qq-upload-148",
@@ -665,7 +700,14 @@
         "explanation": "负责账务核算、预算、税务、合并报表和财务分析。2027硕士及以上，海外毕业窗口2026-08-01—2027-07-31；培养后可能外派至异地子公司。"
       },
       "verification_level": "official_specific_role_confirmed",
-      "priority": "high"
+      "priority": "high",
+      "resume_match_score": 98,
+      "resume_match_reasons": [
+        "应用会计硕士和财务管理本科与岗位专业完全一致；审计、费用分析能对应财务核算、预算及合并报表；岗位明确接受规定窗口内的海外硕士。"
+      ],
+      "fit_caution": "培养后可能赴异地下属子公司任财务负责人；留服认证出证时间需核查。",
+      "priority_tier": "A",
+      "eligible_status": "专业/地点高匹配，资格仍待核"
     },
     {
       "id": "qq-verified-4277-xiangyu-finance",
@@ -691,7 +733,14 @@
         "explanation": "官网明确财务管理岗J17388：总账、会计及税务报表、税务合规、年度审计；本科起，财会、税务或经济管理类相关专业优先，要求英语工作能力。"
       },
       "verification_level": "official_specific_role_confirmed",
-      "priority": "high"
+      "priority": "high",
+      "resume_match_score": 94,
+      "resume_match_reasons": [
+        "财务管理本科+应用会计硕士，具备会计核算、凭证交叉核对、审计底稿和跨部门沟通经验，符合财务岗位工作内容。"
+      ],
+      "fit_caution": "上海/杭州/张家港等地点需具体岗位选择；海外学历资格待核。",
+      "priority_tier": "A",
+      "eligible_status": "专业/地点高匹配，资格仍待核"
     },
     {
       "id": "qq-verified-5526-zhonghui-risk-fin",
@@ -717,7 +766,14 @@
         "explanation": "官网岗位J11539：内控与风险管理、并购重组和战略咨询；本科起，财会、金融、企业管理专业优先，需接受较多加班出差。"
       },
       "verification_level": "official_specific_role_confirmed",
-      "priority": "high"
+      "priority": "high",
+      "resume_match_score": 96,
+      "resume_match_reasons": [
+        "立信年审审计实习覆盖穿行测试、内控矩阵及异常归因，直接对应内控与风险管理咨询；杭州/深圳均属意向城市。"
+      ],
+      "fit_caution": "岗位要求接受较多加班和出差；海外学位及投递状态请官网核实。",
+      "priority_tier": "A",
+      "eligible_status": "专业/地点高匹配，资格仍待核"
     },
     {
       "id": "qq-verified-5526-zhonghui-it-audit",
@@ -743,7 +799,14 @@
         "explanation": "官网岗位J11538：信息科技风险、IT审计、数据挖掘和分析；本科起，信息管理与信息系统相关专业优先；数据分析背景可参考。"
       },
       "verification_level": "official_specific_role_confirmed",
-      "priority": "medium"
+      "priority": "medium",
+      "resume_match_score": 88,
+      "resume_match_reasons": [
+        "熟悉审计穿行测试与抽样，具备 Excel、SQL、Tableau 数据处理技能，可切入IT审计与数据挖掘。"
+      ],
+      "fit_caution": "IT审计偏好信息管理与信息系统专业，需确认跨专业准入。",
+      "priority_tier": "B",
+      "eligible_status": "匹配方向合理，需确认特定限制"
     },
     {
       "id": "qq-verified-5526-zhonghui-valuation",
@@ -769,7 +832,14 @@
         "explanation": "由表格指向的中汇官方招聘页进一步发现：资产估值、财务分析和评估报告工作；本科起，财会、金融等专业优先。该岗位名称未见于汇总表本行，来源为所链接官网。"
       },
       "verification_level": "official_specific_role_confirmed",
-      "priority": "medium"
+      "priority": "medium",
+      "resume_match_score": 84,
+      "resume_match_reasons": [
+        "财务报表分析、Excel/Tableau和基础金融课程适用于估值分析及报告撰写；覆盖多个关注城市。"
+      ],
+      "fit_caution": "估值专业课程和模型经验需进一步补强；官网条件待核。",
+      "priority_tier": "B",
+      "eligible_status": "匹配方向合理，需确认特定限制"
     },
     {
       "id": "qq-verified-5526-zhonghui-tax",
@@ -795,12 +865,40 @@
         "explanation": "官网岗位J11536：税务咨询、税收合规、税务尽调及底稿整理；本科起，会计、税务、财政相关专业优先。"
       },
       "verification_level": "official_specific_role_confirmed",
-      "priority": "high"
+      "priority": "high",
+      "resume_match_score": 91,
+      "resume_match_reasons": [
+        "应用会计硕士及财务凭证核对、合同/发票相关经历适合税务合规、税务尽调和底稿整理。"
+      ],
+      "fit_caution": "中国税务实务和本地税法知识需要补充；实际校招网申状态待核。",
+      "priority_tier": "A",
+      "eligible_status": "专业/地点高匹配，资格仍待核"
     }
   ],
   "warning": "2026-10-20基于已上传腾讯秋招表格逐个访问官方招聘网址，已核实的独立岗位才在网页显示；岗位公开说明不等于已实时完成投递资格和开放状态确认。表格原始数据为历史上传副本。",
   "verification_count": 1,
   "verified_independent_positions": 1,
   "verification_note": "网站上的独立岗位与第三方表格概述分别表示；只有有雇主逐岗证据才能写'官网确认具体岗位'。",
-  "additional_official_positions_20261020": 6
+  "additional_official_positions_20261020": 6,
+  "resume_match_basis": {
+    "graduation": "澳大利亚国立大学应用会计硕士，预计2026年12月毕业",
+    "undergraduate": "财务管理本科",
+    "skills": [
+      "审计项目抽样/穿行测试/底稿",
+      "Excel Power Query、Tableau、SQL",
+      "财务费用对账与核销分析"
+    ],
+    "regions": [
+      "上海",
+      "南京",
+      "杭州",
+      "苏州",
+      "深圳",
+      "江苏",
+      "浙江",
+      "安徽马鞍山"
+    ],
+    "caution": "仅公开非识别性的岗位匹配维度；不公开姓名、电话、邮箱和简历原文"
+  },
+  "profile_review_at": "2026-10-20"
 }
