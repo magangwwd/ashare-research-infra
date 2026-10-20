@@ -1,12 +1,12 @@
 {
   "schema": 1,
   "source_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
-  "checked_at_utc": "2026-10-20T12:59:00Z",
+  "checked_at_utc": "2026-10-20T13:23:00Z",
   "status": "authorized_export_imported",
   "source_freshness": "uploaded_authorized_export",
   "source_export_modified_at": "2026-10-20T12:59:00Z",
   "rows_examined": 10926,
-  "qualified_count": 27,
+  "qualified_count": 33,
   "leads": [
     {
       "id": "qq-upload-35",
@@ -640,10 +640,167 @@
         "checked_at": "2026-10-20",
         "explanation": "腾讯文档表格岗位名和链接已读取，但尚未找到可独立佐证的当前单岗公告。"
       }
+    },
+    {
+      "id": "qq-verified-2910-szgas-finance",
+      "title": "2027届“菁英计划”财务管理类（深圳）",
+      "company": "深圳燃气",
+      "work_city": "深圳市",
+      "source_row": 2910,
+      "original_link": "https://szgas.zhiye.com/jobs",
+      "deadline": null,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "source_sheet": "总表",
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》及链接的招聘官网",
+      "role_confirmed": true,
+      "match_reasons": [
+        "表格提供官方招聘入口",
+        "已在企业正式招聘页面找到独立岗位说明"
+      ],
+      "review_state": "负责账务核算、预算、税务、合并报表和财务分析。2027硕士及以上，海外毕业窗口2026-08-01—2027-07-31；培养后可能外派至异地子公司。 全日制硕士及以上。官网明确境外毕业时间2026-08-01至2027-07-31，须核对留服认证时间；职位是否仍接受申请以官网登录状态为准。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://szgas.zhiye.com/jobs",
+        "explanation": "负责账务核算、预算、税务、合并报表和财务分析。2027硕士及以上，海外毕业窗口2026-08-01—2027-07-31；培养后可能外派至异地子公司。"
+      },
+      "verification_level": "official_specific_role_confirmed",
+      "priority": "high"
+    },
+    {
+      "id": "qq-verified-4277-xiangyu-finance",
+      "title": "2027财务管理岗 J17388（上海/杭州/张家港等）",
+      "company": "象屿股份",
+      "work_city": "上海、杭州、张家港等",
+      "source_row": 4277,
+      "original_link": "https://xiangyu.zhiye.com/campus/jobs",
+      "deadline": null,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "source_sheet": "总表",
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》及链接的招聘官网",
+      "role_confirmed": true,
+      "match_reasons": [
+        "表格提供官方招聘入口",
+        "已在企业正式招聘页面找到独立岗位说明"
+      ],
+      "review_state": "官网明确财务管理岗J17388：总账、会计及税务报表、税务合规、年度审计；本科起，财会、税务或经济管理类相关专业优先，要求英语工作能力。 本科及以上。岗位页面未单列境外学位要求，需在网申系统核对；职位是否仍接受申请以官网登录状态为准。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://xiangyu.zhiye.com/campus/jobs",
+        "explanation": "官网明确财务管理岗J17388：总账、会计及税务报表、税务合规、年度审计；本科起，财会、税务或经济管理类相关专业优先，要求英语工作能力。"
+      },
+      "verification_level": "official_specific_role_confirmed",
+      "priority": "high"
+    },
+    {
+      "id": "qq-verified-5526-zhonghui-risk-fin",
+      "title": "2027秋招风险咨询（财务咨询）J11539",
+      "company": "中汇会计师事务所",
+      "work_city": "杭州、深圳",
+      "source_row": 5526,
+      "original_link": "https://zhcpa.zhiye.com/jobs",
+      "deadline": null,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "source_sheet": "总表",
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》及链接的招聘官网",
+      "role_confirmed": true,
+      "match_reasons": [
+        "表格提供官方招聘入口",
+        "已在企业正式招聘页面找到独立岗位说明"
+      ],
+      "review_state": "官网岗位J11539：内控与风险管理、并购重组和战略咨询；本科起，财会、金融、企业管理专业优先，需接受较多加班出差。 本科及以上。尚无岗位级境外学历条款；职位是否仍接受申请以官网登录状态为准。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://zhcpa.zhiye.com/jobs",
+        "explanation": "官网岗位J11539：内控与风险管理、并购重组和战略咨询；本科起，财会、金融、企业管理专业优先，需接受较多加班出差。"
+      },
+      "verification_level": "official_specific_role_confirmed",
+      "priority": "high"
+    },
+    {
+      "id": "qq-verified-5526-zhonghui-it-audit",
+      "title": "2027秋招风险咨询（IT审计）J11538",
+      "company": "中汇会计师事务所",
+      "work_city": "杭州、深圳",
+      "source_row": 5526,
+      "original_link": "https://zhcpa.zhiye.com/jobs",
+      "deadline": null,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "source_sheet": "总表",
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》及链接的招聘官网",
+      "role_confirmed": true,
+      "match_reasons": [
+        "表格提供官方招聘入口",
+        "已在企业正式招聘页面找到独立岗位说明"
+      ],
+      "review_state": "官网岗位J11538：信息科技风险、IT审计、数据挖掘和分析；本科起，信息管理与信息系统相关专业优先；数据分析背景可参考。 本科及以上。尚无岗位级境外学历条款；职位是否仍接受申请以官网登录状态为准。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://zhcpa.zhiye.com/jobs",
+        "explanation": "官网岗位J11538：信息科技风险、IT审计、数据挖掘和分析；本科起，信息管理与信息系统相关专业优先；数据分析背景可参考。"
+      },
+      "verification_level": "official_specific_role_confirmed",
+      "priority": "medium"
+    },
+    {
+      "id": "qq-verified-5526-zhonghui-valuation",
+      "title": "2027秋招资产评估岗 J11537",
+      "company": "中汇会计师事务所",
+      "work_city": "杭州、深圳、南京、上海等",
+      "source_row": 5526,
+      "original_link": "https://zhcpa.zhiye.com/jobs",
+      "deadline": null,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "source_sheet": "总表",
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》及链接的招聘官网",
+      "role_confirmed": true,
+      "match_reasons": [
+        "表格提供官方招聘入口",
+        "已在企业正式招聘页面找到独立岗位说明"
+      ],
+      "review_state": "由表格指向的中汇官方招聘页进一步发现：资产估值、财务分析和评估报告工作；本科起，财会、金融等专业优先。该岗位名称未见于汇总表本行，来源为所链接官网。 本科及以上。尚无岗位级境外学历条款；职位是否仍接受申请以官网登录状态为准。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://zhcpa.zhiye.com/jobs",
+        "explanation": "由表格指向的中汇官方招聘页进一步发现：资产估值、财务分析和评估报告工作；本科起，财会、金融等专业优先。该岗位名称未见于汇总表本行，来源为所链接官网。"
+      },
+      "verification_level": "official_specific_role_confirmed",
+      "priority": "medium"
+    },
+    {
+      "id": "qq-verified-5526-zhonghui-tax",
+      "title": "2027秋招税务岗 J11536",
+      "company": "中汇会计师事务所",
+      "work_city": "杭州（另有北京、广州）",
+      "source_row": 5526,
+      "original_link": "https://zhcpa.zhiye.com/jobs",
+      "deadline": null,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "source_sheet": "总表",
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》及链接的招聘官网",
+      "role_confirmed": true,
+      "match_reasons": [
+        "表格提供官方招聘入口",
+        "已在企业正式招聘页面找到独立岗位说明"
+      ],
+      "review_state": "官网岗位J11536：税务咨询、税收合规、税务尽调及底稿整理；本科起，会计、税务、财政相关专业优先。 本科及以上。尚无岗位级境外学历条款；职位是否仍接受申请以官网登录状态为准。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://zhcpa.zhiye.com/jobs",
+        "explanation": "官网岗位J11536：税务咨询、税收合规、税务尽调及底稿整理；本科起，会计、税务、财政相关专业优先。"
+      },
+      "verification_level": "official_specific_role_confirmed",
+      "priority": "high"
     }
   ],
-  "warning": "来源为上传的腾讯文档汇总表。网页明确区分表格线索与独立核实单岗；不承诺当前开放。",
+  "warning": "2026-10-20基于已上传腾讯秋招表格逐个访问官方招聘网址，已核实的独立岗位才在网页显示；岗位公开说明不等于已实时完成投递资格和开放状态确认。表格原始数据为历史上传副本。",
   "verification_count": 1,
   "verified_independent_positions": 1,
-  "verification_note": "网站上的独立岗位与第三方表格概述分别表示；只有有雇主逐岗证据才能写'官网确认具体岗位'。"
+  "verification_note": "网站上的独立岗位与第三方表格概述分别表示；只有有雇主逐岗证据才能写'官网确认具体岗位'。",
+  "additional_official_positions_20261020": 6
 }
