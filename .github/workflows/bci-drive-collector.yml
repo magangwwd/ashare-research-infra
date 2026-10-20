@@ -1,12 +1,7 @@
 name: BCI collect verified source to Drive
+# PAUSED by user request (2026-10-20): retain manual restart only.
 on:
-  schedule:
-    - cron: '30 23 * * *' # 07:30 China/Singapore; best-effort
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/bci-drive-collector.yml'
 permissions:
   contents: read
 concurrency:
