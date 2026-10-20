@@ -65,9 +65,15 @@ jobs:
           sys.path.insert(0,"btc-quant/ops")
           import okx_freshness
           okx_freshness.ISSUE_TITLE="[BTC OKX TEST ONLY] freshness alert drill "+os.environ["GITHUB_RUN_ID"]
-          okx_freshness.sync_issue(False,"TEST ONLY: deliberately simulated staleness, not a real outage.")
-          okx_freshness.sync_issue(True,"TEST ONLY: recovery")
-          print("TEST ALERT: GitHub Issue created, deduplicated and closed after recovery")
+          issue=okx_freshness.sync_issue(False,"TEST ONLY: deliberately simulated staleness, not a real outage.")
+          assert issue and issue["number"], "Issue creation gave no durable ID"
+          again=okx_freshness.sync_issue(False,"TEST ONLY: repeated alert")
+          assert again["number"] == issue["number"], "Alert was not deduplicated"
+          n=issue["number"]
+          okx_freshness.request_json(f"/issues/{n}", "PATCH", {"state":"closed"})
+          confirmed=okx_freshness.request_json(f"/issues/{n}")
+          assert confirmed["state"] == "closed", "Issue did not actually close"
+          print(f"TEST ALERT VERIFIED: issue #{n} created, deduplicated, closed and reread as CLOSED")
           PY
       - name: Remove temporary credentials
         if: always()
