@@ -1,5 +1,11 @@
 name: BTC OKX sparse archive
 on:
+  push:
+    branches: [feature/okx-market-data-archive-20261018]
+    paths:
+      - '.github/workflows/btc-okx-market-archive.yml'
+      - 'btc-quant/data/okx_*.py'
+      - 'btc-quant/tests/test_okx_*.py'
   workflow_dispatch:
   schedule:
     - cron: '7 */4 * * *'
@@ -26,6 +32,17 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y rclone
           (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+      - name: Capture non-replayable sparse market snapshots first
+        run: |
+          set -euo pipefail
+          python btc-quant/data/okx_capture.py --out "$RUNNER_TEMP/okx"
+          python btc-quant/data/okx_history_catalog.py "$RUNNER_TEMP/okx"
+      - name: Immutable upload and byte-level verification of snapshots
+        run: |
+          set -euo pipefail
+          dest="gdrive:BTC_Quant_System_OKX/market_data/OKX/sparse_snapshots/run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$RUNNER_TEMP/okx" "$dest" --immutable
+          rclone --config "$RUNNER_TEMP/rclone.conf" check "$RUNNER_TEMP/okx" "$dest" --one-way --download
       - name: Restore verified history checkpoint and pages
         run: |
           set -euo pipefail
@@ -33,6 +50,7 @@ jobs:
           remote="gdrive:BTC_Quant_System_OKX/market_data/OKX/history_trades/BTC-USDT-SWAP"
           if rclone --config "$RUNNER_TEMP/rclone.conf" lsf "$remote" >/dev/null 2>&1; then
             rclone --config "$RUNNER_TEMP/rclone.conf" copy "$remote" "$RUNNER_TEMP/okx-history"
+            rclone --config "$RUNNER_TEMP/rclone.conf" check "$RUNNER_TEMP/okx-history" "$remote" --one-way --download
           else
             echo "History destination unavailable or absent; verifying parent access"
             rclone --config "$RUNNER_TEMP/rclone.conf" lsf "gdrive:BTC_Quant_System_OKX/" >/dev/null
@@ -41,22 +59,12 @@ jobs:
         run: |
           set -euo pipefail
           python btc-quant/data/okx_history_trades.py --out "$RUNNER_TEMP/okx-history" --instrument BTC-USDT-SWAP --pages 5
-      - name: Capture
-        run: |
-          python btc-quant/data/okx_capture.py --out "$RUNNER_TEMP/okx"
-          python btc-quant/data/okx_history_catalog.py "$RUNNER_TEMP/okx"
-        - name: Upload historical pages and checkpoint, then verify
+      - name: Upload historical pages and checkpoint, then verify
         run: |
           set -euo pipefail
           remote="gdrive:BTC_Quant_System_OKX/market_data/OKX/history_trades/BTC-USDT-SWAP"
           rclone --config "$RUNNER_TEMP/rclone.conf" copy "$RUNNER_TEMP/okx-history" "$remote"
           rclone --config "$RUNNER_TEMP/rclone.conf" check "$RUNNER_TEMP/okx-history" "$remote" --one-way --download
-      - name: Immutable upload and verification
-        run: |
-          set -euo pipefail
-          dest="gdrive:BTC_Quant_System_OKX/market_data/OKX/sparse_snapshots/run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
-          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$RUNNER_TEMP/okx" "$dest" --immutable
-          rclone --config "$RUNNER_TEMP/rclone.conf" check "$RUNNER_TEMP/okx" "$dest" --one-way --download
       - uses: actions/upload-artifact@v4
         if: always()
         with:
