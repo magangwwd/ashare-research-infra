@@ -1,0 +1,26 @@
+name: Temporary Task 01 repaired-production verification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/task01-repair-once.yml'
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  request-verified-run:
+    if: contains(github.event.head_commit.message, 'trigger one-time repaired production check')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch one Task 01 run on repaired main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/task01.yml/dispatches" -f ref=main
+          echo "TASK01_REPAIR_DISPATCH_ACCEPTED ref=main"
