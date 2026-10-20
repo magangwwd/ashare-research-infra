@@ -8,6 +8,8 @@ on:
     paths:
       - 'astock-quant/stock_state_strategy/short_swing_3to5_v1.py'
       - 'astock-quant/stock_state_strategy/test_short_swing_3to5_v1.py'
+      - 'astock-quant/stock_state_strategy/short_swing_15m_audit.py'
+      - 'astock-quant/stock_state_strategy/test_short_swing_15m_audit.py'
       - 'astock-quant/stock_state_strategy/SHORT_SWING_3TO5_PAPER_V1.md'
       - '.github/workflows/short-swing-3to5-paper.yml'
   workflow_dispatch:
@@ -21,6 +23,11 @@ on:
         description: 'Last fully closed trade date YYYY-MM-DD'
         required: true
         type: string
+      minute_shadow:
+        description: 'Run optional pinned one-symbol 600351.SH minute audit, no order effect'
+        required: true
+        default: false
+        type: boolean
       budget_cny:
         description: 'Fixed order size RMB 30000-50000'
         required: true
@@ -49,7 +56,7 @@ jobs:
         run: python -m pip install 'pandas>=2.2,<4' 'pyarrow>=15'
       - name: Verify one-position and T+1 execution invariants
         working-directory: astock-quant/stock_state_strategy
-        run: python -m unittest -v test_short_swing_3to5_v1.py
+        run: python -m unittest -v test_short_swing_3to5_v1.py test_short_swing_15m_audit.py
 
   gold-backtest:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
@@ -61,6 +68,7 @@ jobs:
       START: ${{ inputs.start || '2024-01-01' }}
       END: ${{ inputs.end || '2026-10-16' }}
       BUDGET: ${{ inputs.budget_cny || '40000' }}
+      MINUTE_SHADOW: ${{ github.event_name == 'push' || inputs.minute_shadow }}
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - uses: actions/checkout@v4
@@ -107,14 +115,37 @@ jobs:
             done
           done
           rclone copyto "$base/name_history.parquet" "$RUNNER_TEMP/risk/name_history/data.parquet"
+      - name: Optional pinned Baostock 600351 15m read-only source
+        if: github.event_name == 'push' || inputs.minute_shadow
+        shell: bash
+        run: |
+          set -euo pipefail
+          src='gdrive:stock_state_strategy/output/kline_600351_15m_baostock_experiment_v1/2026-10-16/run_39129500679/provider'
+          rclone copy "$src" "$RUNNER_TEMP/minute-source" --transfers 4 --checkers 6
+          rclone check "$RUNNER_TEMP/minute-source" "$src" --one-way --checkers 6
+          python - <<'PY'
+          import pathlib,os,json,hashlib
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])/'minute-source'
+          m=json.loads((root/'provider_manifest.json').read_text())
+          assert m['version']=='BAOSTOCK_600351_15M_PROBE_V1'
+          assert m['symbol']=='600351.SH' and m['non_adjusted'] is True
+          assert m['partitions']==37 and m['rows']==11728
+          for path,sha in m['files_sha256'].items():
+              assert hashlib.sha256((root/path).read_bytes()).hexdigest()==sha
+          print('PINNED_ONE_SYMBOL_MINUTE_SOURCE_VERIFIED')
+          PY
       - name: Paper backtest on real historical prices
         shell: bash
         run: |
           set -euo pipefail
+          extra=()
+          if [[ "$MINUTE_SHADOW" == 'true' ]]; then
+            extra+=(--minute-source-root "$RUNNER_TEMP/minute-source")
+          fi
           python astock-quant/stock_state_strategy/short_swing_3to5_v1.py \
             --market-root "$RUNNER_TEMP/gold" --risk-root "$RUNNER_TEMP/risk" \
             --start "$START" --end "$END" --cash-cny 50000 --budget-cny "$BUDGET" \
-            --output "$RUNNER_TEMP/short-swing/result.json"
+            "${extra[@]}" --output "$RUNNER_TEMP/short-swing/result.json"
       - name: Publish immutable paper result with checksum verification
         shell: bash
         run: |
