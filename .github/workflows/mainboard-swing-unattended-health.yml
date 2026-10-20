@@ -1,14 +1,9 @@
 name: A-share mainboard swing unattended research CI health
 
 on:
-  schedule:
-    # 07:40 Beijing / Singapore, before the 08:00 research brief.
-    - cron: '40 23 * * *'
+  # Paused unattended research on 2026-10-20 at user request.
+  # Kept for explicitly requested manual verification only.
   workflow_dispatch:
-  push:
-    branches: ['main']
-    paths:
-      - '.github/workflows/mainboard-swing-unattended-health.yml'
 
 permissions:
   contents: read
