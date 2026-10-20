@@ -199,6 +199,13 @@ def test_mainboard_feed_skips_non_mainboard_stocks(tmp_path, config, client, pro
     assert "688001.SH" not in recent_calls
     assert "830001.BJ" not in recent_calls
     state = read_json(tmp_path / "metadata/manifest/intraday.json")
+    roster = read_json(tmp_path / "metadata/manifest/intraday_universe.json")
+    assert roster["source"].startswith("Tushare stock_basic")
+    assert roster["official_exchange_reconciled"] is False
+    assert roster["eligible_count"] == len(provider.stocks) - 3
+    assert roster["market_summary"]["SZSE"] == 1
+    assert "000001.SZ" in roster["codes"]
+    assert "300001.SZ" not in roster["codes"]
     assert state["expected_securities"] == len(provider.stocks) - 3
     assert state["coverage"] == pytest.approx(1.0)
     assert state["activated"] is False
