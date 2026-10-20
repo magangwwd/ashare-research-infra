@@ -75,7 +75,7 @@ def _instrument_pinned_v1():
     """
     source=inspect.getsource(v1.simulate)
     blob=Path(inspect.getfile(v1.simulate)).read_bytes()
-    git_blob=hashlib.sha1(b'blob '+str(len(blob)).encode()+b'\\0'+blob).hexdigest()
+    git_blob=hashlib.sha1(b'blob '+str(len(blob)).encode()+bytes([0])+blob).hexdigest()
     if git_blob!=PINNED_V1_GIT_BLOB_SHA:
         raise RuntimeError('Frozen V1 Git blob SHA changed; abort V3 risk study')
     patches=[
