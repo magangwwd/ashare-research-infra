@@ -1,0 +1,68 @@
+name: BTC OKX official 400-level L2 ONE-day bounded archive pilot
+
+on:
+  push:
+    branches: [feature/okx-official-l2-catalog-20261020]
+    paths:
+      - '.github/workflows/btc-okx-official-l2-pilot.yml'
+      - 'btc-quant/data/okx_official_l2_download.py'
+      - 'btc-quant/tests/test_okx_official_l2_download.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: btc-okx-official-l2-single-day-pilot
+  cancel-in-progress: false
+
+jobs:
+  archive-one-day:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Fail closed unless bounded archive and metadata unit tests pass
+        run: |
+          python -m unittest discover -s btc-quant/tests -p 'test_okx_official_catalog.py' -v
+          python -m unittest discover -s btc-quant/tests -p 'test_okx_official_l2_download.py' -v
+      - name: Verify exact official public metadata for 2026-10-10
+        run: |
+          python btc-quant/data/okx_official_catalog.py \
+            --utc-day 2026-10-10 --module 4 --out "$RUNNER_TEMP/catalog"
+      - name: Download MAX 200 MiB with HTTP Range and validate complete gzip CRC/tar
+        run: |
+          python btc-quant/data/okx_official_l2_download.py \
+            --catalog "$RUNNER_TEMP/catalog/okx_official_L2_catalog_module4_2026-10-10.json" \
+            --out "$RUNNER_TEMP/official_L2_day"
+      - name: Install rclone from existing scoped Drive credentials
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+      - name: Upload immutable single UTC day and independently verify remote bytes
+        run: |
+          set -euo pipefail
+          dest="gdrive:BTC_Quant_System_OKX/market_data/OKX/official_portal/L2_400lv/BTC-USDT-SWAP/2026-10-10/run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$RUNNER_TEMP/official_L2_day" "$dest" --immutable
+          rclone --config "$RUNNER_TEMP/rclone.conf" check "$RUNNER_TEMP/official_L2_day" "$dest" --one-way --download
+      - name: Preserve small metadata-only evidence in GitHub Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-l2-day-evidence-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/catalog/
+            ${{ runner.temp }}/official_L2_day/download_manifest.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Clean temporary Drive credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rclone.conf"
