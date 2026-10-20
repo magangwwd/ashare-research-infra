@@ -728,6 +728,61 @@
       "source_published_at": "2026-09-11"
     },
     {
+      "qs_threshold": null,
+      "checked_at": "2026-10-20",
+      "vacancies": null,
+      "application_deadline_time": null,
+      "role_confirmed": false,
+      "priority_tier": 2,
+      "graduate_batch": "2027届",
+      "relevance": "watch",
+      "application_open": null,
+      "documents": [
+        "个人简历",
+        "学籍/学历学位材料",
+        "境外学历认证（如适用）",
+        "单位岗位要求的其他材料"
+      ],
+      "assessment": "以具体单位公告为准",
+      "overseas_details": "是否接受境外学历毕业生需按公司当前批次岗位公告确认。",
+      "qs_details": "未核实到官方公开的QS数值门槛。",
+      "id": "cscec3-east-2027-finance-management",
+      "title": "中建三局华东公司2027届职能管理类：财务管理/会计学（江浙沪皖）",
+      "company": "中建三局集团有限公司上海分公司",
+      "type": "央企国企",
+      "regions": [
+        "上海",
+        "江苏",
+        "浙江",
+        "安徽"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "管理"
+      ],
+      "deadline": null,
+      "published": "2026-09-18",
+      "overseas": "refer_official",
+      "source_url": "https://career.hebut.edu.cn/home/correcruit/content/id/80904.html",
+      "apply_url": "https://zhaopin.cscec3b.com.cn",
+      "summary": "公司2027届校园招聘简章明确将财务管理、会计学列为职能管理类专业，并覆盖上海、江苏、浙江、安徽地区。",
+      "notes": "20人为公司招聘公告中的总体招聘人数，不是单独财务管理/会计人数；具体岗位地市、会计岗名称及截止日期未查明。",
+      "evidence": "university_hosted_employer_announcement",
+      "min_degree": "本科及以上",
+      "majors_exact": [
+        "财务管理",
+        "会计学",
+        "工商管理",
+        "其他职能管理类专业"
+      ],
+      "work_city": "上海及江浙皖，实际项目所在地按岗位确定",
+      "application_process": "中建三局官方校园招聘网站→查询华东公司→核对职能管理/财会职位→提交网申及参加单位招聘程序。",
+      "critical": "华东四省市财会专业类别明确，但不能将总体20人认定为财会岗位数；没有核实到报名截止。",
+      "posting_level": "华东公司招聘专业类别已证实；独立财会职位、人数待核",
+      "verified_from": "河北工业大学就业平台2026-09-18刊载雇主2027校园招聘简章"
+    },
+    {
       "id": "cscec3-shenzhen-2027-finance-track",
       "title": "中建三局集团（深圳）2027届金融财务类校园招聘",
       "company": "中建三局集团（深圳）有限公司",
@@ -1540,6 +1595,57 @@
       "source_published_at": "2026-09-11"
     },
     {
+      "qs_threshold": null,
+      "checked_at": "2026-10-20",
+      "vacancies": null,
+      "application_deadline_time": null,
+      "role_confirmed": false,
+      "priority_tier": 2,
+      "graduate_batch": "2027届",
+      "relevance": "watch",
+      "application_open": null,
+      "documents": [
+        "个人简历",
+        "学籍/学历学位材料",
+        "境外学历认证（如适用）",
+        "单位岗位要求的其他材料"
+      ],
+      "assessment": "以具体单位公告为准",
+      "overseas_details": "是否接受境外学历毕业生需按公司当前批次岗位公告确认。",
+      "qs_details": "未核实到官方公开的QS数值门槛。",
+      "id": "huarong-leasing-2027-zhejiang-finance",
+      "title": "华融金融租赁2027届秋招：会计/财务管理相关专业（浙江）",
+      "company": "华融金融租赁股份有限公司",
+      "type": "银行",
+      "regions": [
+        "浙江"
+      ],
+      "roles": [
+        "金融",
+        "财务",
+        "会计"
+      ],
+      "deadline": null,
+      "published": "2026-09-23",
+      "overseas": "refer_official",
+      "source_url": "https://job.tiangong.edu.cn/correcruit/content/id/56380.html",
+      "apply_url": "https://job.tiangong.edu.cn/correcruit/content/id/56380.html",
+      "summary": "天津工业大学就业网刊载华融金融租赁2027届秋招，专业要求中明确包含会计学、财务管理及经济学，工作地域浙江省。",
+      "notes": "网页转载栏“招聘人数20人”是本条整体招聘登记，不是独立会计岗位人数；正式投递渠道、截止日期、境外学历条件需在雇主原公告核实。",
+      "evidence": "university_hosted_employer_announcement",
+      "min_degree": "本科及以上（依实际岗位）",
+      "majors_exact": [
+        "经济学",
+        "会计学",
+        "财务管理"
+      ],
+      "work_city": "浙江省，具体城市待核实",
+      "application_process": "先打开高校刊载的招聘简章，核实企业官方岗位和申请入口后再投递；本轮未找到可独立核实的企业直接网申网址。",
+      "critical": "会计学与财务管理列为专业条件、浙江为工作省份；尚无确定的财会职位名称与网申截止，先核对正式公告。",
+      "posting_level": "招聘专业和工作省份已核实；单岗、人数、官方投递入口待核",
+      "verified_from": "天津工业大学就业网2026-09-23转载企业2027秋季校招"
+    },
+    {
       "id": "maanshan-school-fair",
       "title": "马鞍山2027届毕业生本地企业专场招聘会（10月23日）",
       "company": "马鞍山职业技术学院就业网",
@@ -1635,6 +1741,58 @@
       "verified_from": "https://picc.zhiye.com/custom/campus?ky=&c1=&c2=23&d=-1&C="
     },
     {
+      "qs_threshold": null,
+      "checked_at": "2026-10-20",
+      "vacancies": null,
+      "application_deadline_time": null,
+      "role_confirmed": false,
+      "priority_tier": 2,
+      "graduate_batch": "2027届",
+      "relevance": "watch",
+      "application_open": "2026-10-06",
+      "documents": [
+        "个人简历",
+        "学籍/学历学位材料",
+        "境外学历认证（如适用）",
+        "单位岗位要求的其他材料"
+      ],
+      "assessment": "以具体单位公告为准",
+      "overseas_details": "是否接受境外学历毕业生需按公司当前批次岗位公告确认。",
+      "qs_details": "未核实到官方公开的QS数值门槛。",
+      "id": "sgcc-digital-2027-finance-xiongan",
+      "title": "【国家电网旗下·明确财务类专业】国网数字科技控股公司2027届校招（雄安/天津）",
+      "company": "国网数字科技控股有限公司",
+      "recruiting_unit": "国网数字科技控股有限公司（国网雄安金融科技集团有限公司）",
+      "type": "国家电网",
+      "regions": [
+        "全国"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "金融"
+      ],
+      "deadline": "2026-10-30",
+      "published": "2026-10-06",
+      "overseas": "refer_official",
+      "source_url": "https://career.nankai.edu.cn/correcruit/content/id/119501.html",
+      "apply_url": "https://sgdt.iguopin.com",
+      "summary": "国家电网全资子公司2027校园招聘将财务管理、会计学、金融学列入金融财务类专业；公司本部工作地雄安新区（少量天津）。",
+      "notes": "2026年10月30日是提前批报名截止；不是集团统一招聘截止，统一招聘预计11—12月另行报名。财务为招聘专业类别，不是已证实的具体岗位空缺或人数。",
+      "evidence": "university_hosted_employer_announcement",
+      "min_degree": "本科及以上，实际岗位可能更高",
+      "majors_exact": [
+        "财务管理",
+        "会计学",
+        "金融学"
+      ],
+      "work_city": "雄安新区（少量天津），不是江浙沪深圳",
+      "application_process": "2026年10月30日前进入国网数科官方提前批平台 sgdt.iguopin.com 投递；统一招聘另在国家电网统一人力资源招聘平台办理，两个批次不可混用。",
+      "critical": "10月30日提前批截止。国网直属数字金融科技招聘的财会专业机会，但工作地在雄安及少量天津，非目标城市；另批预计11—12月开放。",
+      "posting_level": "国家电网子公司官方宣讲招聘专业类别；未核实独立财会岗位名",
+      "verified_from": "南开大学职业发展中心发布国网数科2027届雇主招聘简章（2026-10-06）"
+    },
+    {
       "id": "sgcc-jiangsu-2027",
       "title": "国网江苏电力2027届校园招聘专页",
       "company": "国网江苏省电力有限公司",
@@ -1680,6 +1838,62 @@
       "posting_level": "省公司校招宣传专页",
       "role_confirmed": false,
       "verified_from": "https://gwjsdl.zhaopin.com/cample/index.html"
+    },
+    {
+      "qs_threshold": null,
+      "checked_at": "2026-10-20",
+      "vacancies": null,
+      "application_deadline_time": null,
+      "role_confirmed": false,
+      "priority_tier": 2,
+      "graduate_batch": "2027届",
+      "relevance": "watch",
+      "application_open": "2026-10-06",
+      "documents": [
+        "个人简历",
+        "学籍/学历学位材料",
+        "境外学历认证（如适用）",
+        "单位岗位要求的其他材料"
+      ],
+      "assessment": "以具体单位公告为准",
+      "overseas_details": "是否接受境外学历毕业生需按公司当前批次岗位公告确认。",
+      "qs_details": "未核实到官方公开的QS数值门槛。",
+      "id": "sgcc-yuanguang-2027-finance-east-china",
+      "title": "【国家电网旗下·江浙沪深】远光软件2027届财务类招聘专业（需核实城市对应岗位）",
+      "company": "远光软件股份有限公司（国网数科控股上市公司）",
+      "recruiting_unit": "远光软件股份有限公司",
+      "type": "国家电网",
+      "regions": [
+        "上海",
+        "浙江",
+        "深圳",
+        "安徽",
+        "全国"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "税务"
+      ],
+      "deadline": "2026-10-30",
+      "published": "2026-10-06",
+      "overseas": "refer_official",
+      "source_url": "https://career.nankai.edu.cn/correcruit/content/id/119501.html",
+      "apply_url": "https://sgdt.iguopin.com",
+      "summary": "国网数科2027雇主招聘资料列有远光软件公司的财务类专业（财务管理、会计学、税务）及上海、深圳、杭州、合肥等全国工作地。",
+      "notes": "公告分别列出公司整体工作地与招聘专业，并未逐城明确对应哪种专业岗位，不能称为上海财务岗或深圳会计岗。",
+      "evidence": "university_hosted_employer_announcement",
+      "min_degree": "本科及以上，上海应聘通常硕士及以上（以公告）",
+      "majors_exact": [
+        "财务管理",
+        "会计学",
+        "税务"
+      ],
+      "work_city": "上海/杭州/深圳/合肥均为企业整体工作地；财会岗位所在城市尚未逐岗核实",
+      "application_process": "国网数科2027提前批官网入口 sgdt.iguopin.com →核对远光软件对应单位及工作地→投递；后续统一招聘需回国家电网招聘平台。",
+      "critical": "10月30日提前批截止。公司招聘“专业”和“城市”不是岗位逐条映射，必须在系统中先确认财务岗工作地点。",
+      "posting_level": "招聘专业及总体工作城市明确，财务具体岗位尚未核对",
+      "verified_from": "南开大学发布国网数字科技/远光软件公司2027校招简章"
     },
     {
       "id": "sh-2026-institution-second",
@@ -2761,6 +2975,59 @@
       "keywords": [
         "2027",
         "招聘"
+      ]
+    },
+    {
+      "id": "sgcc_digit",
+      "name": "国网数字科技2027届早批（南开就业网刊载雇主简章）",
+      "type": "国家电网",
+      "priority": 1,
+      "url": "https://career.nankai.edu.cn/correcruit/content/id/119501.html",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "财务",
+        "会计",
+        "金融"
+      ]
+    },
+    {
+      "id": "sgcc_digit_apply",
+      "name": "国网数科2027提前批正式投递平台",
+      "type": "国家电网",
+      "priority": 1,
+      "url": "https://sgdt.iguopin.com",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "财务",
+        "管理"
+      ]
+    },
+    {
+      "id": "cscec3_east",
+      "name": "中建三局华东2027（大学就业网刊载）",
+      "type": "央企国企",
+      "priority": 2,
+      "url": "https://career.hebut.edu.cn/home/correcruit/content/id/80904.html",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "财务",
+        "会计"
+      ]
+    },
+    {
+      "id": "huarong_leasing",
+      "name": "华融金租2027秋招（高校刊载）",
+      "type": "银行",
+      "priority": 2,
+      "url": "https://job.tiangong.edu.cn/correcruit/content/id/56380.html",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "财务",
+        "会计"
       ]
     }
   ]
