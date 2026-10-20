@@ -1,0 +1,499 @@
+{
+  "schema": 1,
+  "source_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+  "checked_at_utc": "2026-10-20T12:59:00Z",
+  "status": "authorized_export_imported",
+  "source_freshness": "uploaded_authorized_export",
+  "source_export_modified_at": "2026-10-20T12:59:00Z",
+  "rows_examined": 10926,
+  "qualified_count": 27,
+  "leads": [
+    {
+      "id": "qq-upload-35",
+      "title": "投资经营、财务审计方向",
+      "company": "南京市交通集团",
+      "work_city": "南京",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 35,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://njjt.zhaopin.com/zk/#/join-online?prantMenuid=1430a2b86c30981848f74cc33dae5d90",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-44",
+      "title": "财务运营岗",
+      "company": "万物云",
+      "work_city": "上海、深圳、杭州、苏州、南京等",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 44,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://vt.onewo.com/campus-recruitment/vanke/147055/#/jobs",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-107",
+      "title": "财务管理方向（以岗位列表为准）",
+      "company": "上海城投集团",
+      "work_city": "上海、浙江",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 107,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://chengtou.zhiye.com/campus/jobs",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-136",
+      "title": "财务方向",
+      "company": "中创新航",
+      "work_city": "常州、合肥等",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 136,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://calbjs.zhiye.com/campus/jobs",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-80",
+      "title": "财会金融类",
+      "company": "中国医药",
+      "work_city": "北京、上海",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 80,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://genertec.zhiye.com/custom/7a34f1fa-99fc-d287-e761-c9dc230e5baa",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-79",
+      "title": "财务会计",
+      "company": "中亿丰控股",
+      "work_city": "全国（城市待核）",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 79,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://xiaoyuan.zhaopin.com/company/KA1312793891P90000001000",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-181",
+      "title": "审计助理、审计实习生",
+      "company": "政旦志远会计师事务所",
+      "work_city": "深圳",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 181,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://xiaoyuan.zhaopin.com/company/KA1488661444D90000003000?refcode=4440",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-227",
+      "title": "审计、税务方向",
+      "company": "北京兴华",
+      "work_city": "全国（城市待核）",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 227,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://www.xhcpas.com/rczp/xyzp/",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-240",
+      "title": "财务管理岗",
+      "company": "华润化学材料",
+      "work_city": "无锡、常州等（岗位地点待核）",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 240,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://crcchem.zhaopin.com",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-261",
+      "title": "会计核算岗",
+      "company": "深圳巴士集团",
+      "work_city": "深圳",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 261,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://jyjpc.iucai.com.cn/#/companyDetail?companyId=129c5be4-0007-4f30-9303-1150e7d2",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-342",
+      "title": "财务岗",
+      "company": "深圳村田科技有限公司",
+      "work_city": "深圳",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 342,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://muratasz.zhiye.com/Campus",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-376",
+      "title": "内控岗",
+      "company": "首创证券",
+      "work_city": "北京、上海等",
+      "deadline": "2026-11-30",
+      "source_sheet": "总表",
+      "source_row": 376,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://campus.51job.com/bjcapital2027/job.html",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-406",
+      "title": "财务类管培生",
+      "company": "现代牧业",
+      "work_city": "马鞍山、呼和浩特等",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 406,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://xiandaimuye.zhiye.com/campus/jobs",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-468",
+      "title": "财务岗",
+      "company": "博华产投",
+      "work_city": "上海、珠海等",
+      "deadline": "2026-11-13",
+      "source_sheet": "总表",
+      "source_row": 468,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://broadvisionfunds.jobs.feishu.cn/campus/position/list?spread=PS76N4V",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-473",
+      "title": "财务管理",
+      "company": "江苏省规划设计集团",
+      "work_city": "南京、苏州等",
+      "deadline": "2026-10-31",
+      "source_sheet": "总表",
+      "source_row": 473,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://app.mokahr.com/campus-recruitment/jspdg/74056#/jobs?page=1&anchorName=jobsList",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-478",
+      "title": "财务管理储备岗、风控储备岗",
+      "company": "远洋商业",
+      "work_city": "上海、宿迁等",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 478,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://xyzp.51job.com/yysy/job.html",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-536",
+      "title": "财务管理岗",
+      "company": "国投创新院",
+      "work_city": "上海、无锡、泰州等",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 536,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://gtcxy.iguopin.com/",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-593",
+      "title": "财务岗",
+      "company": "中基集团",
+      "work_city": "宁波、杭州、上海",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 593,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://mp.weixin.qq.com/s/71LKsK5EFi2iZW_KsdlnuQ",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-616",
+      "title": "财务管理类、风控法务类",
+      "company": "杭州城投",
+      "work_city": "杭州",
+      "deadline": "2026-11-15",
+      "source_sheet": "总表",
+      "source_row": 616,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://hzct2027.zhaopin.com/",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-640",
+      "title": "财务岗",
+      "company": "乐禾食品集团",
+      "work_city": "广东、全国其他地区",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 640,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://lehe.zhiye.com/campus/jobs",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-668",
+      "title": "财务审计类岗位",
+      "company": "中国出口信用保险公司",
+      "work_city": "上海、江苏、浙江、安徽等",
+      "deadline": "2026-11-05",
+      "source_sheet": "总表",
+      "source_row": 668,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://sinosure.zhaopin.com/xyzp/index.html",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-674",
+      "title": "财务管理、审计风控",
+      "company": "物产中大金属集团",
+      "work_city": "杭州、上海等",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 674,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://www.zmmc.com.cn:1688/recruit.aspx?category_id=53",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-148",
+      "title": "财会类管理培训生方向",
+      "company": "杭钢集团",
+      "work_city": "杭州",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 148,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://mp.weixin.qq.com/s/qyt85RVxvoxxz39Idx0DKg",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-347",
+      "title": "财务管理类",
+      "company": "中国三峡建工",
+      "work_city": "全国（岗位地点待核）",
+      "deadline": "2026-11-10",
+      "source_sheet": "总表",
+      "source_row": 347,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://www.zhipin.com/dz/sxjt/school",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-486",
+      "title": "财务方向",
+      "company": "凤凰出版传媒集团",
+      "work_city": "南京",
+      "deadline": "2026-11-01",
+      "source_sheet": "总表",
+      "source_row": 486,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://campus.51job.com/ppmg2026/index4.html",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-43",
+      "title": "财务部管培生",
+      "company": "泽世集团",
+      "work_city": "上海、非洲（具体岗位待核）",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 43,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://mp.weixin.qq.com/s/DQ_NDYK8IaaV1zFnJyhwWQ?scene=1&click_id=2112422911",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    },
+    {
+      "id": "qq-upload-167",
+      "title": "财务专员",
+      "company": "寰宇义嘉国际物流",
+      "work_city": "上海、天津、北京",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 167,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://mp.weixin.qq.com/s/jhKgFb03c_TFQ7ymEz8qxA",
+      "match_reasons": [
+        "表格明确列有财会、审计或相关管理方向",
+        "原始报名入口来自上传的2027届秋招汇总表格"
+      ],
+      "review_state": "表格来源；尚未逐岗确认报名状态、学历与留学生资格",
+      "role_confirmed": false,
+      "source_label": "来源：腾讯文档《27届秋招汇总表格》"
+    }
+  ],
+  "warning": "来源：腾讯文档《27届秋招汇总表格》（2026-10-20上传副本）；未逐岗核实招聘状态，截止日期空白不代表开放。"
+}
