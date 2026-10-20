@@ -63,7 +63,7 @@ def change_ledger(current, previous, current_scan, timestamp):
             "events":events[:500],"counts":counts,"total_events":len(events),
             "disclaimer":"仅有curated_field_change表明入库字段被修改；网页哈希变化和新抓取链接都是待核对线索，绝不自动确认为开放岗位。"}
 
-def make(config,monitor,outdir,run_id,previous=None):
+def make(config,monitor,outdir,run_id,previous=None,qq_feed=None):
     curated=validate_curated(json.loads(pathlib.Path(config).read_text("utf-8")))
     m=json.loads(pathlib.Path(monitor).read_text("utf-8"))
     if m.get("schema")!=1 or "sources" not in m:
@@ -76,6 +76,15 @@ def make(config,monitor,outdir,run_id,previous=None):
             raise ValueError("Job role stated as verified without source")
         if j.get("deadline"):
             datetime.date.fromisoformat(j["deadline"])
+    qq=None
+    if qq_feed:
+        qq=json.loads(pathlib.Path(qq_feed).read_text("utf-8"))
+        if qq.get("schema")!=1 or qq.get("source_id")!="qq_2027_master":
+            raise ValueError("Invalid QQ recruitment source data")
+        if len(qq.get("leads",[]))>300:raise ValueError("Too many third-party leads")
+        for lead in qq.get("leads",[]):
+            if lead.get("role_confirmed") or lead.get("review_state")!="未核实官方招聘资格与开放状态":
+                raise ValueError("Unverified third-party job must remain unverified")
     earlier=None
     if previous:
         earlier=json.loads(pathlib.Path(previous).read_text("utf-8"))
@@ -85,6 +94,7 @@ def make(config,monitor,outdir,run_id,previous=None):
     snap=dict(curated)
     snap.update({
         "change_log":ledger,
+        "qq_sheet":qq,
         "collected_at":now.isoformat().replace("+00:00","Z"),
         "source_monitor_checked_at":m["checked_at"],
         "source_monitor":m,
@@ -107,6 +117,7 @@ if __name__=="__main__":
     p.add_argument("--config",required=True);p.add_argument("--monitor",required=True)
     p.add_argument("--outdir",required=True);p.add_argument("--run-id",required=True)
     p.add_argument("--previous",default=None)
+    p.add_argument("--qq-feed",default=None)
     opt=p.parse_args()
-    proof=make(opt.config,opt.monitor,opt.outdir,opt.run_id,opt.previous)
+    proof=make(opt.config,opt.monitor,opt.outdir,opt.run_id,opt.previous,opt.qq_feed)
     print("FINANCE_SNAPSHOT_OK file="+proof["name"]+" records="+str(proof["listings"])+" changes="+str(proof["changes"])+" sha256="+proof["sha256"])
