@@ -41,9 +41,15 @@ def validate_curated(doc):
         assert p["title"] and p["company"] and p["regions"] and p["roles"]
         assert safe_url(p["source_url"]) and safe_url(p["apply_url"]),p["id"]
         assert p["evidence"] and p["checked_at"]
+        datetime.date.fromisoformat(p["checked_at"])
+        assert isinstance(p.get("role_confirmed"),bool)
+        if p.get("role_confirmed"): assert p.get("verified_from"),p["id"]
         assert p["qs_threshold"] is None or isinstance(p["qs_threshold"],int)
         if p["deadline"]:datetime.date.fromisoformat(p["deadline"])
+    source_ids=set()
     for s in doc["sources"]:
+        assert s["id"] not in source_ids,s["id"]
+        source_ids.add(s["id"])
         assert safe_url(s["url"]),s["id"]
         assert s["name"] and s["id"]
     return doc
@@ -74,7 +80,7 @@ def fetch_one(s):
                     row["status"]="页面过大，跳过解析";return row,leads
             row["digest"]=hashlib.sha256(content).hexdigest()
             row["content_bytes"]=len(content)
-            row["status"]="官网页面响应正常（不代表招聘仍开放）"
+            row["status"]="来源网页响应正常（不代表招聘仍开放）"
             soup=BeautifulSoup(content,"html.parser")
             if soup.title:
                 row["page_title"]=" ".join(soup.title.stripped_strings)[:150]
