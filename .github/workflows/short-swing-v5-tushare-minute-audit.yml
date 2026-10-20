@@ -1,0 +1,94 @@
+name: A-share V5 Tushare January minute evidence PAPER
+
+on:
+  push:
+    branches: ['feat/mainboard-short-swing-3to5-paper-20261020']
+    paths:
+      - '.github/workflows/short-swing-v5-tushare-minute-audit.yml'
+      - 'astock-quant/stock_state_strategy/short_swing_v5_tushare_minute_audit.py'
+      - 'astock-quant/stock_state_strategy/test_short_swing_v5_tushare_minute_audit.py'
+  pull_request:
+    paths:
+      - '.github/workflows/short-swing-v5-tushare-minute-audit.yml'
+      - 'astock-quant/stock_state_strategy/short_swing_v5_tushare_minute_audit.py'
+      - 'astock-quant/stock_state_strategy/test_short_swing_v5_tushare_minute_audit.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install pure research dependencies
+        run: python -m pip install 'pandas>=2.2,<4' 'pyarrow>=18'
+      - name: Check new Tushare minute audit fail-closed logic
+        working-directory: astock-quant/stock_state_strategy
+        run: python -m unittest -v test_short_swing_v5_tushare_minute_audit.py
+
+  january-tushare-evidence:
+    needs: offline-tests
+    if: >-
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       github.event.pull_request.head.ref == 'feat/mainboard-short-swing-3to5-paper-20261020')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      VERSION: '2026-10-20T024536.666798_0000-39fecbf2'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install parquet reader
+        run: python -m pip install 'pandas>=2.2,<4' 'pyarrow>=18'
+      - name: Prepare existing Drive auth in ephemeral runner only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo '::error::Missing Drive access'; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Fetch published Ashare_Quant Tushare January and V5 comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="gdrive:Ashare_Quant/versions/$VERSION"
+          mkdir -p "$RUNNER_TEMP/tushare-jan" "$RUNNER_TEMP/v5"
+          rclone copyto "$base/production_manifest.json" "$RUNNER_TEMP/production_manifest.json"
+          rclone copy "$base/data/clean/stk_mins/year=2026/month=01" "$RUNNER_TEMP/tushare-jan" --checkers 12 --transfers 8
+          rclone copyto \
+            "gdrive:stock_state_strategy/output/short_swing_3to5_v5_causal_rank/2026-10-16/run_39393699829/comparison.json" \
+            "$RUNNER_TEMP/v5/comparison.json"
+      - name: Validate V5 entry/exit 15m session bars against pinned Tushare manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python astock-quant/stock_state_strategy/short_swing_v5_tushare_minute_audit.py \
+            --production-manifest "$RUNNER_TEMP/production_manifest.json" \
+            --minute-root "$RUNNER_TEMP/tushare-jan" \
+            --v5-result "$RUNNER_TEMP/v5/comparison.json" \
+            --output "$RUNNER_TEMP/audit/january_2026_v5.json"
+      - name: Attach proof report without dumping raw trading data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5-pinned-tushare-2026-jan-minute-audit
+          path: ${{ runner.temp }}/audit/january_2026_v5.json
+          if-no-files-found: warn
+          retention-days: 30
