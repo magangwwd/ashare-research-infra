@@ -326,6 +326,12 @@ def progress_markdown(report: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def validation_as_of(now: datetime) -> date:
+    """Use exactly the same completed-session cutoff as Task 01 ingestion."""
+    from .run_task01 import resolved_as_of
+    return resolved_as_of(now)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Task 01 Critical acceptance gate")
     parser.add_argument("--config", default="config/config.yaml")
@@ -335,7 +341,8 @@ def main() -> int:
     config = yaml.safe_load(Path(args.config).read_text())
     root = Path(args.root or config["storage"]["root"]).resolve()
     from zoneinfo import ZoneInfo
-    as_of = date.fromisoformat(args.as_of) if args.as_of else datetime.now(ZoneInfo(config["schedule"]["timezone"])).date()
+    as_of = date.fromisoformat(args.as_of) if args.as_of else validation_as_of(datetime.now(ZoneInfo(config["schedule"]["timezone"])))
+    print(f"TASK01_VALIDATION_DATE_SELECTION as_of={as_of} explicit={bool(args.as_of)}")
     report = validate_task01(root / "data/current", config, as_of)
     atomic_json(root / "metadata/acceptance.json", report)
     progress = history_progress(root / "data/current", root / "metadata", config, as_of, report)
