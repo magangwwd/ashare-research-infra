@@ -23,7 +23,7 @@ ALLOWED = {
     "psbc2027.zhaopin.com", "campus.chinahr.com", "chinapost2027.zhaopin.com",
     "job.bankcomm.com", "zhcpa.zhiye.com", "zp.czbank.com.cn", "sdg.zhaopin.com",
     "zhaopin.cscec3b.com.cn", "hr.jsbchina.cn", "career.hebut.edu.cn",
-    "career.nankai.edu.cn", "sgdt.iguopin.com", "job.tiangong.edu.cn"
+    "career.nankai.edu.cn", "sgdt.iguopin.com", "job.tiangong.edu.cn", "docs.qq.com"
 }
 def safe_url(url):
     try:
@@ -81,6 +81,15 @@ def fetch_one(s):
             row["digest"]=hashlib.sha256(content).hexdigest()
             row["content_bytes"]=len(content)
             row["status"]="来源网页响应正常（不代表招聘仍开放）"
+            if s.get("external_spreadsheet"):
+                # Browser view of Tencent Docs usually exposes a client-side canvas,
+                # NOT bulk cell data. Respect owner export permissions.
+                row["status"]="腾讯文档页面可访问，单元格数据/下载权限尚未证实；请使用授权导出"
+                row["spreadsheet_rows_verified"]=0
+                row["export_permission_verified"]=False
+                soup=BeautifulSoup(content,"html.parser")
+                if soup.title:row["page_title"]=" ".join(soup.title.stripped_strings)[:150]
+                return row,leads
             soup=BeautifulSoup(content,"html.parser")
             if soup.title:
                 row["page_title"]=" ".join(soup.title.stripped_strings)[:150]
@@ -103,7 +112,7 @@ def fetch_one(s):
                 if len(leads)>=8:break
             row["discovered_count"]=len(leads)
     except requests.RequestException:
-        row["status"]="网络访问不稳定，无法确认"
+        row["status"]="腾讯文档访问失败，须获授权导出文件" if s.get("external_spreadsheet") else "网络访问不稳定，无法确认"
     return row,leads
 
 def build(config,out_path):
