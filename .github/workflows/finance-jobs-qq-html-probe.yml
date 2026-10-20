@@ -10,18 +10,24 @@ permissions:
 jobs:
   inspect-public-html:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install HTML probe dependencies
-        run: python -m pip install --disable-pip-version-check 'requests>=2.31,<3' 'beautifulsoup4>=4.12,<5'
-      - name: Read public HTML and count real anchors, script links and table cells
+      - name: Install HTML and browser probe dependencies
+        run: |
+          python -m pip install --disable-pip-version-check 'requests>=2.31,<3' 'beautifulsoup4>=4.12,<5' 'playwright==1.56.0'
+          python -m playwright install --with-deps chromium
+      - name: Read public HTML and count anchor/script links and table cells
         run: |
           python finance_jobs_site/scripts/qq_html_probe.py
           cat qq_html_probe_summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Test dynamic links after public JavaScript renders in anonymous browser
+        run: |
+          python finance_jobs_site/scripts/qq_browser_probe.py
+          cat qq_browser_probe_summary.md >> "$GITHUB_STEP_SUMMARY"
       - name: Upload reproducible sanitized diagnostic
         if: always()
         uses: actions/upload-artifact@v4
@@ -30,5 +36,7 @@ jobs:
           path: |
             qq_html_probe.json
             qq_html_probe_summary.md
+            qq_browser_probe.json
+            qq_browser_probe_summary.md
           retention-days: 14
           if-no-files-found: warn
