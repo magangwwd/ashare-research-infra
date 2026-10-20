@@ -81,7 +81,7 @@ def make(config,monitor,outdir,run_id,previous=None,qq_feed=None):
         qq=json.loads(pathlib.Path(qq_feed).read_text("utf-8"))
         if qq.get("schema")!=1 or qq.get("source_id")!="qq_2027_master":
             raise ValueError("Invalid QQ recruitment source data")
-        if len(qq.get("leads",[]))>300:raise ValueError("Too many third-party leads")
+        if len(qq.get("leads",[]))>1500:raise ValueError("Too many third-party leads")
         for lead in qq.get("leads",[]):
             if lead.get("role_confirmed") or lead.get("review_state")!="未核实官方招聘资格与开放状态":
                 raise ValueError("Unverified third-party job must remain unverified")
