@@ -1,20 +1,7 @@
 name: BCI public research website
+# PAUSED by user request (2026-10-20): preserve site and manual restart only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'bci_public_site/**'
-      - '.github/workflows/bci-pages.yml'
-  pull_request:
-    paths:
-      - 'bci_public_site/**'
-      - '.github/workflows/bci-pages.yml'
-  schedule:
-    - cron: '15 0 * * *'  # daily around 08:15 Asia/Singapore (GitHub scheduling is best-effort)
   workflow_dispatch:
-  workflow_run:
-    workflows: ['BCI collect verified source to Drive']
-    types: [completed]
 
 concurrency:
   group: bci-public-pages
