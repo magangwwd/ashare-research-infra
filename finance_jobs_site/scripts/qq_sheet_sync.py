@@ -31,8 +31,8 @@ DATE_MATCH=re.compile(r"(20\d{2})[-/.年](\d{1,2})[-/.月](\d{1,2})")
 ALLOWED_SHEETS={"总表","央国企","外企"}
 MAX_BYTES=16_000_000  # Uploaded 2026-10-20 XLSX is 12,065,482 bytes.
 MAX_XML_BYTES=100_000_000  # XML expansion may reach 73 MB per sheet.
-MAX_ROWS=16000
-MAX_LEADS=1500
+MAX_ROWS=25000  # Original sheet1 has 18,214 XML row records.
+MAX_LEADS=1500  # Bounded public shortlist; full source XLSX is preserved privately.
 
 def safe_http(url):
     try:
@@ -197,9 +197,8 @@ def parse_leads(sheets,now=None):
               "role_confirmed":False,"permission":"authorized-export-only",
               "evidence":"腾讯文档授权导出；来源真实性需向用人单位确认"
             })
-            if len(result)>=MAX_LEADS:break
-        if len(result)>=MAX_LEADS:break
-    return result,{"rows_examined":checked,"matched":len(result),"skipped":reason_counts}
+    result.sort(key=lambda j:(-j.get("resume_match_score",0),j.get("company",""),j.get("id","")))
+    return result[:MAX_LEADS],{"rows_examined":checked,"matched":min(len(result),MAX_LEADS),"eligible_total_before_limit":len(result),"skipped":reason_counts}
 
 def drive_export():
     from publish_drive import auth,API
