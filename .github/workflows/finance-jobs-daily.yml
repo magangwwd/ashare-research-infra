@@ -1,0 +1,64 @@
+name: Finance Jobs Daily to Drive
+on:
+  schedule:
+    - cron: '35 23 * * *' # 07:35 Asia/Shanghai (next day); best effort
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/finance-jobs-daily.yml'
+permissions:
+  contents: read
+concurrency:
+  group: finance-jobs-daily
+  cancel-in-progress: false
+jobs:
+  collect-and-archive:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Dependencies
+        run: python -m pip install --disable-pip-version-check 'google-auth>=2.28,<3' 'requests>=2.31,<3' 'beautifulsoup4>=4.12,<5'
+      - name: Validate curated records
+        run: python -m unittest discover -s finance_jobs_site/tests -v
+      - name: Check official recruitment sources without inventing vacancies
+        run: python finance_jobs_site/scripts/update_sources.py --config finance_jobs_site/data/opportunities.json --out "$RUNNER_TEMP/source-monitor.json"
+      - name: Build immutable detailed finance recruiting JSON
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          python finance_jobs_site/scripts/create_snapshot.py \
+            --config finance_jobs_site/data/opportunities.json \
+            --monitor "$RUNNER_TEMP/source-monitor.json" \
+            --outdir "$RUNNER_TEMP/finance_snapshots" --run-id "$RUN_ID"
+      - name: Confirm exactly one snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          items=("$RUNNER_TEMP"/finance_snapshots/finance_*.json)
+          test "${#items[@]}" -eq 1
+          printf 'FINANCE_ARCHIVE=%s\n' "${items[0]}" >> "$GITHUB_ENV"
+      - name: Upload to dedicated Google Drive and verify SHA256 readback
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        run: |
+          python finance_jobs_site/scripts/publish_drive.py \
+            --input "$FINANCE_ARCHIVE" \
+            --receipt "$RUNNER_TEMP/finance-drive-receipt.json"
+      - name: Retain reproducible evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: finance-evidence-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/source-monitor.json
+            ${{ runner.temp }}/finance_snapshots/finance_*.json
+            ${{ runner.temp }}/finance-drive-receipt.json
+          if-no-files-found: warn
+          retention-days: 14
