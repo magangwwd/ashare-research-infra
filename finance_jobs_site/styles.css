@@ -125,8 +125,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,su
 .job-card .expanded{display:none}
 .job-card-action{border:none;background:transparent;color:var(--blue);font-size:11px;font-weight:850;padding:9px 0 0}
 .job-card-action:hover{text-decoration:underline}
-.show-more{text-align:center;padding:19px 0}
-.show-more button{width:100%}
+.list-end{text-align:center;padding:20px 0 10px}
+.list-end #back-to-top{display:flex;width:100%;min-height:48px;align-items:center;justify-content:center;border:1px solid #c8d9cf;border-radius:10px;background:#fff;color:#28596f;font-size:13px;font-weight:800}
+.list-end #back-to-top:hover{background:#f0f5f1;border-color:#97b5a5}
 .jobs-disclaimer{font-size:10px;color:#97a5b5;line-height:1.75;padding:8px 1px}
 .job-detail-pane{min-width:0;background:white;border:1px solid #dde6f1;border-radius:13px;position:sticky;top:91px;box-shadow:var(--shadow);max-height:calc(100vh - 110px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
 .job-detail-content{padding:24px}
