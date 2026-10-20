@@ -115,6 +115,7 @@ jobs:
             done
           done
           rclone copyto "$base/name_history.parquet" "$RUNNER_TEMP/risk/name_history/data.parquet"
+      # Research only: one ticker; validates evidence but never changes any order.
       - name: Optional pinned Baostock 600351 15m read-only source
         if: github.event_name == 'push' || inputs.minute_shadow
         shell: bash
