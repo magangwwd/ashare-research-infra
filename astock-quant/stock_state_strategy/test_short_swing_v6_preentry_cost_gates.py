@@ -43,7 +43,7 @@ class GateTests(unittest.TestCase):
         s,f=fixture()
         sim={'mode':'PAPER_ONLY_NO_BROKER_NO_LIVE_AUTHORIZATION',
              'trades':[{'entry_date':'2026-01-08','exit_date':'2026-01-09',
-                        'exit_reason':'STOP_GAP'}],
+                        'exit_reason':'STOP_GAP','pnl_cny':-1500}],
              'daily_nav':[{'date':'2026-01-08','equity_cny':50000}],
              'orders':[], 'open_position':None,
              'policy':{'initial_cash_cny':50000},
