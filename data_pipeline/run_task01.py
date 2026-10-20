@@ -888,6 +888,14 @@ class Pipeline:
             # coverage gate activates, daily freshness is derived from 15-minute
             # bars and the full-market Tushare daily endpoint is no longer used.
             self.intraday_recent()
+            state = self.intraday_state()
+            reason = self.client.redact(str(state.get("reason") or "")).replace("\\n", " ")[:160]
+            print("TASK01_INTRADAY_STATUS "
+                  f"session={state.get('latest_session')} freq={state.get('freq', '15min')} "
+                  f"available={state.get('available')} healthy={state.get('minute_source_healthy')} "
+                  f"coverage={state.get('coverage')} fetched={state.get('recent_requests_fetched')} "
+                  f"bars={state.get('recent_bars_fetched')} errors={state.get('request_errors')} "
+                  f"source={state.get('daily_source')} reason={reason}")
         self.critical_recent(sample)
         if not sample:
             self.extensions()
