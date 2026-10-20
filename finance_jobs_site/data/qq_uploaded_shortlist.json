@@ -1,12 +1,12 @@
 {
   "schema": 1,
   "source_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
-  "checked_at_utc": "2026-10-20T13:23:00Z",
+  "checked_at_utc": "2026-10-20T14:00:00Z",
   "status": "authorized_export_imported",
   "source_freshness": "uploaded_authorized_export",
   "source_export_modified_at": "2026-10-20T12:59:00Z",
   "rows_examined": 10926,
-  "qualified_count": 33,
+  "qualified_count": 45,
   "leads": [
     {
       "id": "qq-upload-35",
@@ -873,9 +873,393 @@
       "fit_caution": "中国税务实务和本地税法知识需要补充；实际校招网申状态待核。",
       "priority_tier": "A",
       "eligible_status": "专业/地点高匹配，资格仍待核"
+    },
+    {
+      "id": "ge-fmp-2027-sh",
+      "title": "2027届财务管理培训生 FMP（上海）",
+      "company": "GE医疗",
+      "work_city": "上海",
+      "deadline": null,
+      "source_sheet": null,
+      "source_row": 3804,
+      "third_party_url": "https://career.hebut.edu.cn/home/correcruit/content/id/80189.html",
+      "original_link": "https://career.hebut.edu.cn/home/correcruit/content/id/80189.html",
+      "source_type": "official_independent",
+      "source_label": "来源：雇主官方招聘网站（独立发现）",
+      "match_reasons": [
+        "找到岗位官方或高校招聘公告",
+        "财会审计专业与目标城市相关"
+      ],
+      "resume_match_score": 99,
+      "resume_match_reasons": [
+        "商科双语背景、Excel/Tableau财务分析、审计和费用分析经历与财务计划分析、商业财务、资金管理轮岗高度契合；官网合作高校公告明确接受2026年9月至2027年6月毕业的海内外毕业生。"
+      ],
+      "fit_caution": "相关高校招聘平台该条有效期可能于2026年10月20日届满；须立即从雇主官方系统核查报名能否提交。",
+      "priority_tier": "A",
+      "role_confirmed": true,
+      "review_state": "相关高校招聘平台该条有效期可能于2026年10月20日届满；须立即从雇主官方系统核查报名能否提交。",
+      "verification": {
+        "status": "university_posted_specific_role",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://career.hebut.edu.cn/home/correcruit/content/id/80189.html",
+        "explanation": "商科双语背景、Excel/Tableau财务分析、审计和费用分析经历与财务计划分析、商业财务、资金管理轮岗高度契合；官网合作高校公告明确接受2026年9月至2027年6月毕业的海内外毕业生。 注意：相关高校招聘平台该条有效期可能于2026年10月20日届满；须立即从雇主官方系统核查报名能否提交。"
+      },
+      "verified_from": "https://career.hebut.edu.cn/home/correcruit/content/id/80189.html"
+    },
+    {
+      "id": "lixin-audit-sh-2027",
+      "title": "2027校招审计员｜上海总所",
+      "company": "立信会计师事务所",
+      "work_city": "上海",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 4731,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://bdochina.zhiye.com/campus/detail?jobAdId=b597aad9-c301-466b-98cd-575735b4b139",
+      "source_type": "qq_linked_official",
+      "source_label": "来源：腾讯文档汇总表 → 企业招聘官网",
+      "match_reasons": [
+        "找到岗位官方或高校招聘公告",
+        "财会审计专业与目标城市相关"
+      ],
+      "resume_match_score": 98,
+      "resume_match_reasons": [
+        "在该所从事过年审审计实习，真实做过销售收款循环、审计抽样、底稿和穿行测试，和官网职位内容直接重合；上海属首选城市。"
+      ],
+      "fit_caution": "官网只明确针对2027届及部分2026届；2026年12月海外硕士毕业是否可报须确认。立信2027校招每人只能投递一个职位。",
+      "priority_tier": "A",
+      "role_confirmed": true,
+      "review_state": "官网只明确针对2027届及部分2026届；2026年12月海外硕士毕业是否可报须确认。立信2027校招每人只能投递一个职位。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://bdochina.zhiye.com/campus/jobs",
+        "explanation": "在该所从事过年审审计实习，真实做过销售收款循环、审计抽样、底稿和穿行测试，和官网职位内容直接重合；上海属首选城市。 注意：官网只明确针对2027届及部分2026届；2026年12月海外硕士毕业是否可报须确认。立信2027校招每人只能投递一个职位。"
+      },
+      "verified_from": "https://bdochina.zhiye.com/campus/jobs"
+    },
+    {
+      "id": "lixin-audit-hz-2027",
+      "title": "2027校招审计员｜浙江分所（杭州）",
+      "company": "立信会计师事务所",
+      "work_city": "杭州",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 4731,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://bdochina.zhiye.com/campus/detail?jobAdId=a3fe26b4-1aa3-4d3a-b176-e3a995ddb09e",
+      "source_type": "qq_linked_official",
+      "source_label": "来源：腾讯文档汇总表 → 企业招聘官网",
+      "match_reasons": [
+        "找到岗位官方或高校招聘公告",
+        "财会审计专业与目标城市相关"
+      ],
+      "resume_match_score": 98,
+      "resume_match_reasons": [
+        "年审、销售循环底稿与穿行测试经历对口；财务管理本科+应用会计硕士满足会计审计专业偏好，杭州属目标城市。"
+      ],
+      "fit_caution": "仅针对2027届及部分2026届；境外毕业资格需HR确认；立信本届只能选择一个岗位申请。",
+      "priority_tier": "A",
+      "role_confirmed": true,
+      "review_state": "仅针对2027届及部分2026届；境外毕业资格需HR确认；立信本届只能选择一个岗位申请。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://bdochina.zhiye.com/campus/jobs",
+        "explanation": "年审、销售循环底稿与穿行测试经历对口；财务管理本科+应用会计硕士满足会计审计专业偏好，杭州属目标城市。 注意：仅针对2027届及部分2026届；境外毕业资格需HR确认；立信本届只能选择一个岗位申请。"
+      },
+      "verified_from": "https://bdochina.zhiye.com/campus/jobs"
+    },
+    {
+      "id": "lixin-audit-nj-2027",
+      "title": "2027校招审计员｜江苏分所（南京）",
+      "company": "立信会计师事务所",
+      "work_city": "南京",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 4731,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://bdochina.zhiye.com/campus/detail?jobAdId=46c7b965-7662-437d-a184-0e632c9ecb21",
+      "source_type": "qq_linked_official",
+      "source_label": "来源：腾讯文档汇总表 → 企业招聘官网",
+      "match_reasons": [
+        "找到岗位官方或高校招聘公告",
+        "财会审计专业与目标城市相关"
+      ],
+      "resume_match_score": 97,
+      "resume_match_reasons": [
+        "岗位强调简单科目审计程序与底稿，和已有审计项目实操吻合；南京是重点意向城市。"
+      ],
+      "fit_caution": "官网2027届及部分2026届条件需确认毕业年份划分；立信一人限投一个2027校招岗位。",
+      "priority_tier": "A",
+      "role_confirmed": true,
+      "review_state": "官网2027届及部分2026届条件需确认毕业年份划分；立信一人限投一个2027校招岗位。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://bdochina.zhiye.com/campus/jobs",
+        "explanation": "岗位强调简单科目审计程序与底稿，和已有审计项目实操吻合；南京是重点意向城市。 注意：官网2027届及部分2026届条件需确认毕业年份划分；立信一人限投一个2027校招岗位。"
+      },
+      "verified_from": "https://bdochina.zhiye.com/campus/jobs"
+    },
+    {
+      "id": "lixin-audit-sz-2027",
+      "title": "2027校招审计员｜苏州",
+      "company": "立信会计师事务所",
+      "work_city": "苏州",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 4731,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://bdochina.zhiye.com/campus/jobs",
+      "source_type": "qq_linked_official",
+      "source_label": "来源：腾讯文档汇总表 → 企业招聘官网",
+      "match_reasons": [
+        "找到岗位官方或高校招聘公告",
+        "财会审计专业与目标城市相关"
+      ],
+      "resume_match_score": 97,
+      "resume_match_reasons": [
+        "审计底稿编制、销售四单据核对和异常归因经历与岗位要求直接重合；苏州是目标城市。"
+      ],
+      "fit_caution": "来源官网2027职位列表，未取得苏州岗位独立detail永久链接；立信一人限投一个岗位，资格待核。",
+      "priority_tier": "A",
+      "role_confirmed": true,
+      "review_state": "来源官网2027职位列表，未取得苏州岗位独立detail永久链接；立信一人限投一个岗位，资格待核。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://bdochina.zhiye.com/campus/jobs",
+        "explanation": "审计底稿编制、销售四单据核对和异常归因经历与岗位要求直接重合；苏州是目标城市。 注意：来源官网2027职位列表，未取得苏州岗位独立detail永久链接；立信一人限投一个岗位，资格待核。"
+      },
+      "verified_from": "https://bdochina.zhiye.com/campus/jobs"
+    },
+    {
+      "id": "lixin-audit-wx-2027",
+      "title": "2027校招审计员｜无锡分所",
+      "company": "立信会计师事务所",
+      "work_city": "无锡",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 4731,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://bdochina.zhiye.com/campus/jobs",
+      "source_type": "qq_linked_official",
+      "source_label": "来源：腾讯文档汇总表 → 企业招聘官网",
+      "match_reasons": [
+        "找到岗位官方或高校招聘公告",
+        "财会审计专业与目标城市相关"
+      ],
+      "resume_match_score": 96,
+      "resume_match_reasons": [
+        "与会计准则、简单科目审计、证据链检查及项目底稿工作对应；江苏就业地域匹配。"
+      ],
+      "fit_caution": "官网岗位列表明确无锡分所审计员，但2026年12月毕业资格需HR确认；立信限制单职位投递。",
+      "priority_tier": "A",
+      "role_confirmed": true,
+      "review_state": "官网岗位列表明确无锡分所审计员，但2026年12月毕业资格需HR确认；立信限制单职位投递。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://bdochina.zhiye.com/campus/jobs",
+        "explanation": "与会计准则、简单科目审计、证据链检查及项目底稿工作对应；江苏就业地域匹配。 注意：官网岗位列表明确无锡分所审计员，但2026年12月毕业资格需HR确认；立信限制单职位投递。"
+      },
+      "verified_from": "https://bdochina.zhiye.com/campus/jobs"
+    },
+    {
+      "id": "lixin-tax-sh-2027",
+      "title": "2027校招税审员｜上海总所",
+      "company": "立信会计师事务所",
+      "work_city": "上海",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 4731,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://bdochina.zhiye.com/campus/jobs",
+      "source_type": "qq_linked_official",
+      "source_label": "来源：腾讯文档汇总表 → 企业招聘官网",
+      "match_reasons": [
+        "找到岗位官方或高校招聘公告",
+        "财会审计专业与目标城市相关"
+      ],
+      "resume_match_score": 92,
+      "resume_match_reasons": [
+        "凭证、发票和银行回单核对及财务报表专业背景有助于纳税鉴证资料收集、财务账项审核。"
+      ],
+      "fit_caution": "财税法熟练程度尚需结合岗位补强；2026年12月毕业资格与立信一人限投一岗限制待考虑。",
+      "priority_tier": "B",
+      "role_confirmed": true,
+      "review_state": "财税法熟练程度尚需结合岗位补强；2026年12月毕业资格与立信一人限投一岗限制待考虑。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://bdochina.zhiye.com/campus/jobs",
+        "explanation": "凭证、发票和银行回单核对及财务报表专业背景有助于纳税鉴证资料收集、财务账项审核。 注意：财税法熟练程度尚需结合岗位补强；2026年12月毕业资格与立信一人限投一岗限制待考虑。"
+      },
+      "verified_from": "https://bdochina.zhiye.com/campus/jobs"
+    },
+    {
+      "id": "lixin-tax-hz-2027",
+      "title": "2027校招税审员｜浙江分所（杭州）",
+      "company": "立信会计师事务所",
+      "work_city": "杭州",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 4731,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://bdochina.zhiye.com/campus/jobs",
+      "source_type": "qq_linked_official",
+      "source_label": "来源：腾讯文档汇总表 → 企业招聘官网",
+      "match_reasons": [
+        "找到岗位官方或高校招聘公告",
+        "财会审计专业与目标城市相关"
+      ],
+      "resume_match_score": 91,
+      "resume_match_reasons": [
+        "财务管理本科、应用会计硕士与审计单据核对经验支持税务鉴证和资料核查；杭州匹配。"
+      ],
+      "fit_caution": "2026年12月毕业资格与一人限投一岗限制待确认；岗位更偏税务实践。",
+      "priority_tier": "B",
+      "role_confirmed": true,
+      "review_state": "2026年12月毕业资格与一人限投一岗限制待确认；岗位更偏税务实践。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://bdochina.zhiye.com/campus/jobs",
+        "explanation": "财务管理本科、应用会计硕士与审计单据核对经验支持税务鉴证和资料核查；杭州匹配。 注意：2026年12月毕业资格与一人限投一岗限制待确认；岗位更偏税务实践。"
+      },
+      "verified_from": "https://bdochina.zhiye.com/campus/jobs"
+    },
+    {
+      "id": "lixin-it-sh-2027",
+      "title": "2027校招IT审计员｜上海总所",
+      "company": "立信会计师事务所",
+      "work_city": "上海",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 4731,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://bdochina.zhiye.com/campus/jobs",
+      "source_type": "qq_linked_official",
+      "source_label": "来源：腾讯文档汇总表 → 企业招聘官网",
+      "match_reasons": [
+        "找到岗位官方或高校招聘公告",
+        "财会审计专业与目标城市相关"
+      ],
+      "resume_match_score": 90,
+      "resume_match_reasons": [
+        "穿行测试和内部控制矩阵实操配合SQL/Tableau/Excel能力，符合信息系统内控检查和数据真实性评估内容。"
+      ],
+      "fit_caution": "官网偏好信息系统审计、计算机、统计背景；专业适配及海外毕业届别需进一步确认。",
+      "priority_tier": "B",
+      "role_confirmed": true,
+      "review_state": "官网偏好信息系统审计、计算机、统计背景；专业适配及海外毕业届别需进一步确认。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://bdochina.zhiye.com/campus/jobs",
+        "explanation": "穿行测试和内部控制矩阵实操配合SQL/Tableau/Excel能力，符合信息系统内控检查和数据真实性评估内容。 注意：官网偏好信息系统审计、计算机、统计背景；专业适配及海外毕业届别需进一步确认。"
+      },
+      "verified_from": "https://bdochina.zhiye.com/campus/jobs"
+    },
+    {
+      "id": "lixin-it-hz-2027",
+      "title": "2027校招IT审计员｜浙江分所（杭州）",
+      "company": "立信会计师事务所",
+      "work_city": "杭州",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 4731,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://bdochina.zhiye.com/campus/jobs",
+      "source_type": "qq_linked_official",
+      "source_label": "来源：腾讯文档汇总表 → 企业招聘官网",
+      "match_reasons": [
+        "找到岗位官方或高校招聘公告",
+        "财会审计专业与目标城市相关"
+      ],
+      "resume_match_score": 89,
+      "resume_match_reasons": [
+        "已有审计执行与数据工具经验，能支撑信息科技风险、一般控制和底稿分析；杭州匹配。"
+      ],
+      "fit_caution": "IT技术专业优先、本人会计背景需确认；立信2027校招限制单职位投递。",
+      "priority_tier": "B",
+      "role_confirmed": true,
+      "review_state": "IT技术专业优先、本人会计背景需确认；立信2027校招限制单职位投递。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://bdochina.zhiye.com/campus/jobs",
+        "explanation": "已有审计执行与数据工具经验，能支撑信息科技风险、一般控制和底稿分析；杭州匹配。 注意：IT技术专业优先、本人会计背景需确认；立信2027校招限制单职位投递。"
+      },
+      "verified_from": "https://bdochina.zhiye.com/campus/jobs"
+    },
+    {
+      "id": "lixin-consult-sh-2027",
+      "title": "2027校招咨询顾问｜上海总所",
+      "company": "立信会计师事务所",
+      "work_city": "上海",
+      "deadline": null,
+      "source_sheet": "总表",
+      "source_row": 4731,
+      "third_party_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "original_link": "https://bdochina.zhiye.com/campus/jobs",
+      "source_type": "qq_linked_official",
+      "source_label": "来源：腾讯文档汇总表 → 企业招聘官网",
+      "match_reasons": [
+        "找到岗位官方或高校招聘公告",
+        "财会审计专业与目标城市相关"
+      ],
+      "resume_match_score": 88,
+      "resume_match_reasons": [
+        "负责小组统筹及跨部门沟通，熟悉Excel/Tableau分析和审计异常汇总，可匹配咨询项目数据分析、汇报材料准备。"
+      ],
+      "fit_caution": "咨询综合竞争较强，岗位可能不以纯财务审计为主；须核验毕业届别。",
+      "priority_tier": "B",
+      "role_confirmed": true,
+      "review_state": "咨询综合竞争较强，岗位可能不以纯财务审计为主；须核验毕业届别。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://bdochina.zhiye.com/campus/jobs",
+        "explanation": "负责小组统筹及跨部门沟通，熟悉Excel/Tableau分析和审计异常汇总，可匹配咨询项目数据分析、汇报材料准备。 注意：咨询综合竞争较强，岗位可能不以纯财务审计为主；须核验毕业届别。"
+      },
+      "verified_from": "https://bdochina.zhiye.com/campus/jobs"
+    },
+    {
+      "id": "daxin-audit-sh-2027",
+      "title": "2027校招审计助理｜上海业务总部",
+      "company": "大信会计师事务所",
+      "work_city": "上海",
+      "deadline": null,
+      "source_sheet": null,
+      "source_row": null,
+      "third_party_url": "https://daxincpa.zhiye.com/campus/jobs",
+      "original_link": "https://daxincpa.zhiye.com/campus/jobs",
+      "source_type": "official_independent",
+      "source_label": "来源：雇主官方招聘网站（独立发现）",
+      "match_reasons": [
+        "找到岗位官方或高校招聘公告",
+        "财会审计专业与目标城市相关"
+      ],
+      "resume_match_score": 95,
+      "resume_match_reasons": [
+        "官网明确要求编制底稿、协助审计项目及报告草拟；已有立信年审实习、财务管理本科和Excel交叉核对经历对口。"
+      ],
+      "fit_caution": "官网职位说明含统招本科及以上，需向人事确认中澳合作本科和ANU海外硕士的实际资格；可接受出差。",
+      "priority_tier": "A",
+      "role_confirmed": true,
+      "review_state": "官网职位说明含统招本科及以上，需向人事确认中澳合作本科和ANU海外硕士的实际资格；可接受出差。",
+      "verification": {
+        "status": "official_specific_role_confirmed",
+        "checked_at": "2026-10-20",
+        "evidence_url": "https://daxincpa.zhiye.com/campus/jobs",
+        "explanation": "官网明确要求编制底稿、协助审计项目及报告草拟；已有立信年审实习、财务管理本科和Excel交叉核对经历对口。 注意：官网职位说明含统招本科及以上，需向人事确认中澳合作本科和ANU海外硕士的实际资格；可接受出差。"
+      },
+      "verified_from": "https://daxincpa.zhiye.com/campus/jobs"
     }
   ],
-  "warning": "2026-10-20基于已上传腾讯秋招表格逐个访问官方招聘网址，已核实的独立岗位才在网页显示；岗位公开说明不等于已实时完成投递资格和开放状态确认。表格原始数据为历史上传副本。",
+  "warning": "Tencent表格导出保存在私有云盘，公开仅保留所发现岗位及证据。部分新岗位为企业招聘官网独立发现，已明确标注来源。2026年12月境外毕业是否符合各企业2027届条件必须逐岗确认。官网列表展示职位不保证持续可投。",
   "verification_count": 1,
   "verified_independent_positions": 1,
   "verification_note": "网站上的独立岗位与第三方表格概述分别表示；只有有雇主逐岗证据才能写'官网确认具体岗位'。",
@@ -903,5 +1287,6 @@
     ],
     "note": "岗位匹配评分不是录用概率，留学学历、毕业资格和职位开放状态以单位官网为准"
   },
-  "profile_review_at": "2026-10-20"
+  "profile_review_at": "2026-10-20",
+  "verified_specific_total": 23
 }
