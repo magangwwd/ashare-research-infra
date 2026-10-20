@@ -1,0 +1,644 @@
+{
+  "schema": 1,
+  "as_of": "2026-10-20",
+  "edition": "2027届校招 / 财会金融与事业单位",
+  "regions": [
+    "上海",
+    "江苏",
+    "浙江",
+    "深圳",
+    "马鞍山",
+    "安徽",
+    "全国"
+  ],
+  "target_majors": [
+    "会计",
+    "财务",
+    "审计",
+    "金融",
+    "税务",
+    "经济",
+    "管理"
+  ],
+  "source_policy": "官方公告与招聘入口优先。宣讲、门户和其他专业提前批不得标记为已确认的财务在招岗位。过期日期自动标记已截止。海外学历与QS门槛只按逐岗位原文认定。",
+  "listings": [
+    {
+      "id": "sgcc-2027-general",
+      "title": "国家电网2027届高校毕业生招聘公告（含财会、金融考试方向）",
+      "company": "国家电网有限公司",
+      "type": "国家电网",
+      "regions": [
+        "全国",
+        "江苏",
+        "浙江",
+        "上海",
+        "安徽"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "金融",
+        "管理"
+      ],
+      "deadline": null,
+      "published": "2026-10-17",
+      "overseas": "refer_official",
+      "source_url": "https://zhaopin.sgcc.com.cn/sgcchr/static/unitPart.html?bullet_id=dcefb56d04714dc4b488d0a7a204bf76",
+      "apply_url": "https://zhaopin.sgcc.com.cn",
+      "summary": "已发布2027届招聘公告，2027版财务会计、金融及管理类考试大纲单列。",
+      "notes": "这是集团招聘公告，并非确认所有省公司现有财务空缺；进入官网后按具体单位、岗位专业、批次及截止日核对。",
+      "evidence": "official_bulletin_dynamic",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "sgcc-2027-campus",
+      "title": "国网直属单位2027届校园宣讲与招聘需求",
+      "company": "国家电网有限公司直属单位",
+      "type": "国家电网",
+      "regions": [
+        "全国",
+        "江苏",
+        "浙江",
+        "上海",
+        "安徽"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "金融",
+        "管理"
+      ],
+      "deadline": null,
+      "published": "2026-09-24",
+      "overseas": "explicit",
+      "source_url": "https://zhaopin.sgcc.com.cn",
+      "apply_url": "https://zhaopin.sgcc.com.cn",
+      "summary": "公开校园招聘需求将财务会计类、金融类列为专业类别之一。",
+      "notes": "留学生须逐条确认毕业日期、留服认证与岗位要求；校园宣讲不等于具体岗位正在接受简历。",
+      "evidence": "official_portal_with_secondary_evidence",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "sgcc-jiangsu-2027",
+      "title": "国网江苏电力2027届校园招聘专页",
+      "company": "国网江苏省电力有限公司",
+      "type": "国家电网",
+      "regions": [
+        "江苏"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "金融"
+      ],
+      "deadline": null,
+      "published": null,
+      "overseas": "domestic_scope",
+      "source_url": "https://gwjsdl.zhaopin.com/cample/index.html",
+      "apply_url": "https://zhaopin.sgcc.com.cn",
+      "summary": "江苏电力2027校招专题，列出特定批次的境内院校硕士条件。",
+      "notes": "所见批次要求境内高校应届硕士及以上；财务岗位及海外学历是否适用于其他批次尚未核实，不应直接认定可报。",
+      "evidence": "official_recruitment_partner",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "chinapost-2027",
+      "title": "中国邮政集团2027年度联合校园招聘",
+      "company": "中国邮政集团有限公司",
+      "type": "央企国企",
+      "regions": [
+        "全国",
+        "江苏",
+        "浙江",
+        "上海",
+        "安徽",
+        "深圳",
+        "马鞍山"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "金融",
+        "审计",
+        "管理"
+      ],
+      "deadline": "2026-10-31",
+      "published": "2026-09-07",
+      "overseas": "explicit",
+      "source_url": "https://www.chinapost.com.cn/cn/report/2609/1176-1.htm",
+      "apply_url": "https://chinapost2027.zhaopin.com",
+      "summary": "官方联合校招覆盖财务会计、金融经济、工商管理等专业，对经认证的境外应届留学生开放。",
+      "notes": "10月31日是中国邮政集团简历接收截止日；邮储银行和中邮保险有各自不同截止日，不能混用。集团公告不保证目标城市恰有财务岗。",
+      "evidence": "verified_announcement",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "huaneng-2027",
+      "title": "中国华能2027届校园招聘入口（含财会管理类别）",
+      "company": "中国华能集团",
+      "type": "央企国企",
+      "regions": [
+        "全国",
+        "江苏",
+        "浙江",
+        "上海",
+        "安徽",
+        "深圳"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "统计",
+        "管理"
+      ],
+      "deadline": null,
+      "published": null,
+      "overseas": "explicit",
+      "source_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000134",
+      "apply_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000134",
+      "summary": "官方校招入口含财务会计类专业、管理岗位及境外学历认证条件。",
+      "notes": "部分岗位或批次对一年制海外硕士有额外限制；必须按单位/岗位详情确认，未核实统一截止日。",
+      "evidence": "verified_announcement",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "boc-2027",
+      "title": "中国银行2027年全球校园招聘（已过本批网申截止日）",
+      "company": "中国银行",
+      "type": "银行",
+      "regions": [
+        "全国",
+        "江苏",
+        "浙江",
+        "上海",
+        "安徽",
+        "深圳",
+        "马鞍山"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "审计",
+        "金融",
+        "管理"
+      ],
+      "deadline": "2026-10-09",
+      "published": "2026-09-03",
+      "overseas": "explicit",
+      "source_url": "https://www.boc.cn/aboutboc/bi4/202609/t20260903_25689311.html",
+      "apply_url": "https://campus.chinahr.com/pages/2027-boc",
+      "summary": "包含总部、审计分部、境内分支机构等；留学生可关注其他批次及官网更新。",
+      "notes": "2027届秋招统一网申已于2026年10月9日24时截止；不是当前可直接提交的机会。",
+      "evidence": "verified_announcement",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "ccb-2027",
+      "title": "建设银行2027年度校园招聘（已过本批网申截止日）",
+      "company": "中国建设银行",
+      "type": "银行",
+      "regions": [
+        "全国",
+        "江苏",
+        "浙江",
+        "上海",
+        "安徽",
+        "深圳",
+        "马鞍山"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "审计",
+        "金融",
+        "管理"
+      ],
+      "deadline": "2026-10-08",
+      "published": "2026-09-04",
+      "overseas": "refer_official",
+      "source_url": "https://job.ccb.com/cn/job/announcement.html?annoId=20260903163254718082",
+      "apply_url": "https://job2.ccb.cn/cn/job/plan_index.html?planType=XY",
+      "summary": "官网2027届岗位表列明具体岗位、地点、网申截止日及报名状态。",
+      "notes": "本批报名于10月8日结束；海外院校与各机构专业资格以岗位公告为准。",
+      "evidence": "verified_announcement",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "icbc-2027",
+      "title": "工商银行2027年度校园招聘（已过本批网申截止日）",
+      "company": "中国工商银行",
+      "type": "银行",
+      "regions": [
+        "全国",
+        "江苏",
+        "浙江",
+        "上海",
+        "安徽",
+        "深圳",
+        "马鞍山"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "审计",
+        "金融",
+        "管理"
+      ],
+      "deadline": "2026-10-08",
+      "published": "2026-09-04",
+      "overseas": "explicit",
+      "source_url": "https://job.icbc.com.cn/pc/index.html",
+      "apply_url": "https://job.icbc.com.cn",
+      "summary": "2027届校招包含专业英才、管培生等方向，境内外院校招录范围需看各机构计划。",
+      "notes": "本批10月8日截止；没有证据证明全部分支机构均有独立会计岗位。",
+      "evidence": "verified_announcement",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "psbc-2027",
+      "title": "邮储银行2027年度校园招聘（本批已截止）",
+      "company": "中国邮政储蓄银行",
+      "type": "银行",
+      "regions": [
+        "全国",
+        "江苏",
+        "浙江",
+        "上海",
+        "安徽",
+        "深圳",
+        "马鞍山"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "金融",
+        "管理"
+      ],
+      "deadline": "2026-10-07",
+      "published": "2026-09-07",
+      "overseas": "refer_official",
+      "source_url": "https://www.psbc.com/cn/gyyc/rczp/xyzp/",
+      "apply_url": "https://psbc2027.zhaopin.com",
+      "summary": "邮储银行单独开展2027届校招，后续批次及马鞍山分支机构以银行正式公告为准。",
+      "notes": "中国邮政集团10月31日截止不适用于邮储银行；邮储银行本批10月7日已结束。",
+      "evidence": "verified_announcement",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "sh-2026-institution-second",
+      "title": "上海事业单位2026年第二批招聘（须已有有效笔试成绩）",
+      "company": "上海市人力资源和社会保障局",
+      "type": "事业单位",
+      "regions": [
+        "上海"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "审计",
+        "管理"
+      ],
+      "deadline": "2026-10-23",
+      "published": "2026-10-15",
+      "overseas": "check_position",
+      "source_url": "https://rsj.sh.gov.cn/tgsgg_17341/20261015/t0035_1444213.html",
+      "apply_url": "https://rsj.sh.gov.cn/tgsgg_17341/20261015/t0035_1444213.html",
+      "summary": "2026年10月19日10时至23日16时报名，需有2026年3月28日上海事业单位笔试有效成绩。",
+      "notes": "特定补充批次，不能把它当作2027届无需笔试成绩的普通校招；具体财会岗位以官方附件为准。",
+      "evidence": "special_restriction",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "js-public-2026",
+      "title": "江苏省属事业单位招录（官方招聘专栏）",
+      "company": "江苏省人社厅",
+      "type": "事业单位",
+      "regions": [
+        "江苏"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "审计",
+        "经济"
+      ],
+      "deadline": null,
+      "published": null,
+      "overseas": "check_position",
+      "source_url": "https://jshrss.jiangsu.gov.cn/col/col78506/index.html",
+      "apply_url": "https://jshrss.jiangsu.gov.cn/col/col78506/index.html",
+      "summary": "江苏人社官方事业单位招聘专栏；经济类通用专业技术岗位可能包含会计、审计。",
+      "notes": "该记录是跟踪入口，不是正在报名的具体职位；必须打开最新公告岗位表。",
+      "evidence": "official_portal",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "sz-institution-portal",
+      "title": "深圳市机关事业单位招聘选调官方专栏",
+      "company": "深圳市考试院",
+      "type": "事业单位",
+      "regions": [
+        "深圳"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "审计",
+        "经济"
+      ],
+      "deadline": null,
+      "published": null,
+      "overseas": "check_position",
+      "source_url": "https://hrss.sz.gov.cn/szksy/zpxd/",
+      "apply_url": "https://hrss.sz.gov.cn/szksy/zpxd/",
+      "summary": "深圳考试院公开招聘专栏，可跟踪事业单位财务、审计、综合管理等新公告。",
+      "notes": "是来源订阅入口，不代表当前存在相符岗位，部分职位可能仅限指定年龄/身份或专业。",
+      "evidence": "official_portal",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "sh-public-portal",
+      "title": "上海市人社局招聘公告入口",
+      "company": "上海市人社局",
+      "type": "事业单位",
+      "regions": [
+        "上海"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "审计",
+        "经济"
+      ],
+      "deadline": null,
+      "published": null,
+      "overseas": "check_position",
+      "source_url": "https://rsj.sh.gov.cn/",
+      "apply_url": "https://rsj.sh.gov.cn/",
+      "summary": "跟踪上海市事业单位未来批次，查明是否需要事先通过笔试。",
+      "notes": "该条只是官网入口，不是招聘岗位。",
+      "evidence": "official_portal",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "maanshan-school-fair",
+      "title": "马鞍山2027届毕业生本地企业专场招聘会（10月23日）",
+      "company": "马鞍山职业技术学院就业网",
+      "type": "招聘活动",
+      "regions": [
+        "马鞍山"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "金融"
+      ],
+      "deadline": "2026-10-23",
+      "published": "2026-09-22",
+      "overseas": "check_position",
+      "source_url": "https://jyw.mastc.edu.cn/info/1009/4412.htm",
+      "apply_url": "https://jyw.mastc.edu.cn/info/1009/4412.htm",
+      "summary": "学院官方说明2026年10月23日下午举行马鞍山企业专场招聘会。",
+      "notes": "这是校园招聘活动，不是公开确认有财务岗位的招聘公告；参与资格和企业名单请现场或向学校核实。",
+      "evidence": "official_event",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "picc-maanshan-2027",
+      "title": "人保财险马鞍山2027届校园招聘（官方岗位入口）",
+      "company": "中国人民财产保险股份有限公司",
+      "type": "保险国企",
+      "regions": [
+        "马鞍山",
+        "安徽"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "财务"
+      ],
+      "deadline": null,
+      "published": "2026-10-15",
+      "overseas": "secondary_report",
+      "source_url": "https://picc.zhiye.com/custom/campus?ky=&c1=&c2=23&d=-1&C=",
+      "apply_url": "https://picc.zhiye.com/custom/campus?ky=&c1=&c2=23&d=-1&C=",
+      "summary": "公开招聘简章提及马鞍山地区的管理培训生、区县综合类及其他岗位。",
+      "notes": "具体会计岗位与报名截止时间须登录人保正式系统核对；转载资料截止日期存在多种表述，此处不宣称开放。",
+      "evidence": "official_recruitment_portal_secondary",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    },
+    {
+      "id": "sasac-2027-watch",
+      "title": "国务院国资委招聘信息与央企2027届校招汇总",
+      "company": "国务院国资委",
+      "type": "央企国企",
+      "regions": [
+        "全国",
+        "江苏",
+        "浙江",
+        "上海",
+        "安徽",
+        "深圳"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "审计",
+        "金融",
+        "管理"
+      ],
+      "deadline": null,
+      "published": null,
+      "overseas": "check_position",
+      "source_url": "https://wap.sasac.gov.cn/n2588035/n2588325/n2588350/index.html",
+      "apply_url": "https://wap.sasac.gov.cn/n2588035/n2588325/n2588350/index.html",
+      "summary": "国资委官方招聘专栏收录多个央企2027届招聘动态与审计类招聘公告。",
+      "notes": "监测入口，不保证展示内容皆为2027财务类职位。",
+      "evidence": "official_portal",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "sgcc",
+      "name": "国家电网招聘平台",
+      "type": "国家电网",
+      "priority": 1,
+      "url": "https://zhaopin.sgcc.com.cn",
+      "discover": false,
+      "keywords": [
+        "招聘",
+        "财务",
+        "会计",
+        "金融",
+        "2027"
+      ]
+    },
+    {
+      "id": "sgcc_bulletin",
+      "name": "国家电网2027届官方公告",
+      "type": "国家电网",
+      "priority": 1,
+      "url": "https://zhaopin.sgcc.com.cn/sgcchr/static/unitPart.html?bullet_id=dcefb56d04714dc4b488d0a7a204bf76",
+      "discover": false,
+      "keywords": [
+        "2027",
+        "财务",
+        "会计",
+        "金融"
+      ]
+    },
+    {
+      "id": "ccb",
+      "name": "中国建设银行校园招聘",
+      "type": "银行",
+      "priority": 2,
+      "url": "https://job2.ccb.cn/cn/job/plan_index.html?planType=XY",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "招聘",
+        "财务",
+        "会计",
+        "审计"
+      ]
+    },
+    {
+      "id": "boc",
+      "name": "中国银行招聘公告",
+      "type": "银行",
+      "priority": 2,
+      "url": "https://www.boc.cn/aboutboc/bi4/",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "招聘",
+        "审计",
+        "财务",
+        "会计"
+      ]
+    },
+    {
+      "id": "icbc",
+      "name": "中国工商银行校招",
+      "type": "银行",
+      "priority": 2,
+      "url": "https://job.icbc.com.cn/pc/index.html",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "招聘",
+        "专业英才"
+      ]
+    },
+    {
+      "id": "post",
+      "name": "中国邮政招聘发布",
+      "type": "央企国企",
+      "priority": 2,
+      "url": "https://www.chinapost.com.cn/cn/report/2609/1176-1.htm",
+      "discover": false,
+      "keywords": [
+        "2027",
+        "财务",
+        "会计"
+      ]
+    },
+    {
+      "id": "huaneng",
+      "name": "中国华能校园招聘",
+      "type": "央企国企",
+      "priority": 3,
+      "url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000134",
+      "discover": false,
+      "keywords": [
+        "2027",
+        "会计"
+      ]
+    },
+    {
+      "id": "sasac",
+      "name": "国资委公开招聘",
+      "type": "央企国企",
+      "priority": 2,
+      "url": "https://wap.sasac.gov.cn/n2588035/n2588325/n2588350/index.html",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "财务",
+        "审计",
+        "校招"
+      ]
+    },
+    {
+      "id": "jiangsu_hr",
+      "name": "江苏省属事业单位招录",
+      "type": "事业单位",
+      "priority": 3,
+      "url": "https://jshrss.jiangsu.gov.cn/col/col78506/index.html",
+      "discover": true,
+      "keywords": [
+        "招聘",
+        "2027",
+        "会计",
+        "财务",
+        "审计"
+      ]
+    },
+    {
+      "id": "shanghai_hr",
+      "name": "上海人社招聘公告",
+      "type": "事业单位",
+      "priority": 3,
+      "url": "https://rsj.sh.gov.cn/",
+      "discover": true,
+      "keywords": [
+        "招聘",
+        "事业单位",
+        "审计",
+        "会计"
+      ]
+    },
+    {
+      "id": "shenzhen_hr",
+      "name": "深圳事业单位招聘选调",
+      "type": "事业单位",
+      "priority": 3,
+      "url": "https://hrss.sz.gov.cn/szksy/zpxd/",
+      "discover": true,
+      "keywords": [
+        "招聘",
+        "会计",
+        "审计"
+      ]
+    },
+    {
+      "id": "maanshan_school",
+      "name": "马鞍山高校就业公告",
+      "type": "地方招聘",
+      "priority": 3,
+      "url": "https://jyw.mastc.edu.cn/info/1009/4412.htm",
+      "discover": false,
+      "keywords": [
+        "马鞍山",
+        "财务"
+      ]
+    }
+  ]
+}
