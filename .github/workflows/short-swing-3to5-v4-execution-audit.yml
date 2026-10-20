@@ -9,6 +9,8 @@ on:
     paths:
       - 'astock-quant/stock_state_strategy/short_swing_3to5_v4_execution_audit.py'
       - 'astock-quant/stock_state_strategy/test_short_swing_3to5_v4_execution_audit.py'
+      - 'astock-quant/stock_state_strategy/short_swing_3to5_v4_cohort_audit.py'
+      - 'astock-quant/stock_state_strategy/test_short_swing_3to5_v4_cohort_audit.py'
       - '.github/workflows/short-swing-3to5-v4-execution-audit.yml'
   workflow_dispatch:
 
@@ -26,4 +28,4 @@ jobs:
         with: {python-version: '3.13'}
       - name: Run V4 assumption accounting adversarial tests
         working-directory: astock-quant/stock_state_strategy
-        run: python -m unittest -v test_short_swing_3to5_v4_execution_audit.py
+        run: python -m unittest -v test_short_swing_3to5_v4_execution_audit.py test_short_swing_3to5_v4_cohort_audit.py
