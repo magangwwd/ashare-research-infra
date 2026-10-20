@@ -17,7 +17,7 @@ jobs:
           set -euo pipefail
           base="https://magangwwd.github.io/ashare-research-infra"
           mkdir -p "$RUNNER_TEMP/finance_site_test"
-          for f in index.html app.js styles.css data/latest.json data/monitor.json data/changes.json data/qq_feed.json data/qq_uploaded_shortlist.json; do
+          for f in index.html app.js styles.css data/latest.json data/monitor.json data/changes.json data/qq_feed.json data/qq_uploaded_shortlist.json data/qq_leads.csv; do
             mkdir -p "$RUNNER_TEMP/finance_site_test/$(dirname "$f")"
             curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 \
               "$base/$f" -o "$RUNNER_TEMP/finance_site_test/$f"
@@ -65,6 +65,11 @@ jobs:
           m=json.loads((p/"data/monitor.json").read_text("utf-8"))
           changes=json.loads((p/"data/changes.json").read_text("utf-8"))
           qq=json.loads((p/"data/qq_feed.json").read_text("utf-8"))
+          import csv
+          with (p/"data/qq_leads.csv").open("r",encoding="utf-8-sig",newline="") as fp:
+              source_csv=list(csv.DictReader(fp))
+          assert len(source_csv)>=1000, "Published CSV must include complete source leads"
+          assert all("company" in row and "original_link" in row for row in source_csv)
           verified=json.loads((p/"data/qq_uploaded_shortlist.json").read_text("utf-8"))
           assert len(verified.get("leads",[]))>=23
           assert sum(1 for v in verified["leads"] if v.get("verification",{}).get("status") in ("official_specific_role_confirmed","university_posted_specific_role","employer_announced_specific_role_secondary_copy") and not v.get("exclude_from_featured"))>=20
