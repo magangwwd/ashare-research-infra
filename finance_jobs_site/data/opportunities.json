@@ -20,7 +20,7 @@
     "经济",
     "管理"
   ],
-  "source_policy": "官方公告与招聘入口优先。宣讲、门户和其他专业提前批不得标记为已确认的财务在招岗位。过期日期自动标记已截止。海外学历与QS门槛只按逐岗位原文认定。",
+  "source_policy": "官方公告与招聘入口优先。宣讲、门户和其他专业提前批不得标记为已确认的财务在招岗位。过期日期自动标记已截止。海外学历与QS门槛只按逐岗位原文认定。 2026-10-20增补：银行综合培养不等同财务会计岗；新发现单位单岗有多个子公司时不要重复计算集团人数。",
   "listings": [
     {
       "id": "chinapost-2027",
@@ -292,6 +292,168 @@
       "verified_from": "华能浙江公司2027届单位招聘官网公告"
     },
     {
+      "id": "sdg-2027-realestate-cashier",
+      "title": "【深圳 · 2027校招】特发地产2027届出纳员（深圳）",
+      "company": "深圳市特发地产有限公司",
+      "type": "央企国企",
+      "regions": [
+        "深圳"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "审计",
+        "管理"
+      ],
+      "deadline": null,
+      "published": "2026-10-16",
+      "overseas": "refer_official",
+      "source_url": "https://sdg.zhaopin.com/info/index.html",
+      "apply_url": "https://sdg.zhaopin.com",
+      "summary": "2027届秋招公告明确：招聘出纳员，工作地深圳，财务相关专业；该公司公告招聘人数为1人。",
+      "notes": "此处1人来自特发地产该单位唯一公布出纳岗名额；最终以企业在线职位详情为准。",
+      "evidence": "employer_official_campus_announcement_with_university_details",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2027届",
+      "min_degree": "本科及以上",
+      "majors_exact": [
+        "财务管理",
+        "会计学",
+        "审计学",
+        "税务",
+        "相关财会专业"
+      ],
+      "work_city": "深圳",
+      "vacancies": 1,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "特发集团官方校招系统→选择2027届校园招聘→所属企业→相应岗位→完善简历及证件照；最多3个志愿，集团管培仅能选一个方向。",
+      "assessment": "简历筛选、综合面试2—3轮、意向沟通、录用通知、签三方",
+      "documents": [
+        "个人简历和证件照",
+        "招聘系统要求的证明材料"
+      ],
+      "overseas_details": "面向2027届，境外毕业及留服认证具体条件本轮未在公告明确列出，应咨询企业招聘方。",
+      "qs_details": "未公布可核实的QS数值门槛",
+      "critical": "深圳真实财务相关岗位名已见公开公告，官方未核实统一报名截止日期，建议立即进入招聘平台核对。此处1人来自特发地产该单位唯一公布出纳岗名额；最终以企业在线职位详情为准。",
+      "priority_tier": 1,
+      "posting_level": "特发集团2027届公告明确具体财务审计/会计/出纳岗位方向",
+      "role_confirmed": true,
+      "verified_from": "特发集团招聘官网 + 2026-10-16高校就业平台公告",
+      "relevance": "core_finance",
+      "source_published_at": "2026-09-11",
+      "recruiting_unit": "深圳市特发地产有限公司"
+    },
+    {
+      "id": "sdg-2027-shenzhen-func-fin-audit",
+      "title": "【深圳 · 2027校招】特发集团总部职能类管培生（财务审计方向）",
+      "company": "深圳市特发集团有限公司",
+      "type": "央企国企",
+      "regions": [
+        "深圳"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "审计",
+        "管理"
+      ],
+      "deadline": null,
+      "published": "2026-10-16",
+      "overseas": "refer_official",
+      "source_url": "https://sdg.zhaopin.com/info/index.html",
+      "apply_url": "https://sdg.zhaopin.com",
+      "summary": "财务审计方向属于正式公布的集团职能类管培生方向；专业包含财务管理、会计、税务、审计等。",
+      "notes": "职能类管培生的财务审计方向并非保证入职即在财务部固定工作；集团总部招聘总人数10人是多个管培方向合计，不能当作财审岗人数。",
+      "evidence": "employer_official_campus_announcement_with_university_details",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2027届",
+      "min_degree": "本科及以上",
+      "majors_exact": [
+        "财务管理",
+        "会计学",
+        "审计学",
+        "税务",
+        "相关财会专业"
+      ],
+      "work_city": "深圳",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "特发集团官方校招系统→选择2027届校园招聘→所属企业→相应岗位→完善简历及证件照；最多3个志愿，集团管培仅能选一个方向。",
+      "assessment": "简历筛选、综合面试2—3轮、意向沟通、录用通知、签三方",
+      "documents": [
+        "个人简历和证件照",
+        "招聘系统要求的证明材料"
+      ],
+      "overseas_details": "面向2027届，境外毕业及留服认证具体条件本轮未在公告明确列出，应咨询企业招聘方。",
+      "qs_details": "未公布可核实的QS数值门槛",
+      "critical": "深圳真实财务相关岗位名已见公开公告，官方未核实统一报名截止日期，建议立即进入招聘平台核对。职能类管培生的财务审计方向并非保证入职即在财务部固定工作；集团总部招聘总人数10人是多个管培方向合计，不能当作财审岗人数。",
+      "priority_tier": 1,
+      "posting_level": "特发集团2027届公告明确具体财务审计/会计/出纳岗位方向",
+      "role_confirmed": true,
+      "verified_from": "特发集团招聘官网 + 2026-10-16高校就业平台公告",
+      "relevance": "core_finance",
+      "source_published_at": "2026-09-11",
+      "recruiting_unit": "深圳市特发集团有限公司"
+    },
+    {
+      "id": "sdg-2027-tefainfo-accounting",
+      "title": "【深圳 · 2027校招】特发信息2027届会计岗",
+      "company": "深圳市特发信息股份有限公司",
+      "type": "央企国企",
+      "regions": [
+        "深圳"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "审计",
+        "管理"
+      ],
+      "deadline": null,
+      "published": "2026-10-16",
+      "overseas": "refer_official",
+      "source_url": "https://sdg.zhaopin.com/info/index.html",
+      "apply_url": "https://sdg.zhaopin.com",
+      "summary": "2027校招公布特发信息招聘会计，接受会计学和财务管理专业；集团说明这家公司岗位分布深圳、东莞等地。",
+      "notes": "集团提供的是特发信息多岗位工作地列表，不代表会计岗一定在深圳；报名截止官方未见统一日期。",
+      "evidence": "employer_official_campus_announcement_with_university_details",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2027届",
+      "min_degree": "本科及以上（最终岗位页面确认）",
+      "majors_exact": [
+        "财务管理",
+        "会计学",
+        "审计学",
+        "税务",
+        "相关财会专业"
+      ],
+      "work_city": "深圳/东莞（岗位实际地点需核）",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "特发集团官方校招系统→选择2027届校园招聘→所属企业→相应岗位→完善简历及证件照；最多3个志愿，集团管培仅能选一个方向。",
+      "assessment": "简历筛选、综合面试2—3轮、意向沟通、录用通知、签三方",
+      "documents": [
+        "个人简历和证件照",
+        "招聘系统要求的证明材料"
+      ],
+      "overseas_details": "面向2027届，境外毕业及留服认证具体条件本轮未在公告明确列出，应咨询企业招聘方。",
+      "qs_details": "未公布可核实的QS数值门槛",
+      "critical": "深圳真实财务相关岗位名已见公开公告，官方未核实统一报名截止日期，建议立即进入招聘平台核对。集团提供的是特发信息多岗位工作地列表，不代表会计岗一定在深圳；报名截止官方未见统一日期。",
+      "priority_tier": 1,
+      "posting_level": "特发集团2027届公告明确具体财务审计/会计/出纳岗位方向",
+      "role_confirmed": true,
+      "verified_from": "特发集团招聘官网 + 2026-10-16高校就业平台公告",
+      "relevance": "core_finance",
+      "source_published_at": "2026-09-11",
+      "recruiting_unit": "深圳市特发信息股份有限公司"
+    },
+    {
       "id": "sgcc-2027-campus",
       "title": "国网直属单位2027届校园宣讲与招聘需求",
       "company": "国家电网有限公司直属单位",
@@ -404,6 +566,978 @@
       "role_confirmed": false,
       "verified_from": "2026-10-17国家电网集团招聘公告/直属单位校园宣讲公告",
       "recruiting_unit": "国家电网有限公司及下属招聘单位"
+    },
+    {
+      "id": "cgws-2027-multicity-project",
+      "title": "【长城证券2027】长城证券项目执行/客户服务/发行岗",
+      "company": "长城证券股份有限公司（中国华能集团旗下）",
+      "type": "央企国企",
+      "regions": [
+        "深圳",
+        "上海"
+      ],
+      "roles": [
+        "金融",
+        "投资",
+        "财务"
+      ],
+      "deadline": "2026-10-31",
+      "published": "2026-09-15",
+      "overseas": "refer_official",
+      "source_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000174",
+      "apply_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000174",
+      "summary": "投行项目尽调、发行文书、资金结算流程等；工作地点包括深圳、上海与北京，最终岗位地点应在申请时核对。",
+      "notes": "上述岗位名、工作地点和专业范围见华能长城证券官方2027招聘职位列表；实际学历和海外资格以具体岗位为准。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2027届",
+      "min_degree": "硕士研究生及以上",
+      "majors_exact": [
+        "财务会计类",
+        "金融学",
+        "经济学",
+        "财政学"
+      ],
+      "work_city": "深圳、上海、北京",
+      "vacancies": null,
+      "application_open": "2026-09-15",
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "公告面向应届高校毕业生，但境外学历应届条件尚未逐条核准。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月31日截止：这是适合财会背景的金融/券商关联岗位，不是企业财务核算岗，需结合岗位职责判断是否符合职业方向。",
+      "priority_tier": 2,
+      "posting_level": "华能官方招聘列表列有该岗位和工作地",
+      "role_confirmed": true,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "finance_adjacent",
+      "source_published_at": "2026-09-11"
+    },
+    {
+      "id": "cgws-2027-shenzhen-invest",
+      "title": "【长城证券2027】长城证券资产管理投资助理岗2",
+      "company": "长城证券股份有限公司（中国华能集团旗下）",
+      "type": "央企国企",
+      "regions": [
+        "深圳"
+      ],
+      "roles": [
+        "金融",
+        "投资",
+        "财务"
+      ],
+      "deadline": "2026-10-31",
+      "published": "2026-09-15",
+      "overseas": "refer_official",
+      "source_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000174",
+      "apply_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000174",
+      "summary": "协助市场分析、投资数据与投后报表、持仓核对及策略复盘；是投资助理，不属于企业财务会计岗位。",
+      "notes": "上述岗位名、工作地点和专业范围见华能长城证券官方2027招聘职位列表；实际学历和海外资格以具体岗位为准。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2027届",
+      "min_degree": "硕士研究生及以上",
+      "majors_exact": [
+        "财务会计类",
+        "金融学",
+        "经济学"
+      ],
+      "work_city": "深圳",
+      "vacancies": null,
+      "application_open": "2026-09-15",
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "公告面向应届高校毕业生，但境外学历应届条件尚未逐条核准。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月31日截止：这是适合财会背景的金融/券商关联岗位，不是企业财务核算岗，需结合岗位职责判断是否符合职业方向。",
+      "priority_tier": 2,
+      "posting_level": "华能官方招聘列表列有该岗位和工作地",
+      "role_confirmed": true,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "finance_adjacent",
+      "source_published_at": "2026-09-11"
+    },
+    {
+      "id": "cgws-2027-shenzhen-research",
+      "title": "【长城证券2027】长城证券综合调研岗",
+      "company": "长城证券股份有限公司（中国华能集团旗下）",
+      "type": "央企国企",
+      "regions": [
+        "深圳"
+      ],
+      "roles": [
+        "金融",
+        "财务",
+        "管理"
+      ],
+      "deadline": "2026-10-31",
+      "published": "2026-09-15",
+      "overseas": "refer_official",
+      "source_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000174",
+      "apply_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000174",
+      "summary": "负责行业资料搜集、经营分析、月季报告及部门综合汇报材料；属于调研管理岗，并非财务会计核算。",
+      "notes": "上述岗位名、工作地点和专业范围见华能长城证券官方2027招聘职位列表；实际学历和海外资格以具体岗位为准。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2027届",
+      "min_degree": "硕士研究生及以上",
+      "majors_exact": [
+        "财务会计类",
+        "统计学",
+        "金融学",
+        "经济学",
+        "企业管理"
+      ],
+      "work_city": "深圳",
+      "vacancies": null,
+      "application_open": "2026-09-15",
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "公告面向应届高校毕业生，但境外学历应届条件尚未逐条核准。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月31日截止：这是适合财会背景的金融/券商关联岗位，不是企业财务核算岗，需结合岗位职责判断是否符合职业方向。",
+      "priority_tier": 2,
+      "posting_level": "华能官方招聘列表列有该岗位和工作地",
+      "role_confirmed": true,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "finance_adjacent",
+      "source_published_at": "2026-09-11"
+    },
+    {
+      "id": "cscec3-shenzhen-2027-finance-track",
+      "title": "中建三局集团（深圳）2027届金融财务类校园招聘",
+      "company": "中建三局集团（深圳）有限公司",
+      "type": "央企国企",
+      "regions": [
+        "深圳"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "金融",
+        "投资"
+      ],
+      "deadline": null,
+      "published": "2026-09-22",
+      "overseas": "refer_official",
+      "source_url": "https://career.hebut.edu.cn/home/recruitment/content/type/2/id/5310.html",
+      "apply_url": "https://zhaopin.cscec3b.com.cn",
+      "summary": "中建三局深圳公司2027校招明确设金融财务类招聘专业：会计学、财务管理、金融学、投资学等。工作范围以深圳与大湾区为主。",
+      "notes": "公告显示“金融财务类”为招聘类别，并非逐岗名称。中建三局校招门户有时响应缓慢，请通过集团官网导航核实。",
+      "evidence": "university_employer_recruitment_bulletin",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2027届",
+      "min_degree": "本科及以上",
+      "majors_exact": [
+        "会计学",
+        "财务管理",
+        "金融学",
+        "投资学"
+      ],
+      "work_city": "深圳为公司所在地；分配范围可能含广州、东莞、佛山、惠州等地",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "中建三局官方招聘门户→2027届校招→深圳公司→查看具体财务/金融职位后投递→集团统一测评→初面复面→录用",
+      "assessment": "中建集团统一测评→初试→复试→签约",
+      "documents": [
+        "个人简历",
+        "学历学位信息",
+        "英语四级/六级成绩证明（具体要求见招聘简章）"
+      ],
+      "overseas_details": "企业对全球知名院校有原则性说明；境外学位是否接受及留服认证细则未核实，应向招聘单位咨询",
+      "qs_details": "提及全球知名院校但未公布QS前多少的数字阈值",
+      "critical": "金融财务类别有明确专业，但没有核实到单独具体岗位和截止时间，必须查职位表。",
+      "priority_tier": 2,
+      "posting_level": "单位校招专业类别，非已确认独立会计岗位",
+      "role_confirmed": false,
+      "verified_from": "河北工业大学就业平台转载单位2027校园招聘宣讲简章",
+      "relevance": "watch",
+      "source_published_at": "2026-09-11"
+    },
+    {
+      "id": "cz2027-czstar-hangzhou",
+      "title": "【浙商银行·2027】杭州 CZ星计划（杭州分行）",
+      "company": "浙商银行",
+      "type": "银行",
+      "regions": [
+        "浙江"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘系统列出的具体岗位：工作城市杭州、硕士及以上；属于银行综合培养/管培方向，不等同会计核算或审计岗位。浙商银行2027届校园招聘，需完成网申后3日内在线测评，10—11月笔面试；境外最高学历毕业期和留服认证要求以当期正式公告为准。",
+      "notes": "本条按招聘页面列示岗位名建立档案，不表示该岗位是独立财务/会计岗；最终具体资格和是否仍开放要登录官方页面核实。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026届和2027届符合毕业窗口者",
+      "min_degree": "硕士研究生及以上",
+      "majors_exact": [
+        "校招公告总体对专业不作统一限制，岗位细则以职位页面为准"
+      ],
+      "work_city": "杭州",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，仅5天；银行综合培养方向，财会毕业生可核对岗位资格，但不是财务部岗位。",
+      "priority_tier": 2,
+      "posting_level": "浙商银行2027届官方校招页面列明的具体岗位名称及城市",
+      "role_confirmed": true,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "bank_related",
+      "source_published_at": "2026-09-11",
+      "recruiting_unit": "浙商银行杭州分行CZ星高潜培养计划"
+    },
+    {
+      "id": "cz2027-czstar-hq",
+      "title": "【浙商银行·2027】杭州 CZ星计划（总行）",
+      "company": "浙商银行（总行/定向）",
+      "type": "银行",
+      "regions": [
+        "浙江"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘系统列出的具体岗位：工作城市杭州、硕士及以上；属于银行综合培养/管培方向，不等同会计核算或审计岗位。浙商银行2027届校园招聘，需完成网申后3日内在线测评，10—11月笔面试；境外最高学历毕业期和留服认证要求以当期正式公告为准。",
+      "notes": "本条按招聘页面列示岗位名建立档案，不表示该岗位是独立财务/会计岗；最终具体资格和是否仍开放要登录官方页面核实。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026届和2027届符合毕业窗口者",
+      "min_degree": "硕士研究生及以上",
+      "majors_exact": [
+        "校招公告总体对专业不作统一限制，岗位细则以职位页面为准"
+      ],
+      "work_city": "杭州",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，仅5天；银行综合培养方向，财会毕业生可核对岗位资格，但不是财务部岗位。",
+      "priority_tier": 2,
+      "posting_level": "浙商银行2027届官方校招页面列明的具体岗位名称及城市",
+      "role_confirmed": true,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "bank_related",
+      "source_published_at": "2026-09-11",
+      "recruiting_unit": "浙商银行总行CZ星高潜培养计划"
+    },
+    {
+      "id": "cz2027-czstar-nanjing",
+      "title": "【浙商银行·2027】南京 CZ星计划（南京分行）",
+      "company": "浙商银行",
+      "type": "银行",
+      "regions": [
+        "江苏"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘系统列出的具体岗位：工作城市南京、硕士及以上；属于银行综合培养/管培方向，不等同会计核算或审计岗位。浙商银行2027届校园招聘，需完成网申后3日内在线测评，10—11月笔面试；境外最高学历毕业期和留服认证要求以当期正式公告为准。",
+      "notes": "本条按招聘页面列示岗位名建立档案，不表示该岗位是独立财务/会计岗；最终具体资格和是否仍开放要登录官方页面核实。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026届和2027届符合毕业窗口者",
+      "min_degree": "硕士研究生及以上",
+      "majors_exact": [
+        "校招公告总体对专业不作统一限制，岗位细则以职位页面为准"
+      ],
+      "work_city": "南京",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，仅5天；银行综合培养方向，财会毕业生可核对岗位资格，但不是财务部岗位。",
+      "priority_tier": 2,
+      "posting_level": "浙商银行2027届官方校招页面列明的具体岗位名称及城市",
+      "role_confirmed": true,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "bank_related",
+      "source_published_at": "2026-09-11",
+      "recruiting_unit": "浙商银行南京分行CZ星高潜培养计划"
+    },
+    {
+      "id": "cz2027-czstar-ningbo",
+      "title": "【浙商银行·2027】宁波 CZ星计划（宁波分行）",
+      "company": "浙商银行",
+      "type": "银行",
+      "regions": [
+        "浙江"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘系统列出的具体岗位：工作城市宁波、硕士及以上；属于银行综合培养/管培方向，不等同会计核算或审计岗位。浙商银行2027届校园招聘，需完成网申后3日内在线测评，10—11月笔面试；境外最高学历毕业期和留服认证要求以当期正式公告为准。",
+      "notes": "本条按招聘页面列示岗位名建立档案，不表示该岗位是独立财务/会计岗；最终具体资格和是否仍开放要登录官方页面核实。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026届和2027届符合毕业窗口者",
+      "min_degree": "硕士研究生及以上",
+      "majors_exact": [
+        "校招公告总体对专业不作统一限制，岗位细则以职位页面为准"
+      ],
+      "work_city": "宁波",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，仅5天；银行综合培养方向，财会毕业生可核对岗位资格，但不是财务部岗位。",
+      "priority_tier": 2,
+      "posting_level": "浙商银行2027届官方校招页面列明的具体岗位名称及城市",
+      "role_confirmed": true,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "bank_related",
+      "source_published_at": "2026-09-11",
+      "recruiting_unit": "浙商银行宁波分行CZ星高潜培养计划"
+    },
+    {
+      "id": "cz2027-czstar-shanghai",
+      "title": "【浙商银行·2027】上海 CZ星计划（上海分行）",
+      "company": "浙商银行",
+      "type": "银行",
+      "regions": [
+        "上海"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘系统列出的具体岗位：工作城市上海、硕士及以上；属于银行综合培养/管培方向，不等同会计核算或审计岗位。浙商银行2027届校园招聘，需完成网申后3日内在线测评，10—11月笔面试；境外最高学历毕业期和留服认证要求以当期正式公告为准。",
+      "notes": "本条按招聘页面列示岗位名建立档案，不表示该岗位是独立财务/会计岗；最终具体资格和是否仍开放要登录官方页面核实。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026届和2027届符合毕业窗口者",
+      "min_degree": "硕士研究生及以上",
+      "majors_exact": [
+        "校招公告总体对专业不作统一限制，岗位细则以职位页面为准"
+      ],
+      "work_city": "上海",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，仅5天；银行综合培养方向，财会毕业生可核对岗位资格，但不是财务部岗位。",
+      "priority_tier": 2,
+      "posting_level": "浙商银行2027届官方校招页面列明的具体岗位名称及城市",
+      "role_confirmed": true,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "bank_related",
+      "source_published_at": "2026-09-11",
+      "recruiting_unit": "浙商银行上海分行CZ星高潜培养计划"
+    },
+    {
+      "id": "cz2027-hangzhou-general",
+      "title": "【浙商银行·2027】杭州 杭州分行综合培养岗",
+      "company": "浙商银行",
+      "type": "银行",
+      "regions": [
+        "浙江"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘系统列出的具体岗位：工作城市杭州、硕士及以上；属于银行综合培养/管培方向，不等同会计核算或审计岗位。浙商银行2027届校园招聘，需完成网申后3日内在线测评，10—11月笔面试；境外最高学历毕业期和留服认证要求以当期正式公告为准。",
+      "notes": "本条按招聘页面列示岗位名建立档案，不表示该岗位是独立财务/会计岗；最终具体资格和是否仍开放要登录官方页面核实。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026届和2027届符合毕业窗口者",
+      "min_degree": "硕士研究生及以上",
+      "majors_exact": [
+        "校招公告总体对专业不作统一限制，岗位细则以职位页面为准"
+      ],
+      "work_city": "杭州",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，仅5天；银行综合培养方向，财会毕业生可核对岗位资格，但不是财务部岗位。",
+      "priority_tier": 2,
+      "posting_level": "浙商银行2027届官方校招页面列明的具体岗位名称及城市",
+      "role_confirmed": true,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "bank_related",
+      "source_published_at": "2026-09-11",
+      "recruiting_unit": "浙商银行杭州分行综合培养"
+    },
+    {
+      "id": "cz2027-hefei",
+      "title": "浙商银行2027届合肥分行招聘入口（具体岗位需登录核对）",
+      "company": "浙商银行合肥分行",
+      "type": "银行",
+      "regions": [
+        "安徽"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘移动端分行列表显示合肥分行。属于分支机构真实招聘入口，但未从公开页面单独核准具体职位名称。",
+      "notes": "2026年10月25日是2027届校招统一截止日期；该分行究竟有哪些独立职位、学历要求需登录官方系统确认。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026、2027届",
+      "min_degree": "按该分行正式岗位详情",
+      "majors_exact": [
+        "以具体分行公告为准"
+      ],
+      "work_city": "合肥",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，但仅核实该分行入口；请确认是否有明确财会岗位，不要将其视为会计岗。",
+      "priority_tier": 2,
+      "posting_level": "已核实该分行2027校招入口，具体岗位名称未核实",
+      "role_confirmed": false,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "watch",
+      "source_published_at": "2026-09-11"
+    },
+    {
+      "id": "cz2027-hq-comprehensive",
+      "title": "【浙商银行·2027】杭州 总行综合培养岗",
+      "company": "浙商银行（总行/定向）",
+      "type": "银行",
+      "regions": [
+        "浙江"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘系统列出的具体岗位：工作城市杭州、硕士及以上；属于银行综合培养/管培方向，不等同会计核算或审计岗位。浙商银行2027届校园招聘，需完成网申后3日内在线测评，10—11月笔面试；境外最高学历毕业期和留服认证要求以当期正式公告为准。",
+      "notes": "本条按招聘页面列示岗位名建立档案，不表示该岗位是独立财务/会计岗；最终具体资格和是否仍开放要登录官方页面核实。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026届和2027届符合毕业窗口者",
+      "min_degree": "硕士研究生及以上",
+      "majors_exact": [
+        "校招公告总体对专业不作统一限制，岗位细则以职位页面为准"
+      ],
+      "work_city": "杭州",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，仅5天；银行综合培养方向，财会毕业生可核对岗位资格，但不是财务部岗位。",
+      "priority_tier": 2,
+      "posting_level": "浙商银行2027届官方校招页面列明的具体岗位名称及城市",
+      "role_confirmed": true,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "bank_related",
+      "source_published_at": "2026-09-11",
+      "recruiting_unit": "浙商银行总行综合培养"
+    },
+    {
+      "id": "cz2027-hq-shaoxing",
+      "title": "【浙商银行·2027】绍兴 总行定向派驻岗位（绍兴）",
+      "company": "浙商银行（总行/定向）",
+      "type": "银行",
+      "regions": [
+        "浙江"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘系统列出的具体岗位：工作城市绍兴、硕士及以上；属于银行综合培养/管培方向，不等同会计核算或审计岗位。浙商银行2027届校园招聘，需完成网申后3日内在线测评，10—11月笔面试；境外最高学历毕业期和留服认证要求以当期正式公告为准。",
+      "notes": "本条按招聘页面列示岗位名建立档案，不表示该岗位是独立财务/会计岗；最终具体资格和是否仍开放要登录官方页面核实。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026届和2027届符合毕业窗口者",
+      "min_degree": "硕士研究生及以上",
+      "majors_exact": [
+        "校招公告总体对专业不作统一限制，岗位细则以职位页面为准"
+      ],
+      "work_city": "绍兴",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，仅5天；银行综合培养方向，财会毕业生可核对岗位资格，但不是财务部岗位。",
+      "priority_tier": 2,
+      "posting_level": "浙商银行2027届官方校招页面列明的具体岗位名称及城市",
+      "role_confirmed": true,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "bank_related",
+      "source_published_at": "2026-09-11",
+      "recruiting_unit": "浙商银行总行定向派驻绍兴分行"
+    },
+    {
+      "id": "cz2027-hq-wenzhou",
+      "title": "【浙商银行·2027】温州 总行定向派驻岗位（温州）",
+      "company": "浙商银行（总行/定向）",
+      "type": "银行",
+      "regions": [
+        "浙江"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘系统列出的具体岗位：工作城市温州、硕士及以上；属于银行综合培养/管培方向，不等同会计核算或审计岗位。浙商银行2027届校园招聘，需完成网申后3日内在线测评，10—11月笔面试；境外最高学历毕业期和留服认证要求以当期正式公告为准。",
+      "notes": "本条按招聘页面列示岗位名建立档案，不表示该岗位是独立财务/会计岗；最终具体资格和是否仍开放要登录官方页面核实。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026届和2027届符合毕业窗口者",
+      "min_degree": "硕士研究生及以上",
+      "majors_exact": [
+        "校招公告总体对专业不作统一限制，岗位细则以职位页面为准"
+      ],
+      "work_city": "温州",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，仅5天；银行综合培养方向，财会毕业生可核对岗位资格，但不是财务部岗位。",
+      "priority_tier": 2,
+      "posting_level": "浙商银行2027届官方校招页面列明的具体岗位名称及城市",
+      "role_confirmed": true,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "bank_related",
+      "source_published_at": "2026-09-11",
+      "recruiting_unit": "浙商银行总行定向派驻温州分行"
+    },
+    {
+      "id": "cz2027-huzhou",
+      "title": "浙商银行2027届湖州分行招聘入口（具体岗位需登录核对）",
+      "company": "浙商银行湖州分行",
+      "type": "银行",
+      "regions": [
+        "浙江"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘移动端分行列表显示湖州分行。属于分支机构真实招聘入口，但未从公开页面单独核准具体职位名称。",
+      "notes": "2026年10月25日是2027届校招统一截止日期；该分行究竟有哪些独立职位、学历要求需登录官方系统确认。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026、2027届",
+      "min_degree": "按该分行正式岗位详情",
+      "majors_exact": [
+        "以具体分行公告为准"
+      ],
+      "work_city": "湖州",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，但仅核实该分行入口；请确认是否有明确财会岗位，不要将其视为会计岗。",
+      "priority_tier": 2,
+      "posting_level": "已核实该分行2027校招入口，具体岗位名称未核实",
+      "role_confirmed": false,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "watch",
+      "source_published_at": "2026-09-11"
+    },
+    {
+      "id": "cz2027-jiaxing",
+      "title": "浙商银行2027届嘉兴分行招聘入口（具体岗位需登录核对）",
+      "company": "浙商银行嘉兴分行",
+      "type": "银行",
+      "regions": [
+        "浙江"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘移动端分行列表显示嘉兴分行。属于分支机构真实招聘入口，但未从公开页面单独核准具体职位名称。",
+      "notes": "2026年10月25日是2027届校招统一截止日期；该分行究竟有哪些独立职位、学历要求需登录官方系统确认。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026、2027届",
+      "min_degree": "按该分行正式岗位详情",
+      "majors_exact": [
+        "以具体分行公告为准"
+      ],
+      "work_city": "嘉兴",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，但仅核实该分行入口；请确认是否有明确财会岗位，不要将其视为会计岗。",
+      "priority_tier": 2,
+      "posting_level": "已核实该分行2027校招入口，具体岗位名称未核实",
+      "role_confirmed": false,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "watch",
+      "source_published_at": "2026-09-11"
+    },
+    {
+      "id": "cz2027-jinhua",
+      "title": "浙商银行2027届金华分行招聘入口（具体岗位需登录核对）",
+      "company": "浙商银行金华分行",
+      "type": "银行",
+      "regions": [
+        "浙江"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘移动端分行列表显示金华分行。属于分支机构真实招聘入口，但未从公开页面单独核准具体职位名称。",
+      "notes": "2026年10月25日是2027届校招统一截止日期；该分行究竟有哪些独立职位、学历要求需登录官方系统确认。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026、2027届",
+      "min_degree": "按该分行正式岗位详情",
+      "majors_exact": [
+        "以具体分行公告为准"
+      ],
+      "work_city": "金华",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，但仅核实该分行入口；请确认是否有明确财会岗位，不要将其视为会计岗。",
+      "priority_tier": 2,
+      "posting_level": "已核实该分行2027校招入口，具体岗位名称未核实",
+      "role_confirmed": false,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "watch",
+      "source_published_at": "2026-09-11"
+    },
+    {
+      "id": "cz2027-shenzhen",
+      "title": "浙商银行2027届深圳分行招聘入口（具体岗位需登录核对）",
+      "company": "浙商银行深圳分行",
+      "type": "银行",
+      "regions": [
+        "深圳"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘移动端分行列表显示深圳分行。属于分支机构真实招聘入口，但未从公开页面单独核准具体职位名称。",
+      "notes": "2026年10月25日是2027届校招统一截止日期；该分行究竟有哪些独立职位、学历要求需登录官方系统确认。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026、2027届",
+      "min_degree": "按该分行正式岗位详情",
+      "majors_exact": [
+        "以具体分行公告为准"
+      ],
+      "work_city": "深圳",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，但仅核实该分行入口；请确认是否有明确财会岗位，不要将其视为会计岗。",
+      "priority_tier": 2,
+      "posting_level": "已核实该分行2027校招入口，具体岗位名称未核实",
+      "role_confirmed": false,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "watch",
+      "source_published_at": "2026-09-11"
+    },
+    {
+      "id": "cz2027-suzhou",
+      "title": "浙商银行2027届苏州分行招聘入口（具体岗位需登录核对）",
+      "company": "浙商银行苏州分行",
+      "type": "银行",
+      "regions": [
+        "江苏"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行官方2027校园招聘移动端分行列表显示苏州分行。属于分支机构真实招聘入口，但未从公开页面单独核准具体职位名称。",
+      "notes": "2026年10月25日是2027届校招统一截止日期；该分行究竟有哪些独立职位、学历要求需登录官方系统确认。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026、2027届",
+      "min_degree": "按该分行正式岗位详情",
+      "majors_exact": [
+        "以具体分行公告为准"
+      ],
+      "work_city": "苏州",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境内毕业2026年1月至2027年7月；境外最高学历2025年1月至2027年7月。须为最高学历毕业后首次就业，按时取得学历学位及留服认证。",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "10月25日截止，但仅核实该分行入口；请确认是否有明确财会岗位，不要将其视为会计岗。",
+      "priority_tier": 2,
+      "posting_level": "已核实该分行2027校招入口，具体岗位名称未核实",
+      "role_confirmed": false,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "watch",
+      "source_published_at": "2026-09-11"
     },
     {
       "id": "maanshan-school-fair",
@@ -817,6 +1951,60 @@
       "verified_from": "https://job.ccb.com/cn/job/announcement.html?annoId=20260903163254718082"
     },
     {
+      "id": "cz2027-hr-bank-system-source",
+      "title": "浙商银行2027届秋招官方招聘计划总览（留学生2025—2027毕业窗口）",
+      "company": "浙商银行",
+      "type": "银行",
+      "regions": [
+        "江苏",
+        "浙江",
+        "上海",
+        "深圳",
+        "安徽"
+      ],
+      "roles": [
+        "金融",
+        "管理",
+        "经济"
+      ],
+      "deadline": "2026-10-25",
+      "published": "2026-09-11",
+      "overseas": "explicit",
+      "source_url": "https://zp.czbank.com.cn/zpweb/zpPostController/planDetailPage.mvc?planId=8a8340e9a033d10501a06502133f0014",
+      "apply_url": "https://zp.czbank.com.cn",
+      "summary": "浙商银行2027届校招集团统一公告：境内2026年1月至2027年7月毕业；境外2025年1月至2027年7月毕业；最高学历毕业后首次就业，取得相应留服认证。",
+      "notes": "这是集团招聘计划，与已单列具体分行岗位相辅相成，并非另一份独立空缺。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2026、2027届",
+      "min_degree": "本科及以上，CZ星岗位通常硕士起",
+      "majors_exact": [
+        "综合培养不限于会计和财务；具体岗位按职位说明"
+      ],
+      "work_city": "江浙沪、深圳、合肥各分行按独立岗位选",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "官方校园招聘系统注册→选择单位及岗位→完善简历、线上测评→笔试面试→录用（以各单位通知为准）",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "境外最高学历毕业2025年1月至2027年7月，留服认证且首次就业",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "2026年10月25日结束本轮网申；这是资格规则汇总，不是一条额外财务岗。",
+      "priority_tier": 3,
+      "posting_level": "官方集团招聘公告",
+      "role_confirmed": false,
+      "verified_from": "浙商银行官方2027校园招聘职位列表（2026-10-20核对）",
+      "relevance": "watch",
+      "source_published_at": "2026-09-11"
+    },
+    {
       "id": "huaneng-audit-finance-special",
       "title": "华能河北新能源2027届：审计管理岗 / 财务管理岗",
       "company": "华能新能源股份有限公司河北分公司",
@@ -973,6 +2161,106 @@
       "posting_level": "官方信息入口（不是已确认财会职位）",
       "role_confirmed": false,
       "verified_from": "https://jshrss.jiangsu.gov.cn/col/col78506/index.html"
+    },
+    {
+      "id": "picc-maanshan-county-2027",
+      "title": "人保财险马鞍山市分公司2027届区县综合类岗位",
+      "company": "中国人民财产保险股份有限公司马鞍山市分公司",
+      "type": "保险国企",
+      "regions": [
+        "马鞍山",
+        "安徽"
+      ],
+      "roles": [
+        "金融",
+        "管理"
+      ],
+      "deadline": null,
+      "published": "2026-10-15",
+      "overseas": "refer_official",
+      "source_url": "https://picc.zhiye.com/custom/campus?ky=&c1=&c2=23&d=-1&C=",
+      "apply_url": "https://picc.zhiye.com/custom/campus?ky=&c1=&c2=23&d=-1&C=",
+      "summary": "2027年安徽省人保财险招聘简章列明马鞍山部分区县综合类岗位。 财务专业是否可申请、具体地点及人数应通过官方职位系统核实。",
+      "notes": "岗位名称见第三方转载招聘简章，当前未从官方页面逐岗证实该职位的专业及截止日期。第三方资料有11月14日截止的提法，但未经官网单独核实，故不作为网站确定截止日。",
+      "evidence": "third_party_bulletin_role_requires_employer_verification",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2027届",
+      "min_degree": "以正式职位详情为准",
+      "majors_exact": [
+        "以具体招聘专业表为准；不能推定招会计"
+      ],
+      "work_city": "马鞍山（市区/县区具体岗位需核实）",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "中国人保财险招聘官网→2027届校园招聘→安徽省分公司→马鞍山→核对具体岗位和报名时间",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "官方系统岗位说明未核实毕业年份及留服认证范围",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "马鞍山本地2027届招聘岗位线索，**非已确认财会职位**；不要把安徽全省140余人当作马鞍山人数。",
+      "priority_tier": 3,
+      "posting_level": "第三方转载有岗位名；招录专业/网申截止/官方单位岗位待核查",
+      "role_confirmed": false,
+      "verified_from": "第三方招聘简章中马鞍山方向；官方在线岗位尚未复核",
+      "relevance": "watch",
+      "source_published_at": "2026-09-11"
+    },
+    {
+      "id": "picc-maanshan-management-2027",
+      "title": "人保财险马鞍山市分公司2027届管理培训生（核对当地岗位）",
+      "company": "中国人民财产保险股份有限公司马鞍山市分公司",
+      "type": "保险国企",
+      "regions": [
+        "马鞍山",
+        "安徽"
+      ],
+      "roles": [
+        "金融",
+        "管理"
+      ],
+      "deadline": null,
+      "published": "2026-10-15",
+      "overseas": "refer_official",
+      "source_url": "https://picc.zhiye.com/custom/campus?ky=&c1=&c2=23&d=-1&C=",
+      "apply_url": "https://picc.zhiye.com/custom/campus?ky=&c1=&c2=23&d=-1&C=",
+      "summary": "2027年安徽省人保财险招聘简章的市州岗位列表列明马鞍山管理培训生方向。 财务专业是否可申请、具体地点及人数应通过官方职位系统核实。",
+      "notes": "岗位名称见第三方转载招聘简章，当前未从官方页面逐岗证实该职位的专业及截止日期。第三方资料有11月14日截止的提法，但未经官网单独核实，故不作为网站确定截止日。",
+      "evidence": "third_party_bulletin_role_requires_employer_verification",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2027届",
+      "min_degree": "以正式职位详情为准",
+      "majors_exact": [
+        "以具体招聘专业表为准；不能推定招会计"
+      ],
+      "work_city": "马鞍山（市区/县区具体岗位需核实）",
+      "vacancies": null,
+      "application_open": null,
+      "application_deadline_time": null,
+      "application_process": "中国人保财险招聘官网→2027届校园招聘→安徽省分公司→马鞍山→核对具体岗位和报名时间",
+      "assessment": "网上申请后进行在线测评及笔试/面试，具体以用人单位通知为准",
+      "documents": [
+        "个人简历",
+        "毕业学历学位资料",
+        "国境外学历留服认证（如适用）",
+        "招聘系统要求的其他材料"
+      ],
+      "overseas_details": "官方系统岗位说明未核实毕业年份及留服认证范围",
+      "qs_details": "未查得统一QS数值门槛，不可只凭排名判断是否符合",
+      "critical": "马鞍山本地2027届招聘岗位线索，**非已确认财会职位**；不要把安徽全省140余人当作马鞍山人数。",
+      "priority_tier": 3,
+      "posting_level": "第三方转载有岗位名；招录专业/网申截止/官方单位岗位待核查",
+      "role_confirmed": false,
+      "verified_from": "第三方招聘简章中马鞍山方向；官方在线岗位尚未复核",
+      "relevance": "watch",
+      "source_published_at": "2026-09-11"
     },
     {
       "id": "psbc-2027",
@@ -1352,6 +2640,127 @@
         "2027",
         "审计",
         "财会"
+      ]
+    },
+    {
+      "id": "czbank_mobile",
+      "name": "浙商银行2027校园招聘岗位及截止时间",
+      "type": "银行",
+      "priority": 1,
+      "url": "https://zp.czbank.com.cn/zpWebMobile/loginController/checkPage.mvc?pageType=1",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "CZ星",
+        "财务",
+        "综合培养",
+        "10月25"
+      ]
+    },
+    {
+      "id": "czbank_announcement",
+      "name": "浙商银行2027届官方校招公告",
+      "type": "银行",
+      "priority": 1,
+      "url": "https://zp.czbank.com.cn/zpweb/zpPostController/planDetailPage.mvc?planId=8a8340e9a033d10501a06502133f0014",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "招聘"
+      ]
+    },
+    {
+      "id": "tefa_campus",
+      "name": "深圳特发集团2027招聘官网",
+      "type": "央企国企",
+      "priority": 1,
+      "url": "https://sdg.zhaopin.com",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "会计",
+        "出纳",
+        "财务审计"
+      ]
+    },
+    {
+      "id": "huaneng_securities",
+      "name": "华能长城证券2027届校招",
+      "type": "央企国企",
+      "priority": 2,
+      "url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000174",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "综合调研",
+        "项目执行",
+        "财务"
+      ]
+    },
+    {
+      "id": "picc_anhui",
+      "name": "人保财险安徽2027届校招正式报名入口",
+      "type": "保险国企",
+      "priority": 2,
+      "url": "https://picc.zhiye.com/custom/campus?ky=&c1=&c2=23&d=-1&C=",
+      "discover": true,
+      "keywords": [
+        "马鞍山",
+        "2027",
+        "综合",
+        "财务"
+      ]
+    },
+    {
+      "id": "cscec3_sz",
+      "name": "中建三局深圳2027财务校招入口",
+      "type": "央企国企",
+      "priority": 2,
+      "url": "https://zhaopin.cscec3b.com.cn",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "金融财务"
+      ]
+    },
+    {
+      "id": "bank_jiangsu",
+      "name": "江苏银行校园招聘官方系统",
+      "type": "银行",
+      "priority": 2,
+      "url": "https://hr.jsbchina.cn",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "招聘",
+        "杭州",
+        "深圳",
+        "财务"
+      ]
+    },
+    {
+      "id": "sgcc_js",
+      "name": "国网江苏电力2027届校园招聘",
+      "type": "国家电网",
+      "priority": 1,
+      "url": "https://gwjsdl.zhaopin.com/cample/index.html",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "财务",
+        "会计"
+      ]
+    },
+    {
+      "id": "shenzhen_tefa_info",
+      "name": "特发集团招聘须知和志愿规则",
+      "type": "央企国企",
+      "priority": 2,
+      "url": "https://sdg.zhaopin.com/info/index.html",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "招聘"
       ]
     }
   ]
