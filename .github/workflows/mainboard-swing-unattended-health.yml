@@ -1,0 +1,70 @@
+name: A-share mainboard swing unattended research CI health
+
+on:
+  schedule:
+    # 07:40 Beijing / Singapore, before the 08:00 research brief.
+    - cron: '40 23 * * *'
+  workflow_dispatch:
+  push:
+    branches: ['main']
+    paths:
+      - '.github/workflows/mainboard-swing-unattended-health.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mainboard-swing-unattended-health
+  cancel-in-progress: false
+
+jobs:
+  research-integrity-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout isolated research branch (no merges, no trading secrets)
+        uses: actions/checkout@v4
+        with:
+          ref: feat/mainboard-short-swing-3to5-paper-20261020
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install offline test dependencies
+        run: python -m pip install 'pandas>=2.2,<4' 'pyarrow>=18'
+      - name: Validate V1 V2 V3 V4 and 15-minute research guards
+        working-directory: astock-quant/stock_state_strategy
+        run: |
+          python -m unittest -v \
+            test_short_swing_3to5_v1.py \
+            test_short_swing_15m_audit.py \
+            test_short_swing_3to5_v2_research.py \
+            test_short_swing_3to5_v3_research.py \
+            test_short_swing_3to5_v4_execution_audit.py
+      - name: Emit research integrity evidence
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/swing-health"
+          python - <<'PY'
+          import json,os,subprocess,datetime,pathlib
+          obj={'project':'A_SHARE_MAINBOARD_3TO5_PAPER',
+               'status':'OFFLINE_TESTS_PASS',
+               'scope':'V1_V2_V3_V4_AND_15M_ONLY',
+               'github_run_id':os.environ['GITHUB_RUN_ID'],
+               'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
+               'checked_at_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+               'live_trading':False,
+               'market_data_replay_executed':False}
+          dest=pathlib.Path(os.environ['RUNNER_TEMP'])/'swing-health/report.json'
+          dest.write_text(json.dumps(obj,indent=2)+'\n')
+          print(json.dumps(obj))
+          PY
+      - name: Keep 30-day CI trace (does not store market data)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swing-research-health-${{ github.run_id }}
+          path: ${{ runner.temp }}/swing-health/report.json
+          retention-days: 30
