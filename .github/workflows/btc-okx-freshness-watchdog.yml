@@ -1,0 +1,80 @@
+name: BTC OKX independent Drive freshness watchdog
+
+on:
+  push:
+    branches: [feature/okx-market-data-archive-20261018]
+    paths:
+      - '.github/workflows/btc-okx-freshness-watchdog.yml'
+      - 'btc-quant/ops/okx_freshness.py'
+      - 'btc-quant/tests/test_okx_freshness.py'
+  workflow_run:
+    workflows: ["BTC OKX sparse archive"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '47 */4 * * *'
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+concurrency:
+  group: btc-okx-independent-freshness
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Run independent watchdog regression tests
+        run: python -m unittest discover -s btc-quant/tests -p 'test_okx_freshness.py' -v
+      - name: Install rclone with existing Drive secret
+        env:
+          GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+      - name: Verify latest successful archive AND actual Drive bytes, open or close alert
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          WATCH_BRANCH: ${{ github.ref_name }}
+          RCLONE_CONFIG: ${{ runner.temp }}/rclone.conf
+        run: |
+          set -euo pipefail
+          python btc-quant/ops/okx_freshness.py
+      - name: Exercise isolated alert creation and recovery (feature branch ONLY)
+        if: github.ref_name == 'feature/okx-market-data-archive-20261018'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os,sys
+          sys.path.insert(0,"btc-quant/ops")
+          import okx_freshness
+          okx_freshness.ISSUE_TITLE="[BTC OKX TEST ONLY] freshness alert drill "+os.environ["GITHUB_RUN_ID"]
+          issue=okx_freshness.sync_issue(False,"TEST ONLY: deliberately simulated staleness, not a real outage.")
+          assert issue and issue["number"], "Issue creation gave no durable ID"
+          again=okx_freshness.sync_issue(False,"TEST ONLY: repeated alert")
+          assert again["number"] == issue["number"], "Alert was not deduplicated"
+          n=issue["number"]
+          okx_freshness.request_json(f"/issues/{n}", "PATCH", {"state":"closed"})
+          confirmed=okx_freshness.request_json(f"/issues/{n}")
+          assert confirmed["state"] == "closed", "Issue did not actually close"
+          print(f"TEST ALERT VERIFIED: issue #{n} created, deduplicated, closed and reread as CLOSED")
+          PY
+      - name: Remove temporary credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rclone.conf"
