@@ -5,6 +5,11 @@ on:
     branches: ['feat/mainboard-short-swing-3to5-paper-20261020']
     paths:
       - '.github/workflows/short-swing-v4-minute-sample.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/short-swing-v4-minute-sample.yml'
+      - 'astock-quant/stock_state_strategy/short_swing_3to5_v4_minute_sample_probe.py'
+      - 'astock-quant/stock_state_strategy/test_short_swing_3to5_v4_minute_sample_probe.py'
   workflow_dispatch:
 
 permissions:
@@ -26,6 +31,7 @@ jobs:
         run: python -m unittest -v test_short_swing_3to5_v4_minute_sample_probe.py
 
   sample-real-provider:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.ref == 'feat/mainboard-short-swing-3to5-paper-20261020'
     needs: minute-sample-offline-tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
