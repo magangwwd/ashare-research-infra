@@ -1,0 +1,52 @@
+name: Finance Jobs Public Site Smoke
+on:
+  workflow_run:
+    workflows: ['Finance Jobs Website Pages']
+    types: [completed]
+permissions:
+  contents: read
+jobs:
+  verify-public:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Fetch public website and both cloud-derived data files
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://magangwwd.github.io/ashare-research-infra"
+          mkdir -p "$RUNNER_TEMP/finance_site_test"
+          for f in index.html app.js styles.css data/latest.json data/monitor.json; do
+            mkdir -p "$RUNNER_TEMP/finance_site_test/$(dirname "$f")"
+            curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 \
+              "$base/$f" -o "$RUNNER_TEMP/finance_site_test/$f"
+          done
+      - name: Verify finance content, SGCC link, dated sourcing and absence of prior medical site
+        env:
+          ROOT: ${{ runner.temp }}/finance_site_test
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ["ROOT"])
+          page=(p/"index.html").read_text("utf-8")
+          js=(p/"app.js").read_text("utf-8")
+          css=(p/"styles.css").read_text("utf-8")
+          d=json.loads((p/"data/latest.json").read_text("utf-8"))
+          m=json.loads((p/"data/monitor.json").read_text("utf-8"))
+          for x in ("urgent","jobs","focus","guide"):
+              assert 'id="'+x+'"' in page,x
+          for id in ("filter-region","filter-qs","filter-overseas","urgent-list","jobs-list"):
+              assert 'id="'+id+'"' in page,id
+          assert "zhaopin.sgcc.com.cn/sgcchr/static/unitPart.html?bullet_id=dcefb56d04714dc4b488d0a7a204bf76" in page
+          assert "乳腺疾病" not in page and "乳腺癌" not in page
+          assert "daysBetween" in js and "near-deadline" in js
+          assert "prefers-reduced-motion" in css
+          assert d.get("schema")==1 and len(d.get("listings",[]))>=15
+          assert d.get("collected_at") and d.get("data_as_of")
+          assert m.get("schema")==1 and isinstance(m.get("sources"),list)
+          assert all(x.get("checked_at") and x.get("source_url") and x.get("posting_level") for x in d["listings"])
+          print("FINANCE_PUBLIC_HTTP_OK listings="+str(len(d["listings"]))+" sources="+str(len(m["sources"]))+
+                " collected="+d["collected_at"]+" data_as_of="+d["data_as_of"])
+          PY
