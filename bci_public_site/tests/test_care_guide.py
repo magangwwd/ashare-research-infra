@@ -41,7 +41,7 @@ class SourcedHospitalGuideTests(unittest.TestCase):
         self.assertGreaterEqual(len(military),5)
         self.assertTrue(all("待核实" in h["verified"] or "历史" in h["verified"] or "研究" in h["verified"] for h in military))
         self.assertIn("现行服务待核实",self.js)
-        self.assertIn("资料来源和更新日期",self.js)
+        self.assertIn("数据来源和更新日期",self.js)
         self.assertIn("不等于推荐或疗效排名",self.html)
     def test_simple_hospital_ui_still_has_real_sources(self):
         self.assertIn("hospitalMatch",self.js)
