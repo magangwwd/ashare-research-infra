@@ -7,6 +7,7 @@ on:
       - '.github/workflows/short-swing-v5-causal-ranking.yml'
       - 'astock-quant/stock_state_strategy/short_swing_3to5_v5_causal_ranking.py'
       - 'astock-quant/stock_state_strategy/test_short_swing_3to5_v5_causal_ranking.py'
+      - 'astock-quant/stock_state_strategy/short_swing_3to5_v5_slippage_stress.py'
   pull_request:
     paths:
       - '.github/workflows/short-swing-v5-causal-ranking.yml'
@@ -109,6 +110,27 @@ jobs:
           print('V5_FULL_CASH_PATH_PAPER_CHECKED', [
              (x['name'],x['summary']['total_return'],x['summary']['max_drawdown'],
               x['summary']['closed_trades']) for x in d['variants']])
+          PY
+      - name: Recompute portfolio at adverse per-side slippage 0.3 and 0.5 pct
+        shell: bash
+        run: |
+          set -euo pipefail
+          python astock-quant/stock_state_strategy/short_swing_3to5_v5_slippage_stress.py \
+            --market-root "$RUNNER_TEMP/gold" --risk-root "$RUNNER_TEMP/risk" \
+            --start "$START" --end "$END" \
+            --gold-manifest-sha256 56003f3eab3ea4ad405ac692e11cb7ff42bb0b700d177903311b8829cd24ded6 \
+            --output "$RUNNER_TEMP/mainboard-v5/stress.json"
+          python - <<'PY'
+          import json,os,pathlib
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])/'mainboard-v5'
+          base=json.loads((root/'comparison.json').read_text())
+          stress=json.loads((root/'stress.json').read_text())
+          assert base['gold_source']['sha256']==stress['gold_manifest_sha256']
+          assert stress['predeclared_slippage_each_fill']==[.003,.005]
+          assert len(stress['runs'])==2
+          assert all([x['name'] for x in row['results']]==[v['name'] for v in base['variants']]
+                     for row in stress['runs'])
+          print('STRESS_PAPER_CAPITAL_PATH_VALIDATED')
           PY
       - name: Archive immutable V5 paper-only result and check Google Drive
         shell: bash
