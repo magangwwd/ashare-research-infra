@@ -243,6 +243,32 @@ def directly_exportable_sheet():
                 "sha256":hashlib.sha256(raw).hexdigest(),"bytes":raw}
     except requests.RequestException:return None
 
+def archive_direct_download(export):
+    """Immutably archive owner-permitted original source bytes and verify readback."""
+    from publish_drive import auth,API
+    raw=export["bytes"]
+    ext="xlsx" if export["name"].lower().endswith(".xlsx") else "csv"
+    name=("qq2027_"+datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")+
+          "_"+export["sha256"][:16]+"."+ext)
+    with auth() as client:
+        init=client.post("https://www.googleapis.com/upload/drive/v3/files",
+            params={"uploadType":"resumable"},json={"name":name,"parents":[DRIVE_FOLDER],
+                "mimeType":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                if ext=="xlsx" else "text/csv"},
+            headers={"X-Upload-Content-Type":"application/octet-stream",
+                "X-Upload-Content-Length":str(len(raw))},timeout=30)
+        url=init.headers.get("Location","")
+        if init.status_code not in (200,201) or not url.startswith("https://www.googleapis.com/"):
+            raise RuntimeError("Cannot archive owner-permitted QQ export")
+        response=client.put(url,data=raw,headers={"Content-Type":"application/octet-stream"},timeout=90)
+        if response.status_code not in (200,201):raise RuntimeError("Failed to save QQ raw export")
+        ident=response.json().get("id")
+        if not ident:raise RuntimeError("Missing Drive archive ID")
+        check=client.get(API+"/"+ident,params={"alt":"media"},timeout=90)
+        if check.status_code!=200 or hashlib.sha256(check.content).hexdigest()!=export["sha256"]:
+            raise RuntimeError("QQ original export readback SHA mismatch")
+    return name
+
 def run(out_path):
     stamp=datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
     result={"schema":1,"source_id":"qq_2027_master","source_url":SOURCE,
@@ -252,14 +278,16 @@ def run(out_path):
       "leads":[],"skip_reasons":{},
       "warning":"腾讯文档只能查看不能保证允许导出，未读取单元格前绝不声称自动同步或岗位匹配。"}
     try:
-        export=drive_export()
-        if not export:
-            export=directly_exportable_sheet()
+        export=directly_exportable_sheet()
+        live_direct=bool(export)
+        if not export:export=drive_export()
         if export:
+            if live_direct:export["name"]=archive_direct_download(export)
             name=export["name"]
             sheets=csv_rows(export["bytes"]) if name.lower().endswith(".csv") else xlsx_rows(export["bytes"])
             leads,stats=parse_leads(sheets)
             result.update(status="authorized_export_imported",raw_download_permitted=True,
+                freshness="direct_authorized_export" if live_direct else "stored_authorized_export",
                 archived_name=name,archived_sha256=export["sha256"],
                 archived_modified_at=export["modified_at"],
                 rows_examined=stats["rows_examined"],qualified_count=stats["matched"],
