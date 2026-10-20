@@ -37,6 +37,8 @@ def export_snapshot(source,publicdir):
         "checked_at_utc":qq.get("checked_at_utc"),
         "status":qq.get("status"),"qualified_count":qq.get("qualified_count",0),
         "rows_examined":qq.get("rows_examined",0),
+        "source_freshness":qq.get("freshness","none"),
+        "source_export_modified_at":qq.get("archived_modified_at"),
         "leads":qq.get("leads",[]),
         "warning":qq.get("warning","第三方招聘线索，必须核实原文")
     }
