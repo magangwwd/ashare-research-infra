@@ -38,7 +38,7 @@ class AuditTests(unittest.TestCase):
         v5,minute=fixture()
         q=minute.drop(minute.index[0])
         r=audit.inspect_v5_january(v5,q,1)
-        self.assertEqual(r["both_entry_exit_dates_16_bars"],0)
+        self.assertEqual(r["both_entry_exit_dates_17_tushare_records"],0)
     def test_contradictory_target_is_reported_not_accepted(self):
         v5,minute=fixture()
         minute.loc[minute["trade_date"]=="2026-01-09","high"]=10.3
