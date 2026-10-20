@@ -354,19 +354,19 @@ function renderQQ(){
     status.textContent='当前状态：表格仅可查看，未取得授权导出的完整单元格数据；已保留链接并每日核查。最近检查 '+when+' UTC。';
     container.hidden=true;return;
   }
-  const items=Array.isArray(qq.leads)?qq.leads.filter(x=>(!x.deadline||daysBetween(x.deadline)>=0)&&['official_specific_role_confirmed','university_posted_specific_role','employer_announced_specific_role_secondary_copy'].includes(x.verification?.status)&&!x.exclude_from_featured).sort((a,b)=>{const score=x=>x.verification?.status==='official_specific_role_confirmed'?0:['university_posted_specific_role','employer_announced_specific_role_secondary_copy'].includes(x.verification?.status)?1:x.verification?.status==='employer_announced_role_category'?2:3;return score(a)-score(b)||(a.deadline||'9999').localeCompare(b.deadline||'9999')||String(a.company).localeCompare(String(b.company),'zh-CN');}):[];
+  const items=Array.isArray(qq.leads)?qq.leads.filter(x=>(!x.deadline||daysBetween(x.deadline)>=0)&&['official_specific_role_confirmed','university_posted_specific_role','employer_announced_specific_role_secondary_copy'].includes(x.verification?.status)&&!x.exclude_from_featured).sort((a,b)=>(Number(b.resume_match_score)||0)-(Number(a.resume_match_score)||0)||(a.deadline||'9999').localeCompare(b.deadline||'9999')||String(a.company).localeCompare(String(b.company),'zh-CN')):[];;
   const sourceType=qq.source_freshness==='uploaded_authorized_export'?'2026年10月20日上传的腾讯文档表格副本':qq.source_freshness==='direct_authorized_export'?'本次已授权的腾讯原始导出':'以前保存到云盘的授权导出副本';
   const sourceDate=qq.source_export_modified_at?'，源文件存档时间 '+qq.source_export_modified_at.slice(0,10):'';
-  status.textContent='已读取'+sourceType+sourceDate+'；扫描 '+qq.rows_examined+' 行、初筛 '+qq.leads.length+' 条、其中 '+items.length+' 条已找到具体岗位证据（可能存在城市或海外资格待核条件）。其他记录继续存档待查；原始汇总表不会自动实时更新。';
+  status.textContent='已读取'+sourceType+sourceDate+'；扫描 '+qq.rows_examined+' 行、自动入库 '+(qq.raw_leads?.length||qq.leads.length)+' 条表格线索，其中 '+items.length+' 条已找到具体岗位证据，按简历相关度排序。注意：源文件为保存的授权副本，不是腾讯实时同步。';
   $('qq-shortlist-count').textContent=items.length+' 条';
   const el=$('qq-shortlist-list');el.replaceChildren();
   items.slice(0,100).forEach(job=>{
     const row=n('article','qq-lead');
-    row.append(n('span','qq-lead-tag','来源：腾讯文档《27届秋招汇总表格》 · '+(job.verification?.status==='official_specific_role_confirmed'?'已核实官网具体岗位':(job.verification?.status==='university_posted_specific_role'||job.verification?.status==='employer_announced_specific_role_secondary_copy'?'已核实具体岗位公告':job.verification?.status==='official_recruitment_page_confirmed'?'已确认招聘专题，单岗待核':'表格线索，待岗位核实'))));
+    row.append(n('span','qq-lead-tag',(job.priority_tier?'优先级'+job.priority_tier+' · 匹配度'+job.resume_match_score+' · ':'')+'来源：腾讯文档《27届秋招汇总表格》 · +(job.verification?.status==='official_specific_role_confirmed'?'已核实官网具体岗位':(job.verification?.status==='university_posted_specific_role'||job.verification?.status==='employer_announced_specific_role_secondary_copy'?'已核实具体岗位公告':job.verification?.status==='official_recruitment_page_confirmed'?'已确认招聘专题，单岗待核':'表格线索，待岗位核实'))));
     row.append(n('strong','',job.title),n('p','',job.company+' · '+job.work_city+
       (job.deadline?' · 截止（待官方确认）'+job.deadline:' · 截止时间未核实')));
     const reasons=n('p','qq-lead-reasons',(job.match_reasons||[]).join(' · '));
-    row.append(reasons,n('p','qq-lead-reasons',job.review_state||'本条岗位须以官网实时信息为准'),anchor('查看原始腾讯表格 ↗',job.third_party_url||qq.source_url,'source-link'));
+    row.append(reasons,n('p','qq-match',(job.resume_match_reasons||[]).join('；')||'财务审计方向相关，具体资格待核'),n('p','qq-lead-reasons','注意：'+(job.fit_caution||job.review_state||'实际网申状态待核')),anchor('查看原始腾讯表格 ↗',job.third_party_url||qq.source_url,'source-link'));
     if(job.verification?.evidence_url){const ev=job.verification.evidence_url;try{const u=new URL(ev);if(u.protocol==='https:'&&!u.username&&!u.password&&u.hostname){const e=n('a','source-link','查看核查证据 ↗');e.href=u.href;e.target='_blank';e.rel='noopener noreferrer nofollow';row.append(e);}}catch{}}
     const original=job.original_link;
     if(original&&SAFE_HOSTS.has((()=>{try{return new URL(original).hostname}catch{return ''}})())){
@@ -466,7 +466,7 @@ async function init(){
    catch{state.ledger=null;}
    try{const q=await fetchJSON('./data/qq_feed.json');if(q.schema===1&&q.source_url?.startsWith('https://docs.qq.com/sheet/'))state.qq=q;}
    catch{state.qq=null;}
-   try{const uploaded=await fetchJSON('./data/qq_uploaded_shortlist.json');if(uploaded.schema===1&&uploaded.source_url?.startsWith('https://docs.qq.com/sheet/')&&Array.isArray(uploaded.leads)){if(!state.qq||state.qq.status!=='authorized_export_imported'||!state.qq.leads?.length)state.qq=uploaded;}}catch{}
+   try{const uploaded=await fetchJSON('./data/qq_uploaded_shortlist.json');if(uploaded.schema===1&&uploaded.source_url?.startsWith('https://docs.qq.com/sheet/')&&Array.isArray(uploaded.leads)){const raw=state.qq?.status==='authorized_export_imported'?state.qq:null;state.qq={...uploaded,raw_leads:raw?.leads||[],rows_examined:raw?.rows_examined||uploaded.rows_examined,source_export_modified_at:raw?.source_export_modified_at||uploaded.source_export_modified_at,source_freshness:raw?'stored_authorized_export':uploaded.source_freshness,checked_at_utc:raw?.checked_at_utc||uploaded.checked_at_utc};}}catch{}
    renderUrgent();renderJobs();renderSources();renderChanges();renderQQ();
  }catch{
    ['jobs-list','urgent-list','sources-list'].forEach(id=>$(id).replaceChildren(n('p','loading','云盘最新招聘数据暂不可用。不能据旧信息认定报名仍开放，请直接访问国家电网等官方招聘网站。')));
