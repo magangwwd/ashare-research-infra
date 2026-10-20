@@ -52,7 +52,12 @@ jobs:
           python -m unittest -v test_short_swing_3to5_v1.py test_short_swing_15m_audit.py test_short_swing_3to5_v2_research.py
 
   gold-variant-compare:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       github.event.pull_request.head.ref == 'feat/mainboard-short-swing-3to5-paper-20261020')
     needs: offline-tests
     runs-on: ubuntu-latest
     timeout-minutes: 180
