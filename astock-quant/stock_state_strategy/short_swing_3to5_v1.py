@@ -350,6 +350,8 @@ def run_cli() -> None:
     ap.add_argument("--budget-cny", type=float, default=40000.0)
     ap.add_argument("--cash-cny", type=float, default=50000.0)
     ap.add_argument("--output", type=Path, required=True)
+    ap.add_argument("--minute-source-root", type=Path,
+                    help="Optional 600351.SH Baostock 15m SHADOW ONLY; no order effects")
     args = ap.parse_args()
     today = datetime.now(ZoneInfo("Asia/Shanghai"))
     if pd.Timestamp(args.end).date() > today.date() or (
@@ -362,7 +364,15 @@ def run_cli() -> None:
     risk = GoldPITRisk(args.risk_root)
     if not risk.limits or not risk.names:
         raise RuntimeError("No valid PIT risk evidence")
-    report = simulate(panel, risk, policy, start=args.start)
+    signals = build_signals(panel, policy, risk)
+    report = simulate(panel, risk, policy, signals=signals, start=args.start)
+    if args.minute_source_root is not None:
+        from short_swing_15m_audit import audit_source
+        report["minute_shadow_audit"] = audit_source(
+            args.minute_source_root, panel, signals, report["trades"])
+    else:
+        report["minute_shadow_audit"] = {
+            "mode": "NOT_REQUESTED", "incremental_15m_profitability_proven": False}
     report["source"] = {"manifest_as_of": manifest["as_of_date"],
                         "manifest_sha256": manifest_sha, "start": args.start, "end": args.end,
                         "risk_summary": risk.summary()}
