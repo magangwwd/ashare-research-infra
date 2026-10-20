@@ -1,33 +1,54 @@
-name: BTC OKX archive freshness watchdog
+name: BTC OKX independent Drive freshness watchdog
+
 on:
+  push:
+    branches: [feature/okx-market-data-archive-20261018]
+    paths:
+      - '.github/workflows/btc-okx-freshness-watchdog.yml'
+      - 'btc-quant/ops/okx_freshness.py'
+      - 'btc-quant/tests/test_okx_freshness.py'
   workflow_dispatch:
   schedule:
     - cron: '47 */4 * * *'
+
 permissions:
   actions: read
   contents: read
+  issues: write
+
+concurrency:
+  group: btc-okx-independent-freshness
+  cancel-in-progress: false
+
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    env:
-      GH_TOKEN: ${{ github.token }}
-      GH_REPO: ${{ github.repository }}
+    timeout-minutes: 15
     steps:
-      - name: Verify recent successful archive run
-        shell: bash
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Run independent watchdog regression tests
+        run: python -m unittest discover -s btc-quant/tests -p 'test_okx_freshness.py' -v
+      - name: Install rclone with existing Drive secret
+        env:
+          GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
         run: |
           set -euo pipefail
-          python - <<'PY'
-          import datetime as dt,json,os,urllib.request
-          url=f"https://api.github.com/repos/{os.environ['GH_REPO']}/actions/workflows/btc-okx-market-archive.yml/runs?per_page=20"
-          req=urllib.request.Request(url,headers={"Authorization":"Bearer "+os.environ["GH_TOKEN"],"Accept":"application/vnd.github+json"})
-          with urllib.request.urlopen(req,timeout=25) as r: runs=json.load(r)["workflow_runs"]
-          now=dt.datetime.now(dt.timezone.utc)
-          good=[x for x in runs if x.get("conclusion")=="success"]
-          if not good: raise SystemExit("ALERT: no successful OKX archive workflow run")
-          latest=max(dt.datetime.fromisoformat(x["created_at"].replace("Z","+00:00")) for x in good)
-          age=(now-latest).total_seconds()/3600
-          print(f"Latest successful archive run age: {age:.2f}h")
-          if age>6: raise SystemExit(f"ALERT: archive freshness exceeded 6 hours: {age:.2f}")
-          PY
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+      - name: Verify latest successful archive AND actual Drive bytes, open or close alert
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          WATCH_BRANCH: ${{ github.ref_name }}
+          RCLONE_CONFIG: ${{ runner.temp }}/rclone.conf
+        run: |
+          set -euo pipefail
+          python btc-quant/ops/okx_freshness.py
+      - name: Remove temporary credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rclone.conf"
