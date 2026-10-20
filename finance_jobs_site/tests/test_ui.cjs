@@ -10,14 +10,29 @@ const data={...curated,collected_at:'2026-10-20T08:00:00Z',data_as_of:curated.as
 const monitor={schema:1,checked_at:'2026-10-20T08:00:00Z',sources:[],potential_new_announcements:[]};
 const changes={events:[{kind:'new_curated_record',id:'j1',title:'新收录记录',source:'https://zhaopin.sgcc.com.cn',note:'入库，不代表今天才发布'}],
   total_events:1,counts:{new_curated_record:1},previous_collected_at:'2026-10-19T08:00:00Z'};
+const qq={schema:1,source_url:'https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2',
+ checked_at_utc:'2026-10-20T12:00:00Z',status:'authorized_export_imported',
+ qualified_count:2,rows_examined:12,leads:[
+ {title:'会计岗',company:'上海某公司',work_city:'上海',deadline:'2026-10-31',
+  third_party_url:'https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2',
+  role_confirmed:false,match_reasons:['专业匹配']},
+ {title:'旧审计岗',company:'过期公司',work_city:'南京',deadline:'2026-10-01',
+  third_party_url:'https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2',
+  role_confirmed:false,match_reasons:['过期应跳过']}
+ ]};
 const dom=new JSDOM(page,{url:'https://example.test/ashare-research-infra/',runScripts:'outside-only'});
-dom.window.fetch=async url=>({ok:true,json:async()=>String(url).includes('monitor.json')?monitor:String(url).includes('changes.json')?changes:data});
+dom.window.fetch=async url=>({ok:true,json:async()=>String(url).includes('monitor.json')?monitor:String(url).includes('changes.json')?changes:String(url).includes('qq_feed.json')?qq:data});
 dom.window.eval(fs.readFileSync(path.join(ROOT,'app.js'),'utf8'));
 const $=id=>dom.window.document.getElementById(id);
 function trigger(id,type){$(id).dispatchEvent(new dom.window.Event(type,{bubbles:true}));}
 (async()=>{
  await new Promise(r=>setTimeout(r,80));
  assert.equal($('stat-items').textContent,String(curated.listings.length));
+ assert.ok($('qq-feed-status').textContent.includes('扫描 12 行'));
+ assert.equal($('qq-shortlist').hidden,false);
+ assert.equal($('qq-shortlist-list').querySelectorAll('.qq-lead').length,1);
+ assert.ok(!$('qq-shortlist-list').textContent.includes('过期公司'));
+ assert.ok($('qq-shortlist-list a[href]').getAttribute('href').startsWith('https://docs.qq.com/'));
  // All jobs must be visible immediately, not behind a load-more button.
  assert.equal($('jobs-list').querySelectorAll('.job-card').length,curated.listings.length);
  assert.ok($('job-filter-count').textContent.includes('已全部展示'));
