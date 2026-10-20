@@ -395,7 +395,7 @@ function renderQQ(){
   const el=$('qq-shortlist-list');el.replaceChildren();
   items.slice(0,100).forEach(job=>{
     const row=n('article','qq-lead');
-    row.append(n('span','qq-lead-tag',(job.priority_tier?'优先级'+job.priority_tier+' · 匹配度'+job.resume_match_score+' · ':'')+'来源：腾讯文档《27届秋招汇总表格》 · +(job.verification?.status==='official_specific_role_confirmed'?'已核实官网具体岗位':(job.verification?.status==='university_posted_specific_role'||job.verification?.status==='employer_announced_specific_role_secondary_copy'?'已核实具体岗位公告':job.verification?.status==='official_recruitment_page_confirmed'?'已确认招聘专题，单岗待核':'表格线索，待岗位核实'))));
+    row.append(n('span','qq-lead-tag',(job.priority_tier?'优先级'+job.priority_tier+' · 匹配度'+job.resume_match_score+' · ':'')+'来源：腾讯文档《27届秋招汇总表格》 · '+(job.verification?.status==='official_specific_role_confirmed'?'已核实官网具体岗位':(job.verification?.status==='university_posted_specific_role'||job.verification?.status==='employer_announced_specific_role_secondary_copy'?'已核实具体岗位公告':job.verification?.status==='official_recruitment_page_confirmed'?'已确认招聘专题，单岗待核':'表格线索，待岗位核实'))));
     row.append(n('strong','',job.title),n('p','',job.company+' · '+job.work_city+
       (job.deadline?' · 截止（待官方确认）'+job.deadline:' · 截止时间未核实')));
     const reasons=n('p','qq-lead-reasons',(job.match_reasons||[]).join(' · '));
