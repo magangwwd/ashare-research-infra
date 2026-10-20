@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Validate downloaded Drive snapshot; export public site files without credentials."""
-import argparse,hashlib,json,pathlib
+import argparse,csv,hashlib,json,pathlib
 from update_sources import validate_curated
 
 def export_snapshot(source,publicdir):
@@ -47,6 +47,17 @@ def export_snapshot(source,publicdir):
     (publicdir/"monitor.json").write_text(json.dumps(monitor,ensure_ascii=False,indent=2)+"\n","utf-8")
     (publicdir/"changes.json").write_text(json.dumps(ledger,ensure_ascii=False,indent=2)+"\n","utf-8")
     (publicdir/"qq_feed.json").write_text(json.dumps(sanitized,ensure_ascii=False,indent=2)+"\n","utf-8")
+    # Public TSV/CSV-style archive is limited to published non-identifying lead fields.
+    # Prevent spreadsheet formula injection when users open the file in Excel.
+    def csv_safe(value):
+        val=str(value or "").replace("\r"," ").replace("\n"," ")
+        return "'"+val if val.lstrip().startswith(("=","+","-","@")) else val
+    columns=("company","title","work_city","deadline","resume_match_score","source_sheet","source_row","original_link","third_party_url","review_state")
+    with (publicdir/"qq_leads.csv").open("w",encoding="utf-8-sig",newline="") as fp:
+        writer=csv.writer(fp)
+        writer.writerow(columns)
+        for lead in sanitized["leads"]:
+            writer.writerow([csv_safe(lead.get(field)) for field in columns])
     return {"archive_sha256":hashlib.sha256(raw).hexdigest(),
         "records":len(data["listings"]),"sources_checked":len(monitor["sources"]),
         "changes":ledger["total_events"],"qq_imported":sanitized["qualified_count"],
