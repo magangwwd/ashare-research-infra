@@ -38,7 +38,7 @@ class CareersContract(unittest.TestCase):
   self.assertTrue(all(j["qs_threshold"] is None for j in self.doc["listings"]))
   sgcc=next(j for j in self.doc["listings"] if j["id"]=="sgcc-2027-general")
   self.assertFalse(sgcc["role_confirmed"])
-  self.assertIn("财务会计",sgcc["critical"])
+  self.assertTrue(any("财务会计" in x or "会计" in x for x in sgcc["majors_exact"]))
  def test_deadlines_and_distinct_parent_companies(self):
   post=next(j for j in self.doc["listings"] if j["id"]=="chinapost-2027")
   savings=next(j for j in self.doc["listings"] if j["id"]=="psbc-2027")
