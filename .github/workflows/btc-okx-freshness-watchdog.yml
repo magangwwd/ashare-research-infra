@@ -49,6 +49,22 @@ jobs:
         run: |
           set -euo pipefail
           python btc-quant/ops/okx_freshness.py
+      - name: Exercise isolated alert creation and recovery (feature branch ONLY)
+        if: github.ref_name == 'feature/okx-market-data-archive-20261018'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os,sys
+          sys.path.insert(0,"btc-quant/ops")
+          import okx_freshness
+          okx_freshness.ISSUE_TITLE="[BTC OKX TEST ONLY] freshness alert drill "+os.environ["GITHUB_RUN_ID"]
+          okx_freshness.sync_issue(False,"TEST ONLY: deliberately simulated staleness, not a real outage.")
+          okx_freshness.sync_issue(True,"TEST ONLY: recovery")
+          print("TEST ALERT: GitHub Issue created, deduplicated and closed after recovery")
+          PY
       - name: Remove temporary credentials
         if: always()
         run: rm -f "$RUNNER_TEMP/rclone.conf"
