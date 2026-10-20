@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "source_url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
-  "checked_at_utc": "2026-10-20T14:00:00Z",
+  "checked_at_utc": "2026-10-20T13:52:10.098Z",
   "status": "authorized_export_imported",
   "source_freshness": "uploaded_authorized_export",
   "source_export_modified_at": "2026-10-20T12:59:00Z",
@@ -885,7 +885,7 @@
       "third_party_url": "https://career.hebut.edu.cn/home/correcruit/content/id/80189.html",
       "original_link": "https://career.hebut.edu.cn/home/correcruit/content/id/80189.html",
       "source_type": "official_independent",
-      "source_label": "来源：雇主官方招聘网站（独立发现）",
+      "source_label": "来源：腾讯文档汇总表 → 高校就业招聘简章",
       "match_reasons": [
         "找到岗位官方或高校招聘公告",
         "财会审计专业与目标城市相关"
@@ -897,7 +897,7 @@
       "fit_caution": "相关高校招聘平台该条有效期可能于2026年10月20日届满；须立即从雇主官方系统核查报名能否提交。",
       "priority_tier": "A",
       "role_confirmed": true,
-      "review_state": "相关高校招聘平台该条有效期可能于2026年10月20日届满；须立即从雇主官方系统核查报名能否提交。",
+      "review_state": "高校就业平台发布的2027 GE医疗FMP上海项目及毕业窗口已核实；雇主官网对应岗位目前是否开放仍须直接核查。相关高校招聘平台该条有效期可能于2026年10月20日届满；须立即从雇主官方系统核查报名能否提交。",
       "verification": {
         "status": "university_posted_specific_role",
         "checked_at": "2026-10-20",
