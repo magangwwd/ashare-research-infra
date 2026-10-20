@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 
 VERSION = "MAINBOARD_SWING_3TO5_FIXED_CNY_PAPER_V1"
-MAINBOARD = re.compile(r"^(?:60[0135]\\d{3})\\.SH$|^(?:00[0123]\\d{3})\\.SZ$")
+MAINBOARD = re.compile(r"^(?:60[0135]\d{3})\.SH$|^(?:00[0123]\d{3})\.SZ$")
 COLUMNS = {
     "daily_prices": ["vendor_symbol", "trade_date", "open", "high", "low", "close",
                      "volume_shares", "turnover_cny", "is_quality_valid"],
