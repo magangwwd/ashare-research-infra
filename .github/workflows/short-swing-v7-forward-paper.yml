@@ -1,0 +1,116 @@
+name: A-share V7 frozen future PAPER receipt - manual
+
+on:
+  push:
+    branches: ['feat/mainboard-short-swing-3to5-paper-20261020']
+    paths:
+      - '.github/workflows/short-swing-v7-forward-paper.yml'
+      - 'astock-quant/stock_state_strategy/short_swing_v7_forward_receipt.py'
+      - 'astock-quant/stock_state_strategy/test_short_swing_v7_forward_receipt.py'
+  pull_request:
+    paths:
+      - '.github/workflows/short-swing-v7-forward-paper.yml'
+      - 'astock-quant/stock_state_strategy/short_swing_v7_forward_receipt.py'
+      - 'astock-quant/stock_state_strategy/test_short_swing_v7_forward_receipt.py'
+  workflow_dispatch:
+    inputs:
+      as_of:
+        description: "Today's fully closed Shanghai trade session YYYY-MM-DD >= 2026-10-21"
+        required: true
+        type: string
+        default: '2026-10-21'
+
+permissions:
+  contents: read
+
+jobs:
+  offline-receipt-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - run: python -m pip install 'pandas>=2.2,<4' 'pyarrow>=18'
+      - name: Enforce frozen prospective signal and no backfill as OOS
+        working-directory: astock-quant/stock_state_strategy
+        run: python -m unittest -v test_short_swing_v7_forward_receipt.py
+
+  capture-genuine-postclose-paper-signal:
+    if: github.event_name == 'workflow_dispatch'
+    needs: offline-receipt-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      ASOF: '${{ inputs.as_of }}'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - run: python -m pip install 'pandas>=2.2,<4' 'pyarrow>=18'
+      - name: Validate exact same-day post-close capture clock before reading anything
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os,sys
+          from datetime import datetime,date,time
+          from zoneinfo import ZoneInfo
+          now=datetime.now(ZoneInfo('Asia/Shanghai'))
+          d=date.fromisoformat(os.environ['ASOF'])
+          assert d>date(2026,10,20) and d==now.date() and now.time()>=time(15,30), 'NO RETROACTIVE OOS / MARKET STILL OPEN'
+          print('PREMARKET_NEXT_DAY_SIGNAL_CAPTURE_CLOCK_VALID')
+          PY
+      - name: Authenticate existing read/write Drive remote privately
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo '::error::Missing authorized Drive configuration'; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Fetch latest PIT Tushare Gold and historic risk rows
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='gdrive:down_data/data/gold/main_board'
+          mkdir -p "$RUNNER_TEMP/gold" "$RUNNER_TEMP/risk/name_history"
+          rclone copyto "$base/manifest.json" "$RUNNER_TEMP/gold/manifest.json"
+          for year in $(seq 2025 "${ASOF:0:4}"); do
+            for dataset in daily_prices adjustment_factors; do
+              rclone copy "$base/$dataset/year=$year" "$RUNNER_TEMP/gold/$dataset/year=$year" --checkers 10 --transfers 6
+            done
+            for dataset in daily_limits suspension_events; do
+              rclone copy "$base/$dataset/year=$year" "$RUNNER_TEMP/risk/$dataset/year=$year" --checkers 10 --transfers 6
+            done
+          done
+          rclone copyto "$base/name_history.parquet" "$RUNNER_TEMP/risk/name_history/data.parquet"
+      - name: Compute timestamped frozen V7 signal only, NO BROKER and NO HISTORICAL RETROFIT
+        shell: bash
+        run: |
+          set -euo pipefail
+          python astock-quant/stock_state_strategy/short_swing_v7_forward_receipt.py \
+            --market-root "$RUNNER_TEMP/gold" --risk-root "$RUNNER_TEMP/risk" \
+            --as-of "$ASOF" --output "$RUNNER_TEMP/future-receipt/receipt.json"
+      - name: Immutable save to Drive before next market opening
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/short_swing_v7_forward_receipts/$ASOF/run_$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/future-receipt" "$dest" --immutable
+          rclone check "$RUNNER_TEMP/future-receipt" "$dest" --one-way
+          echo "FORWARD_PAPER_RECEIPT_ARCHIVED=$dest/receipt.json"
+      - name: Keep local audit artifact too
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v7-next-session-paper-signal-receipt
+          path: ${{ runner.temp }}/future-receipt/receipt.json
+          if-no-files-found: warn
+          retention-days: 60
