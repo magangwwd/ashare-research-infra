@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 import pandas as pd
 import short_swing_3to5_v5_causal_ranking as v5
+from short_swing_3to5_v1 import Policy
 
 def sample():
     # High breakout is deliberately the original first-listed signal.
@@ -69,8 +70,6 @@ class TestCausalRanking(unittest.TestCase):
             "summary":{"closed_trades":1,"realized_pnl_cny":-1500,
                        "total_return":-.03,"max_drawdown":-.03},
             "open_position":None}
-        class Policy:
-            max_order_cny=50000
         with patch.object(v5,"build_signals",return_value=signals),\
              patch.object(v5,"signal_day_features",return_value=features),\
              patch.object(v5,"filter_signals",return_value=(signals,{"original_candidates":3})),\
@@ -86,7 +85,6 @@ class TestCausalRanking(unittest.TestCase):
           "policy":{"initial_cash_cny":50000},"trades":[],"orders":[],
           "daily_nav":[{"date":"2026-01-06","equity_cny":50000}],
           "summary":{"closed_trades":0},"open_position":None}
-        class Policy: max_order_cny=50000
         with patch.object(v5,"build_signals",return_value=signals),\
              patch.object(v5,"signal_day_features",return_value=features),\
              patch.object(v5,"filter_signals",return_value=(signals,{})),\
