@@ -3,7 +3,7 @@
 import argparse,datetime,hashlib,json,pathlib,re
 from publish_drive import auth,FOLDER_ID,API
 NAME=re.compile(r"^finance_(\d{8}T\d{6}Z)_(\d+)\.json$")
-MAX_BYTES=3_000_000
+MAX_BYTES=8_000_000
 
 def choose(files):
     rows=[x for x in files if NAME.fullmatch(x.get("name","")) and x.get("mimeType") in ("application/json","text/plain","application/octet-stream")]
