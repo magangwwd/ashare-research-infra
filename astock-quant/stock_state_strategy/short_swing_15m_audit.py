@@ -43,7 +43,7 @@ def validate_one_day(bars: pd.DataFrame, daily_close_raw: float) -> dict:
             "last_hour_vol_fraction":round(fraction,6), "last_hour_ge30_shadow":bool(fraction >= .30)}
 
 
-def audit_source(root: Path, daily: pd.DataFrame, signals: dict, trades: list[dict]) -> dict:
+def audit_source(root: Path, daily: pd.DataFrame, signals: dict, trades: list[dict],\n                 start: str | None = None) -> dict:
     """Hash-verifies all partitions; returns shadow-only single-symbol research audit."""
     metadata=(root/"provider_manifest.json").read_bytes()
     source=json.loads(metadata)
@@ -91,12 +91,12 @@ def audit_source(root: Path, daily: pd.DataFrame, signals: dict, trades: list[di
         except (ValueError,TypeError) as exc:
             rejected[key]=str(exc)
     candidate_dates=sorted(str(day.date()) for day,rows in signals.items()
-        if any(symbol==SOURCE_SYMBOL for symbol,_ in rows))
+        if any(symbol==SOURCE_SYMBOL for symbol,_ in rows)\n        and (start is None or day >= pd.Timestamp(start)))
     matched={day:valid[day] for day in candidate_dates if day in valid}
     trade_rows=[{"signal_date":t["signal_date"],"pnl_cny":t["pnl_cny"],
                  "minute":valid.get(t["signal_date"])}
                 for t in trades if t["symbol"]==SOURCE_SYMBOL]
-    return {"mode":"SHADOW_ONLY_NO_ORDER_CHANGES", "source":"Baostock", "scope":[SOURCE_SYMBOL],
+    return {"mode":"SHADOW_ONLY_NO_ORDER_CHANGES", "source":"Baostock", "scope":[SOURCE_SYMBOL],\n            "audit_start_date": start,
             "source_manifest_sha256":hashlib.sha256(metadata).hexdigest(),
             "source_capture_at":source.get("captured_at_utc"),
             "minute_distinct_days":int(minutes.day.nunique()),
