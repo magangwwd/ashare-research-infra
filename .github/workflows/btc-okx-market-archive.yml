@@ -25,6 +25,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Verify pagination/checkpoint regression tests before network access
+        run: python -m unittest discover -s btc-quant/tests -p 'test_okx_*.py' -v
       - name: Install rclone and configure Drive
         run: |
           set -euo pipefail
