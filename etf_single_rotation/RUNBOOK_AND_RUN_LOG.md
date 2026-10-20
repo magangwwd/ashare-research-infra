@@ -122,3 +122,17 @@
 - 固定样本外起点 2021-01-01：regime_switch_ultralow CAGR 4.14%、MDD -21.69%、Sharpe 0.452；regime_dd_guard15 CAGR -1.94%、MDD -16.30%、Sharpe -0.277；regime_dd_guard20 CAGR 2.32%、MDD -21.69%、Sharpe 0.314。
 - 固定样本外起点 2023-01-01：regime_switch CAGR 8.93%、MDD -21.69%、Sharpe 0.688；regime_switch_lowvol CAGR 7.75%、MDD -21.69%、Sharpe 0.651；regime_switch_ultralow CAGR 7.47%、MDD -21.69%、Sharpe 0.649；regime_dd_guard15 在该窗口全程现金（0%收益），显示熔断冷静期实现需要进一步复核。
 - 数据审计报告、缺口清单、样本外比较 CSV、策略清单均确认上传 Drive；Artifact 保存成功。该固定 holdout 只是初步稳健性检查，尚非严格逐段 walk-forward；当前所有策略仍 NOT_FOR_TRADING。
+
+## 2026-10-20：阶段 1，逻辑回归测试与黄金风险敏感性核验完成
+
+- 源代码分支 `feature/etf-single-rotation-v1`，关键提交：`a52264238f58d02f9163834640d810580db44d80`（黄金风险期方案与全品种 75% 限仓）、`be631dade32583318014d0fb4fa402d8ca56a9d8`（回归测试）、`5475144c3d1c20a2f7209b1b20e4c9a075410125`（将测试加入实际回测步骤）。
+- GitHub Actions run `39234376712` / job `118398520436`：`completed/success`。依赖安装、Tushare 下载、真实回测、Artifact 归档、Google Drive 上传均成功。
+- 本次执行 `python -m unittest etf_single_rotation.experiments.test_strategy_regressions -v`：`Ran 4 tests ... OK`。涵盖 CASH 月度信号平仓、包括黄金在内的 75% 仓位上限、净值口径样本外收益及 25% 回撤判断。四个回归测试通过不等于策略交易可用。
+- 输入行情：8 只 ETF，21,398 行，2015-01-05～2026-10-19。仍有 5 条 ETF-交易日记录缺口；数据质量 `REVIEW_REQUIRED`，完整总收益语义未独立验证。
+- 重测 `regime_switch_cap75`：CAGR 5.2919%，最大回撤 -17.7492%，Sharpe 0.5954，注意与先前错误仅限制股票持仓的版本不同，不能直接使用旧结果。
+- 新增 `regime_switch_gold_vol8`：CAGR 5.2944%，最大回撤 -18.6641%，Sharpe 0.6616；2021-01-01 起固定窗口 CAGR 2.0026%、最大回撤 -18.6641%，2023-01-01 起 CAGR 6.2100%、最大回撤 -11.2260%。仅固定窗口，并非严格 walk-forward。
+- 新增 `regime_switch_gold_cash`：CAGR 4.4469%，最大回撤 -21.6870%，Sharpe 0.4838。相比黄金波动控制暂无优势。
+- 所有实验报告与 `walk_forward_oos_comparison.csv` 上传 Google Drive 成功；策略 `NOT_FOR_TRADING`。
+- **当前工作**：阶段 2 数据质量缺口与复权/分红语义核验；阶段 3 要实现严格时间序列 walk-forward 训练/验证与评估，防止参数选择泄漏。
+- **后续**：交易成本敏感性、不同市场周期压力测试、冻结候选、最终验收。保留最大历史回撤≤25%、不进行实盘、不在 GitHub 建立自动定时回测。
+- 通知机制：按已验证里程碑报告“完成内容和证据 / 当前工作 / 下一阶段”；每日独立检查并推进，但不会把其当作已成功的仓库回测。
