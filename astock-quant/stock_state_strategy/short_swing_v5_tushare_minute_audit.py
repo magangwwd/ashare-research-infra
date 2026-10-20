@@ -51,7 +51,16 @@ def inspect_v5_january(v5: dict, minute: pd.DataFrame, missing_partition_count: 
     required={"ts_code","trade_time","trade_date","open","high","low","close"}
     if not required.issubset(minute.columns):
         raise ValueError("Missing minute columns")
-    minute=minute.copy()
+    # Only keep the 17 trade-ledger cases before groupby: the original
+    # 64 monthly parquet parts contain millions of unrelated security bars.
+    cases=[t for v in v5["variants"] for t in v["trades"]
+           if t["entry_date"].startswith("2026-01") and t["exit_date"].startswith("2026-01")]
+    required_pairs={(t["symbol"],d) for t in cases for d in
+                    (t["entry_date"],t["exit_date"])}
+    symbols={sym for sym,_ in required_pairs}
+    dates={d for _,d in required_pairs}
+    minute=minute.loc[minute["ts_code"].isin(symbols) &
+                      minute["trade_date"].astype(str).str[:10].isin(dates)].copy()
     minute["trade_time"]=pd.to_datetime(minute["trade_time"],errors="raise")
     minute["trade_date"]=pd.to_datetime(minute["trade_date"],errors="raise").dt.normalize()
     minute["trade_time_day"]=minute["trade_time"].dt.normalize()
