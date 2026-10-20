@@ -307,6 +307,8 @@ def simulate(panel: pd.DataFrame, risk: GoldPITRisk, policy: Policy,
         pending = None
         if position is None and i + 1 < len(dates):
             pending = (day, signals.get(day, []))
+        if start is not None and day < pd.Timestamp(start):
+            continue  # Warm-up bars build indicators but do not extend measured NAV.
         position_value = position["shares"] * last_mark if position is not None else 0.0
         equity = cash + position_value
         max_nav = max(max_nav, equity)
@@ -320,7 +322,7 @@ def simulate(panel: pd.DataFrame, risk: GoldPITRisk, policy: Policy,
     equity_final = nav[-1]["equity_cny"] if nav else cash
     return {
         "version": VERSION, "mode": "PAPER_ONLY_NO_BROKER_NO_LIVE_AUTHORIZATION",
-        "policy": asdict(policy), "sessions": len(dates), "orders": orders,
+        "policy": asdict(policy), "sessions": len(nav), "orders": orders,
         "trades": trades, "daily_nav": nav, "exceptions": exceptions,
         "open_position": position, "summary": {
             "closed_trades": len(trades), "realized_pnl_cny": round(sum(net), 2),
