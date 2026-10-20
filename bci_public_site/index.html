@@ -3,232 +3,151 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
-  <meta name="description" content="乳腺癌患者与家属的通俗健康知识与就诊准备：预防筛查、诊断理解、治疗沟通、术后康复与随访。来源可靠，信息可追溯。">
-  <title>乳腺疾病寻医指南 · 看病流程、全国医院与新疗法科普</title>
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./patient.css">
-  <link rel="stylesheet" href="./care.css">
+  <meta name="theme-color" content="#f8fbfa">
+  <meta name="description" content="乳腺疾病寻医知识平台：看病流程、全国乳腺专科医院、医生与挂号渠道、治疗方法、医学名词、最新医学研究的通俗中文解释。">
+  <title>乳腺健康指南｜看病不迷路</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="stylesheet" href="./guide.css">
   <script src="./research_cn.js" defer></script>
-  <script src="./patient.js" defer></script>
-  <script src="./care.js" defer></script>
+  <script src="./guide.js" defer></script>
 </head>
 <body>
-  <a class="skip" href="#main">跳转到主要内容</a>
-  <header class="site-header">
-    <div class="header-inner">
-      <a class="brand" href="./index.html" aria-label="乳腺健康指南首页">
-        <span class="brand-icon" aria-hidden="true">✳</span>
-        <span><strong>乳腺健康指南</strong><small>可信信息 · 清晰陪伴</small></span>
-      </a>
-      <nav class="audience-nav care-main-nav" aria-label="本站栏目">
-        <a class="audience-tab active" href="#care-hub">看病流程</a>
-        <a class="audience-tab" href="#care-hospitals">找医院</a>
-        <a class="audience-tab" href="#care-frontiers">新疗法</a>
-        <a class="audience-tab" href="#care-glossary">名词解释</a>
+  <a class="skip" href="#main">跳到主要内容</a>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="#home"><span class="brand-sign" aria-hidden="true">✿</span><span><strong>乳腺健康指南</strong><small>简单、可靠、有出处</small></span></a>
+      <nav class="topnav" aria-label="栏目导航">
+        <a href="#where">看病流程</a><a href="#hospitals">找医院</a><a href="#treatments">治疗知识</a><a href="#dictionary">名词解释</a><a href="#research">研究动态</a>
       </nav>
     </div>
   </header>
   <main id="main">
-    <section class="hero wrap">
+    <section class="hero wrap" id="home">
       <div class="hero-content">
-        <div class="eyebrow"><span class="dot"></span> 普通人也能看懂的乳腺健康和寻医指南</div>
-        <h1>乳腺疾病怎样就医？<br><em>从可靠证据找方向。</em></h1>
-        <p class="lead">先知道看什么科、怎样准备检查，再看看全国哪些医院有相关专科、医生团队与官方挂号方式。英文医学研究变成有边界的中文说明，资料持续按原始来源核查。</p>
-        <div class="hero-actions"><a href="#care-hub" class="btn btn-primary">寻找就医方向 <span aria-hidden="true">→</span></a><a href="#care-hospitals" class="btn btn-outline">找医院和挂号入口</a><a href="#cloud-data" class="btn btn-outline">看最新研究中文解读</a></div>
-        <p class="hero-note">本网站仅提供医学科普信息，不会根据症状作诊断，也不推荐个体治疗方案。</p>
-      </div>
-      <div class="hero-visual" aria-hidden="true">
-        <div class="decor-circle c1"></div><div class="decor-circle c2"></div><div class="decor-circle c3"></div>
-        <div class="hero-sign"><span class="hero-sign-top">CARE · KNOWLEDGE</span><span class="hero-flower">✿</span><span class="hero-sign-bottom">了解 · 沟通 · 康复</span></div>
-      </div>
-    </section>
-
-    <div class="notice-wrap wrap"><div class="notice"><span aria-hidden="true">ⓘ</span><p><strong>需要尽快就医的情况：</strong>如果出现新的乳房或腋下肿块、乳头异常分泌物、皮肤或乳头明显变化，建议及时到正规医疗机构评估。网上资料无法替代检查。</p></div></div>
-
-    <section class="wrap section care-hub" id="care-hub" aria-label="乳腺疾病就医与诊疗导航">
-  <div class="section-heading">
-    <div class="label">看病流程 · 根据不同阶段准备问题</div>
-    <h2>就医导航：先了解下一步</h2>
-    <p>选择你想了解的阶段，获得通用检查路径、医生沟通问题和权威原文。不会自动做诊断或要求上传病历。</p>
-  </div>
-  <div class="care-stage-selector" role="group" aria-label="选择就医阶段">
-    <button class="care-stage-btn active" type="button" data-stage="screen" aria-pressed="true"><span>01</span> 筛查或发现异常</button>
-    <button class="care-stage-btn" type="button" data-stage="diagnosis" aria-pressed="false"><span>02</span> 检查与确诊</button>
-    <button class="care-stage-btn" type="button" data-stage="plan" aria-pressed="false"><span>03</span> 制定治疗方案</button>
-    <button class="care-stage-btn" type="button" data-stage="recovery" aria-pressed="false"><span>04</span> 术后康复随访</button>
-  </div>
-  <div class="care-path-detail">
-    <div class="care-path-column">
-      <div class="label">一般会经历哪些检查或讨论？</div>
-      <h3 id="care-stage-name">正在读取云盘诊疗导航…</h3>
-      <p id="care-stage-desc">请以医务人员结合个人情况的建议为准。</p>
-      <ol id="care-steps" class="care-steps"><li>准备已有的病史及检查资料。</li></ol>
-      <a id="care-stage-source" class="care-source-link" href="https://www.cancer.gov/types/breast/treatment" target="_blank" rel="noopener noreferrer">查看权威原始资料 ↗</a>
-    </div>
-    <div class="care-questions-column">
-      <div class="label">医生面前可以问什么？</div>
-      <h3>就诊时可以问什么？</h3>
-      <ul id="care-questions" class="care-questions"><li>目前最需要确认什么？</li></ul>
-      <button id="care-copy-generate" class="care-secondary-btn" type="button">生成我的就诊问题清单 →</button>
-      <textarea id="care-copy-text" aria-label="可复制的就诊问题清单" readonly rows="9" hidden></textarea>
-      <button id="care-copy-button" class="care-secondary-btn care-copy" type="button">复制问题清单</button>
-      <p id="care-copy-result" role="status" class="care-helper">这是通用问题清单，不收集姓名、联系方式或病历信息。</p>
-    </div>
-  </div>
-  <p class="care-small-print">注意：就医流程可能因良性乳腺疾病、癌前病变、原位癌、浸润性癌等诊断而不同。出现新发肿块、血性溢液、乳房明显红肿伴发热等情况，应及时线下评估。</p>
-</section>
-
-<section class="wrap section care-hospitals" id="care-hospitals" aria-label="国内乳腺专科医院公开资料对照">
-  <div class="section-heading">
-    <div class="label">找医院 · 官方专科 / 医生 / 就诊渠道</div>
-    <h2>全国乳腺专科导航：看专长、医生和怎么挂号</h2>
-    <p>先按地区、医院性质和诊疗方向查找，再查看医院官网公开的科室特点、医生介绍、预约入口和来源日期。军队医院与资料待核实的科室均会单独标记，<strong>这里没有疗效排行榜</strong>。</p>
-  </div>
-  <div class="care-hospital-filters">
-    <label>医院性质<select id="care-type"><option value="all">所有医院</option><option value="军队医院">军队医院</option><option value="地方医院">地方医院</option></select></label>
-    <label>地区<select id="care-region"><option value="all">所有地区</option></select></label>
-    <label>专科方向<select id="care-focus"><option value="all">所有专科方向</option></select></label>
-    <label>医院名称或城市<input id="care-hospital-search" type="search" autocomplete="off" placeholder="例如：南京、乳腺外科"></label>
-  </div>
-  <div class="care-hospital-result"><span id="care-hospital-total">正在加载已核实医院资料…</span><span>资料量有限 · 持续补充来源</span></div>
-  <div id="care-hospital-message" role="status" class="care-hospital-message"></div>
-  <div id="care-hospital-list" class="care-hospital-list" aria-live="polite"><p class="care-empty">正在读取医院专科资料…</p></div>
-  <div class="care-compare-wrap">
-    <div class="care-compare-header"><div><h3>并排对照</h3><p id="care-compare-count">请选择 2–3 家进行资料对照</p></div><button type="button" id="care-compare-clear" hidden>清空对照</button></div>
-    <div id="care-compare"><p class="care-empty">选择至少两家，查看公开专科方向及局限性对照。</p></div>
-  </div>
-  <p class="care-small-print">这里展示的是专科资料证据和就诊准备信息，不代表医院水平排名；“待核实”表示目前公开资料不够，不是对医院的差评。所有出诊、院区、收费、号源以医院当天公布的实际情况为准。</p>
-</section>
-
-<section class="wrap section care-frontiers" id="care-frontiers" aria-label="乳腺癌前沿治疗和临床研究">
-  <div class="section-heading">
-    <div class="label">新治疗研究 · 哪些适用条件已经明确？</div>
-    <h2>新疗法讲人话：哪些已用于临床，哪些还在研究？</h2>
-    <p>简要介绍抗体偶联药物、精准治疗、免疫治疗以及液体活检等方向，始终区分标准临床实践、监管批准和正在研究的新方法。</p>
-  </div>
-  <div id="care-frontier-list" class="care-frontier-list"><p class="care-empty">正在读取研究方向…</p></div>
-  <div class="care-research-panel">
-    <div class="care-research-heading"><div><h3>来自云盘的最新文献与试验登记</h3><p>从已保存的医学研究记录里提取中文主题提示。只有题目时不推断疗效，试验登记不等于治疗已获批。</p></div><span id="care-research-updated">正在读取最近采集日期…</span></div>
-    <div id="care-research-list" class="care-research-list" aria-live="polite"><p class="care-empty">正在读取云盘最新研究…</p></div>
-    <a class="care-secondary-btn care-professional-link" href="#cloud-data">查看全部研究的中文说明与原始出处 ↗</a>
-  </div>
-</section>
-
-<section class="wrap section care-faq" id="care-faq" aria-label="患者常见问题">
-  <div class="section-heading"><div class="label">常见疑问 · 点开就能看懂</div><h2>就医前经常被问到的问题</h2><p>点击问题查看简要说明和需要向医生核实的内容。</p></div>
-  <details><summary>影像提示乳腺结节，就一定是乳腺癌吗？</summary><p>不一定。影像描述的是发现与风险线索，确诊需要医生结合影像、体检及必要时的组织病理检查。不要单凭结节大小或网上解释决定手术。</p><a href="https://www.cancer.gov/types/breast/screening" target="_blank" rel="noopener noreferrer">原始医学资料 ↗</a></details>
-  <details><summary>乳腺癌确诊后，是否必须立即切除整个乳房？</summary><p>治疗决策并非“一律全切”。对于合适的病情，可能讨论保乳手术、全乳切除、放射治疗以及先做系统治疗等路径；适用条件由病理、分期、个人意愿和治疗资源决定。</p><a href="https://www.cancer.gov/types/breast/treatment" target="_blank" rel="noopener noreferrer">原始医学资料 ↗</a></details>
-  <details><summary>HER2、ER、PR 等病理指标为什么重要？</summary><p>这些标志物帮助医疗团队判断乳腺癌的生物学类型，影响某些内分泌、HER2靶向等治疗是否可能获益。不能只凭一个指标作治疗决定。</p><a href="https://www.cancer.gov/types/breast/diagnosis/breast-cancer-biomarker-tests" target="_blank" rel="noopener noreferrer">原始医学资料 ↗</a></details>
-  <details><summary>网上看到新的 ADC 或免疫药物，是否可以自己要求使用？</summary><p>药物适应证与监管批准地区、病理分型、治疗线次和健康状况有关。试验结果、FDA批准与中国NMPA批准不是一回事；具体治疗须由医生核对当地获批适应证和临床证据。</p><a href="https://www.cancer.gov/types/breast/treatment" target="_blank" rel="noopener noreferrer">原始医学资料 ↗</a></details>
-  <details><summary>某医院手术量大，是否说明它对我一定更好？</summary><p>不能。手术量、收治患者数、医院排名与针对你具体病情的治疗结果不是同一个指标。应比较专科是否匹配需求、多学科服务、费用和随访便利，并以正式会诊建议为准。</p></details>
-  <p class="care-small-print" id="care-guide-date">正在读取云盘编辑资料更新时间…</p>
-</section>
-
-<section class="wrap section care-glossary" id="care-glossary">
-      <div class="section-heading"><div class="label">不懂医学名词？</div><h2>13 个常见乳腺疾病词语，用中文讲清楚</h2>
-        <p>比如“BI-RADS”“HER2”“内分泌治疗”“ADC”“临床试验”。点击词语展开解释；不了解自己的诊断时请优先咨询接诊医生。</p></div>
-      <label class="care-glossary-filter">查找医学词语 <input id="care-glossary-search" type="search" placeholder="如：结节、HER2、保乳、临床试验" autocomplete="off"></label>
-      <div id="care-glossary-list" class="care-glossary-list" aria-live="polite"><p class="care-empty">正在读取医学词典…</p></div>
-      <p class="care-small-print">词典是通用解释，不用于解释任何人的病理报告。</p>
-    </section>
-
-    <section class="wrap section cloud-main" id="cloud-data">
-      <div class="section-heading cloud-heading">
-        <div><div class="label">有来源的资料持续更新</div><h2>最近收录了哪些医学研究？</h2>
-          <p>这里按中文主题展示近期论文、临床试验和药品监管资讯，并附官方原文。中文解释只描述研究方向，未经医生审定，不是给个人的治疗建议。</p></div>
-        <span id="cloud-freshness" class="cloud-freshness" role="status">正在核验数据日期…</span>
-      </div>
-      <div class="cloud-status" role="status" aria-live="polite">
-        <div class="cloud-status-item"><small>数据采集时间</small><strong id="cloud-collected">—</strong></div>
-        <div class="cloud-status-item"><small>网站数据生成时间</small><strong id="cloud-generated">—</strong></div>
-        <div class="cloud-status-item"><small>最新有效快照</small><strong id="cloud-snapshot">—</strong></div>
-      </div>
-      <div class="cloud-metrics" aria-label="各类数据实际收录条数">
-        <button type="button" class="cloud-metric" data-cloud-filter="articles"><small>乳腺癌公开文献</small><strong id="cloud-count-articles">—</strong><span>论文 · 病例索引 · 康复综述 ↗</span></button>
-        <button type="button" class="cloud-metric" data-cloud-filter="trials"><small>国际临床试验</small><strong id="cloud-count-trials">—</strong><span>登记信息，不代表治疗效果 ↗</span></button>
-        <button type="button" class="cloud-metric" data-cloud-filter="fda"><small>美国药物监管公告</small><strong id="cloud-count-fda">—</strong><span>不能代表中国已获批 ↗</span></button>
-        <button type="button" class="cloud-metric" data-cloud-filter="guides"><small>诊疗指南索引</small><strong id="cloud-count-guides">—</strong><span>仅显示有据可查的条目 ↗</span></button>
-      </div>
-      <div class="cloud-explorer">
-        <div class="cloud-toolbar">
-          <div><h3>医学资料中文浏览</h3><p>每条资料均提供公开来源链接；仅展示允许公开的题录，不存储患者隐私。</p></div>
-          <label class="cloud-search"><span class="sr-only">搜索云盘医学资料</span><input id="cloud-search" type="search" placeholder="搜索中文主题、英文原标题或研究编号…" autocomplete="off"></label>
+        <span class="eyebrow"><span class="signal" aria-hidden="true"></span> 给患者和家属的中文寻医知识平台</span>
+        <h1>乳腺疾病看病，<br><em>从哪里开始？</em></h1>
+        <p>不用先看懂一堆英文论文。这里帮你了解就医步骤、医院擅长的方向、怎样找官方门诊，以及新治疗方法究竟是什么。</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#where">我该怎么办 <span aria-hidden="true">→</span></a>
+          <a class="btn light" href="#hospitals">看看哪些医院适合咨询</a>
         </div>
-        <div class="cloud-filter-row" role="group" aria-label="按数据类别筛选">
-          <button type="button" class="cloud-filter active" data-cloud-filter="all" aria-pressed="true">全部</button>
-          <button type="button" class="cloud-filter" data-cloud-filter="recent" aria-pressed="false">近期论文</button>
-          <button type="button" class="cloud-filter" data-cloud-filter="recovery" aria-pressed="false">康复与随访</button>
-          <button type="button" class="cloud-filter" data-cloud-filter="case" aria-pressed="false">公开病例索引</button>
-          <button type="button" class="cloud-filter" data-cloud-filter="trials" aria-pressed="false">临床试验</button>
-          <button type="button" class="cloud-filter" data-cloud-filter="fda" aria-pressed="false">药物公告</button>
-          <button type="button" class="cloud-filter" data-cloud-filter="guides" aria-pressed="false">指南</button>
+        <div class="hero-meta"><span>不要求上传病历</span><span>医院资料有来源</span><span>研究更新有日期</span></div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="art-ring ring-one"></div><div class="art-ring ring-two"></div>
+        <div class="art-flower">✿</div><span>把复杂医学知识<br>说得明白一点</span>
+      </div>
+    </section>
+
+    <div class="wrap notice">
+      <span aria-hidden="true">ⓘ</span>
+      <p><strong>先说明：</strong>本网站是就医准备和科普工具，不会诊断疾病或推荐个人用药。若出现新发乳房或腋下肿块、血性乳头溢液、皮肤明显改变，或伴发热的明显红肿疼痛，应及时到正规医疗机构评估。</p>
+    </div>
+
+    <section class="wrap section" id="where">
+      <div class="heading"><span class="kicker">01 · 我现在该怎么办</span><h2>先选一个最接近的情况</h2><p>不用填写个人病历。点一下，就能看到常见就医步骤和可以问医生的问题。</p></div>
+      <div class="stage-options" role="group" aria-label="选择当前关注的就医阶段">
+        <button class="stage-btn selected" type="button" data-stage="screen" aria-pressed="true"><span class="stage-symbol">○</span><strong>发现结节 / 想筛查</strong><small>还不知道是不是病</small></button>
+        <button class="stage-btn" type="button" data-stage="diagnosis" aria-pressed="false"><span class="stage-symbol">⌕</span><strong>检查异常 / 等病理</strong><small>想搞懂报告</small></button>
+        <button class="stage-btn" type="button" data-stage="plan" aria-pressed="false"><span class="stage-symbol">✚</span><strong>已经确诊 / 讨论治疗</strong><small>想了解有哪些选择</small></button>
+        <button class="stage-btn" type="button" data-stage="recovery" aria-pressed="false"><span class="stage-symbol">♡</span><strong>治疗后 / 康复复查</strong><small>想知道下一步</small></button>
+      </div>
+      <div class="stage-panel" id="stage-panel" aria-live="polite">
+        <div class="stage-main">
+          <span class="small-title">一般会怎样进行？</span><h3 id="stage-title">加载就诊流程中…</h3>
+          <p id="stage-intro">请以接诊医生结合实际情况的安排为准。</p>
+          <ol id="stage-steps" class="step-list"><li>准备既往检查资料</li></ol>
+          <a id="stage-source" class="source-link" href="https://www.cancer.gov/types/breast/screening" target="_blank" rel="noopener noreferrer">阅读权威说明 ↗</a>
         </div>
-        <div class="cloud-results-meta"><span id="cloud-matches">正在载入…</span><span>有限研究样本 · 不代表所有研究或实际治疗效果</span></div>
-        <div id="cloud-feed" class="cloud-feed" aria-live="polite"><p class="loading">正在读取最新数据…</p></div>
-        <div class="cloud-pager"><button id="cloud-more" type="button" hidden>查看更多已收录记录 ↓</button></div>
-        <p class="cloud-qualifier" id="cloud-qualifier">数据更新取决于 Google Drive 中是否已保存新的有效快照；网站每日检查，但不保证每天都有新医学研究入库。</p>
+        <div class="stage-questions">
+          <span class="small-title">去医院可以这样问</span><h3>医生面前，问什么？</h3>
+          <ul id="stage-ask" class="ask-list"><li>我下一步需要了解什么？</li></ul>
+          <button type="button" id="copy-questions" class="btn small dark">复制这份问题清单 <span aria-hidden="true">↗</span></button>
+          <p id="copy-message" class="mini-note" role="status">可复制到手机备忘录，就诊时使用。</p>
+          <textarea id="question-fallback" readonly aria-label="可手动复制的就诊问题清单" rows="7" hidden></textarea>
+        </div>
       </div>
     </section>
 
-    <div class="wrap patient-guide-divider"><span>帮助理解 · 就诊与康复知识</span><p>以下科普内容是辅助阅读；网站最新信息以上方云盘数据及原始医学资料为准。</p></div>
-
-    <section class="wrap section" id="path">
-      <div class="section-heading"><div class="label">WHERE TO START</div><h2>你现在处在哪个阶段？</h2><p>选择最关心的阶段，先了解该和医生讨论哪些问题。</p></div>
-      <div class="path-grid">
-        <a class="path-card" href="#screening"><span class="stage">01 · PREVENTION</span><span class="path-icon mint">♡</span><h3>担心风险或考虑筛查</h3><p>了解影响筛查方案的因素，提前整理个人与家族病史。</p><span class="path-link">了解预防与筛查 →</span></a>
-        <a class="path-card" href="#diagnosis"><span class="stage">02 · DIAGNOSIS</span><span class="path-icon sky">⌕</span><h3>检查结果有疑问</h3><p>看懂为什么可能需要进一步影像检查、病理或专科评估。</p><span class="path-link">准备就诊材料 →</span></a>
-        <a class="path-card" href="#treatment"><span class="stage">03 · TREATMENT</span><span class="path-icon peach">✚</span><h3>正在讨论治疗方案</h3><p>了解治疗选择会考虑哪些因素，并带着关键问题与医生沟通。</p><span class="path-link">了解治疗选择 →</span></a>
-        <a class="path-card" href="#recovery"><span class="stage">04 · RECOVERY</span><span class="path-icon lavender">❀</span><h3>治疗后康复与随访</h3><p>关注复诊计划、治疗副作用、运动与心理支持等长期需求。</p><span class="path-link">了解康复随访 →</span></a>
+    <section class="wrap section" id="hospitals">
+      <div class="heading"><span class="kicker">02 · 全国医院怎么选</span><h2>看医院的专科特点，不看虚假的排名</h2><p>不同医院有不同的公开诊疗方向。重点看<strong>是否适合自己要咨询的问题</strong>，再核对医生、地点和正规预约入口。</p></div>
+      <div class="hospital-tools">
+        <div class="hospital-tabs" role="group" aria-label="按医院类型筛选">
+          <button type="button" data-type="all" class="chip on" aria-pressed="true">全部医院</button>
+          <button type="button" data-type="地方医院" class="chip" aria-pressed="false">地方医院</button>
+          <button type="button" data-type="军队医院" class="chip" aria-pressed="false">军队医院</button>
+        </div>
+        <div class="hospital-controls">
+          <label>所在地区<select id="region-filter"><option value="all">全国</option></select></label>
+          <label>想咨询的方向<select id="focus-filter"><option value="all">所有专科方向</option></select></label>
+          <label>搜索医院<input id="hospital-search" type="search" placeholder="医院、城市或专科关键词" autocomplete="off"></label>
+        </div>
       </div>
-    </section>
-
-    <section class="wrap section" id="screening">
-      <div class="topic-layout">
-        <div class="topic-intro"><div class="label">01 / PREVENTION</div><h2>预防与筛查</h2><p>不是每个人都适合相同的筛查频率或检查方式。年龄、既往影像、个人及家族史等都值得与医生讨论。</p><a class="text-link" target="_blank" rel="noopener noreferrer" href="https://www.cancer.gov/types/breast/screening">阅读 NCI 乳腺癌筛查资料（英文） ↗</a></div>
-        <div class="topic-info"><h3>和医生沟通时，可以问：</h3><ul><li>我目前有哪些值得关注的风险因素？</li><li>是否需要乳腺影像筛查？适合哪种方式？</li><li>如果检查结果提示异常，下一步如何确认？</li><li>我的家族史是否需要遗传风险评估？</li></ul><div class="gentle-note">日常健康习惯有助于整体健康，但不能保证完全预防乳腺癌。<a target="_blank" rel="noopener noreferrer" href="https://www.cancer.gov/types/breast/causes-risk-factors/prevention">了解风险降低措施 ↗</a></div></div>
+      <div class="list-status"><span id="hospital-count">正在读取医院资料…</span><span>展示特点不等于推荐或疗效排名</span></div>
+      <div id="hospital-list" class="hospital-grid" aria-live="polite"><p class="empty">正在读取云盘中的医院资料…</p></div>
+      <div class="more-line"><button type="button" id="show-more-hospitals" class="btn more" hidden>查看更多医院 ↓</button></div>
+      <div class="compare-box">
+        <div><strong>想对比两家医院？</strong><p>点击医院卡片的“加入对比”，就能并排看专科方向、就诊方式和需要核实的事项。</p></div>
+        <span id="compare-count">尚未选择</span>
+        <button type="button" id="clear-compare" class="text-button" hidden>清空</button>
       </div>
+      <div id="comparison" class="comparison" aria-live="polite"><p class="empty soft">请选择 2 家医院开始比较。</p></div>
+      <p class="section-footnote">军队医院部分资料只来自旧记录或第三方平台，网站会明确标记“待向院方核实”；未找到官方乳腺专科资料不代表该院没有相关能力。</p>
     </section>
 
-    <section class="wrap section section-tint" id="diagnosis">
-      <div class="topic-layout">
-        <div class="topic-intro"><div class="label">02 / DIAGNOSIS</div><h2>检查与确诊</h2><p>筛查发现异常并不一定意味着患癌。医生可能结合体检、影像和必要时的组织病理检查综合判断。</p><p class="small-hint">如果已经拿到检查结果，优先请接诊医生结合原始影像与报告解释。</p></div>
-        <div class="topic-info"><h3>初次就诊建议带上：</h3><ul><li>既往乳腺超声、钼靶或 MRI 的报告与影像。</li><li>既往病理报告、手术和治疗记录（如果有）。</li><li>个人和家族肿瘤相关病史。</li><li>正在服用的药物及最想咨询的问题。</li></ul><div class="gentle-note">病理分型、分期和检查解释需要专业评估，网页不能仅凭报告文本给出确诊结论。</div></div>
+    <section class="wrap section" id="treatments">
+      <div class="heading"><span class="kicker">03 · 治疗方法讲人话</span><h2>常见治疗怎么安排？新技术又是什么？</h2><p>治疗不是人人都一样。有没有必要手术、放疗或用药，要结合病理、分期、身体状况和医生评估。</p></div>
+      <div class="treatment-steps">
+        <article><span>第一步</span><strong>明确是什么病</strong><p>先看影像，有需要时做病理，分清良性与恶性。</p></article>
+        <article><span>第二步</span><strong>弄清癌症类型</strong><p>若确诊乳腺癌，核对分期、ER、PR、HER2 等信息。</p></article>
+        <article><span>第三步</span><strong>和医生讨论治疗</strong><p>可能涉及手术、放疗、药物治疗，顺序因人而异。</p></article>
+        <article><span>第四步</span><strong>康复与长期随访</strong><p>关注恢复、药物管理、定期复诊和生活质量。</p></article>
       </div>
+      <div class="subheading"><h3>你可能听说过的“新方法”</h3><span>点开看通俗解释和适用边界</span></div>
+      <div id="frontier-list" class="accordion" aria-live="polite"><p class="empty">正在读取治疗方法资料…</p></div>
     </section>
 
-    <section class="wrap section" id="treatment">
-      <div class="topic-layout">
-        <div class="topic-intro"><div class="label">03 / TREATMENT</div><h2>理解治疗选择</h2><p>乳腺癌的治疗可能涉及手术、放射治疗、药物治疗等不同组合；是否适用与肿瘤分期、病理和个人情况有关。</p><a class="text-link" target="_blank" rel="noopener noreferrer" href="https://www.cancer.gov/types/breast/treatment">阅读 NCI 乳腺癌治疗说明（英文） ↗</a></div>
-        <div class="topic-info"><h3>治疗方案沟通清单</h3><ul><li>我的诊断、分期、分子分型分别是什么？</li><li>医生推荐该治疗方案的主要依据是什么？</li><li>预期获益、常见风险、替代方案有哪些？</li><li>治疗期间出现哪些情况需要立即联系医院？</li><li>我是否适合寻求多学科讨论或第二诊疗意见？</li></ul><div class="gentle-note">新论文或临床试验登记不意味着治疗已获批或一定适合你。不要自行调整处方。</div></div>
+    <section class="wrap section" id="dictionary">
+      <div class="heading"><span class="kicker">04 · 医学词典</span><h2>看不懂报告上的词？点开看看</h2><p>例如“BI-RADS”“HER2”“穿刺活检”“保乳”“ADC”。只解释通用意思，不解读你的个人报告。</p></div>
+      <label class="search-row">查找术语<input id="term-search" type="search" placeholder="输入结节、病理、HER2、靶向…" autocomplete="off"></label>
+      <div id="term-list" class="glossary-grid" aria-live="polite"><p class="empty">正在加载白话医学词典…</p></div>
+    </section>
+
+    <section class="wrap section" id="research">
+      <div class="heading"><span class="kicker">05 · 最近有什么医学研究</span><h2>研究进展，用中文说重点</h2><p>自动从云盘最新有效研究快照提取题录，给出<strong>研究主题的通俗提示</strong>。没有专业核对的论文结果，就不写成“新疗法有效”。</p></div>
+      <div class="research-top">
+        <div><span class="research-dot" aria-hidden="true"></span><strong id="research-update">正在查看数据采集时间…</strong><p id="research-scope">有新数据才更新；不把网页刷新当成论文更新。</p></div>
+        <span id="research-count" class="count-bubble">…</span>
       </div>
-    </section>
-
-    <section class="wrap section section-tint" id="recovery">
-      <div class="topic-layout">
-        <div class="topic-intro"><div class="label">04 / RECOVERY</div><h2>康复与长期随访</h2><p>完成一个治疗阶段后，随访计划、身体功能、心理状态与生活质量都值得持续关注。康复方案需因人而异。</p><a class="text-link" target="_blank" rel="noopener noreferrer" href="https://www.cancer.gov/about-cancer/coping/survivorship/follow-up-care">阅读 NCI 治疗后随访说明（英文） ↗</a></div>
-        <div class="topic-info"><h3>建议和医疗团队确认：</h3><ul><li>下一次复诊时间、检查项目和联系渠道。</li><li>术后肩臂活动、疼痛或肿胀如何评估和康复。</li><li>如何处理治疗后疲劳、睡眠或情绪问题。</li><li>出现哪些新症状需要提前就诊。</li><li>能否获取书面的长期随访与康复计划。</li></ul><div class="gentle-note">康复锻炼、饮食和辅助疗法请与治疗团队核对安全性，不用非正规方法替代规范治疗。</div></div>
+      <div class="research-tabs" role="group" aria-label="选择医学信息类别">
+        <button class="chip on" type="button" data-research="recent" aria-pressed="true">最新论文</button>
+        <button class="chip" type="button" data-research="recovery" aria-pressed="false">康复随访</button>
+        <button class="chip" type="button" data-research="trials" aria-pressed="false">临床试验</button>
+        <button class="chip" type="button" data-research="fda" aria-pressed="false">药物公告</button>
+        <button class="chip" type="button" data-research="guides" aria-pressed="false">诊疗指南</button>
       </div>
+      <div id="research-list" class="research-list" aria-live="polite"><p class="empty">正在读取最近研究…</p></div>
+      <div class="more-line"><button type="button" id="show-more-research" class="btn more" hidden>再看几条研究 ↓</button></div>
+      <p class="section-footnote">英文原题仅折叠保留供核对；中文为主题说明，不是论文摘要的正式翻译，不保证每篇研究有临床用途。美国 FDA 公告并不等于中国药监部门批准。</p>
     </section>
 
-    <section class="wrap section" id="resources">
-      <div class="section-heading"><div class="label">TRUSTED SOURCES</div><h2>权威资料，从原始来源阅读</h2><p>这些链接来自可信医学机构。部分原文为英文；不同国家的医疗制度、药物可及性可能不同。</p></div>
-      <div class="resource-grid">
-        <a href="https://www.cancer.gov/types/breast/screening" target="_blank" rel="noopener noreferrer" class="resource-card"><span class="resource-source">美国国家癌症研究所 · NCI</span><h3>筛查与检查</h3><p>筛查方式、检查可能带来的获益与局限。</p><span>打开官方资料 ↗</span></a>
-        <a href="https://www.cancer.gov/types/breast/treatment" target="_blank" rel="noopener noreferrer" class="resource-card"><span class="resource-source">美国国家癌症研究所 · NCI</span><h3>乳腺癌治疗</h3><p>按疾病类型与阶段介绍常见治疗类别。</p><span>打开官方资料 ↗</span></a>
-        <a href="https://www.cancer.gov/about-cancer/coping/survivorship/follow-up-care" target="_blank" rel="noopener noreferrer" class="resource-card"><span class="resource-source">美国国家癌症研究所 · NCI</span><h3>治疗后随访</h3><p>复诊安排、随访计划与长期健康问题。</p><span>打开官方资料 ↗</span></a>
-        <a href="https://www.china-oncology.com/zh/article/doi/10.19401/j.cnki.1007-3639.2025.12.009/" target="_blank" rel="noopener noreferrer" class="resource-card"><span class="resource-source">中国抗癌协会 · CACA</span><h3>中国诊疗指南（2026 版）</h3><p>正式出版来源；内容更适合由专业人员协助解读。</p><span>打开期刊页面 ↗</span></a>
-      </div>
+    <section class="wrap section questions" id="faq">
+      <div class="heading"><span class="kicker">患者常问</span><h2>这几个问题，先说清楚</h2></div>
+      <details><summary>有乳腺结节，就一定是乳腺癌吗？</summary><p>不一定。结节是检查发现的一种描述，需要医生结合影像、病史和必要的进一步检查来判断。不要仅凭大小或网络信息自行决定手术。</p></details>
+      <details><summary>乳腺癌一定要把整个乳房切掉吗？</summary><p>不一定。一些患者可以讨论保乳治疗；其他患者可能更适合不同手术或先行药物治疗。具体取决于肿瘤位置和范围、是否适合放疗、个人状况与本人意愿。</p></details>
+      <details><summary>医院名气大，是否就一定更适合我？</summary><p>不一定。需要结合自己的病情、是否匹配专科、交通费用、复诊便利、能否开展所需治疗来考虑。本站展示来源与专科方向，不提供无依据的治愈率排名。</p></details>
+      <details><summary>临床试验里有新药，是不是可以直接报名使用？</summary><p>不一定。研究可能尚在招募，也可能没有中国内地的入组地点。需要研究团队按纳入条件评估，不能仅根据网页登记就认为有效或适合自己。</p></details>
     </section>
-
-    <section class="wrap section update-section" id="updates">
-      <div class="update-head"><div><div class="label">复查与康复研究</div><h2>近期研究信息</h2><p>来自公开文献数据的康复相关研究题录，仅供扩展阅读；<strong>不是对治疗方法的推荐</strong>。</p></div><span id="snapshot-date" class="date-pill" aria-live="polite">读取最新资料中…</span></div>
-      <div id="patient-updates" class="update-grid" aria-live="polite"><p class="loading">正在读取已核验的公开资料…</p></div>
-      <p class="data-note" id="data-note">数据有限，具体医疗问题请咨询专业人员。</p>
+    <section class="wrap bottom-message">
+      <div><strong>一步一步了解，比盲目搜索更重要。</strong><p>先明确问题，再准备资料、核对医院官方渠道，与医生一起作决定。</p></div>
+      <a href="#where" class="btn light">回到就医流程 ↑</a>
     </section>
-
-    
   </main>
-  <footer class="footer"><div class="wrap"><div class="footer-row"><strong>乳腺健康指南</strong><span id="footer-update">数据快照核验中</span></div><p>本网站提供公开医学知识导航和研究信息，不代替诊断、治疗、复诊或医生判断。对于紧急症状请及时就医。文献版权归原始提供者所有。</p><div class="footer-row"><span>© 2026 乳腺疾病寻医与科普指南</span><a href="#care-hospitals">查询全国医院资料 ↑</a></div></div></footer>
+  <footer class="footer">
+    <div class="wrap foot-inner">
+      <div><strong>✿ 乳腺健康指南</strong><p>面向患者和家属的公开医学科普，不收集个人健康资料、不代替医生诊断。</p></div>
+      <span id="guide-updated">医院资料核查时间：读取中…</span>
+    </div>
+  </footer>
 </body>
 </html>

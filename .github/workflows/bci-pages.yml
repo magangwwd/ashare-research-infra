@@ -43,8 +43,7 @@ jobs:
       - name: Syntax-check Chinese patient website scripts
         run: |
           node --check bci_public_site/research_cn.js
-          node --check bci_public_site/patient.js
-          node --check bci_public_site/care.js
+          node --check bci_public_site/guide.js
           node - <<'NODE'
           const assert=require('assert');
           global.window={};
@@ -99,16 +98,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p _site/data
-          cp bci_public_site/index.html bci_public_site/patient.js bci_public_site/care.js bci_public_site/research_cn.js bci_public_site/patient.css bci_public_site/care.css bci_public_site/favicon.svg _site/
+          cp bci_public_site/index.html bci_public_site/guide.js bci_public_site/guide.css bci_public_site/research_cn.js bci_public_site/favicon.svg _site/
           cp bci_public_site/.nojekyll _site/.nojekyll
           cp bci_public_site/data/site-data.json bci_public_site/data/care-guide.json _site/data/
           test -s _site/index.html
           test ! -e _site/professional.html
-          test -s _site/patient.js
-          test -s _site/patient.css
-          test -s _site/care.css
+          test -s _site/guide.js
+          test -s _site/guide.css
           test -s _site/research_cn.js
-          test -s _site/care.js
+          test ! -e _site/care.js
+          test ! -e _site/patient.js
           test -s _site/data/care-guide.json
           test -s _site/data/site-data.json
       - name: Configure existing GitHub Pages site
