@@ -10,7 +10,7 @@ import short_swing_v5_tushare_minute_audit as audit
 
 
 def fixture():
-    clock=sorted(audit.TIMES)
+    clock=sorted(audit.TIMES | {"09:30"})
     rows=[]
     for date in ["2026-01-07","2026-01-09"]:
         for tm in clock:
@@ -30,7 +30,7 @@ class AuditTests(unittest.TestCase):
     def test_full_january_trading_day_and_touch_without_fill_claim(self):
         v5,minute=fixture()
         r=audit.inspect_v5_january(v5,minute,0)
-        self.assertEqual(r["both_entry_exit_dates_16_bars"],3)
+        self.assertEqual(r["both_entry_exit_dates_17_tushare_records"],3)
         self.assertEqual(r["trigger_checked"],3)
         self.assertEqual(r["trigger_inconsistent"],0)
         self.assertEqual(r["verified_actual_fills"],0)
