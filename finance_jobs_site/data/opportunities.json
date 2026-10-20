@@ -2679,6 +2679,26 @@
   ],
   "sources": [
     {
+      "id": "qq_2027_master",
+      "name": "27届秋招汇总表格（腾讯文档 · 每日优先检查）",
+      "type": "第三方招聘汇总",
+      "priority": 0,
+      "url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+      "discover": false,
+      "keywords": [
+        "2027届",
+        "财务",
+        "会计",
+        "审计",
+        "金融",
+        "银行",
+        "国家电网"
+      ],
+      "external_spreadsheet": true,
+      "access_mode": "browser_view_only; export permission not verified",
+      "records_verified": 0
+    },
+    {
       "id": "sgcc",
       "name": "国家电网招聘平台",
       "type": "国家电网",
@@ -3030,5 +3050,17 @@
         "会计"
       ]
     }
-  ]
+  ],
+  "featured_source": {
+    "id": "qq_2027_master",
+    "title": "27届秋招汇总表格",
+    "url": "https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+    "source_kind": "动态第三方汇总表",
+    "checked_at": "2026-10-20",
+    "read_permission": "browser_readonly",
+    "spreadsheet_rows_downloaded": false,
+    "original_owner_export_required": true,
+    "priority": 0,
+    "warning": "当前只确认可查看表格页面；未核实有权下载、导出或批量读取实际单元格。授权导出文件到私有云盘后可自动筛选，不会伪造新增岗位。"
+  }
 }
