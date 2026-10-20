@@ -1,0 +1,57 @@
+name: BTC OKX private official L2 schema audit (no raw event export)
+
+on:
+  push:
+    branches: [feature/okx-l2-structure-audit-20261020]
+    paths:
+      - '.github/workflows/btc-okx-l2-schema-audit.yml'
+      - 'btc-quant/data/okx_l2_schema_probe.py'
+      - 'btc-quant/tests/test_okx_l2_schema_probe.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validate schema-only probe without any real market data
+        run: python -m unittest discover -s btc-quant/tests -p 'test_okx_l2_schema_probe.py' -v
+      - name: Restore approved private official 2026-10-10 archive
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          src="gdrive:BTC_Quant_System_OKX/market_data/OKX/official_portal/L2_400lv/BTC-USDT-SWAP/2026-10-10/run_39356335318_1/BTC-USDT-SWAP-L2orderbook-400lv-2026-10-10.tar.gz"
+          rclone --config "$RUNNER_TEMP/rclone.conf" copyto "$src" "$RUNNER_TEMP/approved_day.tar.gz"
+      - name: Read only schema metadata from first 512KiB uncompressed member
+        run: |
+          python btc-quant/data/okx_l2_schema_probe.py \
+            --archive "$RUNNER_TEMP/approved_day.tar.gz" \
+            --out "$RUNNER_TEMP/quality/l2_schema_probe_2026-10-10.json"
+      - name: Save non-raw report in GitHub Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: okx-private-l2-schema-${{ github.run_id }}
+          path: ${{ runner.temp }}/quality/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Preserve audited schema report in private Drive
+        run: |
+          set -euo pipefail
+          dest="gdrive:BTC_Quant_System_OKX/market_data/OKX/official_portal/L2_400lv/BTC-USDT-SWAP/2026-10-10/quality/run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$RUNNER_TEMP/quality" "$dest" --immutable
+          rclone --config "$RUNNER_TEMP/rclone.conf" check "$RUNNER_TEMP/quality" "$dest" --one-way --download
+      - name: Erase temporary Drive secret
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rclone.conf"
