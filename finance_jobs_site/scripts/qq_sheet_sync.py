@@ -302,6 +302,7 @@ def run(out_path):
     except Exception as exc:
         result["status"]="import_error"
         result["warning"]="云盘导出归档无法自动读取/解析，未导入岗位；错误类型："+type(exc).__name__
+        print("QQ_IMPORT_DIAGNOSTIC type="+type(exc).__name__+" reason="+(str(exc)[:180] if isinstance(exc,(ValueError,KeyError,zipfile.BadZipFile)) else "restricted"))
     out=pathlib.Path(out_path);out.parent.mkdir(parents=True,exist_ok=True)
     out.write_text(json.dumps(result,ensure_ascii=False,indent=2)+"\n","utf-8")
     print("QQ_RECRUITMENT_IMPORT status="+result["status"]+
