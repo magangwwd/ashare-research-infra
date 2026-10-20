@@ -464,8 +464,8 @@ async function init(){
    try{const log=await fetchJSON('./data/changes.json');if(Array.isArray(log.events))state.ledger=log;}
    catch{state.ledger=null;}
    try{const q=await fetchJSON('./data/qq_feed.json');if(q.schema===1&&q.source_url?.startsWith('https://docs.qq.com/sheet/'))state.qq=q;}
-   try{const uploaded=await fetchJSON('./data/qq_uploaded_shortlist.json');if(uploaded.schema===1&&uploaded.source_url?.startsWith('https://docs.qq.com/sheet/')&&Array.isArray(uploaded.leads)){if(!state.qq||state.qq.status!=='authorized_export_imported'||!state.qq.leads?.length)state.qq=uploaded;}}catch{}
    catch{state.qq=null;}
+   try{const uploaded=await fetchJSON('./data/qq_uploaded_shortlist.json');if(uploaded.schema===1&&uploaded.source_url?.startsWith('https://docs.qq.com/sheet/')&&Array.isArray(uploaded.leads)){if(!state.qq||state.qq.status!=='authorized_export_imported'||!state.qq.leads?.length)state.qq=uploaded;}}catch{}
    renderUrgent();renderJobs();renderSources();renderChanges();renderQQ();
  }catch{
    ['jobs-list','urgent-list','sources-list'].forEach(id=>$(id).replaceChildren(n('p','loading','云盘最新招聘数据暂不可用。不能据旧信息认定报名仍开放，请直接访问国家电网等官方招聘网站。')));
