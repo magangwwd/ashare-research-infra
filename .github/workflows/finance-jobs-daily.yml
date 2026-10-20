@@ -8,6 +8,11 @@ on:
     paths:
       - '.github/workflows/finance-jobs-daily.yml'
       - 'finance_jobs_site/data/opportunities.json'
+      - 'finance_jobs_site/scripts/qq_sheet_sync.py'
+      - 'finance_jobs_site/scripts/create_snapshot.py'
+      - 'finance_jobs_site/scripts/read_drive.py'
+      - 'finance_jobs_site/scripts/publish_drive.py'
+      - 'finance_jobs_site/scripts/extract_public.py'
 permissions:
   contents: read
 concurrency:
@@ -39,6 +44,16 @@ jobs:
           GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
         run: |
           python finance_jobs_site/scripts/qq_sheet_sync.py --output "$RUNNER_TEMP/qq-sheet-feed.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          d=json.loads((Path(os.environ["RUNNER_TEMP"])/"qq-sheet-feed.json").read_text("utf-8"))
+          print("QQ_VERIFIED_IMPORT status="+str(d["status"])+" examined="+str(d["rows_examined"])+" leads="+str(d["qualified_count"])+" sha256="+str(d.get("archived_sha256","none")))
+          if d["status"]!="authorized_export_imported":
+              raise SystemExit("The owner-authorized Tencent XLSX is available in Drive, but import failed")
+          if d["rows_examined"]<5000 or d["qualified_count"]<150:
+              raise SystemExit("Tencent export imported but row count suspiciously incomplete")
+          PY
           python - <<'PY'
           import json,os
           from pathlib import Path
