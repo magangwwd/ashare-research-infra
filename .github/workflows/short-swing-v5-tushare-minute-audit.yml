@@ -68,10 +68,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          base="gdrive:Ashare_Quant/versions/$VERSION"
+          # Ashare_Quant is a separate Drive folder, not necessarily listed at gdrive: root.
+          # An explicit folder root does not grant permissions; fail if OAuth cannot read it.
+          ashare_id='1rkC99Ymgp8mjvAcJNRPJMlOGLdI9_bue'
+          base="gdrive:versions/$VERSION"
           mkdir -p "$RUNNER_TEMP/tushare-jan" "$RUNNER_TEMP/v5"
-          rclone copyto "$base/production_manifest.json" "$RUNNER_TEMP/production_manifest.json"
-          rclone copy "$base/data/clean/stk_mins/year=2026/month=01" "$RUNNER_TEMP/tushare-jan" --checkers 12 --transfers 8
+          rclone lsf 'gdrive:' --drive-root-folder-id "$ashare_id" --dirs-only | grep -qx 'versions/'
+          rclone copyto "$base/production_manifest.json" "$RUNNER_TEMP/production_manifest.json" --drive-root-folder-id "$ashare_id"
+          rclone copy "$base/data/clean/stk_mins/year=2026/month=01" "$RUNNER_TEMP/tushare-jan" --drive-root-folder-id "$ashare_id" --checkers 12 --transfers 8
           rclone copyto \
             "gdrive:stock_state_strategy/output/short_swing_3to5_v5_causal_rank/2026-10-16/run_39393699829/comparison.json" \
             "$RUNNER_TEMP/v5/comparison.json"
