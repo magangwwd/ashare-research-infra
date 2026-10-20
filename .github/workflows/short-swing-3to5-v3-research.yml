@@ -1,0 +1,135 @@
+name: A-share mainboard V3 stateful risk gates PAPER
+
+on:
+  push:
+    branches: ['feat/mainboard-short-swing-3to5-paper-20261020']
+    paths:
+      - '.github/workflows/short-swing-3to5-v3-research.yml'
+  pull_request:
+    paths:
+      - 'astock-quant/stock_state_strategy/short_swing_3to5_v3_research.py'
+      - 'astock-quant/stock_state_strategy/test_short_swing_3to5_v3_research.py'
+      - '.github/workflows/short-swing-3to5-v3-research.yml'
+  workflow_dispatch:
+    inputs:
+      start:
+        description: 'Date YYYY-MM-DD, no earlier than 2024-01-01'
+        type: string
+        default: '2024-01-01'
+        required: true
+      end:
+        description: 'Last completed China market session YYYY-MM-DD'
+        type: string
+        default: '2026-10-16'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mainboard-swing-v3-research-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install Python offline test dependencies
+        run: python -m pip install 'pandas>=2.2,<4' 'pyarrow>=18'
+      - name: Test independent risk variants and original V1 execution contracts
+        working-directory: astock-quant/stock_state_strategy
+        run: |
+          python -m unittest -v test_short_swing_3to5_v1.py test_short_swing_15m_audit.py test_short_swing_3to5_v3_research.py
+
+  gold-variant-compare:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       github.event.pull_request.head.ref == 'feat/mainboard-short-swing-3to5-paper-20261020')
+    needs: offline-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      START: ${{ inputs.start || '2024-01-01' }}
+      END: ${{ inputs.end || '2026-10-16' }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install parquet runtime
+        run: python -m pip install 'pandas>=2.2,<4' 'pyarrow>=18'
+      - name: Configure existing Drive secret in temporary directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo '::error::Missing GDRIVE_RCLONE_CONFIG_B64'; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Fetch historical Gold and point-in-time risk records, abort if absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from datetime import date
+          start=date.fromisoformat(os.environ['START'])
+          end=date.fromisoformat(os.environ['END'])
+          assert date(2024,1,1) <= start <= end, 'Bad backtest period'
+          assert end <= date.today(), 'Cannot request future Gold data'
+          PY
+          base='gdrive:down_data/data/gold/main_board'
+          mkdir -p "$RUNNER_TEMP/gold" "$RUNNER_TEMP/risk/name_history"
+          rclone copyto "$base/manifest.json" "$RUNNER_TEMP/gold/manifest.json"
+          from_year="$((10#${START:0:4}-1))"
+          to_year="${END:0:4}"
+          for year in $(seq "$from_year" "$to_year"); do
+            for dataset in daily_prices adjustment_factors; do
+              rclone copy "$base/$dataset/year=$year" "$RUNNER_TEMP/gold/$dataset/year=$year" --checkers 12 --transfers 8
+            done
+            for dataset in daily_limits suspension_events; do
+              rclone copy "$base/$dataset/year=$year" "$RUNNER_TEMP/risk/$dataset/year=$year" --checkers 12 --transfers 8
+            done
+          done
+          rclone copyto "$base/name_history.parquet" "$RUNNER_TEMP/risk/name_history/data.parquet"
+      - name: V3 stateful eight risk variants with exact V1 baseline equality
+        shell: bash
+        run: |
+          set -euo pipefail
+          python astock-quant/stock_state_strategy/short_swing_3to5_v3_research.py \
+            --market-root "$RUNNER_TEMP/gold" --risk-root "$RUNNER_TEMP/risk" \
+            --start "$START" --end "$END" \
+            --output "$RUNNER_TEMP/short-swing-v3/comparison.json"
+          python - <<'PY'
+          import json,os,pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'short-swing-v3/comparison.json'
+          d=json.loads(p.read_text())
+          assert d['mode']=='RESEARCH_ONLY_NO_LIVE_AUTHORIZATION'
+          assert [z['v2_base'] for z in d['datasets']]==['BALANCED','LOOSE']
+          assert all(len(z['variants'])==5 and z['variants'][0]['name']=='NO_GATE_REPRODUCED_V2' for z in d['datasets'])
+          assert d['period']['start']==os.environ['START']
+          assert d['period']['end']==os.environ['END']
+          assert all(v['summary']['closed_trades']>=0 for z in d['datasets'] for v in z['variants'])
+          assert all(z['variants'][0]['summary']['closed_trades']>0 for z in d['datasets'])
+          print('V3_TEN_VARIANTS_SHADOW_CHECKED_V1_BASELINE_EQUIVALENT')
+          PY
+      - name: Archive immutable Drive result, verify round trip checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/short_swing_3to5_v3_research/$END/run_$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/short-swing-v3" "$dest" --immutable --transfers 2
+          rclone check "$RUNNER_TEMP/short-swing-v3" "$dest" --one-way --checkers 4
+          echo "PAPER_ONLY_V3=$dest/comparison.json"
