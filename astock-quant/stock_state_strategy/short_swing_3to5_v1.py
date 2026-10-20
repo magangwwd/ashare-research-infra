@@ -114,7 +114,7 @@ def load_gold(root: Path, start: str, end: str) -> tuple[pd.DataFrame, dict, str
     for key in required:
         merged[key] = pd.to_numeric(merged[key], errors="coerce")
     if (merged[required].isna().any().any() or
-            ~merged["is_quality_valid"].eq(True).all() or
+            not merged["is_quality_valid"].eq(True).all() or
             not merged[["open", "high", "low", "close", "adjustment_factor"]].gt(0).all().all() or
             not merged["turnover_cny"].ge(0).all() or
             not merged["volume_shares"].gt(0).all() or
