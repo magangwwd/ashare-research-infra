@@ -7,7 +7,6 @@ on:
       - '.github/workflows/short-swing-v6-preentry-cost-gates.yml'
       - 'astock-quant/stock_state_strategy/short_swing_v6_preentry_cost_gates.py'
       - 'astock-quant/stock_state_strategy/test_short_swing_v6_preentry_cost_gates.py'
-      - 'astock-quant/stock_state_strategy/short_swing_v6_preentry_cost_gates.py'
   pull_request:
     paths:
       - '.github/workflows/short-swing-v6-preentry-cost-gates.yml'
