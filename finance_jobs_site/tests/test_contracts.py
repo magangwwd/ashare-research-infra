@@ -62,10 +62,19 @@ class CareersContract(unittest.TestCase):
   self.assertEqual(next(x for x in self.doc["listings"] if x["id"]=="sh-2026-institution-second")["deadline"],"2026-10-23")
  def test_single_page_accessibility_and_urgent(self):
   for ident in ("urgent","jobs","focus","guide","urgent-list","jobs-list","filter-text",
-                "filter-type","filter-region","filter-overseas","filter-qs","jobs-more","leads-list"):
+                "filter-type","filter-region","filter-overseas","filter-qs","back-to-top","leads-list"):
    self.assertIn('id="'+ident+'"',self.html)
   for tag in ("daysBetween","jobCard","renderUrgent","renderJobs","details-inner","qs_details"):
    self.assertIn(tag,self.js)
+  self.assertIn('id="back-to-top"',self.html)
+  self.assertIn('href="#home" aria-label="回到页面首行"',self.html)
+  self.assertNotIn('id="jobs-more"',self.html)
+  self.assertNotIn('再看 8 条详细公告',self.html)
+  self.assertNotIn('state.visible',self.js)
+  self.assertNotIn('jobs-more',self.js)
+  self.assertIn('arr.forEach(job=>target.append(jobCard(job)))',self.js)
+  self.assertIn("已全部展示",self.js)
+  self.assertIn(".list-end #back-to-top",self.css)
   self.assertIn("near-deadline",self.css)
   self.assertIn("jobs-workspace",self.css)
   self.assertIn("job-detail-pane",self.css)
