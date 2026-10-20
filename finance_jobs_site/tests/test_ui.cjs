@@ -19,7 +19,10 @@ function trigger(id,type){$(id).dispatchEvent(new dom.window.Event(type,{bubbles
  await new Promise(r=>setTimeout(r,80));
  assert.equal($('stat-items').textContent,String(curated.listings.length));
  assert.ok($('jobs-list').querySelectorAll('.job-card').length>0);
- assert.ok($('jobs-list').querySelector('.expanded .detail-matrix dd'));
+ assert.ok($('job-detail').querySelector('.expanded .detail-matrix dd'));
+ assert.ok($('jobs-list').querySelectorAll('.job-card-action').length>0);
+ assert.ok($('job-detail').textContent.includes('报名'));
+ assert.ok($('job-detail-pane').getAttribute('aria-label').includes('职位'));
  assert.ok($('sources-list').querySelectorAll('.source-card').length>=10);
  assert.ok($('sync-text').textContent.includes('Google Drive'));
  assert.ok($('jobs-list').textContent.includes('岗位'));
@@ -37,6 +40,39 @@ function trigger(id,type){$(id).dispatchEvent(new dom.window.Event(type,{bubbles
  watchTab.click();
  assert.ok($('jobs-list').textContent.includes('招聘')||$('jobs-list').textContent.includes('财务'));
  dom.window.document.querySelector('[data-category="all"]').click();
+ // A job card opens its own complete detail without routing to an unrelated page.
+ const cards=$('jobs-list').querySelectorAll('.job-card');
+ assert.ok(cards.length>=2);
+ const secondId=cards[1].dataset.jobId;
+ cards[1].querySelector('.job-card-action').click();
+ assert.equal($('jobs-list').querySelector('.job-card.selected').dataset.jobId,secondId);
+ assert.ok($('job-detail').textContent.includes(curated.listings.find(x=>x.id===secondId).company));
+ const third=$('jobs-list').querySelectorAll('.job-card')[2];
+ third.focus();third.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));
+ assert.equal($('jobs-list').querySelector('.job-card.selected').dataset.jobId,third.dataset.jobId);
+ // Search and quick city chips update the exact same filtering state.
+ $('hero-search').value='华能';$('hero-region').value='上海';$('hero-search-go').click();
+ assert.equal($('filter-text').value,'华能');assert.equal($('filter-region').value,'上海');
+ assert.ok($('jobs-list').textContent.includes('华能'));
+ dom.window.document.querySelector('[data-quick-region="马鞍山"]').click();
+ assert.equal($('filter-region').value,'马鞍山');
+ $('reset-filters').click();
+ $('filter-sort').value='newest';trigger('filter-sort','change');
+ assert.ok($('jobs-list').querySelectorAll('.job-card').length>0);
+ $('filter-sort').value='deadline';trigger('filter-sort','change');
+ assert.ok($('jobs-list').querySelectorAll('.job-card').length>0);
+ $('reset-filters').click();
+ // On mobile, view details as an independent overlay, close with Escape or overlay.
+ dom.window.matchMedia=()=>({matches:true,media:'(max-width: 860px)'});
+ $('jobs-list').querySelector('.job-card-action').click();
+ assert.ok($('job-detail-pane').classList.contains('mobile-open'));
+ assert.equal($('detail-backdrop').hidden,false);
+ dom.window.document.dispatchEvent(new dom.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+ assert.ok(!$('job-detail-pane').classList.contains('mobile-open'));
+ $('jobs-list').querySelector('.job-card-action').click();
+ $('detail-backdrop').click();
+ assert.equal($('detail-backdrop').hidden,true);
+ dom.window.matchMedia=()=>({matches:false,media:'(max-width: 860px)'});
  // Selecting state grid really filters, not just decorates labels.
  $('filter-type').value='国家电网';trigger('filter-type','change');
  assert.ok($('jobs-list').textContent.includes('国家电网'));
@@ -56,7 +92,7 @@ function trigger(id,type){$(id).dispatchEvent(new dom.window.Event(type,{bubbles
  assert.equal($('filter-status').value,'all');
  assert.ok($('jobs-list').querySelectorAll('.job-card').length>0);
  // No unsafe external open; all linked approved source URLs use safe rel.
- for(const a of dom.window.document.querySelectorAll('.jobs-list a[href]')){
+ for(const a of dom.window.document.querySelectorAll('.job-detail-pane a[href], .jobs-list a[href]')){
    assert.equal(a.rel,'noopener noreferrer');
    assert.equal(a.protocol,'https:');
  }
