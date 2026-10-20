@@ -1,6 +1,9 @@
 name: Mainboard 3-5 day fixed-CNY swing PAPER
 
 on:
+  push:
+    branches: ['feat/mainboard-short-swing-3to5-paper-20261020']
+    paths: ['.github/workflows/short-swing-3to5-paper.yml']
   pull_request:
     paths:
       - 'astock-quant/stock_state_strategy/short_swing_3to5_v1.py'
@@ -49,15 +52,15 @@ jobs:
         run: python -m unittest -v test_short_swing_3to5_v1.py
 
   gold-backtest:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     needs: offline-tests
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
       GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
-      START: ${{ inputs.start }}
-      END: ${{ inputs.end }}
-      BUDGET: ${{ inputs.budget_cny }}
+      START: ${{ inputs.start || '2024-01-01' }}
+      END: ${{ inputs.end || '2026-10-16' }}
+      BUDGET: ${{ inputs.budget_cny || '40000' }}
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - uses: actions/checkout@v4
