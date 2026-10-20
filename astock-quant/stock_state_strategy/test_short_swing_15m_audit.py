@@ -62,6 +62,11 @@ class MinuteContract(unittest.TestCase):
             with patch("pandas.read_parquet",return_value=bars()):
                 result=audit_source(root,daily,signals,executed)
             self.assertEqual(result["verified_minute_signal_days"],1)
+            # A warmed-up signal predating the requested interval is audit-only, not in-period.
+            with patch("pandas.read_parquet",return_value=bars()):
+                late=audit_source(root,daily,signals,executed,start="2026-10-17")
+            self.assertEqual(late["stock_daily_signal_days"],0)
+            self.assertEqual(late["verified_minute_signal_days"],0)
             self.assertFalse(result["marketwide_minute_coverage_verified"])
             self.assertFalse(result["incremental_15m_profitability_proven"])
             self.assertEqual(result["matched_paper_trades"][0]["pnl_cny"],5.)
