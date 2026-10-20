@@ -51,13 +51,16 @@ def validate_curated(doc):
 def fetch_one(s):
     row={"id":s["id"],"name":s["name"],"url":s["url"],"type":s["type"],
          "status":"无法自动读取，请打开官网","http_status":None,"digest":None,
-         "discovered_count":0}
+         "discovered_count":0,
+         "checked_at_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+         "page_title":None,"final_url":None,"content_bytes":None}
     leads=[]
     try:
         with requests.Session() as session:
             response=session.get(s["url"],headers={"User-Agent":"FinanceCampusJobSourceMonitor/1.0 (public announcements only)"},
                 timeout=TIMEOUT,stream=True,allow_redirects=True)
             row["http_status"]=response.status_code
+            row["final_url"]=response.url
             if not safe_url(response.url):
                 row["status"]="重定向到未核实域名，跳过";return row,leads
             if response.status_code != 200:
@@ -70,9 +73,12 @@ def fetch_one(s):
                 if len(content)>MAX_BYTES:
                     row["status"]="页面过大，跳过解析";return row,leads
             row["digest"]=hashlib.sha256(content).hexdigest()
+            row["content_bytes"]=len(content)
             row["status"]="官网页面响应正常（不代表招聘仍开放）"
-            if not s.get("discover"):return row,leads
             soup=BeautifulSoup(content,"html.parser")
+            if soup.title:
+                row["page_title"]=" ".join(soup.title.stripped_strings)[:150]
+            if not s.get("discover"):return row,leads
             found=set()
             for anchor in soup.select("a[href]"):
                 text=" ".join(anchor.stripped_strings)
@@ -85,7 +91,9 @@ def fetch_one(s):
                 found.add(link)
                 leads.append({"source_id":s["id"],"title":text[:160],"url":link,
                     "review_state":"待人工核对","role_confirmed":False,
-                    "application_confirmed":False})
+                    "application_confirmed":False,
+                    "discovered_at_utc":row["checked_at_utc"],
+                    "confidence":"仅关键词与官网链接相关，尚未核实岗位"})
                 if len(leads)>=8:break
             row["discovered_count"]=len(leads)
     except requests.RequestException:
