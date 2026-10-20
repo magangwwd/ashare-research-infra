@@ -213,16 +213,48 @@ def drive_export():
         return {"name":latest["name"],"modified_at":latest.get("modifiedTime"),
             "sha256":hashlib.sha256(response.content).hexdigest(),"bytes":response.content}
 
+def directly_exportable_sheet():
+    """Only use the exact public link if it itself returns a real downloadable file.
+    
+    No session cookies, internal Tencent APIs, sheet canvas scraping or bypasses.
+    """
+    import requests
+    try:
+        with requests.get(SOURCE,headers={"User-Agent":"Mozilla/5.0 (compatible; FinanceCampusRecruitAudit/1.0)"},
+                          timeout=(5,12),stream=True,allow_redirects=True) as r:
+            if r.status_code!=200 or urlparse(r.url).hostname!="docs.qq.com":return None
+            media=r.headers.get("Content-Type","").lower().split(";")[0].strip()
+            if media not in ("text/csv","application/csv",
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"):
+                return None
+            chunks=[];total=0
+            for chunk in r.iter_content(65536):
+                total+=len(chunk)
+                if total>MAX_BYTES:return None
+                chunks.append(chunk)
+            raw=b"".join(chunks)
+            if media=="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" and not zipfile.is_zipfile(io.BytesIO(raw)):
+                return None
+            if media!="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" and not raw.strip():
+                return None
+            return {"name":"Tencent_public_authorized." + ("xlsx" if zipfile.is_zipfile(io.BytesIO(raw)) else "csv"),
+                "modified_at":datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "sha256":hashlib.sha256(raw).hexdigest(),"bytes":raw}
+    except requests.RequestException:return None
+
 def run(out_path):
     stamp=datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
     result={"schema":1,"source_id":"qq_2027_master","source_url":SOURCE,
       "checked_at_utc":stamp,"status":"export_required","raw_download_permitted":False,
-      "source":"Private Google Drive import folder, not Tencent live cells",
+      "source":"Owner-permitted download if available, otherwise private Google Drive authorized export",
       "private_export_folder_id":DRIVE_FOLDER,"rows_examined":0,"qualified_count":0,
       "leads":[],"skip_reasons":{},
       "warning":"腾讯文档只能查看不能保证允许导出，未读取单元格前绝不声称自动同步或岗位匹配。"}
     try:
         export=drive_export()
+        if not export:
+            export=directly_exportable_sheet()
         if export:
             name=export["name"]
             sheets=csv_rows(export["bytes"]) if name.lower().endswith(".csv") else xlsx_rows(export["bytes"])
