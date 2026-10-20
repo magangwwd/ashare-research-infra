@@ -567,3 +567,19 @@ body{background:var(--bg);color:var(--ink);font-size:14px;letter-spacing:.003em}
 @media(max-width:820px){.qq-focus{flex-direction:column;align-items:stretch}.qq-focus-actions{max-width:none}}
 @media(max-width:620px){.qq-focus{padding:18px 17px;margin-top:16px}.qq-shortlist-list{grid-template-columns:1fr}
  .qq-focus h2{font-size:17px}}
+
+/* Resume-matched verified shortlist and large unverified source archive */
+.qq-source-caption{font-size:12px;color:#586b60;line-height:1.75;margin:6px 0 14px}
+.qq-lead{box-shadow:0 1px 7px rgba(14,53,42,.045)}
+.qq-lead .qq-match{font-weight:750;color:#1d5c47}
+.qq-archive{margin-top:13px}
+.qq-archive-search-label{display:flex;flex-direction:column;gap:7px;font-weight:650;font-size:12px;color:#385648;max-width:540px;margin:12px 0 17px}
+.qq-archive-search-label input{min-height:44px;border:1px solid #ccd8cf;border-radius:9px;background:#fff;padding:8px 12px;font:inherit;color:#233c32}
+.qq-archive-search-label input:focus-visible{outline:3px solid #89b5a3;outline-offset:2px}
+.qq-archive-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.qq-archive-item{padding:13px 14px;border:1px solid #e0e8e1;border-radius:9px;display:flex;flex-direction:column;gap:7px;min-width:0}
+.qq-archive-item strong{font-size:13px;line-height:1.55;color:#263d34}
+.qq-archive-item p{font-size:11px;line-height:1.6;color:#576a5d;margin:0;overflow-wrap:anywhere}
+.qq-archive-item a{font-size:11px}
+.qq-archive-status{font-size:10px;font-weight:750;color:#796b36}
+@media(max-width:680px){.qq-archive-list{grid-template-columns:1fr}.qq-archive-search-label{max-width:100%}}
