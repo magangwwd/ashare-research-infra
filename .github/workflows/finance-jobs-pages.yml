@@ -72,9 +72,10 @@ jobs:
           Path("_site/data/latest.json").write_text(json.dumps(public,ensure_ascii=False))
           Path("_site/data/monitor.json").write_text(json.dumps(dict(schema=1,checked_at=None,sources=[],potential_new_announcements=[])))
           Path("_site/data/changes.json").write_text(json.dumps(dict(events=[],counts={},total_events=0,baseline=True,previous_collected_at=None,disclaimer="CI sample fixture; never published")))
+          Path("_site/data/qq_feed.json").write_text(json.dumps(dict(schema=1,source_url="https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",checked_at_utc="2026-10-20T00:00:00Z",status="export_required",qualified_count=0,rows_examined=0,leads=[],warning="仅作CI检测样本，绝不声称已导出")),ensure_ascii=False))
           PY
           else
-            cp finance_jobs_site/data/public/latest.json finance_jobs_site/data/public/monitor.json finance_jobs_site/data/public/changes.json _site/data/
+            cp finance_jobs_site/data/public/latest.json finance_jobs_site/data/public/monitor.json finance_jobs_site/data/public/changes.json finance_jobs_site/data/public/qq_feed.json _site/data/
           fi
           python - <<'PY'
           import json
@@ -89,6 +90,9 @@ jobs:
           m=json.loads((site/"data/monitor.json").read_text("utf-8"))
           audit=json.loads((site/"data/changes.json").read_text("utf-8"))
           assert isinstance(audit.get("events"),list) and "total_events" in audit
+          qq=json.loads((site/"data/qq_feed.json").read_text("utf-8"))
+          assert qq["schema"]==1 and qq["source_url"].startswith("https://docs.qq.com/sheet/")
+          assert 'id="qq-focus"' in html and 'id="qq-feed-status"' in html
           assert 'id="changes"' in html and 'id="category-count-core"' in html
           assert 'id="job-detail-pane"' in html and 'id="hero-search"' in html
           assert 'id="filter-sort"' in html and 'id="detail-backdrop"' in html
