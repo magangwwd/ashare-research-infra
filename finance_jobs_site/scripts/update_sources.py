@@ -21,7 +21,8 @@ ALLOWED = {
     "wap.sasac.gov.cn", "jshrss.jiangsu.gov.cn", "rsj.sh.gov.cn",
     "hrss.sz.gov.cn", "jyw.mastc.edu.cn", "picc.zhiye.com", "www.psbc.com",
     "psbc2027.zhaopin.com", "campus.chinahr.com", "chinapost2027.zhaopin.com",
-    "job.bankcomm.com", "zhcpa.zhiye.com"
+    "job.bankcomm.com", "zhcpa.zhiye.com", "zp.czbank.com.cn", "sdg.zhaopin.com",
+    "zhaopin.cscec3b.com.cn", "hr.jsbchina.cn", "career.hebut.edu.cn"
 }
 def safe_url(url):
     try:
