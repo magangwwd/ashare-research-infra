@@ -67,6 +67,16 @@ class CareersContract(unittest.TestCase):
   for tag in ("daysBetween","jobCard","renderUrgent","renderJobs","details-inner","qs_details"):
    self.assertIn(tag,self.js)
   self.assertIn("near-deadline",self.css)
+  self.assertIn("jobs-workspace",self.css)
+  self.assertIn("job-detail-pane",self.css)
+  self.assertIn("mobile-open",self.css)
+  self.assertIn("@media(max-width:620px)",self.css)
+  for ident in ("hero-search","hero-search-go","hero-region","filter-sort","job-detail-pane","job-detail","close-detail","detail-backdrop"):
+   self.assertIn('id="'+ident+'"',self.html)
+  for handler in ("selectJob","closeMobileDetail","sortJobs","showDetailOnMobile"):
+   self.assertIn(handler,self.js)
+  self.assertIn("data-quick-region",self.html)
+  self.assertIn("aria-live",self.html)
   self.assertIn("prefers-reduced-motion",self.css)
   self.assertIn("aria-live",self.html)
   self.assertNotIn("乳腺癌",self.html)
