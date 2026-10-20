@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 from data_pipeline.run_task01 import resolved_as_of
+from data_pipeline.validate import validation_as_of
 from data_pipeline.download import TushareClient
 
 
@@ -21,6 +22,17 @@ def test_intraday_never_selects_unclosed_session():
     assert resolved_as_of(shanghai("2026-10-13T17:59:59")) == date(2026, 10, 12)
     assert resolved_as_of(shanghai("2026-10-13T18:00:00")) == date(2026, 10, 13)
     assert resolved_as_of(shanghai("2026-10-13T23:50:00")) == date(2026, 10, 13)
+
+
+def test_production_validation_uses_same_completed_session_cutoff():
+    # Regression: scheduled Task 01 begins on Oct 20 at 06:59 and ingests Oct 19;
+    # acceptance must not demand the not-yet-finished Oct 20 session.
+    for timestamp in ("2026-10-20T06:59:00", "2026-10-20T07:31:00",
+                      "2026-10-20T17:59:59", "2026-10-20T18:00:00"):
+        now = shanghai(timestamp)
+        assert validation_as_of(now) == resolved_as_of(now)
+    assert validation_as_of(shanghai("2026-10-20T07:31:00")) == date(2026, 10, 19)
+    assert validation_as_of(shanghai("2026-10-20T18:00:00")) == date(2026, 10, 20)
 
 
 def test_timezone_and_invalid_cutoff_guard():
