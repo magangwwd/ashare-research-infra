@@ -9,7 +9,7 @@ const SAFE_HOSTS=new Set([
  'psbc2027.zhaopin.com','campus.chinahr.com','job.bankcomm.com','zhcpa.zhiye.com','zp.czbank.com.cn','sdg.zhaopin.com','zhaopin.cscec3b.com.cn','hr.jsbchina.cn','career.hebut.edu.cn','career.nankai.edu.cn','sgdt.iguopin.com','job.tiangong.edu.cn'
 ]);
 const state={feed:null,search:'',region:'all',type:'all',status:'all',overseas:false,rolesOnly:false,qs:'',
-  visible:10,monitor:null,category:'all',ledger:null,sort:'recommended',selectedId:null,lastCardFocus:null};
+  monitor:null,category:'all',ledger:null,sort:'recommended',selectedId:null,lastCardFocus:null};
 const cnTime=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'});
 function today(){const ps=cnTime.formatToParts(new Date());const x=Object.fromEntries(ps.map(p=>[p.type,p.value]));return x.year+'-'+x.month+'-'+x.day;}
 function daysBetween(day){return Math.round((Date.parse(day+'T00:00:00Z')-Date.parse(today()+'T00:00:00Z'))/86400000);}
@@ -264,15 +264,13 @@ function renderJobs(){
  });
  const arr=state.feed.listings.filter(jobSearchMatch).sort(sortJobs);
  $('job-total').textContent=arr.length+' 条匹配';
- $('job-filter-count').textContent='符合条件 '+arr.length+' 条 · 已显示 '+Math.min(state.visible,arr.length)+' 条';
+ $('job-filter-count').textContent='符合条件 '+arr.length+' 条 · 已全部展示';
  const target=$('jobs-list');target.replaceChildren();
- arr.slice(0,state.visible).forEach(job=>target.append(jobCard(job)));
+ arr.forEach(job=>target.append(jobCard(job)));
  if(!arr.some(job=>job.id===state.selectedId))state.selectedId=arr[0]?.id||null;
  if(state.selectedId)selectJob(state.selectedId,{openMobile:false});
  else {$('job-detail').replaceChildren(n('p','loading','没有符合当前条件的招聘记录，请调整筛选。'));closeMobileDetail(false);}
  if(!arr.length)target.append(n('p','loading','没有匹配的官方记录，可放宽条件。网站不虚构工作岗位或QS资格。'));
- const more=$('jobs-more');more.hidden=state.visible>=arr.length;
- if(!more.hidden)more.textContent='再看 '+Math.min(8,arr.length-state.visible)+' 条详细公告 ↓';
  const rank=Number(state.qs);
  $('qs-message').textContent=state.qs&&Number.isInteger(rank)&&rank>0?
    '你输入了 QS '+rank+'。当前已核实招聘信息没有通用QS排名门槛；本站不能据此自动判定有资格或筛除岗位，请逐条打开原文核对。':
@@ -362,7 +360,7 @@ function changeUI(){
  state.region=$('filter-region').value;state.type=$('filter-type').value;
  state.status=$('filter-status').value;
  state.overseas=$('filter-overseas').checked;state.rolesOnly=$('filter-role').checked;
- state.qs=$('filter-qs').value.trim();state.sort=$('filter-sort').value;state.visible=10;
+ state.qs=$('filter-qs').value.trim();state.sort=$('filter-sort').value;
  $('hero-region').value=state.region;
  if(document.activeElement!==$('hero-search'))$('hero-search').value=$('filter-text').value;
  closeMobileDetail(false);renderJobs();
@@ -372,7 +370,7 @@ function initControls(){
    $(id).addEventListener(id==='filter-text'||id==='filter-qs'?'input':'change',changeUI);
  }
  document.querySelectorAll('[data-category]').forEach(button=>button.addEventListener('click',()=>{
-   state.category=button.dataset.category;state.visible=10;closeMobileDetail(false);renderJobs();
+   state.category=button.dataset.category;closeMobileDetail(false);renderJobs();
  }));
  $('hero-search-go').addEventListener('click',()=>{
    $('filter-text').value=$('hero-search').value;
@@ -396,7 +394,6 @@ function initControls(){
    $('filter-overseas').checked=false;$('filter-role').checked=false;$('filter-qs').value='';$('filter-sort').value='recommended';
    $('hero-search').value='';$('hero-region').value='all';state.category='all';changeUI();
  });
- $('jobs-more').addEventListener('click',()=>{state.visible+=10;renderJobs();});
 }
 async function fetchJSON(path){
  const response=await fetch(path,{cache:'no-store'});
