@@ -71,6 +71,15 @@ def download_pages(out: Path, instrument="BTC-USDT-SWAP", page_limit=5,
         "schema": 1, "instrument": instrument, "after": None,
         "pages": 0, "complete": False, "coverage": "BOUNDED_SPARSE_PAGES_ONLY",
     }
+    migrated_legacy = False
+    if "schema" not in state and checkpoint.exists():
+        # Legacy checkpoint was written by the first verified live archive job.
+        # Never reset the cursor: validate every legacy page and checksum below.
+        if not isinstance(state.get("pages"), int) or state["pages"] <= 0:
+            raise ValueError("Invalid legacy checkpoint page count")
+        state = {**state, "schema": 1, "instrument": instrument,
+                 "coverage": "BOUNDED_SPARSE_PAGES_ONLY"}
+        migrated_legacy = True
     if (state.get("schema") != 1 or state.get("instrument") != instrument
             or not isinstance(state.get("pages"), int) or state["pages"] < 0):
         raise ValueError("Invalid or cross-instrument checkpoint")
@@ -87,6 +96,8 @@ def download_pages(out: Path, instrument="BTC-USDT-SWAP", page_limit=5,
             raise ValueError("Checkpoint/cursor/last-page checksum mismatch")
     elif state["after"] is not None:
         raise ValueError("Nonempty cursor without pages")
+    if migrated_legacy:
+        save_state(checkpoint, state)
 
     for _ in range(page_limit):
         if state["complete"]:
