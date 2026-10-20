@@ -38,7 +38,9 @@ jobs:
           changes=json.loads((p/"data/changes.json").read_text("utf-8"))
           for x in ("urgent","jobs","focus","guide","changes"):
               assert 'id="'+x+'"' in page,x
-          for id in ("filter-region","filter-qs","filter-overseas","urgent-list","jobs-list","category-count-core","changes-list"):
+          for id in ("filter-region","filter-qs","filter-overseas","urgent-list","jobs-list",
+                     "category-count-core","changes-list","hero-search","hero-search-go",
+                     "hero-region","filter-sort","job-detail-pane","job-detail","close-detail","detail-backdrop"):
               assert 'id="'+id+'"' in page,id
           assert "zhaopin.sgcc.com.cn/sgcchr/static/unitPart.html?bullet_id=dcefb56d04714dc4b488d0a7a204bf76" in page
           assert "乳腺疾病" not in page and "乳腺癌" not in page
@@ -50,6 +52,9 @@ jobs:
           assert len(d.get("sources",[]))>=25
           assert changes.get("previous_collected_at") and isinstance(changes.get("events"),list)
           assert "categoryOf" in js and "renderChanges" in js
+          assert "selectJob" in js and "closeMobileDetail" in js and "sortJobs" in js
+          assert "jobs-workspace" in css and "job-detail-pane" in css
+          assert "@media(max-width:620px)" in css and "prefers-reduced-motion" in css
           assert all(x.get("checked_at") and x.get("source_url") and x.get("posting_level") for x in d["listings"])
           print("FINANCE_PUBLIC_HTTP_OK listings="+str(len(d["listings"]))+" sources="+str(len(m["sources"]))+
                 " collected="+d["collected_at"]+" data_as_of="+d["data_as_of"]+
