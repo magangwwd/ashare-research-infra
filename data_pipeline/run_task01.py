@@ -456,13 +456,21 @@ class Pipeline:
                 if pd.notna(row.delist_date) and row.delist_date < year_start:
                     continue
                 left, right = history_window(year, start, end)
-                if left > right:
+                # Bound each historical request to that security's actual
+                # listing lifetime, not merely the calendar-year intersection.
+                lower = datetime.strptime(left[:10], "%Y-%m-%d").date()
+                upper = datetime.strptime(right[:10], "%Y-%m-%d").date()
+                if pd.notna(row.list_date):
+                    lower = max(lower, row.list_date)
+                if pd.notna(row.delist_date):
+                    upper = min(upper, row.delist_date - timedelta(days=1))
+                if lower > upper:
                     continue
                 yield {
                     "ts_code": row.ts_code,
                     "freq": settings["freq"],
-                    "start_date": left,
-                    "end_date": right,
+                    "start_date": f"{lower.isoformat()} 09:00:00",
+                    "end_date": f"{upper.isoformat()} 16:00:00",
                 }
 
     def intraday_history(self) -> None:
