@@ -6,6 +6,7 @@ This is a bounded single-day research archive (not trading execution data).
 import argparse
 import datetime as dt
 import hashlib
+import gzip
 import json
 import os
 from pathlib import Path
@@ -116,6 +117,17 @@ def validate_tar_gz(path):
         raise ValueError(f"Invalid official tar.gz: {exc}") from exc
     if members < 1:
         raise ValueError("Official archive contains no entries")
+    # Streaming tar readers may stop at TAR EOF before the underlying gzip
+    # checksum trailer. Consume the whole gzip stream to verify CRC/ISIZE.
+    uncompressed_stream_bytes = 0
+    try:
+        with gzip.open(path, "rb") as gz:
+            while block := gz.read(CHUNK_SIZE):
+                uncompressed_stream_bytes += len(block)
+                if uncompressed_stream_bytes > MAX_UNCOMPRESSED + 8 * 1024 * 1024:
+                    raise ValueError("Gzip payload exceeds bounded expanded size")
+    except (OSError, EOFError) as exc:
+        raise ValueError(f"Gzip checksum or trailer failed: {exc}") from exc
     return members, expanded
 
 
@@ -146,7 +158,11 @@ def download(catalog, out: Path, *, opener=urllib.request.urlopen):
             offset += len(data)
             print(f"downloaded {offset}/{total} bytes", flush=True)
     members, expanded = validate_tar_gz(part)
-    digest = hashlib.sha256(part.read_bytes()).hexdigest()
+    hasher = hashlib.sha256()
+    with part.open("rb") as fh:
+        while block := fh.read(CHUNK_SIZE):
+            hasher.update(block)
+    digest = hasher.hexdigest()
     part.replace(final)
     manifest = {
         "source": "OKX_OFFICIAL_L2_400_LEVEL_DAILY",
