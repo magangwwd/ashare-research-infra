@@ -1,0 +1,111 @@
+name: Finance Jobs Website Pages
+on:
+  pull_request:
+    paths:
+      - 'finance_jobs_site/**'
+      - '.github/workflows/finance-jobs-daily.yml'
+      - '.github/workflows/finance-jobs-pages.yml'
+      - '.github/workflows/finance-jobs-public-smoke.yml'
+  workflow_dispatch:
+  workflow_run:
+    workflows: ['Finance Jobs Daily to Drive']
+    types: [completed]
+  schedule:
+    - cron: '20 0 * * *' # 08:20 Asia/Shanghai; fallback if previous collector finishes late
+permissions:
+  contents: read
+concurrency:
+  group: finance-jobs-pages
+  cancel-in-progress: false
+jobs:
+  build-and-validate:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && 'main' || github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check 'google-auth>=2.28,<3' 'requests>=2.31,<3' 'beautifulsoup4>=4.12,<5'
+      - name: Validate detailed job metadata and user-facing safety rules
+        run: |
+          python -m unittest discover -s finance_jobs_site/tests -v
+          node --check finance_jobs_site/app.js
+      - name: Download latest immutable finance snapshot from Google Drive
+        if: github.event_name != 'pull_request'
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        run: |
+          python finance_jobs_site/scripts/read_drive.py --output "$RUNNER_TEMP/finance-latest.json" --receipt "$RUNNER_TEMP/finance-drive-read.json"
+          python finance_jobs_site/scripts/extract_public.py --input "$RUNNER_TEMP/finance-latest.json" --output-dir finance_jobs_site/data/public
+      - name: Verify public site content and no old medical content
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site/data
+          cp finance_jobs_site/index.html finance_jobs_site/app.js finance_jobs_site/styles.css _site/
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            python - <<'PY'
+          import json,sys
+          from pathlib import Path
+          src=json.loads(Path("finance_jobs_site/data/opportunities.json").read_text("utf-8"))
+          public=dict(src,collected_at=src["as_of"]+"T00:00:00Z",data_as_of=src["as_of"])
+          Path("_site/data/latest.json").write_text(json.dumps(public,ensure_ascii=False))
+          Path("_site/data/monitor.json").write_text(json.dumps(dict(schema=1,checked_at=None,sources=[],potential_new_announcements=[])))
+          PY
+          else
+            cp finance_jobs_site/data/public/latest.json finance_jobs_site/data/public/monitor.json _site/data/
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          site=Path("_site")
+          assert (site/"index.html").is_file() and (site/"app.js").is_file()
+          html=(site/"index.html").read_text("utf-8")
+          assert "国家电网" in html and 'id="jobs-list"' in html and 'id="urgent-list"' in html
+          assert not (site/"professional.html").exists()
+          assert "乳腺疾病" not in html and "乳腺癌" not in html
+          d=json.loads((site/"data/latest.json").read_text("utf-8"))
+          m=json.loads((site/"data/monitor.json").read_text("utf-8"))
+          assert d["schema"]==1 and len(d["listings"])>=12 and m["schema"]==1
+          assert all(x["deadline"] is None or x["deadline"][:4]=="2026" for x in d["listings"])
+          assert "zhaopin.sgcc.com.cn" in html
+          print("FINANCE_SITE_OK listings="+str(len(d["listings"]))+" sources="+str(len(d["sources"]))+" collected_at="+str(d.get("collected_at")))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: finance-site-build-${{ github.run_id }}
+          path: _site/
+          retention-days: 7
+      - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+      - name: Upload public pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+  deploy:
+    if: github.event_name != 'pull_request' && needs.build-and-validate.result == 'success'
+    needs: build-and-validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy Finance Jobs page
+        id: deployment
+        uses: actions/deploy-pages@v4
