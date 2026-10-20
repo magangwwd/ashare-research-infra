@@ -15,7 +15,7 @@ const qq={schema:1,source_url:'https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=B
  qualified_count:2,rows_examined:12,leads:[
  {title:'会计岗',company:'上海某公司',work_city:'上海',deadline:'2026-10-31',
   third_party_url:'https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2',
-  role_confirmed:false,match_reasons:['专业匹配']},
+  role_confirmed:true,match_reasons:['专业匹配'],verification:{status:'university_posted_specific_role',checked_at:'2026-10-20',evidence_url:'https://career.gdut.edu.cn/teachin/view/id/191616'}},
  {title:'旧审计岗',company:'过期公司',work_city:'南京',deadline:'2026-10-01',
   third_party_url:'https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2',
   role_confirmed:false,match_reasons:['过期应跳过']}
