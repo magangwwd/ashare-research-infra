@@ -17,7 +17,7 @@ jobs:
           set -euo pipefail
           base="https://magangwwd.github.io/ashare-research-infra"
           mkdir -p "$RUNNER_TEMP/finance_site_test"
-          for f in index.html app.js styles.css data/latest.json data/monitor.json; do
+          for f in index.html app.js styles.css data/latest.json data/monitor.json data/changes.json; do
             mkdir -p "$RUNNER_TEMP/finance_site_test/$(dirname "$f")"
             curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 \
               "$base/$f" -o "$RUNNER_TEMP/finance_site_test/$f"
@@ -35,18 +35,23 @@ jobs:
           css=(p/"styles.css").read_text("utf-8")
           d=json.loads((p/"data/latest.json").read_text("utf-8"))
           m=json.loads((p/"data/monitor.json").read_text("utf-8"))
-          for x in ("urgent","jobs","focus","guide"):
+          changes=json.loads((p/"data/changes.json").read_text("utf-8"))
+          for x in ("urgent","jobs","focus","guide","changes"):
               assert 'id="'+x+'"' in page,x
-          for id in ("filter-region","filter-qs","filter-overseas","urgent-list","jobs-list"):
+          for id in ("filter-region","filter-qs","filter-overseas","urgent-list","jobs-list","category-count-core","changes-list"):
               assert 'id="'+id+'"' in page,id
           assert "zhaopin.sgcc.com.cn/sgcchr/static/unitPart.html?bullet_id=dcefb56d04714dc4b488d0a7a204bf76" in page
           assert "乳腺疾病" not in page and "乳腺癌" not in page
           assert "daysBetween" in js and "near-deadline" in js
           assert "prefers-reduced-motion" in css
-          assert d.get("schema")==1 and len(d.get("listings",[]))>=15
+          assert d.get("schema")==1 and len(d.get("listings",[]))>=50
           assert d.get("collected_at") and d.get("data_as_of")
           assert m.get("schema")==1 and isinstance(m.get("sources"),list)
+          assert len(d.get("sources",[]))>=25
+          assert changes.get("previous_collected_at") and isinstance(changes.get("events"),list)
+          assert "categoryOf" in js and "renderChanges" in js
           assert all(x.get("checked_at") and x.get("source_url") and x.get("posting_level") for x in d["listings"])
           print("FINANCE_PUBLIC_HTTP_OK listings="+str(len(d["listings"]))+" sources="+str(len(m["sources"]))+
-                " collected="+d["collected_at"]+" data_as_of="+d["data_as_of"])
+                " collected="+d["collected_at"]+" data_as_of="+d["data_as_of"]+
+                " events="+str(changes["total_events"]))
           PY
