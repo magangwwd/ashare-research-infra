@@ -19,8 +19,17 @@ def export_snapshot(source,publicdir):
             raise ValueError("Invalid QS evidence")
     publicdir=pathlib.Path(publicdir);publicdir.mkdir(parents=True,exist_ok=True)
     qq=data.get("qq_sheet")
-    if not isinstance(qq,dict) or qq.get("source_id")!="qq_2027_master":
-        raise ValueError("Missing truthful prioritized Tencent Docs source status")
+    if not isinstance(qq,dict):
+        # First UI release may use the previous immutable archive before the new
+        # QQ-monitoring collector run has written an updated Drive snapshot.
+        # Safely report absence; never invent Tencent Docs spreadsheet rows.
+        qq={"schema":1,"source_id":"qq_2027_master",
+            "source_url":"https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2",
+            "status":"awaiting_authorized_export","qualified_count":0,
+            "rows_examined":0,"leads":[],
+            "warning":"此份历史云盘快照未包含腾讯表格授权导出资料。"}
+    elif qq.get("source_id")!="qq_2027_master":
+        raise ValueError("Unexpected recruitment sheet identifier")
     if len(qq.get("leads",[]))>300:
         raise ValueError("Third-party candidate list too large")
     sanitized={
