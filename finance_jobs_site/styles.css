@@ -539,3 +539,31 @@ body{background:var(--bg);color:var(--ink);font-size:14px;letter-spacing:.003em}
   .brand small{font-size:10px}
   .filter-panel .qs-warning{font-size:11px}
 }
+
+
+/* Prioritized live QQ Docs source: plain factual status, not an implied authorized import. */
+.qq-focus{display:flex;align-items:center;justify-content:space-between;gap:22px;
+ background:#fff;border:1px solid #d9e4dc;border-left:4px solid #28596f;
+ border-radius:11px;padding:23px 27px;margin-top:25px;box-shadow:0 5px 22px #1b3c3008}
+.qq-focus-main{max-width:710px;min-width:0}
+.qq-focus-brow{font-size:10px;color:#497968;letter-spacing:.08em;font-weight:850}
+.qq-focus h2{font-size:19px;letter-spacing:-.025em;line-height:1.4;margin:6px 0;color:#223a39}
+.qq-focus p{font-size:12px;color:#657970;line-height:1.8;margin:6px 0}
+.qq-focus .qq-sync-status{font-size:11px;background:#fbf6eb;color:#795f35;
+ border:1px solid #ede3cd;border-radius:6px;padding:8px 11px;margin-top:12px}
+.qq-focus-actions{display:flex;flex-direction:column;gap:9px;min-width:235px;max-width:270px}
+.qq-focus-actions .button{min-height:46px;text-align:center;font-size:12px}
+.qq-focus-actions span{font-size:10px;line-height:1.7;color:#778b80}
+.qq-shortlist{background:#fff;border:1px solid #e0e8e0;border-radius:11px;padding:20px 22px;margin-top:13px}
+.qq-shortlist-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.qq-shortlist-head strong{font-size:15px}.qq-shortlist-head span{font-size:12px;color:#75887a}
+.qq-shortlist-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.qq-lead{border:1px solid #e3e9e3;border-radius:9px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.qq-lead strong{font-size:13px;color:#264940;line-height:1.6}
+.qq-lead p{font-size:11px;margin:0;color:#667b6e;line-height:1.7}
+.qq-lead .qq-lead-reasons{color:#477464}
+.qq-lead-tag{align-self:flex-start;background:#f2f4ed;color:#7a6e45;font-size:10px;font-weight:800;
+ padding:3px 8px;border-radius:5px}
+@media(max-width:820px){.qq-focus{flex-direction:column;align-items:stretch}.qq-focus-actions{max-width:none}}
+@media(max-width:620px){.qq-focus{padding:18px 17px;margin-top:16px}.qq-shortlist-list{grid-template-columns:1fr}
+ .qq-focus h2{font-size:17px}}
