@@ -78,6 +78,22 @@ class ArchiveTests(unittest.TestCase):
                 module.download_pages(Path(tmp), page_limit=1,
                                       opener=FakeOpener([[bad]]), sleeper=lambda _: None)
 
+    def test_legacy_live_checkpoint_is_validated_then_migrated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            module.download_pages(out, page_limit=1,
+                                  opener=FakeOpener([[row(100), row(99)]]), sleeper=lambda _: None)
+            path = out / (INSTRUMENT + "_checkpoint.json")
+            legacy = json.loads(path.read_text())
+            for key in ("schema", "instrument", "coverage"):
+                legacy.pop(key, None)
+            path.write_text(json.dumps(legacy))
+            state = module.download_pages(out, page_limit=1,
+                                          opener=FakeOpener([[row(98), row(97)]]),
+                                          sleeper=lambda _: None)
+            self.assertEqual((state["schema"], state["pages"], state["after"]), (1, 2, "97"))
+            self.assertEqual(json.loads(path.read_text())["coverage"], "BOUNDED_SPARSE_PAGES_ONLY")
+
     def test_bounds_and_missing_checkpoint_page(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
