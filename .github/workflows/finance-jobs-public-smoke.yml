@@ -17,7 +17,7 @@ jobs:
           set -euo pipefail
           base="https://magangwwd.github.io/ashare-research-infra"
           mkdir -p "$RUNNER_TEMP/finance_site_test"
-          for f in index.html app.js styles.css data/latest.json data/monitor.json data/changes.json data/qq_feed.json; do
+          for f in index.html app.js styles.css data/latest.json data/monitor.json data/changes.json data/qq_feed.json data/qq_uploaded_shortlist.json; do
             mkdir -p "$RUNNER_TEMP/finance_site_test/$(dirname "$f")"
             curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 \
               "$base/$f" -o "$RUNNER_TEMP/finance_site_test/$f"
@@ -65,6 +65,11 @@ jobs:
           m=json.loads((p/"data/monitor.json").read_text("utf-8"))
           changes=json.loads((p/"data/changes.json").read_text("utf-8"))
           qq=json.loads((p/"data/qq_feed.json").read_text("utf-8"))
+          verified=json.loads((p/"data/qq_uploaded_shortlist.json").read_text("utf-8"))
+          assert len(verified.get("leads",[]))>=23
+          assert sum(1 for v in verified["leads"] if v.get("verification",{}).get("status") in ("official_specific_role_confirmed","university_posted_specific_role","employer_announced_specific_role_secondary_copy") and not v.get("exclude_from_featured"))>=20
+          assert any(v.get("resume_match_score",0)>=90 and v.get("resume_match_reasons") for v in verified["leads"])
+          assert not any(key in str(verified).lower() for key in ("candidate_phone","candidate_email","resume_original","resume_text"))
           for x in ("urgent","jobs","focus","guide","changes","qq-focus"):
               assert 'id="'+x+'"' in page,x
           for id in ("filter-region","filter-qs","filter-overseas","urgent-list","jobs-list",
