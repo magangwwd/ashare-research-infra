@@ -44,7 +44,7 @@ jobs:
       - name: Test independent risk variants and original V1 execution contracts
         working-directory: astock-quant/stock_state_strategy
         run: |
-          python -m unittest -v test_short_swing_3to5_v1.py test_short_swing_15m_audit.py test_short_swing_3to5_v3_research.py
+          python -m unittest -v test_short_swing_3to5_v1.py test_short_swing_15m_audit.py test_short_swing_3to5_v2_research.py test_short_swing_3to5_v3_research.py
 
   gold-variant-compare:
     if: >-
