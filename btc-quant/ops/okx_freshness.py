@@ -14,6 +14,7 @@ import urllib.request
 
 
 ISSUE_TITLE = "[BTC OKX] 数据采集停滞或云盘校验失败"
+_ISSUES_CREATED_THIS_PROCESS = {}
 DEST = "gdrive:BTC_Quant_System_OKX/market_data/OKX/sparse_snapshots"
 
 
@@ -98,18 +99,25 @@ def check(now=None, max_age_hours=6):
 def sync_issue(healthy, details):
     issues = request_json("/issues?state=open&per_page=100")
     existing = next((x for x in issues if x.get("title") == ISSUE_TITLE and "pull_request" not in x), None)
+    # API list endpoints may lag immediately after creation. Preserve the
+    # exact returned issue ID for subsequent checks in the same process.
+    existing = existing or _ISSUES_CREATED_THIS_PROCESS.get(ISSUE_TITLE)
     if healthy:
         if existing is not None:
-            return request_json(f"/issues/{existing['number']}", "PATCH", {"state": "closed"})
+            closed = request_json(f"/issues/{existing['number']}", "PATCH", {"state": "closed"})
+            _ISSUES_CREATED_THIS_PROCESS.pop(ISSUE_TITLE, None)
+            return closed
         return None
     if existing is not None:
         return existing  # deduplicate; unchanged issue remains active until healthy
-    return request_json("/issues", "POST", {
+    issue = request_json("/issues", "POST", {
         "title": ISSUE_TITLE,
         "body": "## BTC OKX 数据采集独立告警\n\n" + details[:1500] +
                 "\n\n检测包括成功工作流时间、Drive 文件存在性、真实 SHA256 和快照时间戳。"
                 "\n此告警不涉及实盘交易。"
     })
+    _ISSUES_CREATED_THIS_PROCESS[ISSUE_TITLE] = issue
+    return issue
 
 
 def main():
