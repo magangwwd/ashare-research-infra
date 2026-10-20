@@ -83,8 +83,10 @@ def inspect_v5_january(v5: dict, minute: pd.DataFrame, missing_partition_count: 
             entry=groups.get((t["symbol"],t["entry_date"]))
             exit_=groups.get((t["symbol"],t["exit_date"]))
             def complete(df):
-                return df is not None and len(df)==16 and {
-                    d.strftime("%H:%M") for d in df["trade_time"]}==TIMES
+                # Published Tushare has one additional 09:30 open record and
+                # exactly 16 regular 15m end-of-bar stamps. Treat separately.
+                return df is not None and len(df)==17 and {
+                    d.strftime("%H:%M") for d in df["trade_time"]}==(TIMES | {"09:30"})
             eok=complete(entry);xok=complete(exit_)
             row={"variant":v["name"],"symbol":t["symbol"],"entry_date":t["entry_date"],
                  "exit_date":t["exit_date"],"exit_reason":t["exit_reason"],
@@ -102,17 +104,23 @@ def inspect_v5_january(v5: dict, minute: pd.DataFrame, missing_partition_count: 
                     abs(float(entry.iloc[0]["open"])-raw_entry_px)<=.02)
                 stop=float(t["entry_price_raw"])*.97
                 target=float(t["entry_price_raw"])*1.05
+                regular=exit_.loc[exit_["trade_time"].dt.strftime("%H:%M")!="09:30"]
+                if len(regular)!=16:raise AssertionError("Regular 15m sessions incomplete")
                 if t["exit_reason"]=="STOP_INTRADAY_ASSUMED":
-                    row["bar_trigger_consistent"]=bool(float(exit_["low"].min())<=stop+.02)
+                    row["bar_trigger_consistent"]=bool(float(regular["low"].min())<=stop+.02)
+                    row["opening_record_only_touch"]=bool(
+                        not row["bar_trigger_consistent"] and float(exit_["low"].min())<=stop+.02)
                 elif t["exit_reason"]=="TARGET_INTRADAY_ASSUMED":
-                    row["bar_trigger_consistent"]=bool(float(exit_["high"].max())>=target-.02)
+                    row["bar_trigger_consistent"]=bool(float(regular["high"].max())>=target-.02)
+                    row["opening_record_only_touch"]=bool(
+                        not row["bar_trigger_consistent"] and float(exit_["high"].max())>=target-.02)
             details.append(row)
     return {"version":"V5_TUSHARE_15M_JANUARY_2026_NECESSARY_ONLY",
             "minute_source":"Tushare clean stk_mins non-adjusted via Ashare_Quant",
             "published_version":PINNED_VERSION,
             "source_missing_partition_count":missing_partition_count,
             "january_completed_trade_variants":len(details),
-            "both_entry_exit_dates_16_bars":sum(t["complete_entry_exit"] for t in details),
+            "both_entry_exit_dates_17_tushare_records":sum(t["complete_entry_exit"] for t in details),
             "trigger_checked":sum(t["bar_trigger_consistent"] is not None for t in details),
             "trigger_inconsistent":sum(t["bar_trigger_consistent"] is False for t in details),
             "verified_actual_fills":0,"details":details,
