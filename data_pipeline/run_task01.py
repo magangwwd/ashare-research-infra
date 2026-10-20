@@ -48,6 +48,10 @@ def load_config(path: Path) -> dict:
     if intraday.get("enabled"):
         if intraday.get("dataset") != "stk_mins" or intraday.get("freq") != "15min":
             raise ValueError("Task 01 intraday source is fixed to Tushare stk_mins 15min")
+        if intraday.get("universe") != "mainboard":
+            raise ValueError("Task 01 15min scope must be SSE/SZSE mainboard A shares")
+        if intraday.get("activate_daily_from_minutes"):
+            raise ValueError("Mainboard-only 15min cannot replace full-market daily Critical dataset")
         if str(intraday.get("history_start", "")) < "20200101":
             raise ValueError("intraday.history_start cannot be earlier than 20200101")
         for name in ("recent_requests_per_run", "history_requests_per_run", "backfill_history_requests_per_run", "daily_validation_sample", "max_errors_before_abort", "raw_retention_days"):
@@ -324,9 +328,9 @@ class Pipeline:
             self.get_save("suspend_d", {"trade_date": day.strftime("%Y%m%d")})
             self.suspension_probed.add(day)
         suspended = suspension_codes(self.stage, day)
-        expected = clean.expected_pool(self.master, day, suspended, self.open_exchanges(day))
+        expected = clean.intraday_mainboard_codes(self.master, day, suspended, self.open_exchanges(day))
         if not expected:
-            raise ValidationError(f"stk_mins: theoretical security pool is empty for {day}")
+            raise ValidationError(f"stk_mins: mainboard security pool is empty for {day}")
         covered = covered_codes(minute_clean, day) & expected
         coverage = len(covered) / len(expected)
         threshold = self.config["intraday"]["min_security_coverage"]
@@ -356,23 +360,44 @@ class Pipeline:
             reason = self.capabilities["interfaces"].get("stk_mins", {}).get(
                 "reason", "stk_mins capability unavailable")
             status = {**previous, "enabled": True, "available": False,
-                      "activated": bool(previous.get("activated", False)),
+                      "scope": "SSE_SZSE_MAIN_A_SHARE",
+                      "activated": False,
                       "minute_source_healthy": False,
-                      "daily_source": ("tushare_daily_fallback" if previous.get("activated")
-                                       else "tushare_daily_until_minute_gate_passes"),
+                      "daily_source": "tushare_daily",
                       "updated_at": utcnow(), "reason": reason,
-                      "source_status": "DEGRADED" if previous.get("activated") else "NOT_ACTIVATED"}
+                      "source_status": "DEGRADED"}
             atomic_json(state_path, status)
             self.store.gap("stk_mins", {"trade_date": str(self.sessions[-1])}, reason)
-            print(f"WARNING minute feed unavailable; validated daily fallback required: {reason}")
+            print(f"WARNING mainboard minute feed unavailable; independent daily source remains: {reason}")
             return
 
         day = self.sessions[-1]
         if day not in self.suspension_probed and self.available("suspend_d"):
             self.get_save("suspend_d", {"trade_date": day.strftime("%Y%m%d")})
             self.suspension_probed.add(day)
-        expected = sorted(clean.expected_pool(
+        expected = sorted(clean.intraday_mainboard_codes(
             self.master, day, suspension_codes(self.stage, day), self.open_exchanges(day)))
+        # Persist the exact provider-derived acquisition roster for audit.
+        # This is Tushare metadata, NOT a claim of official SSE/SZSE reconciliation.
+        roster = self.master.loc[self.master["ts_code"].isin(expected)].sort_values("ts_code")
+        atomic_json(self.store.metadata / "intraday_universe.json", {
+            "trade_date": str(day),
+            "source": "Tushare stock_basic (L/D/P); provider market/exchange metadata",
+            "scope": "SSE_SZSE_MAIN_A_SHARE",
+            "official_exchange_reconciled": False,
+            "eligible_count": len(expected),
+            "market_summary": {
+                "SSE": int(roster["exchange"].eq("SSE").sum()),
+                "SZSE": int(roster["exchange"].eq("SZSE").sum()),
+            },
+            "codes": expected,
+            "roster_sha256": hashlib.sha256("\\n".join(expected).encode("utf-8")).hexdigest(),
+            "checked_at": utcnow(),
+        })
+        print(f"TASK01_MAINBOARD_UNIVERSE session={day} eligible={len(expected)} "
+              f"SSE={int(roster['exchange'].eq('SSE').sum())} "
+              f"SZSE={int(roster['exchange'].eq('SZSE').sum())} "
+              "source=tushare_stock_basic official_reconciled=false")
         budget = settings["recent_requests_per_run"]
         fetched = bars = empty_streak = 0
         errors = []
@@ -400,22 +425,21 @@ class Pipeline:
         minute_clean = read_session(self.stage, "stk_mins", day)
         covered = covered_codes(minute_clean, day) & set(expected)
         coverage = len(covered) / len(expected) if expected else 0.0
-        activated = bool(previous.get("activated"))
+        # This feed only covers mainboard. It cannot create or replace the
+        # Critical daily series, which still includes non-mainboard A shares.
+        activated = False
         derived = None
-        if coverage >= settings["min_security_coverage"]:
-            derived = self.derive_daily_from_minutes(day)
-            if settings.get("activate_daily_from_minutes"):
-                activated = True
-        elif activated:
-            reason = (f"stk_mins {day}: activated source incomplete, coverage={coverage:.2%}, "
+        if coverage < settings["min_security_coverage"]:
+            reason = (f"mainboard stk_mins {day}: coverage={coverage:.2%}, "
                       f"expected={len(expected)}, covered={len(covered)}")
             self.store.gap("stk_mins", {"trade_date": str(day)}, reason)
-            print(f"WARNING {reason}; use fully validated Tushare daily fallback")
+            print(f"WARNING {reason}; preserving independent official daily source")
 
         state = {
             **previous,
             "enabled": True,
             "available": True,
+            "scope": "SSE_SZSE_MAIN_A_SHARE",
             "freq": settings["freq"],
             "history_start": settings["history_start"],
             "latest_session": str(day),
@@ -428,11 +452,9 @@ class Pipeline:
             "activated": activated,
             "minute_source_healthy": coverage >= settings["min_security_coverage"],
             "source_status": ("HEALTHY" if coverage >= settings["min_security_coverage"]
-                              else ("DEGRADED" if activated else "NOT_ACTIVATED")),
-            "activation_date": previous.get("activation_date") or (str(day) if activated else None),
-            "daily_source": ("stk_mins_15min" if activated and coverage >= settings["min_security_coverage"]
-                             else ("tushare_daily_fallback" if activated
-                                   else "tushare_daily_until_minute_gate_passes")),
+                              else "DEGRADED"),
+            "activation_date": None,
+            "daily_source": "tushare_daily",
             "derived_daily": derived,
             "updated_at": utcnow(),
         }
@@ -442,7 +464,11 @@ class Pipeline:
         settings = self.config["intraday"]
         start = datetime.strptime(settings["history_start"], "%Y%m%d").date()
         end = self.as_of
-        rows = self.master.sort_values(["list_date", "ts_code"], kind="stable")
+        rows = self.master.loc[
+            self.master["exchange"].isin(["SSE", "SZSE"])
+            & self.master["board"].eq("MAIN")
+            & self.master["security_type"].eq("A_SHARE")
+        ].sort_values(["list_date", "ts_code"], kind="stable")
         for year in range(end.year, start.year - 1, -1):
             year_start, year_end = date(year, 1, 1), date(year, 12, 31)
             for row in rows.itertuples():
@@ -451,13 +477,21 @@ class Pipeline:
                 if pd.notna(row.delist_date) and row.delist_date < year_start:
                     continue
                 left, right = history_window(year, start, end)
-                if left > right:
+                # Bound each historical request to that security's actual
+                # listing lifetime, not merely the calendar-year intersection.
+                lower = datetime.strptime(left[:10], "%Y-%m-%d").date()
+                upper = datetime.strptime(right[:10], "%Y-%m-%d").date()
+                if pd.notna(row.list_date):
+                    lower = max(lower, row.list_date)
+                if pd.notna(row.delist_date):
+                    upper = min(upper, row.delist_date - timedelta(days=1))
+                if lower > upper:
                     continue
                 yield {
                     "ts_code": row.ts_code,
                     "freq": settings["freq"],
-                    "start_date": left,
-                    "end_date": right,
+                    "start_date": f"{lower.isoformat()} 09:00:00",
+                    "end_date": f"{upper.isoformat()} 16:00:00",
                 }
 
     def intraday_history(self) -> None:
@@ -509,7 +543,8 @@ class Pipeline:
         names = dependency_order(["daily", "adj_factor", "daily_basic"])
         counts = {n: 2 if sample else self.config["download"]["daily_basic_lookback_trading_days" if n == "daily_basic" else "lookback_trading_days"] for n in names}
         intraday_state = self.intraday_state()
-        minute_daily = bool(intraday_state.get("activated")) and not sample
+        minute_daily = (bool(self.config["intraday"].get("activate_daily_from_minutes"))
+                        and bool(intraday_state.get("activated")) and not sample)
         minute_healthy = bool(intraday_state.get("minute_source_healthy", True))
         activation_date = (date.fromisoformat(intraday_state["activation_date"])
                            if minute_daily and intraday_state.get("activation_date") else None)

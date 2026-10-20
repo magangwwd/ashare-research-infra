@@ -192,6 +192,24 @@ def expected_pool(master: pd.DataFrame, day: date, suspended: set[str] | None = 
     return set(master.loc[live, "ts_code"]) - (suspended or set())
 
 
+def intraday_mainboard_codes(master: pd.DataFrame, day: date,
+                             suspended: set[str] | None = None,
+                             open_exchanges: set[str] | None = None) -> set[str]:
+    """Main-board A shares eligible for a particular session, from official metadata.
+
+    Include previously listed/delisted main-board shares only if they were live
+    on that historical date. Never infer board membership from ticker prefixes.
+    """
+    eligible = expected_pool(master, day, suspended, open_exchanges)
+    mainboard = master.loc[
+        master["exchange"].isin(["SSE", "SZSE"])
+        & master["board"].eq("MAIN")
+        & master["security_type"].eq("A_SHARE"),
+        "ts_code",
+    ]
+    return eligible & set(mainboard)
+
+
 def mainboard_pool(master: pd.DataFrame) -> pd.DataFrame:
     return master.loc[(master["exchange"].isin(["SSE", "SZSE"])) & (master["board"] == "MAIN")
                       & (master["security_type"] == "A_SHARE") & (master["listing_status"] == "L")].copy()
