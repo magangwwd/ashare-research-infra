@@ -16,3 +16,35 @@ a{text-decoration:none;color:inherit}button,input,select{font:inherit}button{cur
 @media(max-width:740px){.wrap{width:calc(100% - 30px)}.header-inner{gap:10px;min-height:64px}.brand-icon{width:36px;height:36px;font-size:16px}.brand strong{font-size:14px}.brand small{font-size:9px}.top-edition{display:none}.nav{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;max-width:53vw}.nav a{white-space:nowrap;font-size:11px;padding:7px}.hero{margin-top:13px;grid-template-columns:1fr}.hero-copy{padding:33px 26px}.hero-aside{display:none}.hero h1{font-size:32px}.hero p{font-size:12px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stats>div{padding:16px}.stats strong{font-size:26px}.section{padding-top:47px}.section-heading{display:block}.section-heading .legend{display:block;margin-top:10px}.urgent-grid,.source-grid,.guide-grid{grid-template-columns:1fr}.filters{grid-template-columns:1fr 1fr}.filters label:last-child{grid-column:auto}.filters .search-label{grid-column:1/-1}.secondary-filters{gap:13px}.job-card{padding:17px}.job-info{grid-template-columns:1fr 1fr}.job-info .info-item:last-child{grid-column:1/-1}.detail-matrix{grid-template-columns:1fr}.sgcc-block{grid-template-columns:1fr}.footer{margin-top:45px}}
 @media(max-width:430px){.hero-actions{display:grid}.hero-actions .button{width:100%}.filters{grid-template-columns:1fr}.filters .search-label{grid-column:auto}.detail-row{grid-template-columns:95px 1fr}.job-info{grid-template-columns:1fr}.job-info .info-item:last-child{grid-column:auto}.top-edition{display:none}.nav{max-width:46vw}.source-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{transition:none!important}}
+
+
+/* Simplified quick-scan job categories and independently verifiable audit change journal. */
+.job-category-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 12px}
+.category-tab{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:11px;
+ border:1px solid #dce5f3;background:white;color:#365679;min-height:58px;text-align:left}
+.category-tab strong{font-size:12px;line-height:1.5}
+.category-tab span{display:grid;place-items:center;flex:none;min-width:25px;height:25px;background:#f0f4fb;
+ color:#4672a7;font-size:11px;font-weight:850;border-radius:6px}
+.category-tab.selected{background:#285fbb;color:white;border-color:#285fbb;box-shadow:0 3px 12px #285fbb22}
+.category-tab.selected span{background:#ffffff24;color:white}
+.category-tab:hover:not(.selected){background:#f4f8fe;border-color:#aec7e8}
+.tag.actual{background:#e4f3e9;color:#267756}
+.tag.related{background:#e8efff;color:#385eb1}
+.tag.pending{background:#eff1f4;color:#697989}
+.job-info{grid-template-columns:1.25fr .9fr .95fr 1.05fr}
+.job-card .job-description{max-width:980px}
+.job-card .evidence-note{margin-top:4px}
+.stale-note{background:#fff7df;border-left:3px solid #dda15a;padding:9px 12px;color:#906c36;font-size:11px}
+.audit-status{border:1px solid #d6e4f6;background:#eaf3ff;color:#396691;padding:13px 17px;border-radius:11px;font-size:12px;font-weight:700}
+.changes-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.change-row{background:white;border:1px solid #dfe9f5;border-radius:11px;padding:15px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.change-row strong{font-size:12px;color:#284e7c;line-height:1.7}
+.change-row p{font-size:11px;color:#71869e;line-height:1.75;margin:0}
+.change-kind{font-size:10px;padding:3px 8px;border-radius:5px;background:#eef3fc;color:#4e78a3}
+.change-kind.critical{background:#fff0d3;color:#926323}
+.audit-explainer{font-size:11px;line-height:1.85;color:#778ea6;margin-top:12px}
+@media(max-width:960px){.job-category-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.job-info{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:740px){.job-category-tabs{gap:7px}.category-tab{min-height:54px;padding:10px}.category-tab strong{font-size:11px}.changes-list{grid-template-columns:1fr}}
+@media(max-width:430px){.job-category-tabs{grid-template-columns:1fr 1fr}.category-tab{flex-wrap:wrap;gap:5px}
+.job-info{grid-template-columns:1fr 1fr!important}.job-info .info-item:last-child{grid-column:auto!important}
+.change-row{padding:13px}}
