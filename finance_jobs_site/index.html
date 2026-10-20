@@ -13,7 +13,7 @@
 <header class="site-header">
   <div class="wrap header-inner">
     <a href="./" class="brand"><span class="brand-icon">财</span><span><strong>财会校招情报站</strong><small>国网 · 银行 · 国企 · 事业单位</small></span></a>
-    <nav class="nav" aria-label="页面导航"><a href="#urgent">报名提醒</a><a href="#jobs">详细岗位</a><a href="#focus">重点关注</a><a href="#guide">留学资格</a></nav>
+    <nav class="nav" aria-label="页面导航"><a href="#urgent">报名提醒</a><a href="#jobs">详细岗位</a><a href="#focus">重点关注</a><a href="#changes">更新记录</a><a href="#guide">留学资格</a></nav>
     <span class="top-edition">2027届 · 官方来源</span>
   </div>
 </header>
@@ -43,7 +43,13 @@
      <div id="urgent-list" class="urgent-grid" aria-live="polite"><p class="loading">正在核实报名日期…</p></div>
    </section>
    <section id="jobs" class="section jobs-section">
-     <div class="section-heading"><div><span class="eyebrow">可搜索 · 可筛选 · 有公告来源</span><h2>财务招聘详细信息</h2><p>每条展开后看学历、专业、城市、海外学历、QS条件、招聘人数、笔试流程、申请材料、官方网址。</p></div><span id="job-total" class="result-count">—</span></div>
+     <div class="section-heading"><div><span class="eyebrow">可搜索 · 可筛选 · 有公告来源</span><h2>财务招聘详细信息</h2><p>先看职位名称、工作地、学历、截止日及证据级别；展开后再看海外学历、QS条件、招聘人数、笔试流程、申请材料和正式报名入口。</p></div><span id="job-total" class="result-count">—</span></div>
+     <div class="job-category-tabs" role="group" aria-label="按岗位核实程度快速筛选">
+       <button class="category-tab selected" type="button" data-category="all" aria-pressed="true"><strong>全部招聘信息</strong><span id="category-count-all">…</span></button>
+       <button class="category-tab" type="button" data-category="core" aria-pressed="false"><strong>明确财务会计审计岗</strong><span id="category-count-core">…</span></button>
+       <button class="category-tab" type="button" data-category="related" aria-pressed="false"><strong>银行、金融及管培岗</strong><span id="category-count-related">…</span></button>
+       <button class="category-tab" type="button" data-category="watch" aria-pressed="false"><strong>官方公告 / 待核实</strong><span id="category-count-watch">…</span></button>
+     </div>
      <div class="filters">
        <label class="search-label">关键词搜索<input id="filter-text" type="search" placeholder="输入 国网 / 财务 / 审计 / 马鞍山 / 华能" autocomplete="off"></label>
        <label>工作地区<select id="filter-region"><option value="all">全部目标地区</option><option value="上海">上海</option><option value="江苏">江苏</option><option value="浙江">浙江</option><option value="深圳">深圳</option><option value="马鞍山">马鞍山</option><option value="安徽">安徽其他</option><option value="全国">全国性公告</option></select></label>
@@ -57,7 +63,7 @@
        <button id="reset-filters" class="reset" type="button">清空筛选</button>
      </div>
      <p class="qs-warning" id="qs-message">QS排名仅供自我规划，只有招聘原文明确写出门槛时才能判断。没有写QS要求的公告，不会被错误筛掉或判定合格。</p>
-     <div class="list-head"><span id="job-filter-count">正在读取…</span><span>精选优先 · 过期公告自动后置 · 不推断实际空缺</span></div>
+     <div class="list-head"><span id="job-filter-count">正在读取…</span><span>招聘公告 ≠ 具体空缺 · 过期后置 · 截止时刻以官网为准</span></div>
      <div id="jobs-list" class="jobs-list" aria-live="polite"><p class="loading">正在加载 Google Drive 详细招聘档案…</p></div>
      <div class="show-more"><button type="button" id="jobs-more" class="button secondary" hidden>加载更多公告 ↓</button></div>
    </section>
@@ -69,6 +75,16 @@
      </div>
      <div id="sources-list" class="source-grid" aria-live="polite"><p class="loading">正在读取监测清单…</p></div>
      <details class="leads" id="leads-panel"><summary>自动发现的公告线索（必须人工核对） <span id="leads-count"></span></summary><div id="leads-list">每日监测中，尚无可信线索。</div></details>
+   </section>
+   <section id="changes" class="section">
+     <div class="section-heading">
+       <div><span class="eyebrow">云盘快照 · 核验台账</span><h2>每天查了哪些来源？哪些信息有变化？</h2>
+       <p>保存上一份和今天的独立云盘快照，分开记录<strong>新增档案、修改的招聘字段、招聘来源网页变化、待人工核对的公告链接</strong>。网页内容变化不代表出现新招聘。</p></div>
+       <span id="changes-total" class="result-count">读取中…</span>
+     </div>
+     <div class="audit-status" id="audit-status" role="status">正在读取 Google Drive 变化台账…</div>
+     <div id="changes-list" class="changes-list" aria-live="polite"><p class="loading">读取历史对照中…</p></div>
+     <p class="audit-explainer">留意：每天扫描不会重新验证每个岗位的全部报名要求。“来源巡检时间”与“具体岗位资格最近人工核实日期”是两回事；旧资料须返回招聘单位官网核对。</p>
    </section>
    <section id="guide" class="section">
      <div class="section-heading"><div><span class="eyebrow">留学生 · 应届毕业</span><h2>投递前先核对四件事</h2><p>特别是QS排名、毕业日期和留服认证，不能用其他单位的招聘规则套到自己身上。</p></div></div>
