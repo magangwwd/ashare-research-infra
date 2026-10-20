@@ -17,7 +17,7 @@ jobs:
           set -euo pipefail
           base="https://magangwwd.github.io/ashare-research-infra"
           mkdir -p "$RUNNER_TEMP/finance_site_test"
-          for f in index.html app.js styles.css data/latest.json data/monitor.json data/changes.json; do
+          for f in index.html app.js styles.css data/latest.json data/monitor.json data/changes.json data/qq_feed.json; do
             mkdir -p "$RUNNER_TEMP/finance_site_test/$(dirname "$f")"
             curl --fail --location --silent --show-error --retry 8 --retry-delay 5 --retry-all-errors --max-time 30 \
               "$base/$f" -o "$RUNNER_TEMP/finance_site_test/$f"
@@ -36,7 +36,8 @@ jobs:
           d=json.loads((p/"data/latest.json").read_text("utf-8"))
           m=json.loads((p/"data/monitor.json").read_text("utf-8"))
           changes=json.loads((p/"data/changes.json").read_text("utf-8"))
-          for x in ("urgent","jobs","focus","guide","changes"):
+          qq=json.loads((p/"data/qq_feed.json").read_text("utf-8"))
+          for x in ("urgent","jobs","focus","guide","changes","qq-focus"):
               assert 'id="'+x+'"' in page,x
           for id in ("filter-region","filter-qs","filter-overseas","urgent-list","jobs-list",
                      "category-count-core","changes-list","hero-search","hero-search-go",
@@ -51,6 +52,11 @@ jobs:
           assert m.get("schema")==1 and isinstance(m.get("sources"),list)
           assert len(d.get("sources",[]))>=25
           assert changes.get("previous_collected_at") and isinstance(changes.get("events"),list)
+          assert qq.get("schema")==1 and qq.get("source_url")=="https://docs.qq.com/sheet/DS210WHFxVXdHcWJS?tab=BB08J2"
+          assert isinstance(qq.get("leads"),list) and all(not item.get("role_confirmed") for item in qq["leads"])
+          assert "private_export_folder_id" not in qq and "resume" not in str(qq).lower()
+          assert 'id="qq-feed-status"' in page and 'id="qq-shortlist"' in page
+          assert "docs.qq.com/sheet/DS210WHFxVXdHcWJS" in page
           assert "categoryOf" in js and "renderChanges" in js
           assert "selectJob" in js and "closeMobileDetail" in js and "sortJobs" in js
           assert 'id="back-to-top"' in page and 'href="#home"' in page
