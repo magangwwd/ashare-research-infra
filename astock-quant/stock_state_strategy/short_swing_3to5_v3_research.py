@@ -16,7 +16,7 @@ import short_swing_3to5_v1 as v1
 from short_swing_3to5_v2_research import SPECS, signal_day_features, filter_signals
 
 V3_VERSION='MAINBOARD_SWING_3TO5_STATEFUL_GUARDS_PAPER_V3'
-PINNED_V1_SIM_SHA='5eea829d10173fac06ca99dd64c2ae77e0fb7d408dad643b995697cc5e3031cf'
+PINNED_V1_GIT_BLOB_SHA='b99b95e3b7ca1c98f42c7b6176819fe8412b5b85'
 
 @dataclass(frozen=True)
 class GateSpec:
@@ -74,8 +74,10 @@ def _instrument_pinned_v1():
     A no-gate run is independently compared with V1 on each real Gold dataset.
     """
     source=inspect.getsource(v1.simulate)
-    if hashlib.sha256(source.encode()).hexdigest()!=PINNED_V1_SIM_SHA:
-        raise RuntimeError('Frozen V1 simulator SHA changed; abort V3 risk study')
+    blob=Path(inspect.getfile(v1.simulate)).read_bytes()
+    git_blob=hashlib.sha1(b'blob '+str(len(blob)).encode()+b'\\0'+blob).hexdigest()
+    if git_blob!=PINNED_V1_GIT_BLOB_SHA:
+        raise RuntimeError('Frozen V1 Git blob SHA changed; abort V3 risk study')
     patches=[
       ('''def simulate(panel: pd.DataFrame, risk: GoldPITRisk, policy: Policy,
              signals: dict | None = None, start: str | None = None) -> dict:''',
@@ -134,7 +136,7 @@ def research(panel,risk,policy,start,end):
         datasets.append({'v2_base':spec.name,'filter_counts':counts,'variants':variants})
     return {'version':V3_VERSION,'mode':'RESEARCH_ONLY_NO_LIVE_AUTHORIZATION',
             'period':{'start':start,'end':end},'policy':asdict(policy),
-            'pinned_v1_sim_sha':PINNED_V1_SIM_SHA,
+            'pinned_v1_git_blob_sha':PINNED_V1_GIT_BLOB_SHA,
             'fixed_gates':[asdict(x) for x in GATES],'datasets':datasets,
             'disclosures':[
               'All 2024–2026 data are previously studied; no untouched out-of-sample claim.',
