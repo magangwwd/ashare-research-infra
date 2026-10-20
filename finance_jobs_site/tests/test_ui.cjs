@@ -32,7 +32,7 @@ function trigger(id,type){$(id).dispatchEvent(new dom.window.Event(type,{bubbles
  assert.equal($('qq-shortlist').hidden,false);
  assert.equal($('qq-shortlist-list').querySelectorAll('.qq-lead').length,1);
  assert.ok(!$('qq-shortlist-list').textContent.includes('过期公司'));
- assert.ok($('qq-shortlist-list a[href]').getAttribute('href').startsWith('https://docs.qq.com/'));
+ assert.ok($('qq-shortlist-list').querySelector('a[href]').getAttribute('href').startsWith('https://docs.qq.com/'));
  // All jobs must be visible immediately, not behind a load-more button.
  assert.equal($('jobs-list').querySelectorAll('.job-card').length,curated.listings.length);
  assert.ok($('job-filter-count').textContent.includes('已全部展示'));
