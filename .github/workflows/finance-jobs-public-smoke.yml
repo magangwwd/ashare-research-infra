@@ -53,6 +53,10 @@ jobs:
           assert changes.get("previous_collected_at") and isinstance(changes.get("events"),list)
           assert "categoryOf" in js and "renderChanges" in js
           assert "selectJob" in js and "closeMobileDetail" in js and "sortJobs" in js
+          assert 'id="back-to-top"' in page and 'href="#home"' in page
+          assert "jobs-more" not in page and "jobs-more" not in js
+          assert "arr.forEach(job=>target.append(jobCard(job)))" in js
+          assert "已全部展示" in js and ".list-end #back-to-top" in css
           assert "jobs-workspace" in css and "job-detail-pane" in css
           assert "--bg:#f8f8f6" in css and "--blue:#28596f" in css
           assert "aside-steps" in page and "寻找匹配的岗位" in page
