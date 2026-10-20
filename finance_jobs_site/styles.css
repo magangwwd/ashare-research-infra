@@ -313,3 +313,10 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,su
  .detail-keyfacts{grid-template-columns:1fr 1fr}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+
+
+.source-collection{margin-top:14px;background:white;border:1px solid var(--line);border-radius:11px;padding:14px 17px}
+.source-collection>summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:15px;font-size:12px;color:#436889;font-weight:850}
+.source-collection>summary span{font-size:10px;color:#8da0b4;font-weight:700}
+.source-collection .source-grid{margin-top:15px}
+@media(max-width:620px){.source-collection{padding:13px 14px}}
