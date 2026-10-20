@@ -28,7 +28,7 @@ def test_15min_units_aggregate_back_to_daily_contract(provider):
     assert pd.isna(row["pre_close"])
 
 
-def test_minute_onboarding_activates_only_after_full_coverage(tmp_path, config, client, provider, as_of):
+def test_mainboard_minutes_do_not_replace_full_market_daily(tmp_path, config, client, provider, as_of):
     config["intraday"].update(
         enabled=True,
         recent_requests_per_run=100,
@@ -41,17 +41,19 @@ def test_minute_onboarding_activates_only_after_full_coverage(tmp_path, config, 
     pipeline.intraday_recent()
 
     state = read_json(tmp_path / "metadata/manifest/intraday.json")
-    assert state["activated"] is True
+    assert state["activated"] is False
     assert state["coverage"] == pytest.approx(1.0)
-    assert state["daily_source"] == "stk_mins_15min"
-
+    assert state["scope"] == "SSE_SZSE_MAIN_A_SHARE"
+    assert state["daily_source"] == "tushare_daily"
     latest = pipeline.sessions[-1]
+    assert read_session(pipeline.stage, "daily", latest).empty
+    pipeline.critical_recent()
     daily = read_session(pipeline.stage, "daily", latest)
     assert len(daily) == len(provider.stocks)
     assert daily["close"].eq(10.5).all()
 
 
-def test_post_activation_latest_daily_does_not_use_full_market_daily(tmp_path, config, client, provider, as_of):
+def test_mainboard_minutes_do_not_block_official_daily_download(tmp_path, config, client, provider, as_of):
     config["intraday"].update(
         enabled=True,
         recent_requests_per_run=100,
@@ -66,9 +68,9 @@ def test_post_activation_latest_daily_does_not_use_full_market_daily(tmp_path, c
     pipeline.critical_recent(sample=False)
     new_calls = provider.calls[before:]
 
-    # Historical pre-activation lookback may still be bootstrapped from daily,
-    # but the activated session must never use the full-market daily endpoint.
-    assert not any(
+    # Restricting minute data to mainboard cannot substitute it for the
+    # Critical all-A-share daily source.
+    assert any(
         endpoint == "daily"
         and params.get("trade_date") == latest.strftime("%Y%m%d")
         and "ts_code" not in params
@@ -134,7 +136,7 @@ def test_intraday_history_records_pending_and_completion(tmp_path, config, clien
     assert state["history_complete"] is True
     assert state["history_finished_at"]
 
-def test_minute_permission_loss_after_activation_falls_back_to_verified_daily(tmp_path, config, client, provider, as_of):
+def test_minute_permission_loss_keeps_full_market_daily_available(tmp_path, config, client, provider, as_of):
     config["intraday"].update(enabled=True, recent_requests_per_run=100, history_requests_per_run=0)
     pipeline = Pipeline(tmp_path, config, client, as_of)
     pipeline.bootstrap()
@@ -145,12 +147,11 @@ def test_minute_permission_loss_after_activation_falls_back_to_verified_daily(tm
     pipeline.intraday_recent()
     status = read_json(pipeline.store.metadata / "intraday.json")
     assert status["minute_source_healthy"] is False
-    assert status["daily_source"] == "tushare_daily_fallback"
+    assert status["daily_source"] == "tushare_daily"
     pipeline.critical_recent()
     assert len(read_session(pipeline.stage, "daily", latest)) == len(provider.stocks)
     assert len(read_session(pipeline.stage, "daily_basic", latest)) == len(provider.stocks)
-    report = read_json(pipeline.store.metadata / "daily_source_fallback.json")
-    assert report["sessions"][0]["source"] == "tushare_daily"
+    assert not (pipeline.store.metadata / "daily_source_fallback.json").exists()
 
 
 def test_failed_official_daily_does_not_pass_minute_fallback(tmp_path, config, client, provider, as_of):
