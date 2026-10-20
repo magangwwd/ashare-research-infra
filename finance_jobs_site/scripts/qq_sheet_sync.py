@@ -29,9 +29,10 @@ REGION=re.compile(r"上海|江苏|南京|苏州|无锡|常州|南通|镇江|扬�
 DIRECT=re.compile(r"财务|会计|审计|税务|预算|核算|内控|经营分析|资金管理|财会")
 DATE_MATCH=re.compile(r"(20\d{2})[-/.年](\d{1,2})[-/.月](\d{1,2})")
 ALLOWED_SHEETS={"总表","央国企","外企"}
-MAX_BYTES=12_000_000
-MAX_ROWS=12000
-MAX_LEADS=300
+MAX_BYTES=16_000_000  # Uploaded 2026-10-20 XLSX is 12,065,482 bytes.
+MAX_XML_BYTES=100_000_000  # XML expansion may reach 73 MB per sheet.
+MAX_ROWS=16000
+MAX_LEADS=1500
 
 def safe_http(url):
     try:
@@ -69,8 +70,9 @@ def xlsx_rows(raw):
     with zipfile.ZipFile(io.BytesIO(raw)) as z:
         names=z.namelist()
         if len(names)>2000:raise ValueError("too many workbook components")
+        if sum(inf.file_size for inf in z.infolist())>160_000_000:raise ValueError("workbook XML total too large")
         for inf in z.infolist():
-            if inf.file_size>MAX_BYTES or inf.filename.startswith("/") or ".." in inf.filename.split("/"):
+            if inf.file_size>MAX_XML_BYTES or inf.filename.startswith("/") or ".." in inf.filename.split("/"):
                 raise ValueError("invalid or huge workbook component")
         shared=[]
         if "xl/sharedStrings.xml" in names:
@@ -147,6 +149,10 @@ def parse_leads(sheets,now=None):
         if hdr is None:
             skip("unrecognized_header");continue
         start,cols=hdr
+        first_link_for_row={}
+        for ref,url in hyperlinks.items():
+            m=re.fullmatch(r"[A-Z]+(\d+)",ref)
+            if m and safe_http(url):first_link_for_row.setdefault(int(m.group(1)),url)
         for rowno,row in enumerate(rows[start+1:],start+2):
             checked+=1
             def value(field):
@@ -167,14 +173,7 @@ def parse_leads(sheets,now=None):
             for i,col in enumerate(row):
                 if link:break
                 if safe_http(col) and re.search(r"招聘|job|career|campus|zhaopin",str(col),re.I):link=cleanup(col,400)
-            if not link:
-                # Cell hyperlinks may be captured by the xlsx export but aren't a prerequisite for a lead.
-                for col,header in cols.items():
-                    pass
-                for ref,url in hyperlinks.items():
-                    m=re.match(r"([A-Z]+)(\d+)$",ref)
-                    if m and int(m.group(2))==rowno and safe_http(url):
-                        link=url;break
+            if not link:link=first_link_for_row.get(rowno,"")
             fingerprint=hashlib.sha256((company+"|"+role+"|"+city+"|"+link).encode()).hexdigest()[:16]
             if fingerprint in seen:skip("duplicate");continue
             seen.add(fingerprint)
@@ -182,10 +181,17 @@ def parse_leads(sheets,now=None):
             if REGION.search(city):reasons.append("工作地属于关注地区")
             if DIRECT.search(role):reasons.append("职位名称包含财会相关关键词")
             if deadline:reasons.append("截止日期未过（依据第三方表格，官网待核）")
+            priority=45 if DIRECT.search(role) else 25
+            if re.search(r"上海|南京|杭州|苏州|深圳|马鞍山",city):priority+=18
+            elif REGION.search(city):priority+=10
+            if "2027" in combined:priority+=8
+            if deadline:priority+=4
+            reasons.append("基于财务/审计经历和城市的初筛评分；毕业年份及海外资格请核对官网")
             result.append({
               "id":"qq-"+fingerprint,"title":role[:150],"company":company[:120],
               "work_city":city or "表格未明确具体城市","deadline":deadline,
               "source_sheet":sheet,"source_row":rowno,"third_party_url":SOURCE,
+              "resume_match_score":priority,"source_label":"来源：腾讯文档《27届秋招汇总表格》",
               "original_link":link or None,"match_reasons":reasons,
               "review_state":"未核实官方招聘资格与开放状态",
               "role_confirmed":False,"permission":"authorized-export-only",
