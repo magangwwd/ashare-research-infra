@@ -22,7 +22,8 @@ ALLOWED = {
     "hrss.sz.gov.cn", "jyw.mastc.edu.cn", "picc.zhiye.com", "www.psbc.com",
     "psbc2027.zhaopin.com", "campus.chinahr.com", "chinapost2027.zhaopin.com",
     "job.bankcomm.com", "zhcpa.zhiye.com", "zp.czbank.com.cn", "sdg.zhaopin.com",
-    "zhaopin.cscec3b.com.cn", "hr.jsbchina.cn", "career.hebut.edu.cn"
+    "zhaopin.cscec3b.com.cn", "hr.jsbchina.cn", "career.hebut.edu.cn",
+    "career.nankai.edu.cn", "sgdt.iguopin.com", "job.tiangong.edu.cn"
 }
 def safe_url(url):
     try:
