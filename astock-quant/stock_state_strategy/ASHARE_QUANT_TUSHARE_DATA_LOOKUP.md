@@ -34,7 +34,7 @@
 
 1. 每次先读取根 `current.json`，通过 `manifest_file_id` 取对应**正式** `production_manifest.json`，核SHA、版本和 `critical_history_complete` 标记；读取 `metadata/manifest/intraday.json` 与 `metadata/history_progress.json`。
 2. 只认来源为**Tushare** 的 `data/clean/stk_mins` 和 `data/clean/daily`，绝不使用Baostock作分钟行情；`down_data/data/gold/main_board/kline_15m` 目前另行查看为空，不能混同。
-3. 清单一个真实分区样本 `data/clean/stk_mins/year=2026/month=01/bucket=01/part-000.parquet` 已证实可经Drive取回（文件头为Parquet `PAR1`），但**尚未用Parquet解码器逐行核算数据**；同月`bucket=00`的旧manifest `file_id` 目前返404，应先验证每个实际需用文件的可读权限，404不可视为验证通过。
+3. 清单一个真实分区样本 `data/clean/stk_mins/year=2026/month=01/bucket=01/part-000.parquet` 已证实可经Drive取回（文件头尾均为Parquet `PAR1`，文件大小560,224字节，实际SHA256为`1945663e1a2dc82a8eeb690fe9656c76515b12979b1a91356fdaf8668676db75`，与正式清单完全一致），但**尚未用Parquet解码器逐行核算数据**；同月`bucket=00`的旧manifest `file_id` 目前返404，应先验证每个实际需用文件的可读权限，404不可视为验证通过。
 4. **A股主板**不是全部5564只证券；须用证券主表、历史上市日期、交易所/板块与退市状态进行历史时点筛选，不能把创业板、科创板等混入。
 5. 重放V2-LOOSE共131笔实际模拟成交的股票和日期，逐单核 `ts_code`、`trade_time`、每日16根标准15min bar、分钟源日期、日线OHLC、前复权调整和 `T+1`；先算实际成交交易覆盖率，再有条件地评估滑点和止损，**分钟高低价仍不能证明逐笔一定成交**。
 6. 基础数据齐备后，冻结信号时点已知的突破幅度/成交量等候选规则，重新跑**完整资金路径**而不是事后删掉亏损单；做下一阶段尚未研究的前瞻模拟，验收正收益与最大回撤≤25%，不做实盘。
