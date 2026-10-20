@@ -24,11 +24,21 @@ function anchor(txt,href,cls){
   return a;
 }
 function dateLabel(v){return v||'官方尚未公布';}
+function deadlineTimeElapsed(job){
+  const m=String(job.application_deadline_time||'').match(/^(\d{1,2}):(\d{2})/);
+  if(!m)return false;  // No confirmed cutoff time: do not invent one.
+  const target=Number(m[1])*60+Number(m[2]);
+  if(target>=1440)return false; // A published "24:00" is end of day.
+  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{
+    timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',hourCycle:'h23'
+  }).formatToParts(new Date()).map(p=>[p.type,p.value]));
+  return Number(parts.hour)*60+Number(parts.minute)>=target;
+}
 function briefStatus(job){
   if(!job.deadline)return {key:'unknown',tag:'报名日期待核实',days:null};
   const days=daysBetween(job.deadline);
-  if(days<0)return {key:'closed',tag:'本批已截止',days};
-  if(days<=7)return {key:'urgent',tag:'距离截止 '+days+' 天',days};
+  if(days<0 || (days===0&&deadlineTimeElapsed(job)))return {key:'closed',tag:'本批已截止',days};
+  if(days<=7)return {key:'urgent',tag:days===0?'今天截止 · 请立即核实':'距离截止 '+days+' 天',days};
   return {key:'open',tag:'已公布截止日',days};
 }
 function openState(job){const r=briefStatus(job);return r.key==='closed'?'closed':r.key==='unknown'?'unknown':'open';}
