@@ -137,58 +137,109 @@
       "verified_from": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000134"
     },
     {
-      "id": "huaneng-audit-finance-special",
-      "title": "华能招聘：财务管理岗、审计管理岗（具体工作地待核对）",
-      "company": "中国华能集团下属招聘单位",
-      "type": "央企国企",
-      "regions": [
-        "全国"
-      ],
-      "roles": [
-        "财务",
-        "会计",
-        "审计",
-        "税务"
-      ],
-      "deadline": null,
-      "published": null,
-      "overseas": "refer_official",
-      "source_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000137",
-      "apply_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000137",
-      "summary": "官方招聘公告的岗位清单明确列出审计管理岗（审计、统计、税收、会计、财政等专业）和财务管理岗（财务管理、会计、税收、经济等专业）。",
-      "notes": "该公告已明确岗位名称和对应专业，但目前没有可靠数据确定工作城市、招录人数、统一截止日；务必打开原始公告核对。",
       "evidence": "official_specific_roles",
       "checked_at": "2026-10-20",
       "qs_threshold": null,
       "graduate_batch": "2027届",
-      "min_degree": "单位岗位表确认",
-      "majors_exact": [
-        "审计学",
-        "统计学",
-        "税收学",
-        "会计学",
-        "财政学",
-        "财务管理",
-        "经济学"
-      ],
-      "work_city": null,
       "vacancies": null,
-      "application_open": null,
-      "application_deadline_time": null,
-      "application_process": "华能官方招聘系统→选择发布该公告的单位和审计/财务管理岗→核对地点与资格→按规定提交简历",
-      "assessment": "待核对单位公告",
-      "documents": [
-        "毕业证明或认证",
-        "成绩单",
-        "个人简历"
-      ],
-      "overseas_details": "须按本招聘单位具体条件判定；华能集团部分公告允许获得留服认证的境外初次就业毕业生",
-      "qs_details": "原岗位公告未核实到QS门槛",
-      "critical": "这是少数已查明明确财务管理/审计管理职位名称的记录；工作地和截止日期尚未核实，尽快打开官方详情。",
+      "application_open": "2026-09-15",
+      "application_deadline_time": "官网只列截止日期，具体当天时间以报名系统为准",
+      "application_process": "**必须做两步：**①在华能校园招聘官网报名对应财务管理岗；②在截止前按官方公告要求将个人材料扫描件压缩包另发公告列明邮箱。缺一不可。",
+      "assessment": "材料筛选→笔试、面试→体检/考察→公示、录用（依单位官方通知）",
+      "qs_details": "官方未规定明确QS排名数值门槛；学校排名不能自动代表资格",
       "priority_tier": 1,
-      "posting_level": "已核实财会/审计岗位名称；工作地、报名截止待核",
       "role_confirmed": true,
-      "verified_from": "华能官方招聘岗位公告"
+      "documents": [
+        "完整简历含照片和证件复印件（只在官网要求的渠道提交）",
+        "盖章就业推荐表与全科成绩单",
+        "研究生需本科成绩及学历证明",
+        "英语/计算机证书、奖项证明",
+        "官方指定邮箱报送资料压缩包"
+      ],
+      "id": "huaneng-anhui-chaohu-finance-management-2027",
+      "title": "【安徽巢湖 · 明确财务岗位】华能巢湖电厂2027届财务管理岗",
+      "company": "华能巢湖发电有限责任公司",
+      "recruiting_unit": "华能巢湖发电有限责任公司",
+      "type": "央企国企",
+      "regions": [
+        "安徽"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "金融"
+      ],
+      "deadline": "2026-10-31",
+      "published": "2026-09-15",
+      "overseas": "explicit",
+      "source_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000265",
+      "apply_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000265",
+      "summary": "华能安徽分公司下属巢湖电厂2027届财务管理岗，明确工作地安徽省巢湖市，本科起，专业包括会计、财务管理、金融学等。",
+      "notes": "巢湖市不等于马鞍山市，是否接受异地工作请自行衡量。公告写明招聘单位保留提前或延长简历截止日权利，当前统一列10月31日。",
+      "min_degree": "本科及以上",
+      "majors_exact": [
+        "统计与会计核算",
+        "金融学（含保险学）",
+        "会计",
+        "财务管理",
+        "会计学"
+      ],
+      "work_city": "安徽省巢湖市",
+      "overseas_details": "2027年8月底前留服认证且具备派遣资格的境外高校毕业生可申报；官方描述“境外知名高校高层次”但未给出QS前多少的数字门槛，请直接向该单位确认。",
+      "critical": "**10月31日截止，岗位明确、安徽巢湖、本科起；官网投递和官方公告指定邮箱报送材料须两步都完成。** 不要仅报名系统填报就认为提交成功。",
+      "posting_level": "华能官网明确财务管理岗、巢湖工作地、本科及专业目录",
+      "verified_from": "华能巢湖发电有限责任公司2027届官方公告及岗位列表"
+    },
+    {
+      "evidence": "official_specific_roles",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2027届",
+      "vacancies": null,
+      "application_open": "2026-09-15",
+      "application_deadline_time": "官网只列截止日期，具体当天时间以报名系统为准",
+      "application_process": "通过中国华能官方校园招聘平台注册并选择该单位对应岗位，按照官网公告完成材料上传、资格审查和笔面试。",
+      "assessment": "材料筛选→笔试、面试→体检/考察→公示、录用（依单位官方通知）",
+      "qs_details": "官方未规定明确QS排名数值门槛；学校排名不能自动代表资格",
+      "priority_tier": 1,
+      "role_confirmed": true,
+      "documents": [
+        "个人简历（含照片）",
+        "学校就业推荐表及全科成绩单",
+        "适用的境外留服学历认证",
+        "英语、计算机证书及有关证明"
+      ],
+      "id": "huaneng-shanghai-finance-management-2027",
+      "title": "【上海 · 明确财务岗位】华能核能技术研究院 2027届财务管理岗",
+      "company": "华能核能技术研究院有限公司",
+      "recruiting_unit": "华能核能技术研究院有限公司",
+      "type": "央企国企",
+      "regions": [
+        "上海"
+      ],
+      "roles": [
+        "财务",
+        "会计"
+      ],
+      "deadline": "2026-10-31",
+      "published": "2026-09-15",
+      "overseas": "explicit",
+      "source_url": "https://zhaopin.chng.com.cn/ManagementTraineeRecruit?aId=2000101",
+      "apply_url": "https://zhaopin.chng.com.cn/ManagementTraineeRecruit?aId=2000101",
+      "summary": "华能官方招聘公告已明确列出上海财务管理岗；工作地上海，硕士及以上，会计类、财务会计类、财务管理、会计学相关专业。",
+      "notes": "上海市浦东新区世博馆路200号为院方办公地址；到岗地点以实际签约通知为准；人数及薪酬数额没有查明。",
+      "min_degree": "硕士及以上",
+      "majors_exact": [
+        "财务会计类",
+        "会计类",
+        "财务管理",
+        "会计学"
+      ],
+      "work_city": "上海",
+      "overseas_details": "2027年8月底前获得教育部当年认证的境外初次就业留学生可申报；明确不接收2026年入学的一年制海外硕士参加本年度（可考虑下一年度）。",
+      "critical": "**优质具体财务岗位：上海、硕士起、10月31日截止。** 海外2026年入学一年制硕士明确不符合本届；境外学历须在2027年8月底前完成认证。",
+      "posting_level": "华能单位官网明确写明财务管理岗、工作地上海、硕士",
+      "verified_from": "华能核能技术研究院2027年招聘公告及明确岗位列表"
     },
     {
       "id": "huaneng-zhejiang-cleangreen-2027",
@@ -545,6 +596,58 @@
       "verified_from": "https://rsj.sh.gov.cn/tgsgg_17341/20261015/t0035_1444213.html"
     },
     {
+      "id": "zhonghui-2027-audit-j11535",
+      "title": "【多地 · 审计岗位】中汇会计师事务所2027秋招审计岗 J11535",
+      "company": "中汇会计师事务所（特殊普通合伙）",
+      "recruiting_unit": "中汇会计师事务所",
+      "type": "会计师事务所",
+      "regions": [
+        "上海",
+        "江苏",
+        "浙江",
+        "深圳",
+        "安徽"
+      ],
+      "roles": [
+        "审计",
+        "会计",
+        "财务"
+      ],
+      "deadline": null,
+      "published": "2026-08-11",
+      "overseas": "refer_official",
+      "source_url": "https://zhcpa.zhiye.com/jobs",
+      "apply_url": "https://zhcpa.zhiye.com/jobs",
+      "summary": "中汇正式招聘网站显示2027秋招审计岗 J11535，全职，工作地包括杭州、宁波、上海、南京、苏州、无锡、深圳、合肥等地。",
+      "notes": "招聘网站未明确这个岗位的统一截止日、具体招聘人数及海外毕业生认定条件，务必进入正式岗位链接核对。",
+      "evidence": "employer_official_specific_role",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2027届",
+      "min_degree": "本科及以上",
+      "majors_exact": [
+        "专业不限；财会、统计、计算机、信息管理等相关专业优先"
+      ],
+      "work_city": "杭州、宁波、上海、南京、苏州、无锡、深圳、合肥等多个城市（职位详情选择）",
+      "vacancies": null,
+      "application_open": "2026-08-11发布",
+      "application_deadline_time": null,
+      "application_process": "进入中汇官方招聘系统→选择2027秋招审计岗(J11535)→选地区→注册并提交简历→关注面试/笔试通知。",
+      "assessment": "由招聘单位后续通知面试与测评；目前未独立核实统一安排",
+      "documents": [
+        "个人简历",
+        "毕业与学籍资料",
+        "职位系统实际要求的附件"
+      ],
+      "overseas_details": "岗位描述要求本科及以上但未单列海外学历认定规则；海外毕业生应咨询中汇招聘方确认。",
+      "qs_details": "官网该岗位没有发布QS数字门槛",
+      "critical": "**这是已核实到职位编号和多城工作地的审计校招岗**，适合财会专业应届生；报名截止日尚未核实，建议尽快打开官方岗位详情。",
+      "priority_tier": 2,
+      "posting_level": "招聘单位官网已列明2027秋招审计岗J11535、地区和学历",
+      "role_confirmed": true,
+      "verified_from": "中汇招聘系统2027秋招审计岗 J11535（2026-08-11发布）"
+    },
+    {
       "id": "bankcomm-2027",
       "title": "交通银行2027届校招（本批报名已截止）",
       "company": "交通银行",
@@ -712,6 +815,60 @@
       "posting_level": "已截止的校招",
       "role_confirmed": false,
       "verified_from": "https://job.ccb.com/cn/job/announcement.html?annoId=20260903163254718082"
+    },
+    {
+      "id": "huaneng-audit-finance-special",
+      "title": "华能河北新能源2027届：审计管理岗 / 财务管理岗",
+      "company": "华能新能源股份有限公司河北分公司",
+      "type": "央企国企",
+      "regions": [
+        "河北"
+      ],
+      "roles": [
+        "财务",
+        "会计",
+        "审计",
+        "税务"
+      ],
+      "deadline": "2026-10-31",
+      "published": null,
+      "overseas": "refer_official",
+      "source_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000137",
+      "apply_url": "https://zhaopin.chng.com.cn/CampusRecruit?aId=2000137",
+      "summary": "官方招聘公告的岗位清单明确列出审计管理岗（审计、统计、税收、会计、财政等专业）和财务管理岗（财务管理、会计、税收、经济等专业）。",
+      "notes": "该公告已明确岗位名称和对应专业，但目前没有可靠数据确定工作城市、招录人数、统一截止日；务必打开原始公告核对。",
+      "evidence": "official_specific_roles",
+      "checked_at": "2026-10-20",
+      "qs_threshold": null,
+      "graduate_batch": "2027届",
+      "min_degree": "本科及以上",
+      "majors_exact": [
+        "审计学",
+        "统计学",
+        "税收学",
+        "会计学",
+        "财政学",
+        "财务管理",
+        "经济学"
+      ],
+      "work_city": "河北等项目所在地，具体工作地需在岗位报名页核对",
+      "vacancies": null,
+      "application_open": "2026-09-15",
+      "application_deadline_time": null,
+      "application_process": "华能官方招聘系统→选择发布该公告的单位和审计/财务管理岗→核对地点与资格→按规定提交简历",
+      "assessment": "待核对单位公告",
+      "documents": [
+        "毕业证明或认证",
+        "成绩单",
+        "个人简历"
+      ],
+      "overseas_details": "该单位公开公告为普通高校2027届应届毕业生；境外毕业生是否符合条件未查明，须咨询招聘单位。",
+      "qs_details": "原岗位公告未核实到QS门槛",
+      "critical": "财务及审计岗位名称已核实，但工作地主要在河北等项目所在地，不在当前首选江浙沪深和马鞍山范围。",
+      "priority_tier": 3,
+      "posting_level": "明确审计管理岗及财务管理岗；工作地点未细化",
+      "role_confirmed": true,
+      "verified_from": "华能官方招聘岗位公告"
     },
     {
       "id": "icbc-2027",
@@ -1182,6 +1339,19 @@
       "keywords": [
         "马鞍山",
         "财务"
+      ]
+    },
+    {
+      "id": "zhonghui",
+      "name": "中汇会计师事务所2027校招",
+      "type": "会计师事务所",
+      "priority": 3,
+      "url": "https://zhcpa.zhiye.com/jobs",
+      "discover": true,
+      "keywords": [
+        "2027",
+        "审计",
+        "财会"
       ]
     }
   ]
