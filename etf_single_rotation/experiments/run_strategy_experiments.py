@@ -195,8 +195,10 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     strategy_names = ["trend_filter", "volatility_control", "cross_asset_defensive", "regime_switch", "regime_switch_lowvol", "regime_switch_ultralow", "regime_dd_guard15", "regime_dd_guard20", "regime_switch_midvol", "regime_switch_cap75", "regime_switch_gold_vol8", "regime_switch_gold_cash"]
     summaries, curves, signals_all, weights_all = [], [], [], []
+    walk_forward_equities = {}
     for strategy in strategy_names:
         summary, equity, weights, signals = run_one(prices, strategy)
+        walk_forward_equities[strategy] = equity
         summaries.append(summary)
         curves.append(pd.DataFrame({"date": equity.index, "strategy": strategy, "equity": equity.values}))
         signals_all.extend(signals)
@@ -212,6 +214,9 @@ def main():
             oos_rows.append(out_of_sample_metrics(prices, strategy, start_date))
     pd.DataFrame(oos_rows).to_csv(OUT / "walk_forward_oos_comparison.csv", index=False)
     print("OOS_COMPARISON " + json.dumps(oos_rows, ensure_ascii=False))
+    from walk_forward import walk_forward
+    wf_report = walk_forward(walk_forward_equities, OUT)
+    print("WALK_FORWARD_SUMMARY " + json.dumps(wf_report, ensure_ascii=False))
     pd.concat(curves, ignore_index=True).to_csv(OUT / "strategy_equity_curves.csv", index=False)
     pd.DataFrame(signals_all).to_csv(OUT / "strategy_monthly_signals.csv", index=False)
     pd.concat(weights_all, ignore_index=True).to_csv(OUT / "strategy_daily_weights.csv", index=False)
@@ -224,11 +229,11 @@ def main():
         "data_quality_acceptance": audit.get("acceptance", "NOT_AVAILABLE"),
         "data_gaps_present": audit.get("calendar_missing_sessions_detected", None),
         "cost_model": "0.10% per 100% change in portfolio weight (5bp fee + 5bp slippage proxy)",
-        "signal_timing": "monthly close signal active from next observed date; daily returns applied to prior-day weights",
+        "signal_timing": "monthly close signal target active from next observed date; daily returns applied to prior-day weights; execution/cost model still requires independent accounting audit",
         "limitations": [
             "Current adjusted-price total-return semantics are not independently verified.",
             "Missing dates are forward-filled for valuation only and remain under data-quality review.",
-            "No hyperparameter optimization is performed; fixed-period out-of-sample results are reported separately.",
+            "Fixed-window holdouts and retrospective expanding-window model selection are reported separately; because candidates were explored on the whole history, these are not untouched prospective tests.",
             "ETF-level max drawdown does not guarantee portfolio drawdown control; every result remains preliminary.",
             "regime_switch_lowvol is a predeclared lower-volatility sensitivity test (8% target versus 12%), not an accepted strategy.",
             "regime_switch_ultralow is a predeclared 6% volatility-target sensitivity test; all outputs remain preliminary.",
