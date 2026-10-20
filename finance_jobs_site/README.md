@@ -115,3 +115,12 @@
 - 简历原始 `.docx` 已在使用者自己的**私人 ChatGPT Library**中归档，目录 `/Finance_Careers_Private`。其中姓名、联系方式、证件及原文件不得提交至此公共 GitHub 仓库或公开网站。网页只使用无身份标识的“财会硕士／境外应届／目标城市／相关实习与专业方向”择岗规则；QS门槛依招聘公告核实，不自行虚构。
 
 针对本功能的验证：`python -m unittest discover -s finance_jobs_site/tests -v`，以及 GitHub Actions 经私有 Drive 读写后的网页公开检查。状态出错会显示在 GitHub Actions Summary 和网页上，而不是假装同步成功。
+
+
+## 2026-10-20 第六阶段：腾讯文档 HTML 静态与匿名浏览器真实抓取实验
+
+- 独立 GitHub Actions 测试： https://github.com/magangwwd/ashare-research-infra/actions/runs/39423573700 （只读检查，不触碰现有招聘数据、简历、云盘秘钥）。
+- 静态 HTML：HTTP 200，485677 字节，标题“27届秋招汇总表格”；57 个 script、195 处脚本 URL 字面量，但实际 a[href]=0、HTML table tr/td=0，外部招聘候选链接=0。
+- 无登录状态 Chromium 执行页面 JavaScript 并等待约 13 秒：HTTP 200，1 个 frame，body 可见文本 275 字符，gridcell=0、table td=0、可识别 data-href/data-url=0，外部招聘候选链接=0，真正验证的表格单元格记录=0。
+- 结论：**HTTP 200 只能证明表格外壳可访问，不能证明表格内容、超链接可批量读取**。两种方式本次都不能取得职位数据，绝不可宣称“已从腾讯表格下载并筛选岗位”。也不能据本次无登录无数据认定所有授权用户的浏览器访问都无数据。
+- 后续只在合法授权下继续评估浏览器可见单元格的可访问性与单元格链接，或用作者允许导出的 XLSX/CSV；不能依赖脚本库网址或未证实 API 误报岗位。测试源码：scripts/qq_html_probe.py、scripts/qq_browser_probe.py。
