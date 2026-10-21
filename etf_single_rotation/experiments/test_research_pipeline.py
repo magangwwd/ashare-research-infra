@@ -110,5 +110,85 @@ class ResearchGateTests(unittest.TestCase):
             self.assertEqual(len(result["cost_stress"]), 3)
 
 
+
+class DriveUploadRecoveryTests(unittest.TestCase):
+    def test_retries_transient_500_and_skips_confirmed_uploads_on_rerun(self):
+        from unittest.mock import patch
+        from etf_single_rotation import upload_drive as uploader
+
+        class Response:
+            def __init__(self, status, file_id="file-123"):
+                self.status_code = status
+                self._id = file_id
+
+            def json(self):
+                return {"id": self._id, "name": "sample.csv"}
+
+        class FakeSession:
+            calls = 0
+            def post(self, *args, **kwargs):
+                self.calls += 1
+                return Response(500 if self.calls == 1 else 200)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            sample = Path(tmp) / "sample.csv"
+            sample.write_text("hello")
+            checkpoint = Path(tmp) / "upload_checkpoint.json"
+            fake = FakeSession()
+            with patch.object(uploader, "FILES", [sample]), patch.object(
+                uploader, "PROGRESS", checkpoint
+            ), patch.object(
+                uploader, "_oauth_session", return_value=fake
+            ), patch.object(uploader.time, "sleep", return_value=None):
+                uploader.main()
+                self.assertEqual(fake.calls, 2)
+                progress = json.loads(checkpoint.read_text())
+                self.assertEqual(progress["files"][sample.as_posix()]["drive_id"], "file-123")
+                uploader.main()
+                self.assertEqual(fake.calls, 2, "Already uploaded file must not be uploaded again")
+
+    def test_partial_upload_failure_can_continue_from_per_file_checkpoint(self):
+        from unittest.mock import patch
+        from etf_single_rotation import upload_drive as uploader
+
+        class Response:
+            def __init__(self, code, drive_id="next"):
+                self.status_code = code
+                self._id = drive_id
+
+            def json(self):
+                return {"id": self._id, "name": "ok"}
+
+        class Session:
+            def __init__(self, statuses):
+                self.statuses = list(statuses)
+                self.calls = 0
+
+            def post(self, *args, **kwargs):
+                self.calls += 1
+                return Response(self.statuses.pop(0))
+
+        with tempfile.TemporaryDirectory() as tmp:
+            first = Path(tmp) / "first.csv"
+            second = Path(tmp) / "second.csv"
+            first.write_text("first")
+            second.write_text("second")
+            progress_path = Path(tmp) / "upload_checkpoint.json"
+            prior = Session([200, 500, 500, 500, 500])
+            recovered = Session([200])
+            with patch.object(uploader, "FILES", [first, second]), patch.object(
+                uploader, "PROGRESS", progress_path
+            ), patch.object(uploader.time, "sleep", return_value=None):
+                with patch.object(uploader, "_oauth_session", return_value=prior):
+                    with self.assertRaises(SystemExit):
+                        uploader.main()
+                self.assertEqual(prior.calls, 5)
+                with patch.object(uploader, "_oauth_session", return_value=recovered):
+                    uploader.main()
+                self.assertEqual(recovered.calls, 1)
+                state = json.loads(progress_path.read_text())
+                self.assertEqual(len(state["files"]), 2)
+
+
 if __name__ == "__main__":
     unittest.main()
