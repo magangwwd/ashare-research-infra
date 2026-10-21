@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0.0",
+  "standard_id": "AUTO-RD-SOP-001",
+  "project": "REPLACE_PROJECT",
+  "mandate": {
+    "goal": "REPLACE_PROJECT_GOAL",
+    "real_trading": false,
+    "max_auto_risk": "LOW"
+  },
+  "governance": {
+    "sop_path": "docs/autonomous-rd/AUTONOMOUS_RD_SOP.md",
+    "max_in_flight_tasks": 1,
+    "max_auto_retries": 2,
+    "approval_required": [
+      "LIVE_TRADING",
+      "RELEASE",
+      "OVERRIDE_FROZEN_RULES",
+      "WEAKEN_RISK_CONTROL",
+      "DISABLE_AUDIT",
+      "DELETE_SOURCE_DATA"
+    ]
+  },
+  "tasks": [
+    {
+      "id": "PROJECT-DATA-001",
+      "title": "Official/authorized data provenance and gaps",
+      "priority": 0,
+      "goal": "Immutable verified research input",
+      "status": "READY",
+      "depends_on": [],
+      "risk_tier": "LOW",
+      "owner": "GPT+GitHub",
+      "acceptance": [
+        "Source and licence recorded",
+        "SHA256 verified",
+        "Calendar/gaps classified without invented data"
+      ],
+      "evidence": [],
+      "next_action": "Produce dataset manifest with original source and SHA",
+      "version": 1
+    },
+    {
+      "id": "PROJECT-RESEARCH-002",
+      "title": "Leakage-safe validation and independent benchmark",
+      "priority": 1,
+      "goal": "Reproducible risk-adjusted research",
+      "status": "BLOCKED",
+      "depends_on": [
+        "PROJECT-DATA-001"
+      ],
+      "risk_tier": "LOW",
+      "owner": "GPT+GitHub",
+      "acceptance": [
+        "Causal completed-candle decisions",
+        "Train-validation-test separation",
+        "Costs and untouched benchmark",
+        "Real GitHub run and artifact"
+      ],
+      "evidence": [],
+      "next_action": "Wait for DATA-001 VERIFIED_DONE",
+      "version": 1
+    }
+  ],
+  "version_history": [
+    {
+      "version": 1,
+      "reason": "Template creation",
+      "date": "2026-10-21"
+    }
+  ]
+}
