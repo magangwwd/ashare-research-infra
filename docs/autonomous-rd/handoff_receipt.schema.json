@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Autonomous R&D Handoff Receipt v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "project",
+    "task_id",
+    "run_id",
+    "run_attempt",
+    "github_event",
+    "head_sha",
+    "status",
+    "source",
+    "checks",
+    "artifact_urls",
+    "drive_readback",
+    "next_action",
+    "created_at_utc",
+    "risk_approval"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "project": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "run_id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "run_attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "github_event": {
+      "enum": [
+        "push",
+        "schedule",
+        "workflow_dispatch",
+        "workflow_run",
+        "repository_dispatch",
+        "manual_external"
+      ]
+    },
+    "head_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "status": {
+      "enum": [
+        "CLAIMED",
+        "RUNNING",
+        "VERIFYING",
+        "REVIEW_REQUIRED",
+        "VERIFIED_DONE",
+        "RETRYABLE_FAILED",
+        "BLOCKED",
+        "CANCELLED"
+      ]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "data_cutoff_utc",
+        "input_sha256",
+        "provenance"
+      ],
+      "properties": {
+        "data_cutoff_utc": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "input_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "provenance": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tests_passed",
+        "tests_failed",
+        "output_sha256"
+      ],
+      "properties": {
+        "tests_passed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tests_failed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_sha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "artifact_urls": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "drive_readback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "performed",
+        "matching_files",
+        "differences"
+      ],
+      "properties": {
+        "performed": {
+          "type": "boolean"
+        },
+        "matching_files": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "differences": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "risk_approval": {
+      "enum": [
+        "RESEARCH_ONLY",
+        "HUMAN_REVIEW_PENDING",
+        "HUMAN_APPROVED_NONTRADING"
+      ]
+    },
+    "blocker": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "fingerprint": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "agent_review_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "VERIFIED_DONE"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "checks": {
+            "properties": {
+              "tests_failed": {
+                "const": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
