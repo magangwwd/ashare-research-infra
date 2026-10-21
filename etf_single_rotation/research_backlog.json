@@ -60,12 +60,26 @@
       "id": "ETF-DIV-004",
       "priority": 3,
       "title": "Independently audit dividends, fund_adj and cash total return",
-      "status": "IN_PROGRESS",
+      "status": "REVIEW_REQUIRED",
       "depends_on": [
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "Independently compare corporate_action_evidence.json documented 510500 2015 consolidation 0.28032483, 512100 2022 consolidation 0.36555, 512690 2021 1:2 split and 2021-12-31 RMB0.35 cash dividend against Tushare raw price+fund_adj and cash-share accounting. Flag unexpected discrepancies; never accept ETF total return solely from matched factors."
+      "next_action": "Review draft PR #92; add record-date dividend entitlement tests and issuer-verified dividend registry in isolated PR; run scoped CI and independent price/Drive readback before VERIFIED_DONE. PAPER-005 remains dependency blocked.",
+      "review_evidence": {
+        "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
+        "pr_state": "DRAFT_UNMERGED",
+        "review_head_sha": "dff9aca9ddab6d2a51dab4cf819abfa6405a079a",
+        "tested": "SIX_SYNTHETIC_TESTS_LOCALLY_PREVIOUSLY; NO_GITHUB_CI_RUN",
+        "artifact_drive_readback": "NOT_PERFORMED_FOR_THIS_CHANGE",
+        "blockers": [
+          "Independent issuer dividend coverage incomplete",
+          "Independent market price and fund_adj reconciliation incomplete",
+          "Record-date cash receivable/payment ledger unverified",
+          "Cloud CI and Drive audit for new code not run"
+        ],
+        "last_checked_utc": "2026-10-21T22:26:42Z"
+      }
     },
     {
       "id": "ETF-PAPER-005",
@@ -92,5 +106,5 @@
   "latest_verified_run": 39599580852,
   "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 13 sequential stages; 38 tests OK; 48 Drive uploads; all 5 declared ETF halts source-matched",
   "last_known_research_status": "NOT_FOR_TRADING",
-  "updated_utc": "2026-10-21T12:32:00Z"
+  "updated_utc": "2026-10-21T22:26:42Z"
 }
