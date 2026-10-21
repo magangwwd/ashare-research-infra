@@ -312,7 +312,10 @@ def executable_walk_forward(closes: pd.DataFrame, opens: pd.DataFrame,
     traded = trades.copy()
     if not traded.empty:
         traded["date"] = pd.to_datetime(traded["date"])
-        traded = traded[traded.date >= first_date].copy()
+        # Exclude any liquidation after the final held-out session: such
+        # trades must not inflate costs or counts for the reported test period.
+        traded = traded[(traded.date >= first_date) &
+                        (traded.date <= date_list[-1])].copy()
     report = {
         "method": "past-only training selection with executable, continuously self-financing single-ETF portfolio",
         "fold_count": len(fold_records),
