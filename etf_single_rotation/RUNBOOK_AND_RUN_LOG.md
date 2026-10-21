@@ -201,3 +201,10 @@
 - **同一历史区间初步对照**：滚动选型ETF策略执行账本年化约**6.643%**、最大历史回撤**-21.687%**；510300.SH买入持有年化约**6.018%**、回撤**-42.155%**；518880.SH买入持有年化约**14.993%**、回撤**-30.519%**；0%利息现金年化0%、回撤0%。这些基于同一个Tushare调整价数据源，不是第二数据源独立复核；黄金收益高于本策略，但历史回撤也超过项目25%数值门槛；不能据此声称本ETF策略优于所有被动策略或保证未来达标。
 - 自动门禁仍 `NOT_FOR_TRADING`，数据质量 `REVIEW_REQUIRED`：5条ETF历史交易日缺口与调整价格/分红总收益口径仍待**独立核实**，此前候选曾后验查看全样本，不存在不可更改的未来纸面证据，券商真实成交价格成本未得到验证。
 - **下一项自主研究**：按 `research_backlog.json` 转入 `ETF-DATA-003`，逐条收集独立交易所停牌公告或第二数据商报价核验5处缺口；不能捏造缺口行情。之后 `ETF-DIV-004` 分红/复权对账、冻结前瞻，阶段证明不能互相替代。
+
+## 2026-10-21 北京时间20:32：独立公告核验全部5处ETF交易日缺口（已核验）
+- 已在 `metadata/announced_suspensions.json` 保存5处来源及公告，新增 `experiments/audit_suspension_notices.py` 对真实Tushare `data_quality_gaps.csv` 的缺失日期进行完全键匹配、排斥同日期存在真实成交报价的矛盾、不能自动插值/填造交易K线。
+- 证据：159915.SZ 2021-02-08基金持有人大会计票日停牌（易方达基金签章公告的公开PDF，并有券商复牌时间核对）；510500.SH 2015-04-13及14为南方基金份额折算登记/除权停牌（上交所公告）；512100.SH 2022-09-02为南方ETF份额合并停牌（上交所公告）；512690.SH 2021-05-14为鹏华酒ETF份额拆分停牌（多家券商引述交易所公告）。所有源链接与分类直接保存在注册表，分清官方交易所与券商证据。**并非全部缺口均由数据商传输错误造成；不能凭交易所营业日就推定ETF该日开市。**
+- GitHub真实回测验收：Run **39599580852** / Job **119220366735**，最终 `completed/success`。日志 `Ran 38 tests ... OK`，13个研究阶段先后完成，`ETF_SUSPENSION_CROSSCHECK` 显示 `observed_provider_missing_exchange_session_rows=5`、`documented_announced_halt_rows=5`、`unexplained_rows=0`，Drive `DRIVE_UPLOAD_COMPLETE files=48`，包含 `documented_suspension_gaps.csv` 和 `documented_suspension_summary.json` 的真实上传记录；Github Artifact ID **12345747366**。链接：https://github.com/magangwwd/ashare-research-infra/actions/runs/39599580852
+- **不得误判为策略数据完全验收**：原有 `audit_data.py` 仍将ETF交易所开市日的非报价列为原始缺口供追溯，但新增来源核验解释了5个日期的停牌原因；份额折算/合并后 `fund_adj` 是否正确保留总收益、酒ETF现金分红是否纳入投资者现金回报**仍未独立验证**。门禁保持 `NOT_FOR_TRADING`、data quality `REVIEW_REQUIRED`；历史累计回撤≤25%不是未来保证。
+- 下一个自主任务切换至 `ETF-DIV-004`：已建立 `metadata/corporate_action_evidence.json`，列出南方500ETF 2015折算比例0.28032483、中证1000ETF 2022合并比例0.36555、酒ETF 2021拆分比例2.0、酒ETF 2021-12-31现金分红每份0.35元及支付日2022-01-06，均附公开证据来源。下一轮必须与Tushare `raw_close/adj_factor`、原始现金/份额台账逐条交叉计算，不可仅凭公告就认定收益已修复。
