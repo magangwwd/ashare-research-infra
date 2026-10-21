@@ -34,7 +34,7 @@ class ExecutableWalkForwardTests(unittest.TestCase):
         prices = pd.DataFrame({"510300.SH": 100.0}, index=dates)
         targets = pd.DataFrame({"510300.SH": 0.50}, index=dates)
         curve = pd.Series(1.001 ** np.arange(len(dates)), index=dates)
-        folds = (("2019-01-01", "2019-02-28"),)
+        folds = (("2019-01-02", "2019-02-28"),)
         with tempfile.TemporaryDirectory() as output:
             report = executable_walk_forward(
                 prices, prices, {"A": targets}, {"A": curve},
@@ -88,7 +88,7 @@ class ExecutableWalkForwardTests(unittest.TestCase):
             chosen = [r["selected_strategy"] for r in report["folds"]]
             self.assertEqual(chosen, ["A", "B"])
             trades = pd.read_csv(Path(output) / "executable_walk_forward_trades.csv")
-            switch = trades.loc[trades.date == "2020-01-02"]
+            switch = trades.loc[trades.date == "2020-01-01"]
             self.assertEqual(set(switch.side), {"BUY", "SELL"})
             self.assertEqual(len(switch), 2)
             self.assertGreater(report["charged_fee_slippage"], 0)
