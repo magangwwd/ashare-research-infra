@@ -41,7 +41,7 @@ def download_verified(interval):
 
 
 def parse_archive(blob, interval, unusual_rows=None):
-    seconds = {"4h": 14400, "15m": 900}[interval]
+    seconds = {"4h": 14400, "15m": 900, "5m": 300, "1m": 60}[interval]
     rows = {}
     with zipfile.ZipFile(io.BytesIO(blob)) as archive:
         csv_files = [n for n in archive.namelist() if n.endswith(".csv")]
