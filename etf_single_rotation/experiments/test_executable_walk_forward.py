@@ -71,9 +71,12 @@ class ExecutableWalkForwardTests(unittest.TestCase):
         years = np.array([d.year for d in dates])
         # 2015-2018 A initially dominates; strong 2019 B performance should
         # make B the new training-only choice at 2020-01-01.
-        a_daily = np.where(years <= 2018, 0.0015, 0.0)
-        b_daily = np.where(years <= 2018, 0.0001,
-                           np.where(years == 2019, 0.009, 0.0001))
+        sample_day = np.arange(n)
+        a_daily = np.where(years <= 2018,
+                           0.0008 + 0.01 * np.sin(sample_day / 5), 0.0)
+        b_daily = np.where(years <= 2018,
+                           0.0001 + 0.01 * np.sin(sample_day / 7),
+                           np.where(years == 2019, 0.006, 0.0001))
         equities = {
             "A": pd.Series(np.cumprod(1 + a_daily), index=dates),
             "B": pd.Series(np.cumprod(1 + b_daily), index=dates),
