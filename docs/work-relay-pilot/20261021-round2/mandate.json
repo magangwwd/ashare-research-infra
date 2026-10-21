@@ -10,7 +10,7 @@
   "no_merge": true,
   "no_research_changes": true,
   "no_external_secrets": true,
-  "notification_permission": "built-in GITHUB_TOKEN pull-requests:write, isolated no-checkout notify job only",
+  "notification_permission": "built-in GITHUB_TOKEN pull-requests:write and contents:write needed by draft GraphQL transition; isolated no-checkout notify job only; no source write API calls",
   "sequence": [
     "normal PASS plus injected failure FAIL",
     "ready_for_review emitted twice after validation/artifact upload",
@@ -24,5 +24,7 @@
     "out of scope diff",
     "two agent commits exhausted"
   ],
-  "note": "PR+reviewed head SHA dedup. Initial provisioning commits excluded from two event-agent commit rounds. Expected failure run must remain failure."
+  "note": "PR+reviewed head SHA dedup. Initial provisioning commits excluded from two event-agent commit rounds. Expected failure run must remain failure.",
+  "provisioning_failed_run": 39606068127,
+  "permission_fix_evidence": "https://github.com/actions/toolkit/issues/1165 ; first notify run FORBIDDEN despite PullRequests:write"
 }
