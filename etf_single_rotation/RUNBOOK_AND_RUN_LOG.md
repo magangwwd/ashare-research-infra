@@ -193,3 +193,11 @@
 - 任务检查点：`etf_single_rotation/state/run_checkpoint.json` 记录每个阶段状态、代码SHA、输入/产物Hash及重试次数；`etf_single_rotation/state/drive_upload_checkpoint.json` 保留逐文件云盘上传结果。**恢复跨Run须采用相同研究代码SHA、恢复对应GitHub Artifact，且所有已完成产物Hash一致**；代码变更后应从新版本重新运行，不可把旧产物称为新版本验收。GitHub无自动无限次跨Run重试；超出重试上限须GPT或用户审核。
 - **准确的角色边界**：GitHub按既定阶段顺序自主运行完成并停止；GPT每天北京时间08:00审核结果、异常和新研究决策，但用户随时发问或委托时可即时参与。无任何任务要求个人电脑开机或GPT全天在线。未部署周期性每小时ETF全量回测。
 - 下一项需要研究决策后写入程序的工作：独立核实5条缺口及现金分红后的ETF总回报、ETF收益基准和前瞻纸面账本；此处不把计划当已执行。
+
+## 2026-10-21 北京时间20:18：GPT自主研发接续及同区间可执行基准（已核验）
+- 已建立 `AUTONOMOUS_RESEARCH_PLAN.md` 和 `research_backlog.json`，显式记录已经完成的任务、任务依赖、验收标准、Github Run证据和下一项。GitHub内部按有序任务立即接续并停止；GPT另有**条件触发的自主研发巡检**（最多每小时查看一次新异常/待办，不等于每小时重新运行ETF回测），原有每天北京时间08:00日报任务继续独立启用。GPT按规则、权限及工具实际可用性参与修复/设计下一阶段，不能因无人值守便推定其无间断开发。
+- 新增可执行基准 `experiments/benchmark_self_financing.py`：同一区间（2019-01-02 至 2026-10-21）现金（0%利息）、510300.SH沪深300 ETF、518880.SH黄金 ETF 的单标的现货买入持有，2019年首次可用开盘成交价、买入费用滑点每边0.10%，与策略自融资账本尽量一致。三条专门回归测试覆盖初始买入费用、缺开盘价禁止虚拟买入、测试区间基准日。
+- **实测通过**：一次性主分支 GitHub workflow `etf-research-one-shot.yml` Run **39597990839** / Job **119215003886** 为 `completed/success`；日志 `Ran 34 tests ... OK`、`PIPELINE_OK like_for_like_benchmarks`、`ETF_PIPELINE_STATUS RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED`，累计12个预设研究阶段、`DRIVE_UPLOAD_COMPLETE files=46`，3份新基准CSV/JSON实际上传Drive；GitHub Artifact `etf-research-checkpoint` ID **12344916336**。核验链接：https://github.com/magangwwd/ashare-research-infra/actions/runs/39597990839
+- **同一历史区间初步对照**：滚动选型ETF策略执行账本年化约**6.643%**、最大历史回撤**-21.687%**；510300.SH买入持有年化约**6.018%**、回撤**-42.155%**；518880.SH买入持有年化约**14.993%**、回撤**-30.519%**；0%利息现金年化0%、回撤0%。这些基于同一个Tushare调整价数据源，不是第二数据源独立复核；黄金收益高于本策略，但历史回撤也超过项目25%数值门槛；不能据此声称本ETF策略优于所有被动策略或保证未来达标。
+- 自动门禁仍 `NOT_FOR_TRADING`，数据质量 `REVIEW_REQUIRED`：5条ETF历史交易日缺口与调整价格/分红总收益口径仍待**独立核实**，此前候选曾后验查看全样本，不存在不可更改的未来纸面证据，券商真实成交价格成本未得到验证。
+- **下一项自主研究**：按 `research_backlog.json` 转入 `ETF-DATA-003`，逐条收集独立交易所停牌公告或第二数据商报价核验5处缺口；不能捏造缺口行情。之后 `ETF-DIV-004` 分红/复权对账、冻结前瞻，阶段证明不能互相替代。
