@@ -14,7 +14,7 @@ on:
         options: [quick, deep]
   # Test new file on isolated feature branch; branch cannot write to Drive.
   push:
-    branches: [main, feat/btc-hourly-research-loop-20261021]
+    branches: [main, feat/btc-hourly-research-loop-20261021, fix/btc-hourly-schedule-dedup-recovery-20261021]
     paths:
       - '.github/workflows/btc-hourly-research-cycle.yml'
       - 'btc-quant/ops/research_loop.py'
