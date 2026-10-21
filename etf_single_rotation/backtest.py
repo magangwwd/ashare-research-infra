@@ -158,3 +158,4 @@ if __name__ == "__main__":
     subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "etf_single_rotation/experiments", "-p", "test_*.py", "-v"], check=True)
     # The existing workflow's backtest step also runs the new exploratory comparison harness.
     subprocess.run([sys.executable, str(Path(__file__).with_name("experiments") / "run_strategy_experiments.py")], check=True)
+    subprocess.run([sys.executable, str(Path(__file__).with_name("experiments") / "audit_execution_model.py")], check=True)
