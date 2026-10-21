@@ -40,7 +40,7 @@ def download_verified(interval):
     return blob, sha
 
 
-def parse_archive(blob, interval):
+def parse_archive(blob, interval, unusual_rows=None):
     seconds = {"4h": 14400, "15m": 900}[interval]
     rows = {}
     with zipfile.ZipFile(io.BytesIO(blob)) as archive:
@@ -56,7 +56,11 @@ def parse_archive(blob, interval):
                 stamp = int(r[0])
                 opened = dt.datetime.fromtimestamp(stamp / (1_000_000 if stamp >= 10**15 else 1000), UTC)
                 if int(opened.timestamp()) % seconds or opened.microsecond:
-                    raise ValueError(f"unaligned {interval} row {i}: {opened}")
+                    if unusual_rows is None:
+                        raise ValueError(f"unaligned {interval} row {i}: {opened}")
+                    unusual_rows.append({"csv_row": i, "utc_open": opened.isoformat(),
+                                         "reason": "not aligned to official interval"})
+                    continue
                 v = tuple(map(float, r[1:6]))
                 o, h, l, c, vol = v
                 if not (0 < l <= o <= h and l <= c <= h and vol >= 0):
@@ -90,7 +94,8 @@ def main():
     args = parser.parse_args()
     payload_15, sha_15 = download_verified("15m")
     payload_4, sha_4 = download_verified("4h")
-    fifteen = parse_archive(payload_15, "15m")
+    unusual_15m = []
+    fifteen = parse_archive(payload_15, "15m", unusual_rows=unusual_15m)
     four = parse_archive(payload_4, "4h")
 
     gaps = {}
@@ -140,6 +145,8 @@ def main():
         "month": "2018-02",
         "official_zip_sha256": {"15m": sha_15, "4h": sha_4},
         "official_checksums_verified": True,
+        "unaligned_15m_rows_count": len(unusual_15m),
+        "unaligned_15m_rows_preview": unusual_15m[:15],
         "source_15m_rows": len(fifteen), "source_4h_rows": len(four),
         "expected_missing_4h_opens": [t.isoformat() for t in MISSING_4H_OPEN],
         "target_missing_15m_total": len(missing_15m),
@@ -154,7 +161,7 @@ def main():
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     print(json.dumps({k: report[k] for k in (
-        "status", "source_15m_rows", "source_4h_rows", "target_missing_15m_total",
+        "status", "source_15m_rows", "source_4h_rows", "unaligned_15m_rows_count", "target_missing_15m_total",
         "all_15m_discontinuities_count", "independent_overlapping_4h_windows_checked",
         "overlapping_4h_mismatch_count"
     )}, ensure_ascii=False))
