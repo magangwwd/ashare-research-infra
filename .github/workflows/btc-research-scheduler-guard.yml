@@ -1,0 +1,48 @@
+name: BTC research scheduler self-heal (independent watchdog)
+
+# The established BTC V3 watchdog is already hourly; after it finishes this
+# guard checks the NEW research schedule and requests a safe quick fallback
+# only if no native schedule or fallback run has appeared within two hours.
+on:
+  workflow_run:
+    workflows: ["BTC V3 progress watchdog"]
+    types: [completed]
+    branches: [main]
+  schedule:
+    - cron: "07 */2 * * *"
+  push:
+    branches: [main, fix/btc-hourly-schedule-dedup-recovery-20261021]
+    paths:
+      - ".github/workflows/btc-research-scheduler-guard.yml"
+      - "btc-quant/ops/research_scheduler_watchdog.py"
+      - "btc-quant/tests/test_research_scheduler_watchdog.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+concurrency:
+  group: btc-research-scheduler-independent-guard
+  cancel-in-progress: false
+
+jobs:
+  detect-and-recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Validate scheduler watchdog deduplication and fail-closed rules
+        run: python -m unittest discover -s btc-quant/tests -p test_research_scheduler_watchdog.py -v
+      - name: Detect missed hourly cron and request safe quick fallback if needed
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python btc-quant/ops/research_scheduler_watchdog.py
