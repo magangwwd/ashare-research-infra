@@ -233,6 +233,113 @@ def performance(ledger: pd.DataFrame, trades: pd.DataFrame, strategy: str):
     }
 
 
+def executable_walk_forward(closes: pd.DataFrame, opens: pd.DataFrame,
+                            targets_by_strategy: dict[str, pd.DataFrame],
+                            training_equities: dict[str, pd.Series],
+                            folds=None, candidates=None,
+                            fee_rate=FEE_SLIPPAGE_PER_SIDE):
+    """Replay a genuinely shared cash/share ledger across strategy switches.
+
+    The earlier retrospective report stitched different stand-alone net-return
+    curves and did not trade at fold boundaries. Here selected strategy targets
+    are applied to ONE portfolio; the first fold and every switch use next-open
+    fills and include sell/buy turnover costs.
+    """
+    from etf_single_rotation.experiments.walk_forward import (
+        FOLDS, CANDIDATES, select_on_history, score
+    )
+    folds = FOLDS if folds is None else folds
+    candidates = CANDIDATES if candidates is None else candidates
+    dates = closes.index
+    if not (dates.equals(opens.index) and dates.is_monotonic_increasing):
+        raise ValueError("Chronological close/open indexes must match")
+    combined = pd.DataFrame(0.0, index=dates, columns=closes.columns)
+    fold_records, train_records = [], []
+    all_test_dates = []
+    last_end = None
+    for window_start, window_end in folds:
+        start, end = pd.Timestamp(window_start), pd.Timestamp(window_end)
+        if last_end is not None and start <= last_end:
+            raise ValueError("Walk-forward windows cannot overlap")
+        train_dates = dates[dates < start]
+        test_dates = dates[(dates >= start) & (dates <= end)]
+        if len(train_dates) < 500 or len(test_dates) < 20:
+            raise ValueError("Insufficient fold history")
+        train_end = train_dates[-1].date().isoformat()
+        selected, scores = select_on_history(
+            training_equities, train_end, candidates=candidates
+        )
+        train_records += [{"window_start": window_start, **x} for x in scores]
+        if selected != "CASH":
+            target = targets_by_strategy[selected]
+            if not target.index.equals(dates) or list(target.columns) != list(closes.columns):
+                raise ValueError("Walk-forward target price-panel mismatch")
+            combined.loc[test_dates, :] = target.loc[test_dates, :].to_numpy()
+        fold_records.append({
+            "train_end": train_end, "test_start": test_dates[0].date().isoformat(),
+            "test_end": test_dates[-1].date().isoformat(),
+            "selected_strategy": selected,
+            "sessions": int(len(test_dates))
+        })
+        all_test_dates.extend(test_dates)
+        last_end = end
+    if len(set(all_test_dates)) != len(all_test_dates):
+        raise ValueError("Overlapping test dates")
+    ledger, trades = simulate(
+        closes, opens, combined, "executable_walk_forward", fee_rate=fee_rate
+    )
+    dated = ledger.set_index("date")
+    first_date = pd.Timestamp(all_test_dates[0])
+    base_date = dates[dates < first_date][-1]
+    date_list = pd.DatetimeIndex(all_test_dates)
+    if not dated.index.is_unique or dated.loc[date_list].isna().all().any():
+        raise AssertionError("Missing walk-forward portfolio values")
+    test_equity = pd.concat([
+        pd.Series([dated.at[base_date, "equity"]], index=[base_date]),
+        dated.loc[date_list, "equity"]
+    ])
+    summary = score(test_equity)
+    for row in fold_records:
+        start = pd.Timestamp(row["test_start"])
+        end = pd.Timestamp(row["test_end"])
+        prev_day = dates[dates < start][-1]
+        slice_equity = pd.concat([
+            pd.Series([dated.at[prev_day, "equity"]], index=[prev_day]),
+            dated.loc[start:end, "equity"]
+        ])
+        row.update(score(slice_equity))
+    traded = trades.copy()
+    if not traded.empty:
+        traded["date"] = pd.to_datetime(traded["date"])
+        traded = traded[traded.date >= first_date].copy()
+    report = {
+        "method": "past-only training selection with executable, continuously self-financing single-ETF portfolio",
+        "fold_count": len(fold_records),
+        "folds": fold_records,
+        "stitched_executable_holdout": summary,
+        "executed_trade_legs": int(len(traded)),
+        "charged_fee_slippage": float(traded.fee_slippage.sum()) if not traded.empty else 0.0,
+        "fixed_fee_slippage_per_side": fee_rate,
+        "acceptance": "RETROSPECTIVE_EXPLORATORY_NOT_FOR_TRADING",
+        "limitations": [
+            "Candidates and hyperparameters were reviewed on the historical sample, so this is not virgin prospective OOS.",
+            "Historical price adjustment/dividend semantics and five ETF/date gaps remain under review.",
+            "The day-after close to next-open execution remains a simplifying tradability model."
+        ],
+    }
+    OUT.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(fold_records).to_csv(OUT / "executable_walk_forward_folds.csv", index=False)
+    pd.DataFrame(train_records).to_csv(OUT / "executable_walk_forward_training_scores.csv", index=False)
+    dated.loc[date_list].reset_index().to_csv(
+        OUT / "executable_walk_forward_ledger.csv", index=False
+    )
+    traded.to_csv(OUT / "executable_walk_forward_trades.csv", index=False)
+    (OUT / "executable_walk_forward_summary.json").write_text(
+        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    return report
+
+
 def main():
     source = ROOT / "data" / "prices.csv"
     if not source.exists():
@@ -248,10 +355,12 @@ def main():
         raise SystemExit("No real ETF price rows")
     OUT.mkdir(parents=True, exist_ok=True)
     summary_rows, ledger_rows, trade_rows, curve_rows, histories = [], [], [], [], {}
+    targets_by_strategy = {}
     from etf_single_rotation.experiments.run_strategy_experiments import run_one
     old_rows = []
     for strategy in STRATEGIES:
         targets, _ = build_monthly_targets(closes.ffill(), strategy)
+        targets_by_strategy[strategy] = targets
         ledger, trades = simulate(closes, opens, targets, strategy)
         summary = performance(ledger, trades, strategy)
         summary_rows.append(summary)
@@ -281,6 +390,8 @@ def main():
     pd.DataFrame(old_rows).to_csv(OUT / "self_financing_vs_exploratory.csv", index=False)
     report = walk_forward(histories, OUT, candidates=CANDIDATES)
     print("SELF_FINANCING_WALK_FORWARD " + json.dumps(report, ensure_ascii=False))
+    executed_report = executable_walk_forward(closes, opens, targets_by_strategy, histories)
+    print("EXECUTABLE_WALK_FORWARD " + json.dumps(executed_report, ensure_ascii=False))
     quality_path = ROOT / "results" / "data_quality_summary.json"
     quality = json.loads(quality_path.read_text(encoding="utf-8")) if quality_path.exists() else {}
     metadata = {
