@@ -98,6 +98,14 @@ class ResearchGateTests(unittest.TestCase):
                 "last_date": "2026-10-21", "acceptance": "REVIEW_REQUIRED"
             }
             (root / "results/data_quality_summary.json").write_text(json.dumps(quality))
+            (root / "results/documented_suspension_summary.json").write_text(
+                json.dumps({
+                    "status": "ALL_GAPS_HAVE_ANNOUNCED_SUSPENSION_EVIDENCE",
+                    "observed_provider_missing_exchange_session_rows": 5,
+                    "documented_announced_halt_rows": 5,
+                    "unexplained_rows": 0,
+                })
+            )
             pd.DataFrame([
                 {"fee_slippage_per_side": f, "cagr": 0.05,
                  "max_drawdown": -0.21}
@@ -117,7 +125,7 @@ class ResearchGateTests(unittest.TestCase):
             result = evaluate(root)
             self.assertFalse(result["full_acceptance"])
             self.assertEqual(result["status"], "NOT_FOR_TRADING")
-            self.assertIn("UNRESOLVED_ETF_SESSION_GAPS", result["open_blockers"])
+            self.assertIn("ANNOUNCED_ETF_SPLIT_HALT_PRICE_ADJUSTMENT_NOT_INDEPENDENTLY_AUDITED", result["open_blockers"])
             self.assertEqual(len(result["cost_stress"]), 3)
 
 
