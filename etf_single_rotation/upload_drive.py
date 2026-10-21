@@ -14,6 +14,8 @@ FILES = [
     Path("etf_single_rotation/results/data_quality.csv"),
     Path("etf_single_rotation/results/data_quality_gaps.csv"),
     Path("etf_single_rotation/results/data_quality_summary.json"),
+    Path("etf_single_rotation/results/documented_suspension_gaps.csv"),
+    Path("etf_single_rotation/results/documented_suspension_summary.json"),
     Path("etf_single_rotation/results/research_acceptance_gate.json"),
     Path("etf_single_rotation/state/run_checkpoint.json"),
     Path("etf_single_rotation/results/equity_curve.csv"),
