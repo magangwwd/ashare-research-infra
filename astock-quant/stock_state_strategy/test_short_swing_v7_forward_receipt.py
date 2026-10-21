@@ -66,4 +66,26 @@ class ForwardReceiptTests(unittest.TestCase):
         x=panel_for();x['trade_date']='2026-10-20'
         with self.assertRaises(ValueError):
             f.receipt(x,None,DAY,'a'*64,'2026-10-21',NOW)
+    def test_next_business_morning_before_open(self):
+        f.require_true_forward_clock(DAY,datetime(2026,10,22,8,0,tzinfo=timezone(timedelta(hours=8))))
+        f.require_true_forward_clock(date(2026,10,23),
+            datetime(2026,10,26,8,0,tzinfo=timezone(timedelta(hours=8))))
+        for clock in [datetime(2026,10,22,9,25,tzinfo=timezone(timedelta(hours=8))),
+                      datetime(2026,10,22,6,59,tzinfo=timezone(timedelta(hours=8))),
+                      datetime(2026,10,23,8,0,tzinfo=timezone(timedelta(hours=8)))]:
+            with self.assertRaises(ValueError):
+                f.require_true_forward_clock(DAY,clock)
+    def test_weekday_holiday_gap_must_not_be_silently_accepted(self):
+        with self.assertRaises(ValueError):
+            f.require_true_forward_clock(date(2026,10,23),
+                datetime(2026,10,27,8,0,tzinfo=timezone(timedelta(hours=8))))
+    def test_code_sha_in_offline_receipt(self):
+        ix=pd.Timestamp(DAY);pick={ix:[('600001.SH',.03)]}
+        with patch.object(f,'signal_day_features',return_value=fake_features()),\
+             patch.object(f,'build_signals',return_value=pick),\\
+             patch.object(f,'filter_signals',return_value=(pick,{})),\\
+             patch.object(f,'rank_signals',return_value=pick),\\
+             patch.dict('os.environ',{'V7_RESEARCH_COMMIT_SHA':'a'*40}):
+            out=f.receipt(panel_for(),None,DAY,'x'*64,'2026-10-21',NOW)
+        self.assertEqual(out['research_code_sha'],'a'*40)
 if __name__=='__main__':unittest.main()
