@@ -1,0 +1,104 @@
+name: Work relay round2 completion bridge
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'docs/work-relay-pilot/20261021-round2/**'
+      - '.github/workflows/work-pr-relay-round2.yml'
+permissions: {}
+concurrency:
+  group: work-relay-r2-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  validate:
+    if: >-
+      github.repository == 'magangwwd/ashare-research-infra' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'test/work-pr-relay-round2-20261021' &&
+      startsWith(github.event.pull_request.title, '[WORK-RELAY-R2-20261021]')
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [normal, fault]
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          sparse-checkout: docs/work-relay-pilot/20261021-round2
+      - name: JSON fixture in network-isolated namespace
+        env:
+          PILOT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PILOT_CASE: ${{ matrix.case }}
+        run: |
+          sudo unshare --net python3 -I -B docs/work-relay-pilot/20261021-round2/validate.py "$PILOT_HEAD_SHA" "$PILOT_CASE" > "$RUNNER_TEMP/result.json"
+      - name: Show acceptance result
+        if: always()
+        run: cat "$RUNNER_TEMP/result.json"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: relay-r2-${{ matrix.case }}-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/result.json
+          if-no-files-found: error
+          retention-days: 7
+  notify:
+    needs: validate
+    if: >-
+      always() && needs.validate.result != 'skipped' &&
+      github.repository == 'magangwwd/ashare-research-infra' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'test/work-pr-relay-round2-20261021' &&
+      startsWith(github.event.pull_request.title, '[WORK-RELAY-R2-20261021]')
+    permissions:
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Emit completion and duplicate PR events without checkout
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PILOT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          NORMAL_RESULT: inspect matrix jobs and artifacts
+          FAULT_RESULT: ${{ needs.validate.result }}
+        run: |
+          python3 -I - <<'PY'
+          import datetime, json, os, urllib.request
+          repo = "magangwwd/ashare-research-infra"
+          number = int(os.environ["PR_NUMBER"])
+          sha = os.environ["PILOT_HEAD_SHA"]
+          token = os.environ["GH_TOKEN"]
+          def api(url, data=None):
+              req = urllib.request.Request(url, data=None if data is None else json.dumps(data).encode(),
+                  headers={"Authorization": "Bearer " + token, "Accept": "application/vnd.github+json",
+                           "X-GitHub-Api-Version": "2022-11-28", "Content-Type": "application/json"})
+              with urllib.request.urlopen(req, timeout=20) as response:
+                  return json.load(response)
+          def pr():
+              p = api("https://api.github.com/repos/" + repo + "/pulls/" + str(number))
+              if (p["state"] != "open" or p["head"]["sha"] != sha or
+                  p["head"]["repo"]["full_name"] != repo or p["head"]["ref"] != "test/work-pr-relay-round2-20261021" or
+                  not p["title"].startswith("[WORK-RELAY-R2-20261021]")):
+                  raise SystemExit("stale or out-of-scope PR; no event emitted")
+              return p
+          def mutation(name, node):
+              query = "mutation($id:ID!){"+name+"(input:{pullRequestId:$id}){pullRequest{isDraft}}}"
+              data = api("https://api.github.com/graphql", {"query": query, "variables": {"id": node}})
+              if data.get("errors"):
+                  raise RuntimeError("PR transition denied: " + json.dumps(data["errors"]))
+          for index in range(2):
+              p = pr()
+              if not p["draft"]:
+                  mutation("convertPullRequestToDraft", p["node_id"])
+              mutation("markPullRequestReadyForReview", p["node_id"])
+              print(json.dumps({"event_action": "ready_for_review", "notification": index + 1,
+                  "head_sha": sha, "pr": number, "run_id": os.environ["GITHUB_RUN_ID"],
+                  "normal": os.environ["NORMAL_RESULT"], "fault": os.environ["FAULT_RESULT"],
+                  "emitted_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}), flush=True)
+          
+          PY

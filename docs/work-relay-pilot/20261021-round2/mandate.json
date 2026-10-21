@@ -1,0 +1,28 @@
+{
+  "pilot_id": "WORK-RELAY-R2-20261021",
+  "allowed_branch": "test/work-pr-relay-round2-20261021",
+  "allowed_paths": [
+    "docs/work-relay-pilot/20261021-round2/",
+    ".github/workflows/work-pr-relay-round2.yml"
+  ],
+  "max_work_tasks": 3,
+  "max_agent_commit_rounds": 2,
+  "no_merge": true,
+  "no_research_changes": true,
+  "no_external_secrets": true,
+  "notification_permission": "built-in GITHUB_TOKEN pull-requests:write, isolated no-checkout notify job only",
+  "sequence": [
+    "normal PASS plus injected failure FAIL",
+    "ready_for_review emitted twice after validation/artifact upload",
+    "GPT verifies and atomically commits receipt plus repaired task",
+    "repair PASS and duplicate event",
+    "GPT final receipt [skip ci]; no further dispatch"
+  ],
+  "stop_on": [
+    "missing event evidence",
+    "permissions failure",
+    "out of scope diff",
+    "two agent commits exhausted"
+  ],
+  "note": "PR+reviewed head SHA dedup. Initial provisioning commits excluded from two event-agent commit rounds. Expected failure run must remain failure."
+}
