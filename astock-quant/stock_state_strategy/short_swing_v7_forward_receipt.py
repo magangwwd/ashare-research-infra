@@ -9,9 +9,10 @@ No scheduler and no automated brokerage API.
 from __future__ import annotations
 import argparse
 from dataclasses import asdict, replace
-from datetime import date,datetime,time
+from datetime import date,datetime,time,timedelta
 import hashlib
 import json
+import os
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import pandas as pd
@@ -27,12 +28,25 @@ LOOSE=next(s for s in SPECS if s.name=='LOOSE')
 VERSION='V7_55_BREADTH_40K_FROZEN_FORWARD_PAPER_20261020'
 
 def require_true_forward_clock(asof:date,now:datetime):
+    """Only a genuine postclose signal or next *business* morning before open.
+
+    Morning capture is necessary to share the existing daily 08:00 A-share
+    task. Missing official weekday-holiday calendars fail closed; a stale
+    older session may never be relabelled as a fresh prospective signal.
+    """
     if now.tzinfo is None:
         raise ValueError('Clock must include timezone')
     clock=now.astimezone(ZoneInfo('Asia/Shanghai'))
-    if not (asof>FREEZE_DATE and clock.date()==asof
-            and clock.time()>=time(15,30)):
-        raise ValueError('Not a contemporaneous post-close forward session; never backfill as forward')
+    if asof<=FREEZE_DATE or asof>clock.date() or asof.weekday()>4:
+        raise ValueError('Invalid as-of session, no postdated or in-sample receipt')
+    same_day=(clock.date()==asof and clock.time()>=time(15,30))
+    next_business=asof+timedelta(days=1)
+    while next_business.weekday()>4:
+        next_business+=timedelta(days=1)
+    premarket=(clock.date()==next_business and
+               clock.weekday()<5 and time(7,0)<=clock.time()<time(9,20))
+    if not (same_day or premarket):
+        raise ValueError('Not postclose or verified next business morning preopen; never backfill as forward')
 
 def receipt(panel:pd.DataFrame,risk,asof:date,manifest_sha:str,manifest_asof:str,now:datetime)->dict:
     require_true_forward_clock(asof,now)
@@ -56,7 +70,11 @@ def receipt(panel:pd.DataFrame,risk,asof:date,manifest_sha:str,manifest_asof:str
         selected.append({'symbol':symbol,'legacy_score':round(float(score),8),
                          'known_prior5_return':round(float(f.prior5_gain),8),
                          'known_breakout':round(float(f.breakout),8)})
+    code_sha=os.environ.get('V7_RESEARCH_COMMIT_SHA','')
+    if code_sha and (len(code_sha)!=40 or any(ch not in '0123456789abcdef' for ch in code_sha)):
+        raise ValueError('Invalid pinned research source SHA')
     core={'version':VERSION,
+          'research_code_sha':code_sha or 'UNSET_OFFLINE_TEST_ONLY',
           'mode':'PAPER_CANDIDATE_SNAPSHOT_ONLY_NO_ORDER',
           'as_of':str(asof),'captured_at_shanghai':now.astimezone(
             ZoneInfo('Asia/Shanghai')).isoformat(),
@@ -78,6 +96,7 @@ def receipt(panel:pd.DataFrame,risk,asof:date,manifest_sha:str,manifest_asof:str
             'Prior existing position and actual open/limit/suspension/risk gates must be checked before shadow BUY.',
             'Next open gap, T+1, queues, bid-ask and exit slippage cannot be known at signal close.',
             'Only this timestamped immutable record captured before next open can count as prospective evidence.',
+            'Morning capture is valid only before the next business-day market opening; weekday holidays without exchange calendar must fail closed.',
             '30+ full prospective independent trades needed before strategy qualification.']}
     digest=hashlib.sha256(json.dumps(core,ensure_ascii=False,
                                       sort_keys=True,separators=(',',':')).encode('utf-8')).hexdigest()
