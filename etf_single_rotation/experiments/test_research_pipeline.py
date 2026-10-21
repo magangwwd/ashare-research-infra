@@ -103,6 +103,17 @@ class ResearchGateTests(unittest.TestCase):
                  "max_drawdown": -0.21}
                 for f in [0.001, 0.003, 0.005]
             ]).to_csv(root / "results/self_financing/cost_stress_executable_walk_forward.csv", index=False)
+            (root / "results/self_financing/benchmark_self_financing_manifest.json").write_text(
+                json.dumps({"status": "BENCHMARK_EXPLORATORY_NOT_FOR_TRADING"})
+            )
+            pd.DataFrame([
+                {"benchmark": "cash_zero_interest"},
+                {"benchmark": "etf_buy_hold_510300.SH"},
+                {"benchmark": "etf_buy_hold_518880.SH"},
+            ]).to_csv(
+                root / "results/self_financing/benchmark_self_financing_comparison.csv",
+                index=False,
+            )
             result = evaluate(root)
             self.assertFalse(result["full_acceptance"])
             self.assertEqual(result["status"], "NOT_FOR_TRADING")
