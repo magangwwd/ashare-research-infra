@@ -24,6 +24,8 @@ FILES = [
     Path("etf_single_rotation/results/execution_accounting_audit.csv"),
     Path("etf_single_rotation/results/execution_accounting_implicit_turnover.csv"),
     Path("etf_single_rotation/results/execution_accounting_summary.json"),
+    Path("etf_single_rotation/results/provider_gap_recheck.csv"),
+    Path("etf_single_rotation/results/provider_gap_recheck_summary.json"),
     Path("etf_single_rotation/results/self_financing/self_financing_strategy_comparison.csv"),
     Path("etf_single_rotation/results/self_financing/self_financing_daily_ledger.csv"),
     Path("etf_single_rotation/results/self_financing/self_financing_trades.csv"),
