@@ -237,7 +237,8 @@ def executable_walk_forward(closes: pd.DataFrame, opens: pd.DataFrame,
                             targets_by_strategy: dict[str, pd.DataFrame],
                             training_equities: dict[str, pd.Series],
                             folds=None, candidates=None,
-                            fee_rate=FEE_SLIPPAGE_PER_SIDE):
+                            fee_rate=FEE_SLIPPAGE_PER_SIDE,
+                            output_dir=None):
     """Replay a genuinely shared cash/share ledger across strategy switches.
 
     The earlier retrospective report stitched different stand-alone net-return
@@ -327,14 +328,15 @@ def executable_walk_forward(closes: pd.DataFrame, opens: pd.DataFrame,
             "The day-after close to next-open execution remains a simplifying tradability model."
         ],
     }
-    OUT.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame(fold_records).to_csv(OUT / "executable_walk_forward_folds.csv", index=False)
-    pd.DataFrame(train_records).to_csv(OUT / "executable_walk_forward_training_scores.csv", index=False)
+    output_dir = OUT if output_dir is None else Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(fold_records).to_csv(output_dir / "executable_walk_forward_folds.csv", index=False)
+    pd.DataFrame(train_records).to_csv(output_dir / "executable_walk_forward_training_scores.csv", index=False)
     dated.loc[date_list].reset_index().to_csv(
-        OUT / "executable_walk_forward_ledger.csv", index=False
+        output_dir / "executable_walk_forward_ledger.csv", index=False
     )
-    traded.to_csv(OUT / "executable_walk_forward_trades.csv", index=False)
-    (OUT / "executable_walk_forward_summary.json").write_text(
+    traded.to_csv(output_dir / "executable_walk_forward_trades.csv", index=False)
+    (output_dir / "executable_walk_forward_summary.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     return report
