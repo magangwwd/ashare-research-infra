@@ -1,0 +1,120 @@
+{
+  "pilot_id": "WORK-RELAY-R2-20261021",
+  "pr": 90,
+  "repository": "magangwwd/ashare-research-infra",
+  "reviewed_head_sha": "47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+  "dedup_key": "magangwwd/ashare-research-infra#90@47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+  "event_head_sha": null,
+  "observed_head_sha": "47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+  "event_sha_attribution": "Webhook omitted SHA; notification logs bind this unchanged observed head to both transitions.",
+  "event": {
+    "action": "ready_for_review",
+    "actor": "github-actions[bot]",
+    "delivery_id": "63690cb0-cd51-11f1-8e47-d54112ca44db",
+    "received_at_utc": "2026-10-21T13:14:48.135000+00:00"
+  },
+  "duplicate_event": {
+    "action": "ready_for_review",
+    "actor": "github-actions[bot]",
+    "delivery_id": "6546f470-cd51-11f1-848d-d8039ffa6781",
+    "received_at_utc": "2026-10-21T13:14:51.182000+00:00",
+    "decision": "COALESCED_NO_SECOND_DISPATCH"
+  },
+  "gpt_started_at_utc": "2026-10-21T13:15:31Z",
+  "gpt_start_source": "provided task-run start context; separate platform execution telemetry unavailable",
+  "run": {
+    "id": 39606264671,
+    "url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/39606264671",
+    "status": "completed",
+    "conclusion": "failure",
+    "updated_at": "2026-10-21T13:14:52Z",
+    "note": "Expected injected failure; workflow is not successful."
+  },
+  "jobs": [
+    {
+      "id": 119243122808,
+      "name": "validate (fault)",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-10-21T13:14:34Z",
+      "completed_at": "2026-10-21T13:14:39Z",
+      "runner_name": "GitHub Actions 1000001587"
+    },
+    {
+      "id": 119243123279,
+      "name": "validate (normal)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-21T13:14:34Z",
+      "completed_at": "2026-10-21T13:14:41Z",
+      "runner_name": "GitHub Actions 1000001588"
+    },
+    {
+      "id": 119243201971,
+      "name": "notify",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-21T13:14:43Z",
+      "completed_at": "2026-10-21T13:14:51Z",
+      "runner_name": "GitHub Actions 1000001589"
+    }
+  ],
+  "computation_jobs_completed_at": "2026-10-21T13:14:41Z",
+  "notification_job_id": 119243201971,
+  "notifications": [
+    {
+      "event_action": "ready_for_review",
+      "notification": 1,
+      "head_sha": "47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+      "pr": 90,
+      "run_id": "39606264671",
+      "normal": "inspect matrix jobs and artifacts",
+      "fault": "failure",
+      "emitted_at": "2026-10-21T13:14:47.045983+00:00"
+    },
+    {
+      "event_action": "ready_for_review",
+      "notification": 2,
+      "head_sha": "47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+      "pr": 90,
+      "run_id": "39606264671",
+      "normal": "inspect matrix jobs and artifacts",
+      "fault": "failure",
+      "emitted_at": "2026-10-21T13:14:50.152213+00:00"
+    }
+  ],
+  "task_raw_checksum": "5a19c11e0f30c679bc462df811a551e5d315452aee3653e90ff82355e703dc64",
+  "artifacts": [
+    {
+      "id": 12347164833,
+      "name": "relay-r2-fault-47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+      "digest": "sha256:b6844039d43cde119572b06d3ca495109f009dd3104991851cc8e73427ec672e",
+      "head_sha": "47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+      "zip_digest_verified": true,
+      "result_json_verified": true,
+      "checksum": "5a19c11e0f30c679bc462df811a551e5d315452aee3653e90ff82355e703dc64",
+      "task_id": "R2-FAILURE",
+      "status": "FAIL"
+    },
+    {
+      "id": 12346914907,
+      "name": "relay-r2-normal-47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+      "digest": "sha256:0dbec7eee7ab470849a3044ea5493bf3e527299cec46408a43c144d986a59f3f",
+      "head_sha": "47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+      "zip_digest_verified": true,
+      "result_json_verified": true,
+      "checksum": "5a19c11e0f30c679bc462df811a551e5d315452aee3653e90ff82355e703dc64",
+      "task_id": "R2-NORMAL",
+      "status": "PASS"
+    }
+  ],
+  "expected_failure_identified": true,
+  "decision": "REPAIR_DISPATCHED",
+  "agent_commit_round": 1,
+  "remaining_dispatch": 1,
+  "duplicate_delivery_observed": true,
+  "batch_duplicate_coalesced": true,
+  "persisted_receipt_replay_tested": false,
+  "next_action": "Await new ready_for_review event for repaired head. No manual advance.",
+  "reliability_proven": false
+}
