@@ -31,7 +31,7 @@ def decide(event: str, requested_mode: str, now_utc: datetime) -> dict:
         eligible = requested_mode == "full"
         reason = "MANUAL_FULL" if eligible else "MANUAL_QUICK"
     elif event == "push":
-        eligible = True
+        eligible = False
         reason = "WORKFLOW_DEFINITION_SMOKE_TEST"
     elif event == "schedule":
         eligible = local.weekday() < 5 and local.hour >= 17
