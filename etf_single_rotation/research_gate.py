@@ -21,6 +21,7 @@ ETF_SYMBOLS = {
 }
 REQUIRED_REPORTS = (
     RESULTS / "data_quality_summary.json",
+    RESULTS / "documented_suspension_summary.json",
     RESULTS / "execution_accounting_summary.json",
     SF / "self_financing_manifest.json",
     SF / "executable_walk_forward_summary.json",
@@ -74,8 +75,17 @@ def evaluate(root: Path = ROOT) -> dict:
     blockers = []
     if quality.get("acceptance") != "PRELIMINARY_PASS_NOT_STRATEGY_ACCEPTANCE":
         blockers.append("HISTORICAL_ETF_DATA_REVIEW_REQUIRED")
-    if int(quality.get("missing_etf_session_records", -1)) > 0:
-        blockers.append("UNRESOLVED_ETF_SESSION_GAPS")
+    halt_summary = json.loads(
+        (results / "documented_suspension_summary.json").read_text("utf-8")
+    )
+    if int(quality.get("missing_etf_session_records", -1)) != int(
+        halt_summary.get("observed_provider_missing_exchange_session_rows", -2)
+    ):
+        raise ValueError("ETF missing-session records and independent suspension evidence counts disagree")
+    if halt_summary.get("status") != "ALL_GAPS_HAVE_ANNOUNCED_SUSPENSION_EVIDENCE":
+        blockers.append("UNEXPLAINED_ETF_SESSION_GAPS")
+    elif int(halt_summary.get("documented_announced_halt_rows", -1)) > 0:
+        blockers.append("ANNOUNCED_ETF_SPLIT_HALT_PRICE_ADJUSTMENT_NOT_INDEPENDENTLY_AUDITED")
     benchmark_manifest = json.loads(
         (sf / "benchmark_self_financing_manifest.json").read_text("utf-8")
     )
