@@ -15,13 +15,20 @@
   "event_started_review": true,
   "review": "PASS: diff contains only mandate.json; limits match user scope; no existing receipts",
   "actions_at_review": [],
-  "automatic_write_round": 1,
+  "automatic_write_round": 2,
   "tasks_dispatched": 1,
   "next_task": "RELAY-002",
-  "status": "DISPATCH_PREPARED",
+  "status": "BLOCKED",
   "github_run_verified": false,
   "artifact_verified": false,
   "ready_for_review_bridge": "UNTESTED",
   "reliability": "UNPROVEN",
-  "notes": "Validation has no network namespace; checkout and artifact transfer require GitHub infrastructure network. No manual run_now used."
+  "notes": "Python validation uses a network-isolated namespace. GitHub checkout/artifact transport requires infrastructure network. Keep webhook enabled; later events may inspect real status, but must not redispatch RELAY-002 or write endless pending receipts.",
+  "next_task_committed": true,
+  "dispatch_commit_sha": "45d236bf0a42319061d787afdee773cd2f7777a0",
+  "checked_at": "2026-10-21T13:05:19Z",
+  "blocking_reason": "No Actions run returned for dispatch SHA at verification. New workflow execution is unproven; no job or artifact exists in observed results. Cause not established; possible event delivery/registration delay is not ruled out.",
+  "stop_dispatch": true,
+  "remaining_tasks": 0,
+  "completion_bridge": "UNTESTED: no successful GitHub completion to bridge"
 }
