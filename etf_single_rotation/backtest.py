@@ -163,6 +163,8 @@ if __name__ == "__main__":
     # The existing workflow's backtest step also runs the new exploratory comparison harness.
     subprocess.run([sys.executable, str(Path(__file__).with_name("experiments") / "run_strategy_experiments.py")], check=True)
     subprocess.run([sys.executable, str(Path(__file__).with_name("experiments") / "audit_execution_model.py")], check=True)
+    # Re-query provider on the exact missing ETF dates, without auto-filling data.
+    subprocess.run([sys.executable, "-m", "etf_single_rotation.experiments.verify_provider_gaps"], check=True)
     # Independent self-financing simulation: cash, ETF shares, real next open, no daily rebalance.
     subprocess.run([sys.executable, "-m", "etf_single_rotation.experiments.simulate_self_financing"], check=True)
     # Frozen-candidate, multiple assumed trading-cost pressure test.
