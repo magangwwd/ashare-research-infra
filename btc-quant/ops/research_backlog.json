@@ -1,0 +1,205 @@
+{
+  "schema_version": "1.0.0",
+  "standard_id": "AUTO-RD-SOP-001",
+  "project": "BTC_QUANT_OKX_RESEARCH",
+  "mandate": {
+    "goal": "Research-only causal BTC/OKX data provenance, immutable forward paper ledger, and out-of-sample regime research",
+    "real_trading": false,
+    "max_auto_risk": "LOW",
+    "frozen_v3_commit": "d60c667b3654dbfb00efea9bc72241cca3bb8d5c",
+    "source_data_immutable": true,
+    "live_orders_prohibited": true
+  },
+  "governance": {
+    "sop_path": "docs/autonomous-rd/AUTONOMOUS_RD_SOP.md",
+    "max_in_flight_tasks": 1,
+    "max_auto_retries": 2,
+    "approval_required": [
+      "LIVE_TRADING",
+      "RELEASE",
+      "OVERRIDE_FROZEN_RULES",
+      "WEAKEN_RISK_CONTROL",
+      "DISABLE_AUDIT",
+      "DELETE_SOURCE_DATA"
+    ]
+  },
+  "tasks": [
+    {
+      "id": "BTC-SOP-P1-001",
+      "title": "Bootstrap BTC evidence-driven backlog and contract checks",
+      "priority": 0,
+      "goal": "Bootstrap BTC evidence-driven backlog and contract checks",
+      "status": "CLAIMED",
+      "depends_on": [],
+      "risk_tier": "LOW",
+      "owner": "GPT+GitHub",
+      "acceptance": [
+        "Valid schema and dependency checks in isolated branch",
+        "GitHub Actions run and artifact independently verified",
+        "Review PR before merge; no automatic VERIFIED_DONE"
+      ],
+      "evidence": [
+        "https://github.com/magangwwd/ashare-research-infra/blob/main/docs/autonomous-rd/AUTONOMOUS_RD_SOP.md"
+      ],
+      "next_action": "Review isolated branch CI and draft PR; issue handoff receipt only after verified GitHub run.",
+      "version": 1
+    },
+    {
+      "id": "BTC-OKX-L2-001",
+      "title": "Official 400-level L2 deterministic snapshot/update reconstruction",
+      "priority": 0,
+      "goal": "Official 400-level L2 deterministic snapshot/update reconstruction",
+      "status": "READY",
+      "depends_on": [],
+      "risk_tier": "LOW",
+      "owner": "GPT+GitHub",
+      "acceptance": [
+        "Official 2026-10-10 BTC-USDT-SWAP module=4 source provenance and original SHA256 preserved",
+        "Independent full-depth replay across snapshot boundaries; explicit sequence-gap limitations",
+        "Bounded memory and tests for crossed/unsorted/missing levels",
+        "One real Actions run, artifact, immutable Drive upload and downloaded-byte verification"
+      ],
+      "evidence": [
+        "https://github.com/magangwwd/ashare-research-infra/issues/70",
+        "https://github.com/magangwwd/ashare-research-infra/actions/runs/39356335318",
+        "https://github.com/magangwwd/ashare-research-infra/actions/runs/39356981273"
+      ],
+      "next_action": "Inspect real JSONL schema and implement fail-closed snapshot/update reconstruction on research-only branch.",
+      "version": 1
+    },
+    {
+      "id": "BTC-4H-GAP-001",
+      "title": "Quarantine 16 missing historical 4h bars and review segment-only research",
+      "priority": 0,
+      "goal": "Quarantine 16 missing historical 4h bars and review segment-only research",
+      "status": "REVIEW_REQUIRED",
+      "depends_on": [],
+      "risk_tier": "LOW",
+      "owner": "GPT+GitHub",
+      "acceptance": [
+        "Source gap inventory preserves all 16 missing bars without interpolation",
+        "PR #85 checksum and Drive evidence reviewed independently",
+        "Never label gap-excluded retrospective result as full historical or forward"
+      ],
+      "evidence": [
+        "https://github.com/magangwwd/ashare-research-infra/issues/26",
+        "https://github.com/magangwwd/ashare-research-infra/pull/85",
+        "https://github.com/magangwwd/ashare-research-infra/actions/runs/39536004873"
+      ],
+      "next_action": "Review PR #85 checksum, artifact and Drive readback; keep Issue #26 open until original gaps truly resolved.",
+      "version": 1
+    },
+    {
+      "id": "BTC-SCHEDULE-001",
+      "title": "Verify native hourly schedule after delayed cron and bounded fallback",
+      "priority": 0,
+      "goal": "Verify native hourly schedule after delayed cron and bounded fallback",
+      "status": "VERIFYING",
+      "depends_on": [],
+      "risk_tier": "LOW",
+      "owner": "GPT+GitHub",
+      "acceptance": [
+        "Observe at least two successive native schedule runs near cron minute 23 UTC",
+        "Separate workflow_dispatch fallback from schedule and avoid duplicate deep compute",
+        "Keep Issue #91 open if recurrence or inadequate evidence"
+      ],
+      "evidence": [
+        "https://github.com/magangwwd/ashare-research-infra/issues/91",
+        "https://github.com/magangwwd/ashare-research-infra/actions/runs/39640469594",
+        "https://github.com/magangwwd/ashare-research-infra/actions/runs/39643341719"
+      ],
+      "next_action": "Check next native hourly schedule; record delay, duplicate count and guard outcome.",
+      "version": 1
+    },
+    {
+      "id": "BTC-FORWARD-001",
+      "title": "Maintain immutable frozen V3 daily shadow observations",
+      "priority": 0,
+      "goal": "Maintain immutable frozen V3 daily shadow observations",
+      "status": "RUNNING",
+      "depends_on": [],
+      "risk_tier": "LOW",
+      "owner": "GPT+GitHub",
+      "acceptance": [
+        "Freeze exact V3 commit and strategy/config blobs",
+        "Only append next complete UTC day; no backfill counted as forward",
+        "Continuous state SHA chain, NORMAL/REDUCED/HALTED fail-closed, verified Drive readback"
+      ],
+      "evidence": [
+        "https://github.com/magangwwd/ashare-research-infra/actions/runs/39565932122",
+        "https://drive.google.com/file/d/1KnC_TfzD93ZLWa9FJYkdUuMiInE9UZ4E/view"
+      ],
+      "next_action": "Verify next 2026-10-21 UTC daily paper state at next scheduled forward run; do not submit orders.",
+      "version": 1
+    },
+    {
+      "id": "BTC-WF-DAILY-001",
+      "title": "Independent causal daily Walk-Forward with locked train/validation/test",
+      "priority": 1,
+      "goal": "Independent causal daily Walk-Forward with locked train/validation/test",
+      "status": "READY",
+      "depends_on": [],
+      "risk_tier": "LOW",
+      "owner": "GPT+GitHub",
+      "acceptance": [
+        "Closed-bar decisions, no future leakage or retrospective best-segment selection",
+        "Locked baseline and same-window native daily comparison",
+        "Train/test embargo and costs at 1x/2x with artifact and Drive byte readback"
+      ],
+      "evidence": [
+        "https://github.com/magangwwd/ashare-research-infra/actions/runs/39614249033"
+      ],
+      "next_action": "Freeze comparison protocol and inspect fold-level leakage; avoid reusing evaluated windows as untouched blind samples.",
+      "version": 1
+    },
+    {
+      "id": "BTC-REGIME-001",
+      "title": "Validate Regime Router V3/HMG/CASH mapping and anti-churn",
+      "priority": 2,
+      "goal": "Validate Regime Router V3/HMG/CASH mapping and anti-churn",
+      "status": "BLOCKED",
+      "depends_on": [
+        "BTC-WF-DAILY-001"
+      ],
+      "risk_tier": "LOW",
+      "owner": "GPT+GitHub",
+      "acceptance": [
+        "No HMG entries during bearish/high-risk state",
+        "State transitions with cooldown and turnover costs",
+        "Independent OOS evidence versus V3/CASH"
+      ],
+      "evidence": [
+        "https://github.com/magangwwd/ashare-research-infra/actions/runs/39614249033"
+      ],
+      "next_action": "Wait for BTC-WF-DAILY-001 VERIFIED_DONE; research-only until approval.",
+      "version": 1
+    },
+    {
+      "id": "BTC-COST-001",
+      "title": "Stress test execution cost, drawdown and slippage",
+      "priority": 3,
+      "goal": "Stress test execution cost, drawdown and slippage",
+      "status": "BLOCKED",
+      "depends_on": [
+        "BTC-WF-DAILY-001"
+      ],
+      "risk_tier": "LOW",
+      "owner": "GPT+GitHub",
+      "acceptance": [
+        "Evaluate 1x/2x fees and spread/slippage with causal execution",
+        "Report maximum drawdown with target <=25% explicitly not guaranteed",
+        "No leverage, shorts or real trades"
+      ],
+      "evidence": [],
+      "next_action": "Wait for verified Walk-Forward evidence before scenario acceptance.",
+      "version": 1
+    }
+  ],
+  "version_history": [
+    {
+      "version": 1,
+      "reason": "Initial isolated BTC P1 backlog candidate from verified 2026-10-21 UTC runs; statuses intentionally NOT VERIFIED_DONE",
+      "date": "2026-10-22"
+    }
+  ]
+}
