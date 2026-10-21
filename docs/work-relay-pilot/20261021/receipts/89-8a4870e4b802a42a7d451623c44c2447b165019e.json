@@ -1,0 +1,27 @@
+{
+  "pilot_id": "WORK-RELAY-PILOT-20261021",
+  "pr": 89,
+  "head_sha": "8a4870e4b802a42a7d451623c44c2447b165019e",
+  "dedup_key": "89:8a4870e4b802a42a7d451623c44c2447b165019e",
+  "event": {
+    "type": "pull_request",
+    "action": "opened",
+    "delivery_id": "cb242490-cd4f-11f1-9066-e418e2fa2db0",
+    "actor": "magangwwd"
+  },
+  "run_started_at": "2026-10-21T13:03:31Z",
+  "first_clock_observed_at": "2026-10-21T13:03:46Z",
+  "trigger_created": "inferred from received webhook; configuration not independently inspected",
+  "event_started_review": true,
+  "review": "PASS: diff contains only mandate.json; limits match user scope; no existing receipts",
+  "actions_at_review": [],
+  "automatic_write_round": 1,
+  "tasks_dispatched": 1,
+  "next_task": "RELAY-002",
+  "status": "DISPATCH_PREPARED",
+  "github_run_verified": false,
+  "artifact_verified": false,
+  "ready_for_review_bridge": "UNTESTED",
+  "reliability": "UNPROVEN",
+  "notes": "Validation has no network namespace; checkout and artifact transfer require GitHub infrastructure network. No manual run_now used."
+}

@@ -1,0 +1,10 @@
+{
+  "task_id": "RELAY-002",
+  "pilot_id": "WORK-RELAY-PILOT-20261021",
+  "operation": "validate_json_only",
+  "input": "mandate.json",
+  "reviewed_head_sha": "8a4870e4b802a42a7d451623c44c2447b165019e",
+  "no_network": true,
+  "no_secrets": true,
+  "no_repository_writes": true
+}
