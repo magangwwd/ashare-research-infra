@@ -1,4 +1,5 @@
 name: ETF research one-shot checkpoint pipeline
+run-name: ETF autonomous research evidence (${{ github.event_name }})
 
 # A single project run, NOT an hourly repeating backtest. Stage succession is
 # controlled by research_pipeline.py. Only workflow installation/update on main
