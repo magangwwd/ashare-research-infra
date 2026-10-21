@@ -26,6 +26,8 @@ REQUIRED_REPORTS = (
     SF / "executable_walk_forward_summary.json",
     SF / "cost_stress_manifest.json",
     SF / "cost_stress_executable_walk_forward.csv",
+    SF / "benchmark_self_financing_manifest.json",
+    SF / "benchmark_self_financing_comparison.csv",
 )
 
 
@@ -74,11 +76,21 @@ def evaluate(root: Path = ROOT) -> dict:
         blockers.append("HISTORICAL_ETF_DATA_REVIEW_REQUIRED")
     if int(quality.get("missing_etf_session_records", -1)) > 0:
         blockers.append("UNRESOLVED_ETF_SESSION_GAPS")
+    benchmark_manifest = json.loads(
+        (sf / "benchmark_self_financing_manifest.json").read_text("utf-8")
+    )
+    benchmark = pd.read_csv(sf / "benchmark_self_financing_comparison.csv")
+    if benchmark_manifest.get("status") != "BENCHMARK_EXPLORATORY_NOT_FOR_TRADING":
+        raise ValueError("Benchmark manifest must remain exploratory")
+    if set(benchmark["benchmark"]) != {
+        "cash_zero_interest", "etf_buy_hold_510300.SH", "etf_buy_hold_518880.SH"
+    }:
+        raise ValueError("Missing or unexpected approved comparison benchmarks")
     blockers.extend([
         "DIVIDEND_TOTAL_RETURN_NOT_INDEPENDENTLY_VALIDATED",
         "CANDIDATE_SELECTION_WAS_RETROSPECTIVELY_EXPLORED",
         "NO_UNTOUCHED_FORWARD_PAPER_HISTORY",
-        "NO_INDEPENDENT_INVESTABLE_BENCHMARK_VERIFICATION",
+        "SAME_SOURCE_BENCHMARKS_NOT_EXTERNALLY_VERIFIED",
         "MODELLED_TRANSACTION_COST_NOT_LIVE_EXECUTION",
     ])
     if not all(r["passes_numeric_history_filter"] for r in cost_summary):
@@ -91,6 +103,8 @@ def evaluate(root: Path = ROOT) -> dict:
         "data_quality": quality.get("acceptance"),
         "historical_max_drawdown_numeric_target": -0.25,
         "cost_stress": cost_summary,
+        "benchmark_status": benchmark_manifest["status"],
+        "benchmark_names": sorted(benchmark["benchmark"].tolist()),
         "status": "NOT_FOR_TRADING",
         "full_acceptance": False,
         "open_blockers": blockers,
