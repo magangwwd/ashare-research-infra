@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "project": "ETF_SINGLE_ROTATION",
+  "mandate": {
+    "symbol_count": 8,
+    "max_simultaneous_etf_positions": 1,
+    "may_hold_cash": true,
+    "historical_max_drawdown_target": 0.25,
+    "real_trading": false,
+    "github_hourly_cron": false,
+    "gpt_daily_review_beijing": "08:00"
+  },
+  "decision_rules": {
+    "github": "Execute only predefined ordered tasks; stop on research gate; no automatic strategy redesign.",
+    "gpt": "Select and execute highest-priority READY low-risk research task when new progress or a pending unreviewed task exists; record evidence, avoid duplicate work.",
+    "resume": "GitHub checkpoints and hash/audit logs are evidence; do not treat re-running a prior model as a new research breakthrough.",
+    "blocked": "If evidence is insufficient, mark BLOCKED with source and next requirement, rather than fabricate results.",
+    "notifications": "Report verified material progress, new failures, and decisions; send daily brief separately."
+  },
+  "tasks": [
+    {
+      "id": "ETF-INFRA-001",
+      "priority": 0,
+      "title": "Self-financing accounting, cost stress and one-shot research pipeline",
+      "status": "VERIFIED_RESEARCH_COMPLETE",
+      "completed_by_run": 39595995359,
+      "remaining": "Requires research acceptance, NOT_FOR_TRADING"
+    },
+    {
+      "id": "ETF-BENCH-002",
+      "priority": 1,
+      "title": "Same-window single ETF/cash executable benchmark",
+      "status": "RUNNING_VERIFICATION",
+      "expected_outputs": [
+        "results/self_financing/benchmark_self_financing_manifest.json",
+        "results/self_financing/benchmark_self_financing_comparison.csv"
+      ],
+      "github_run": 39597990839,
+      "acceptance": "Same 2019-2026 holdout dates, opening execution and fee test pass, uploaded data"
+    },
+    {
+      "id": "ETF-DATA-003",
+      "priority": 2,
+      "title": "Independently identify five historical ETF date gaps",
+      "status": "READY",
+      "depends_on": [
+        "ETF-BENCH-002"
+      ],
+      "acceptance": "Each gap independently classified with primary exchange notice or second source; no invented fills",
+      "notes": "Suspension, missing vendor quote, and stale adjustment factors must be distinguished"
+    },
+    {
+      "id": "ETF-DIV-004",
+      "priority": 3,
+      "title": "Independently audit dividends, fund_adj and cash total return",
+      "status": "READY",
+      "depends_on": [
+        "ETF-BENCH-002"
+      ],
+      "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone"
+    },
+    {
+      "id": "ETF-PAPER-005",
+      "priority": 4,
+      "title": "Freeze untouched forward paper-account model",
+      "status": "READY",
+      "depends_on": [
+        "ETF-DATA-003",
+        "ETF-DIV-004"
+      ],
+      "acceptance": "Frozen immutable code/rule SHA before new trading date; append-only daily simulation receipts and source freshness"
+    },
+    {
+      "id": "ETF-ACCEPT-006",
+      "priority": 5,
+      "title": "Final strategy viability report",
+      "status": "BLOCKED",
+      "depends_on": [
+        "ETF-PAPER-005"
+      ],
+      "acceptance": "Verified ETF data, fees and execution model, independent benchmark and untouched paper evidence; never promise future drawdown"
+    }
+  ],
+  "latest_verified_run": 39595995359,
+  "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED",
+  "last_known_research_status": "NOT_FOR_TRADING",
+  "updated_utc": "2026-10-21T12:18:00Z"
+}
