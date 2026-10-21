@@ -82,9 +82,9 @@ class ForwardReceiptTests(unittest.TestCase):
     def test_code_sha_in_offline_receipt(self):
         ix=pd.Timestamp(DAY);pick={ix:[('600001.SH',.03)]}
         with patch.object(f,'signal_day_features',return_value=fake_features()),\
-             patch.object(f,'build_signals',return_value=pick),\\
-             patch.object(f,'filter_signals',return_value=(pick,{})),\\
-             patch.object(f,'rank_signals',return_value=pick),\\
+             patch.object(f,'build_signals',return_value=pick),\
+             patch.object(f,'filter_signals',return_value=(pick,{})),\
+             patch.object(f,'rank_signals',return_value=pick),\
              patch.dict('os.environ',{'V7_RESEARCH_COMMIT_SHA':'a'*40}):
             out=f.receipt(panel_for(),None,DAY,'x'*64,'2026-10-21',NOW)
         self.assertEqual(out['research_code_sha'],'a'*40)
