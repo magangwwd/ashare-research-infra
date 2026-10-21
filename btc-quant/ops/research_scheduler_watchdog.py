@@ -37,7 +37,9 @@ def decide(runs, now, age_limit=120):
         for x in runs
     )
     return {
-        "status": "HEALTHY_RECENT_CRON_OR_FALLBACK" if has_recent else "MISSING_RECENT_CRON_AND_FALLBACK",
+        "status": ("HEALTHY_RECENT_CRON_OR_FALLBACK" if has_recent else
+                   "BOOTSTRAP_GRACE_RECENT_MAIN_PUSH" if all_recent else
+                   "MISSING_RECENT_CRON_AND_FALLBACK"),
         "should_dispatch": not has_recent and not all_recent,
         "last_cron_or_fallback_id": latest.get("id") if latest else None,
         "age_minutes": round(since, 2) if since is not None else None,
@@ -80,7 +82,7 @@ def main():
     fetched = api(token,"GET",f"/actions/workflows/{WORKFLOW}/runs?per_page=50")
     result = decide(fetched["workflow_runs"],now)
     print(json.dumps({"checked_utc":now.isoformat(),**result},ensure_ascii=False))
-    if result["status"] == "HEALTHY_RECENT_CRON_OR_FALLBACK":
+    if result["status"] != "MISSING_RECENT_CRON_AND_FALLBACK":
         return
     evidence = (f"At {now.isoformat()} official BTC research cron missing/delayed for >=2h. "
                 f"Last schedule/dispatch run: {result['last_cron_or_fallback_id']}, "
