@@ -1,0 +1,181 @@
+name: BTC bounded 24h research cycle (hourly, NO ORDERS)
+
+# SCHEDULE is active only when this file reaches the default branch.
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Run monitor only, or full retrospective regime/HMG/V3 experiment'
+        type: choice
+        required: true
+        default: deep
+        options: [quick, deep]
+  # Test new file on isolated feature branch; branch cannot write to Drive.
+  push:
+    branches: [main, feat/btc-hourly-research-loop-20261021]
+    paths:
+      - '.github/workflows/btc-hourly-research-cycle.yml'
+      - 'btc-quant/ops/research_loop.py'
+      - 'btc-quant/tests/test_research_loop.py'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: btc-hourly-research-cycle
+  cancel-in-progress: false
+
+jobs:
+  autonomous-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Select bounded mode (hourly monitor, four deep experiments per day)
+        shell: bash
+        run: |
+          set -euo pipefail
+          hour="$(date -u +%H)"
+          mode=quick
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            mode=deep
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            mode="${{ inputs.mode }}"
+          elif [[ "$hour" == "01" || "$hour" == "07" || "$hour" == "13" || "$hour" == "19" ]]; then
+            mode=deep
+          fi
+          test "$mode" = quick -o "$mode" = deep
+          echo "MODE=$mode" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/research"
+          echo "BTC research mode: $mode (not continuous compute; Github schedules may be delayed)"
+      - name: Always test source safety, causal routing, grid boundaries and monitor
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s btc-quant/tests -p 'test_research_loop.py' -v
+          python -m unittest discover -s btc-quant/tests -p 'test_regime_router.py' -v
+          python -m unittest discover -s btc-quant/tests -p 'test_hmg_safety.py' -v
+      - name: Full BTC regression suite before deep retrospective experiments
+        if: env.MODE == 'deep'
+        run: python -m unittest discover -s btc-quant/tests -v
+      - name: Select only genuinely available closed UTC daily source
+        if: env.MODE == 'deep'
+        run: |
+          python btc-quant/data/select_available_day.py \
+            --output "$RUNNER_TEMP/research/source_availability.json" \
+            --github-env "$GITHUB_ENV" --max-lag 3
+      - name: Read independently frozen historical base from existing Google Drive
+        if: env.MODE == 'deep'
+        env:
+          GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo "::error::Drive secret missing"; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          base='gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014/'
+          rclone --config "$RUNNER_TEMP/rclone.conf" lsf "$base" --files-only >/dev/null
+          rclone --config "$RUNNER_TEMP/rclone.conf" copyto \
+            "${base}native_daily_run_38670182049_1__btc_daily_utc.csv" \
+            "$RUNNER_TEMP/frozen_base.csv"
+      - name: Extend only valid Binance UTC daily source (no invented bars)
+        if: env.MODE == 'deep'
+        run: |
+          set -euo pipefail
+          python btc-quant/data/extend_daily.py \
+            --base "$RUNNER_TEMP/frozen_base.csv" \
+            --out "$RUNNER_TEMP/research/data" \
+            --cache "$RUNNER_TEMP/source_cache" \
+            --end "$LATEST_CLOSED_UTC"
+      - name: Study confirmed market regime with frozen research policy
+        if: env.MODE == 'deep'
+        run: |
+          python btc-quant/regime/router.py \
+            --input "$RUNNER_TEMP/research/data/btc_daily_utc.csv" \
+            --config btc-quant/config/regime_router_20261016.json \
+            --out "$RUNNER_TEMP/research/regime" >/dev/null
+      - name: Study conservative HMG 1x and 2x cost stress
+        if: env.MODE == 'deep'
+        run: |
+          set -euo pipefail
+          for mult in 1 2; do
+            python btc-quant/regime/hmg.py \
+              --input "$RUNNER_TEMP/research/data/btc_daily_utc.csv" \
+              --regime-csv "$RUNNER_TEMP/research/regime/regime_history.csv" \
+              --cost-multiplier "$mult" \
+              --out "$RUNNER_TEMP/research/hmg_${mult}x" >/dev/null
+          done
+      - name: Run rolling 730/90 R1/R0/V3/CASH shared-account experiments
+        if: env.MODE == 'deep'
+        run: |
+          python btc-quant/regime/r1_experiment.py \
+            --input "$RUNNER_TEMP/research/data/btc_daily_utc.csv" \
+            --config btc-quant/config/regime_router_20261016.json \
+            --out "$RUNNER_TEMP/research/stage1" >/dev/null
+      - name: Compare existing V3 historical strategy engine and costs
+        if: env.MODE == 'deep'
+        run: |
+          python btc-quant/backtest/run.py \
+            --input "$RUNNER_TEMP/research/data/btc_daily_utc.csv" \
+            --out "$RUNNER_TEMP/research/v3" >/dev/null
+      - name: Generate checked hourly evidence, reject inconsistent cutoffs
+        if: success()
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmd=(python btc-quant/ops/research_loop.py \
+            --mode "$MODE" --output "$RUNNER_TEMP/research/receipt.json")
+          if [[ "$MODE" == deep ]]; then cmd+=(--deep-dir "$RUNNER_TEMP/research"); fi
+          "${cmd[@]}"
+      - name: Save quick/deep evidence in GitHub
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-autoresearch-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/research/receipt.json
+            ${{ runner.temp }}/research/source_availability.json
+            ${{ runner.temp }}/research/data/data_provenance.json
+            ${{ runner.temp }}/research/regime/latest_regime.json
+            ${{ runner.temp }}/research/stage1/stage1_summary.json
+            ${{ runner.temp }}/research/hmg_1x/hmg_summary.json
+            ${{ runner.temp }}/research/hmg_2x/hmg_summary.json
+            ${{ runner.temp }}/research/v3/summary.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Append immutable deep research summaries to Drive, reread and verify
+        if: success() && env.MODE == 'deep' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="$RUNNER_TEMP/research"
+          stage="$RUNNER_TEMP/drive_evidence"
+          mkdir -p "$stage/regime" "$stage/stage1" "$stage/hmg_1x" "$stage/hmg_2x" "$stage/v3" "$stage/data"
+          cp "$src/receipt.json" "$src/source_availability.json" "$stage/"
+          cp "$src/data/data_provenance.json" "$stage/data/"
+          cp "$src/regime/latest_regime.json" "$stage/regime/"
+          cp "$src/stage1/stage1_summary.json" "$stage/stage1/"
+          cp "$src/hmg_1x/hmg_summary.json" "$stage/hmg_1x/"
+          cp "$src/hmg_2x/hmg_summary.json" "$stage/hmg_2x/"
+          cp "$src/v3/summary.json" "$stage/v3/"
+          dest="gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014/RESEARCH_AUTOCYCLE_HOURLY/run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$stage" "$dest" --immutable
+          rclone --config "$RUNNER_TEMP/rclone.conf" check "$stage" "$dest" --one-way --download
+          echo "Immutable iteration uploaded and re-downloaded for verification; NO LIVE ORDERS"
+      - name: Remove ephemeral Google Drive credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rclone.conf"
