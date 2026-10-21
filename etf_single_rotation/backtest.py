@@ -156,8 +156,12 @@ def run(path=DATA):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("csv", nargs="?", default=str(DATA))
+    parser.add_argument("--baseline-only", action="store_true",
+                        help="Only run the legacy baseline; orchestrator runs other phases separately")
     args = parser.parse_args()
     run(Path(args.csv))
+    if args.baseline_only:
+        raise SystemExit(0)
     # Stop the workflow if core accounting / cash / exposure invariants regress.
     subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "etf_single_rotation/experiments", "-p", "test_*.py", "-v"], check=True)
     # The existing workflow's backtest step also runs the new exploratory comparison harness.
