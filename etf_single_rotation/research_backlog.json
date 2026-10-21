@@ -30,24 +30,29 @@
       "id": "ETF-BENCH-002",
       "priority": 1,
       "title": "Same-window single ETF/cash executable benchmark",
-      "status": "RUNNING_VERIFICATION",
+      "status": "VERIFIED_RESEARCH_COMPLETE",
       "expected_outputs": [
         "results/self_financing/benchmark_self_financing_manifest.json",
         "results/self_financing/benchmark_self_financing_comparison.csv"
       ],
       "github_run": 39597990839,
-      "acceptance": "Same 2019-2026 holdout dates, opening execution and fee test pass, uploaded data"
+      "acceptance": "Same 2019-2026 holdout dates, opening execution and fee test pass, uploaded data",
+      "completed_by_run": 39597990839,
+      "tests_verified": 34,
+      "files_uploaded_to_drive": 46,
+      "note": "Historical 2019-01-02–2026-10-21 ETF 510300/518880 and cash benchmarks computed; still SAME_SOURCE_NOT_FOR_TRADING."
     },
     {
       "id": "ETF-DATA-003",
       "priority": 2,
       "title": "Independently identify five historical ETF date gaps",
-      "status": "READY",
+      "status": "IN_PROGRESS",
       "depends_on": [
         "ETF-BENCH-002"
       ],
       "acceptance": "Each gap independently classified with primary exchange notice or second source; no invented fills",
-      "notes": "Suspension, missing vendor quote, and stale adjustment factors must be distinguished"
+      "notes": "Suspension, missing vendor quote, and stale adjustment factors must be distinguished",
+      "next_action": "Cross-check the five missing ETF/session dates using official suspension notices or an independent priced source; write per-case source, classification and reproducible evidence. Do not impute bars."
     },
     {
       "id": "ETF-DIV-004",
@@ -81,8 +86,8 @@
       "acceptance": "Verified ETF data, fees and execution model, independent benchmark and untouched paper evidence; never promise future drawdown"
     }
   ],
-  "latest_verified_run": 39595995359,
-  "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED",
+  "latest_verified_run": 39597990839,
+  "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 12 stages; 34 tests; 46 Drive files",
   "last_known_research_status": "NOT_FOR_TRADING",
   "updated_utc": "2026-10-21T12:18:00Z"
 }
