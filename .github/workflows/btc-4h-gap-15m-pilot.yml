@@ -1,0 +1,32 @@
+name: BTC historical 4h gap vs 15m pilot (research only)
+
+on:
+  push:
+    branches: [research/btc-2018-gap-15m-pilot-20261021]
+    paths:
+      - '.github/workflows/btc-4h-gap-15m-pilot.yml'
+      - 'btc-quant/data/audit_15m_gap.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Audit official Binance 15m archive and independently compare 4h
+        run: python btc-quant/data/audit_15m_gap.py --out "$RUNNER_TEMP/btc_gap_15m_audit.json"
+      - name: Retain read-only audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-4h-gap-vs-15m-${{ github.run_id }}
+          path: ${{ runner.temp }}/btc_gap_15m_audit.json
+          retention-days: 30
+          if-no-files-found: warn
