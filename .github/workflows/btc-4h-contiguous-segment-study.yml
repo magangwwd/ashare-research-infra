@@ -6,6 +6,8 @@ on:
       - '.github/workflows/btc-4h-contiguous-segment-study.yml'
       - 'btc-quant/data/build_contiguous_4h_study.py'
       - 'btc-quant/tests/test_contiguous_4h_study.py'
+      - 'btc-quant/data/checksum_4h_months.py'
+      - 'btc-quant/tests/test_checksum_4h_months.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -24,8 +26,13 @@ jobs:
         run: |
           python -m unittest discover -s btc-quant/tests -p 'test_full_4h_continuity.py' -v
           python -m unittest discover -s btc-quant/tests -p 'test_contiguous_4h_study.py' -v
+          python -m unittest discover -s btc-quant/tests -p 'test_checksum_4h_months.py' -v
       - name: Download original untouched Binance Spot monthly BTCUSDT 4h (2018-01..2026-09)
         run: python btc-quant/data/download.py --start 2018-01 --end 2026-09 --out "$RUNNER_TEMP/spot_4h"
+      - name: Verify ALL monthly ZIPs against official Binance SHA256 checksums
+        run: |
+          python btc-quant/data/checksum_4h_months.py \
+            --source "$RUNNER_TEMP/spot_4h" --out "$RUNNER_TEMP/spot_4h_official_checksums.json"
       - name: Extract ONLY longest complete UTC segment, strict 4h to daily
         run: |
           python btc-quant/data/build_contiguous_4h_study.py \
@@ -52,5 +59,25 @@ jobs:
           path: |
             ${{ runner.temp }}/validated_segment/
             ${{ runner.temp }}/segmented_results/
+            ${{ runner.temp }}/spot_4h_official_checksums.json
           retention-days: 30
           if-no-files-found: warn
+      - name: Append isolated research evidence to existing Drive, verify actual bytes
+        env:
+          GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          trap 'rm -f "$RUNNER_TEMP/rclone.conf"' EXIT
+          base="gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014/RESEARCH_GAP_EXCLUDED_4H/run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          stage="$RUNNER_TEMP/research-evidence"
+          mkdir -p "$stage/validated_segment" "$stage/backtest"
+          cp "$RUNNER_TEMP/validated_segment/"* "$stage/validated_segment/"
+          cp "$RUNNER_TEMP/segmented_results/"* "$stage/backtest/"
+          cp "$RUNNER_TEMP/spot_4h_official_checksums.json" "$stage/"
+          rclone --config "$RUNNER_TEMP/rclone.conf" lsf 'gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014/' >/dev/null
+          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$stage" "$base" --immutable
+          rclone --config "$RUNNER_TEMP/rclone.conf" check "$stage" "$base" --one-way --download
