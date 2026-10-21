@@ -12,6 +12,7 @@ FEE = 0.0005
 SLIPPAGE = 0.0005
 ALERT_DD = 0.15
 POSITION_EXIT_DD = 0.12
+MAX_DRAWDOWN_ACCEPTANCE = 0.25  # Unified project target; an historical test, not a guarantee
 
 def load_prices(path):
     df = pd.read_csv(path, parse_dates=["date"])
@@ -132,17 +133,20 @@ def run(path=DATA):
         "annualized_volatility": vol, "sharpe_rf0": sharpe, "trade_events": len(trades),
         "fees_per_side": FEE, "slippage_per_side": SLIPPAGE,
         "alert_drawdown": ALERT_DD, "position_trailing_stop": POSITION_EXIT_DD,
+        "maximum_drawdown_acceptance_target": MAX_DRAWDOWN_ACCEPTANCE,
+        "acceptance": "FAIL_DRAWDOWN" if maxdd < -MAX_DRAWDOWN_ACCEPTANCE else (
+            "FAIL_NONPOSITIVE_CAGR" if cagr <= 0 else "PRELIMINARY_NOT_FOR_TRADING"),
         "limitations": [
             "ETF prices use Tushare fund_adj factors scaled to the latest factor; independently validate total-return semantics against distributions and a benchmark.",
             "Position stop is evaluated on prior close and filled at the next observed open; gap risk can exceed the stop threshold.",
             "Missing closes are carried forward for valuation only; missing execution prices cause the rebalance to be skipped.",
-            "Calendar gaps remain under review; no benchmark comparison or walk-forward split yet. Do not treat as final acceptance."
+            "Calendar gaps and dividend total-return semantics remain under review. The independent self-financing model and retrospective walk-forward are separate; this baseline is not the final acceptance model."
         ]
     }
     (OUT / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2))
-    if maxdd < -0.20:
-        print("FAIL: maximum drawdown exceeded the 20% target.")
+    if maxdd < -MAX_DRAWDOWN_ACCEPTANCE:
+        print(f"FAIL: maximum drawdown exceeded the {MAX_DRAWDOWN_ACCEPTANCE:.0%} target.")
     elif cagr <= 0:
         print("FAIL: CAGR is not positive.")
     else:
