@@ -11,6 +11,7 @@ import datetime as dt
 import hashlib
 import io
 import json
+import math
 from pathlib import Path
 import re
 import zipfile
@@ -49,7 +50,9 @@ def parse_month(filename, blob):
                     seconds = n / (1_000_000 if n >= 10**15 else 1_000 if n >= 10**12 else 1)
                     opened = dt.datetime.fromtimestamp(seconds, UTC)
                     op, high, low, close, volume = map(float, row[1:6])
-                    valid = 0 < low <= min(op, close) <= max(op, close) <= high and volume >= 0
+                    valid = (all(math.isfinite(x) for x in (op, high, low, close, volume))
+                             and 0 < low <= min(op, close) <= max(op, close) <= high
+                             and volume >= 0)
                 except (OverflowError, ValueError, OSError) as exc:
                     anomalies.append({"row": line_number, "reason": "invalid_numeric", "detail": str(exc)[:100]})
                     continue
