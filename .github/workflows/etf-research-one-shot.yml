@@ -58,7 +58,8 @@ jobs:
           name: etf-research-checkpoint
           run-id: ${{ inputs.resume_run_id }}
           github-token: ${{ github.token }}
-          path: .
+          # Artifact content root is etf_single_rotation/; restore into it.
+          path: etf_single_rotation
 
       - name: Run ordered research stages, fail closed, save each checkpoint
         run: python -m etf_single_rotation.research_pipeline
@@ -69,7 +70,7 @@ jobs:
         with:
           name: etf-research-checkpoint
           path: |
-            etf_single_rotation/state/run_checkpoint.json
+            etf_single_rotation/state/
             etf_single_rotation/data/prices.csv
             etf_single_rotation/data/trade_calendar.csv
             etf_single_rotation/results/
