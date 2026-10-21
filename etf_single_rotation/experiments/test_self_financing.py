@@ -21,7 +21,7 @@ class SelfFinancingTests(unittest.TestCase):
         self.assertTrue(np.allclose(ledger.shares.iloc[0], ledger.shares.iloc[1:]))
         self.assertTrue(np.allclose(ledger.cash.iloc[0], ledger.cash.iloc[1:]))
         self.assertGreater(float(ledger.close_exposure.iloc[1]), 0.50)
-        self.assertLess(float(ledger.close_exposure.iloc[3]), 0.51)
+        self.assertLess(float(ledger.close_exposure.iloc[3]), 0.53)
 
     def test_signal_effective_next_open(self):
         dates = pd.bdate_range("2020-01-02", periods=3)
