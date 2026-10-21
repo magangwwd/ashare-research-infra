@@ -14,11 +14,13 @@ on:
         options: [quick, deep]
   # Test new file on isolated feature branch; branch cannot write to Drive.
   push:
-    branches: [main, feat/btc-hourly-research-loop-20261021]
+    branches: [main, feat/btc-hourly-research-loop-20261021, fix/btc-hourly-schedule-dedup-recovery-20261021]
     paths:
       - '.github/workflows/btc-hourly-research-cycle.yml'
       - 'btc-quant/ops/research_loop.py'
       - 'btc-quant/tests/test_research_loop.py'
+      - 'btc-quant/ops/research_cycle_gate.py'
+      - 'btc-quant/tests/test_research_cycle_gate.py'
 
 permissions:
   contents: read
@@ -57,25 +59,28 @@ jobs:
           fi
           test "$mode" = quick -o "$mode" = deep
           echo "MODE=$mode" >> "$GITHUB_ENV"
+          echo "REQUESTED_MODE=$mode" >> "$GITHUB_ENV"
           mkdir -p "$RUNNER_TEMP/research"
           echo "BTC research mode: $mode (not continuous compute; Github schedules may be delayed)"
       - name: Always test source safety, causal routing, grid boundaries and monitor
         run: |
           set -euo pipefail
           python -m unittest discover -s btc-quant/tests -p 'test_research_loop.py' -v
+          python -m unittest discover -s btc-quant/tests -p 'test_research_cycle_gate.py' -v
+          python -m unittest discover -s btc-quant/tests -p 'test_research_scheduler_watchdog.py' -v
           python -m unittest discover -s btc-quant/tests -p 'test_regime_router.py' -v
           python -m unittest discover -s btc-quant/tests -p 'test_hmg_safety.py' -v
       - name: Full BTC regression suite before deep retrospective experiments
         if: env.MODE == 'deep'
         run: python -m unittest discover -s btc-quant/tests -v
       - name: Select only genuinely available closed UTC daily source
-        if: env.MODE == 'deep'
+        if: env.REQUESTED_MODE == 'deep'
         run: |
           python btc-quant/data/select_available_day.py \
             --output "$RUNNER_TEMP/research/source_availability.json" \
             --github-env "$GITHUB_ENV" --max-lag 3
-      - name: Read independently frozen historical base from existing Google Drive
-        if: env.MODE == 'deep'
+      - name: Read last immutable deep research receipt
+        if: env.REQUESTED_MODE == 'deep'
         env:
           GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
         shell: bash
@@ -85,6 +90,33 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y rclone
           (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          root='gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014/RESEARCH_AUTOCYCLE_HOURLY'
+          rclone --config "$RUNNER_TEMP/rclone.conf" lsf "$root/" --dirs-only > "$RUNNER_TEMP/deep_run_folders.txt"
+          latest="$(grep -E '^run_[0-9]+_[0-9]+/$' "$RUNNER_TEMP/deep_run_folders.txt" | LC_ALL=C sort -r | head -n1 || true)"
+          if [[ -n "$latest" ]]; then
+            rclone --config "$RUNNER_TEMP/rclone.conf" copyto "$root/$latest"receipt.json "$RUNNER_TEMP/research/prior_receipt.json"
+            echo "PREVIOUS_DEEP_RECEIPT=$RUNNER_TEMP/research/prior_receipt.json" >> "$GITHUB_ENV"
+            echo "Last deep receipt directory: $latest"
+          fi
+      - name: Skip duplicate historical research, retry missing or changed work
+        if: env.REQUESTED_MODE == 'deep'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmd=(python btc-quant/ops/research_cycle_gate.py \
+            --requested-mode deep \
+            --availability "$RUNNER_TEMP/research/source_availability.json" \
+            --out "$RUNNER_TEMP/research/gate.json" \
+            --github-env "$GITHUB_ENV")
+          if [[ -n "${PREVIOUS_DEEP_RECEIPT:-}" ]]; then cmd+=(--previous "$PREVIOUS_DEEP_RECEIPT"); fi
+          "${cmd[@]}"
+      - name: Read independently frozen historical base from existing Google Drive
+        if: env.MODE == 'deep'
+        env:
+          GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
           base='gdrive:BTC_Quant_System_OKX/BTC_V3_第三轮回测_20261014/'
           rclone --config "$RUNNER_TEMP/rclone.conf" lsf "$base" --files-only >/dev/null
           rclone --config "$RUNNER_TEMP/rclone.conf" copyto \
@@ -140,6 +172,9 @@ jobs:
           cmd=(python btc-quant/ops/research_loop.py \
             --mode "$MODE" --output "$RUNNER_TEMP/research/receipt.json")
           if [[ "$MODE" == deep ]]; then cmd+=(--deep-dir "$RUNNER_TEMP/research"); fi
+          if [[ -f "$RUNNER_TEMP/research/gate.json" ]]; then
+            cmd+=(--gate "$RUNNER_TEMP/research/gate.json")
+          fi
           "${cmd[@]}"
       - name: Save quick/deep evidence in GitHub
         if: always()
@@ -148,6 +183,7 @@ jobs:
           name: btc-autoresearch-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/research/receipt.json
+            ${{ runner.temp }}/research/gate.json
             ${{ runner.temp }}/research/source_availability.json
             ${{ runner.temp }}/research/data/data_provenance.json
             ${{ runner.temp }}/research/regime/latest_regime.json
@@ -165,7 +201,7 @@ jobs:
           src="$RUNNER_TEMP/research"
           stage="$RUNNER_TEMP/drive_evidence"
           mkdir -p "$stage/regime" "$stage/stage1" "$stage/hmg_1x" "$stage/hmg_2x" "$stage/v3" "$stage/data"
-          cp "$src/receipt.json" "$src/source_availability.json" "$stage/"
+          cp "$src/receipt.json" "$src/source_availability.json" "$src/gate.json" "$stage/"
           cp "$src/data/data_provenance.json" "$stage/data/"
           cp "$src/regime/latest_regime.json" "$stage/regime/"
           cp "$src/stage1/stage1_summary.json" "$stage/stage1/"

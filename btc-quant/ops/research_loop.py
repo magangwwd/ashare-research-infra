@@ -129,6 +129,7 @@ def main():
     parser.add_argument("--mode", choices=("quick", "deep"), required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--deep-dir")
+    parser.add_argument("--gate")
     args = parser.parse_args()
     now = datetime.now(timezone.utc)
     checks = query_workflows(os.environ.get("GITHUB_REPOSITORY", ""),
@@ -147,6 +148,17 @@ def main():
         "auto_merge_or_modify_strategies": False,
         "resource_governor": "hourly lightweight; deep hours UTC 01/07/13/19; 45min timeout; no overlapping jobs",
     }
+    if args.gate and Path(args.gate).is_file():
+        gate = json.loads(Path(args.gate).read_text(encoding="utf-8"))
+        if gate["effective_mode"] != args.mode:
+            raise ValueError("Gate mode mismatch: refusing unlabeled study")
+        summary["requested_mode"] = gate["requested_mode"]
+        summary["cycle_decision"] = gate["action"]
+        summary["research_fingerprint"] = gate["research_fingerprint"]
+        summary["data_health_from_gate"] = gate["source_health"]
+        summary["next_unresolved_research_backlog"] = gate["unresolved_research_backlog"]
+        summary["research_backlog_automated"] = False
+        summary["last_successful_deep_run_id"] = gate["previous_successful_deep_run_id"]
     if args.mode == "deep":
         if not args.deep_dir:
             raise ValueError("--deep-dir is required for deep run")
