@@ -165,3 +165,5 @@ if __name__ == "__main__":
     subprocess.run([sys.executable, str(Path(__file__).with_name("experiments") / "audit_execution_model.py")], check=True)
     # Independent self-financing simulation: cash, ETF shares, real next open, no daily rebalance.
     subprocess.run([sys.executable, "-m", "etf_single_rotation.experiments.simulate_self_financing"], check=True)
+    # Frozen-candidate, multiple assumed trading-cost pressure test.
+    subprocess.run([sys.executable, "-m", "etf_single_rotation.experiments.stress_self_financing"], check=True)
