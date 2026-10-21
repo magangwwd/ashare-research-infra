@@ -183,3 +183,13 @@
 - 冻结0.10%参考费率训练选择规则并用同一本自融资账本执行的追溯滚动测试：每笔单边0.10% /0.30%/0.50%时，组合年化6.643%/5.520%/4.409%，三档最大回撤均-21.687%，夏普0.616/0.524/0.432；三个测试折间所选均为 `regime_switch_ultralow`。此为成本代理与追溯训练，不能宣称未来稳定低于25%。
 - 已归档 `results/self_financing/cost_stress_strategy_comparison.csv`、`cost_stress_executable_walk_forward.csv`、`cost_stress_manifest.json`；上传日志有文件ID。数值门槛合格不等于最终验收：5条ETF交易日缺口与分红复权总收益语义仍未解决。
 - **下一项**：来源复核5处具体日频缺口、核验Tushare复权因子及分红事件是否正确纳入现金回报；随后独立基准和真正未来纸面模拟。依然不启用GitHub schedule、不进行真实交易。
+
+
+## 2026-10-21 20:03 北京时间：ETF 一次性自动研发流水线正式实测验收
+- 架构：GitHub 默认分支 main 的独立工作流 `.github/workflows/etf-research-one-shot.yml`，无每小时 cron。首次启动后 GitHub runner 从 ETF 研究分支 `feature/etf-single-rotation-v1` 读取 `etf_single_rotation/research_pipeline.py`，串行执行数据下载、质量审计、会计测试、旧基线对照、探索性比较、隐含再平衡审计、提供商历史缺口复核、自融资真实现金/份额回测、费用压力测试、保守验收门禁、Drive 上传。单次运行完成后停止，不自主生成新的未定义研究方向。
+- 最终实测证据：GitHub Actions run **39595995359** / job **119208318683**，状态 `completed/success`；日志顺序出现11个 `PIPELINE_OK`（含 `archive_google_drive`）、`DRIVE_UPLOAD_COMPLETE files=43`、`ETF_PIPELINE_STATUS RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED`。GitHub Artifact `etf-research-checkpoint` 已保存（检查点、行情、策略报告）。链接：https://github.com/magangwwd/ashare-research-infra/actions/runs/39595995359 。
+- 首轮 run 39595088983 曾失败：10个研究阶段成功，Drive上传HTTP 500导致 archive 失败；已修正为对瞬时500/502/503/504/429重试、已确认成功文件逐文件保留进度并跳过。后续 run 39595995359 在真实GitHub运行中证实43个报告上传成功；失败不能直接声称上传成功。
+- `etf_single_rotation/research_gate.py` 自动核验：固定8只ETF、三档费用压力（单边0.10%、0.30%、0.50%）在此次追溯滚动测试中年化约6.643%/5.520%/4.409%，各档最大历史回撤约-21.687%；数据质量仍 `REVIEW_REQUIRED`，5条历史ETF日频缺口、分红/总收益口径、独立前瞻、基准未闭环，因此 `NOT_FOR_TRADING`，不是最终策略验收通过。
+- 任务检查点：`etf_single_rotation/state/run_checkpoint.json` 记录每个阶段状态、代码SHA、输入/产物Hash及重试次数；`etf_single_rotation/state/drive_upload_checkpoint.json` 保留逐文件云盘上传结果。**恢复跨Run须采用相同研究代码SHA、恢复对应GitHub Artifact，且所有已完成产物Hash一致**；代码变更后应从新版本重新运行，不可把旧产物称为新版本验收。GitHub无自动无限次跨Run重试；超出重试上限须GPT或用户审核。
+- **准确的角色边界**：GitHub按既定阶段顺序自主运行完成并停止；GPT每天北京时间08:00审核结果、异常和新研究决策，但用户随时发问或委托时可即时参与。无任何任务要求个人电脑开机或GPT全天在线。未部署周期性每小时ETF全量回测。
+- 下一项需要研究决策后写入程序的工作：独立核实5条缺口及现金分红后的ETF总回报、ETF收益基准和前瞻纸面账本；此处不把计划当已执行。
