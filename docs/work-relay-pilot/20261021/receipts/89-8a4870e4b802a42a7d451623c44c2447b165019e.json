@@ -15,20 +15,59 @@
   "event_started_review": true,
   "review": "PASS: diff contains only mandate.json; limits match user scope; no existing receipts",
   "actions_at_review": [],
-  "automatic_write_round": 2,
+  "automatic_write_round": 3,
   "tasks_dispatched": 1,
   "next_task": "RELAY-002",
-  "status": "BLOCKED",
-  "github_run_verified": false,
-  "artifact_verified": false,
+  "status": "DISPATCH_AND_ARTIFACT_VERIFIED_CLOSED_LOOP_UNPROVEN",
+  "github_run_verified": true,
+  "artifact_verified": true,
   "ready_for_review_bridge": "UNTESTED",
-  "reliability": "UNPROVEN",
-  "notes": "Python validation uses a network-isolated namespace. GitHub checkout/artifact transport requires infrastructure network. Keep webhook enabled; later events may inspect real status, but must not redispatch RELAY-002 or write endless pending receipts.",
+  "reliability": "UNPROVEN: normal run verified; failed validation and actual duplicate-delivery tests remain outstanding.",
+  "notes": "Final allowed write records acceptance evidence only. Subsequent events must be read-only with no redispatch or receipt writes. Webhook remains enabled; scheduled fallback unchanged. No merge or ready_for_review transition performed.",
   "next_task_committed": true,
   "dispatch_commit_sha": "45d236bf0a42319061d787afdee773cd2f7777a0",
-  "checked_at": "2026-10-21T13:05:19Z",
-  "blocking_reason": "No Actions run returned for dispatch SHA at verification. New workflow execution is unproven; no job or artifact exists in observed results. Cause not established; possible event delivery/registration delay is not ruled out.",
+  "checked_at": "2026-10-21T13:06:48Z",
+  "blocking_reason": "Previous no-run observation superseded by real completed runs. Completion-triggered GPT bridge remains unproven.",
   "stop_dispatch": true,
   "remaining_tasks": 0,
-  "completion_bridge": "UNTESTED: no successful GitHub completion to bridge"
+  "completion_bridge": "UNTESTED: synchronize events originate from commits, not CI completion. Do not count completion-before-review timing as completion-trigger proof.",
+  "subsequent_event_review": {
+    "type": "pull_request",
+    "action": "synchronize",
+    "delivery_id": "1a10ea70-cd50-11f1-8a68-da601a7c7223",
+    "run_started_at": "2026-10-21T13:05:50Z",
+    "reviewed_head_sha": "fb3f05989699993eb8fb8b1f9f4a9fa7d09f5328",
+    "dedup_key": "89:fb3f05989699993eb8fb8b1f9f4a9fa7d09f5328",
+    "new_tasks_dispatched": 0
+  },
+  "runs_verified": [
+    {
+      "id": 39604913180,
+      "head_sha": "45d236bf0a42319061d787afdee773cd2f7777a0",
+      "event": "pull_request",
+      "conclusion": "success",
+      "job_id": 119238505913,
+      "artifact_id": 12346823644,
+      "artifact_zip_sha256": "4f2f49b155449038115334451f090610c34345014c838709202a83e161492add",
+      "artifact_downloaded_and_parsed": true,
+      "result": {
+        "task_id": "RELAY-002",
+        "head_sha": "45d236bf0a42319061d787afdee773cd2f7777a0",
+        "status": "PASS",
+        "checksum": "aae80f1933c793a3c561b13d57ce1ed7fda4dce2210d3f2485564d39b020ed33"
+      },
+      "checksum_matches_task_bytes": true
+    },
+    {
+      "id": 39604976975,
+      "head_sha": "fb3f05989699993eb8fb8b1f9f4a9fa7d09f5328",
+      "event": "pull_request",
+      "conclusion": "success",
+      "job_id": 119238719694,
+      "artifact_id": 12348072519,
+      "artifact_metadata_verified": true,
+      "artifact_contents_verified": false
+    }
+  ],
+  "remaining_automatic_write_rounds": 0
 }
