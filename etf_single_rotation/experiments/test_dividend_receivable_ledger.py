@@ -40,8 +40,23 @@ class CashEntitlementTests(unittest.TestCase):
 
     def test_record_date_accrual_then_payment_without_double_count(self):
         rows = cash_entitlement_ledger(self.registry, self.snapshots, self.days)["daily"]
-        self.assertEqual([x["cash_receivable_cny"] for x in rows], [0, 3.5, 3.5, 3.5, 0, 0])
+        self.assertEqual([x["record_date_locked_entitlement_cny"] for x in rows], [0, 3.5, 3.5, 3.5, 0, 0])
+        self.assertEqual([x["cash_receivable_cny"] for x in rows], [0, 0, 3.5, 3.5, 0, 0])
         self.assertEqual([x["cumulative_cash_paid_cny"] for x in rows], [0, 0, 0, 0, 3.5, 3.5])
+
+    def test_unadjusted_price_nav_has_no_record_date_double_count(self):
+        rows = cash_entitlement_ledger(self.registry, self.snapshots, self.days)["daily"]
+        raw_prices = [2, 2, 1.65, 1.65, 1.65, 1.65]  # synthetic, not market data
+        nav = [10 * p + row["cash_receivable_cny"] + row["cumulative_cash_paid_cny"]
+               for p, row in zip(raw_prices, rows)]
+        self.assertEqual(nav, [20] * len(self.days))
+
+    def test_same_day_registration_and_ex_date(self):
+        event = dividend()
+        event["registration_date"] = event["event_date"]
+        snapshots = {("512690.SH", "2021-12-31"): 10}
+        rows = cash_entitlement_ledger({"schema_version": 1, "events": [event]}, snapshots, self.days)["daily"]
+        self.assertEqual([r["cash_receivable_cny"] for r in rows], [0, 0, 3.5, 3.5, 0, 0])
 
     def test_zero_record_date_holding_is_explicitly_allowed(self):
         rows = cash_entitlement_ledger(
