@@ -47,11 +47,11 @@ def apply_unit_change(shares, event):
 
 
 def cash_entitlement_ledger(registry, record_date_shares, observation_dates):
-    """Accrue on registration, settle on payment; never add cash twice.
+    """Lock entitlement on registration; recognize NAV receivable on ex-date; settle on payment.
 
     record_date_shares: {(symbol, 'YYYY-MM-DD'): nonnegative shares}.
     Every dividend needs an explicit snapshot, including zero holdings.
-    observation_dates: ascending unique ISO dates. No prices are used.
+    observation_dates: ascending unique ISO dates. No prices are used; NAV treatment assumes unadjusted raw prices and must not be combined with adjusted prices.
     """
     events = validate_events(registry)
     days = [_day(x) for x in observation_dates]
@@ -80,17 +80,24 @@ def cash_entitlement_ledger(registry, record_date_shares, observation_dates):
         })
     rows = []
     for day in days:
-        receivable = paid = 0.0
+        locked = receivable = paid = 0.0
         for item in details:
             registration = _day(item["registration_date"])
+            ex_date = _day(item["ex_dividend_date"])
             payment = _day(item["payment_date"])
             amount = item["cash_entitlement_cny"]
+            # Record-date entitlement is informational, not NAV cash.
+            # With raw (unadjusted) prices, recognize receivable at ex-date,
+            # when the price becomes ex-dividend, to avoid double counting.
             if registration <= day < payment:
+                locked += amount
+            if ex_date <= day < payment:
                 receivable += amount
             elif day >= payment:
                 paid += amount
         rows.append({
             "date": day.isoformat(),
+            "record_date_locked_entitlement_cny": locked,
             "cash_receivable_cny": receivable,
             "cumulative_cash_paid_cny": paid,
             "status": "RESEARCH_ACCOUNTING_NOT_TOTAL_RETURN_CERTIFICATION",
