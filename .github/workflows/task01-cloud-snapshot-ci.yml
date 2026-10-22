@@ -1,0 +1,40 @@
+name: Task01 Cloud Snapshot CI
+
+on:
+  push:
+    paths:
+      - 'cloud_runtime/task01/**'
+      - 'scripts/export_task01_cloud_snapshot.py'
+      - 'scripts/verify_task01_cloud_snapshot.py'
+      - '.github/workflows/task01-cloud-snapshot-ci.yml'
+  pull_request:
+    paths:
+      - 'cloud_runtime/task01/**'
+      - 'scripts/export_task01_cloud_snapshot.py'
+      - 'scripts/verify_task01_cloud_snapshot.py'
+      - '.github/workflows/task01-cloud-snapshot-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: cloud_runtime/task01/requirements.txt
+      - name: Verify preserved files and recovery artifacts
+        run: python scripts/verify_task01_cloud_snapshot.py
+      - name: Install snapshot dependencies
+        run: python -m pip install -r cloud_runtime/task01/requirements.txt
+      - name: Run snapshot offline tests
+        working-directory: cloud_runtime/task01
+        env:
+          PYTHONPATH: ${{ github.workspace }}/cloud_runtime/task01
+        run: python -m pytest -q

@@ -1,0 +1,65 @@
+storage:
+  root: .
+  parquet_compression: zstd
+  compact_target_mb: 192
+  market_raw_retention_days: 180
+  drive:
+    enabled: false
+    folder_id: '1rkC99Ymgp8mjvAcJNRPJMlOGLdI9_bue'
+validation:
+  min_coverage: 0.95
+  min_daily_rows: 1000
+  max_key_null_fraction: 0.05
+schedule:
+  timezone: Asia/Shanghai
+download:
+  retries: 3
+  retry_seconds: 2
+  requests_per_minute: 100
+  page_size: 2000
+  max_pages: 1000
+  history_start: '20200101'
+  history_requests_per_run: 120
+  maintenance_history_requests_per_run: 240
+  backfill_history_requests_per_run: 600
+  # Until the newest 750 sessions are complete for daily/adj_factor/daily_basic,
+  # reserve 75% of bounded history requests for that backtest-ready window.
+  core_history_target_sessions: 750
+  core_history_budget_fraction: 0.75
+  repair_requests_per_run: 15
+  audit_requests_per_run: 10
+  required_recent_requests_per_run: 25
+  optional_recent_requests_per_run: 10
+  lookback_trading_days: 5
+  daily_basic_lookback_trading_days: 15
+  financial_lookback_days: 400
+  smoke_lookback_days: 60
+intraday:
+  enabled: true
+  dataset: stk_mins
+  freq: 15min
+  history_start: '20260101'
+  recent_requests_per_run: 6000
+  history_requests_per_run: 240
+  backfill_history_requests_per_run: 600
+  max_errors_before_abort: 5
+  min_security_coverage: 0.95
+  activate_daily_from_minutes: true
+  daily_validation_sample: 20
+  raw_retention_days: 14
+datasets:
+  stock_basic: true
+  trade_cal: true
+  daily: true
+  adj_factor: true
+  daily_basic: true
+  required: true
+  optional: true
+industry:
+  primary: null
+  preference: [SW2021, SW2014, CITICS]
+  # Primary remains null until historical coverage and stability are reviewed.
+index_universe: []
+index_discovery_names: ['上证指数', '深证成指', '沪深300', '中证500', '中证1000', '上证50', '中证2000', '创业板指']
+optional_whitelist: [margin, margin_detail, block_trade, top_list, stk_holdernumber, stk_holdertrade, stk_surv, share_float]
+candidate_datasets: [pledge_stat, pledge_detail, repurchase]
