@@ -1,0 +1,30 @@
+name: Chat Task 01 safe trigger
+# Isolated no-data dry run on this branch. Production trigger requires a reviewed main-branch merge.
+on:
+  push:
+    branches:
+      - feature/chat-task01-safe-trigger-20261023
+    paths:
+      - .github/workflows/chat-task01-safe-trigger.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: chat-task01-trigger-probe
+  cancel-in-progress: false
+jobs:
+  safe-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify existing Task 01 workflow and refuse production writes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "feature/chat-task01-safe-trigger-20261023"
+          echo "CHAT_TASK01_SAFE_PROBE_OK run=$GITHUB_RUN_ID"
+          echo "Production Task01 was NOT dispatched and Drive was NOT modified."
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" --jq '{id, status, event, head_sha}'
