@@ -65,21 +65,20 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "Review PR #92 record-date fills and issuer evidence; reconcile actual raw market closes and fund_adj around all events, confirm cash settlement and Drive readback. Scoped CI 39941412805 passed 44 synthetic tests at SHA 40be64ca; NOT total-return acceptance. PAPER-005 remains dependency blocked.",
+      "next_action": "Review draft PR #92; add record-date dividend entitlement tests and issuer-verified dividend registry in isolated PR; run scoped CI and independent price/Drive readback before VERIFIED_DONE. PAPER-005 remains dependency blocked.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
-        "review_head_sha": "40be64ca266513022113df7a75ba1feac3859f5e",
-        "tested": "SCOPED_GITHUB_CI_RUN_39941412805_JOB_120373477467_44_OF_44_SYNTHETIC_TESTS_PASSED_EXACT_CHECKOUT_SHA",
-        "receipt_path": "etf_single_rotation/metadata/receipts/ETF_DIV004_record_date_synthetic_ci_39941412805.json",
+        "review_head_sha": "dff9aca9ddab6d2a51dab4cf819abfa6405a079a",
+        "tested": "SIX_SYNTHETIC_TESTS_LOCALLY_PREVIOUSLY; NO_GITHUB_CI_RUN",
         "artifact_drive_readback": "NOT_PERFORMED_FOR_THIS_CHANGE",
         "blockers": [
-          "Issuer originals and complete dividend registry independent verification incomplete",
-          "Real market price/fund_adj event-window reconciliation incomplete",
-          "Real strategy record-date fill snapshots and account-available cash dates unverified",
-          "Independent real-data output hashes and Drive readback not verified"
+          "Independent issuer dividend coverage incomplete",
+          "Independent market price and fund_adj reconciliation incomplete",
+          "Record-date cash receivable/payment ledger unverified",
+          "Cloud CI and Drive audit for new code not run"
         ],
-        "last_checked_utc": "2026-10-23T10:47:26.173Z"
+        "last_checked_utc": "2026-10-21T22:26:42Z"
       }
     },
     {
@@ -107,5 +106,5 @@
   "latest_verified_run": 39599580852,
   "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 13 sequential stages; 38 tests OK; 48 Drive uploads; all 5 declared ETF halts source-matched",
   "last_known_research_status": "NOT_FOR_TRADING",
-  "updated_utc": "2026-10-23T10:47:26.173Z"
+  "updated_utc": "2026-10-21T22:26:42Z"
 }
