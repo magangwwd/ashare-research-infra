@@ -1,0 +1,67 @@
+name: Five-stock finance targeted backfill (manual only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  targeted-finance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run isolated backfill tests
+        run: python -m unittest ai_research.tests.test_five_clean_backfill ai_research.tests.test_three_statement_audit -v
+      - name: Collect five stocks, two quarters, four datasets
+        id: collect
+        shell: bash
+        run: |
+          set +e
+          python -m ai_research.five_clean_backfill --out "$RUNNER_TEMP/five_finance" --throttle 0.7
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          test -s "$RUNNER_TEMP/five_finance/audit.json" || exit 1
+          exit 0
+      - name: Configure restricted Drive remote
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo "::error::Missing Drive secret"; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone lsf gdrive:stock_state_strategy --files-only --max-depth 1 | grep -qx 'LOCK_TO_MARKUP_PAPER_STRATEGY.md'
+      - name: Save isolated evidence without changing production Clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/finance_targeted_backfill/runs/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          rclone copy "$RUNNER_TEMP/five_finance" "$dest" --transfers 3 --checkers 6
+          rclone check "$RUNNER_TEMP/five_finance" "$dest" --one-way
+          echo "Audit saved to $dest"
+      - name: Fail closed if incomplete
+        shell: bash
+        run: |
+          test "${{ steps.collect.outputs.exit_code }}" = "0" || { echo "::error::Financial coverage incomplete; see isolated Drive audit"; exit 1; }
+          python - <<'PY'
+          import json,os,pathlib
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])/"five_finance"
+          audit=json.loads((root/"audit.json").read_text())
+          assert audit["status"]=="COMPLETE" and audit["valid"]==40 and len(audit["files"])==8
+          assert (root/"targeted_acceptance.json").exists()
+          print("TARGETED_FIVE_STOCK_FINANCE_COMPLETE: 40/40")
+          PY
