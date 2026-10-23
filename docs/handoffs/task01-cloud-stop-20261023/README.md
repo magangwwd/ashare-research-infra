@@ -18,6 +18,8 @@
 
 本地同份材料：`/workspace/task01-handoff-20261023T065808Z`。本地数据根：`/workspace/ashare-task01-resumed-20261018`。**不要因为进程停止就删除这些目录**；后续另行确认完整数据库恢复与保留策略。
 
+最终停机回执也已单独存入同一 Drive 目录：[查看回执](https://drive.google.com/file/d/1Cf6to0d4RBNuOZItHs8MHBF89Z05wRHQ/view)。该 JSON 记录本地服务归零、STOP 标志、恢复包 SHA 和 GitHub 停机文档提交，大小/SHA 已验证。云盘恢复包保留停机前证据，最终状态以该回执及 `stop-verification.json` 为准。
+
 ## 最新工作 checkpoint
 
 - Drive 工作目录 ID：`1R3Y0GdYzthmsSHRg2ufRo-aLdwGfN-Bc`；工作 `current.json` 文件 ID：`1eMos543XPXcAA2c6Q72ifOAyQoUm8Mzs`。

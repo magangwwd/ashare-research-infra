@@ -1,0 +1,13 @@
+{
+  "verified_at": "2026-10-23T07:13:32.443757+00:00",
+  "drive_folder_id": "171cgvEJNff-OcfikVyeeMMCfEa4CV6Ef",
+  "drive_file_id": "1Cf6to0d4RBNuOZItHs8MHBF89Z05wRHQ",
+  "drive_filename": "cloud-stop-20261023-final-b01496db55ff36ef26b57ee8ac0505138c41537e9725b8c715b091378a169dba.json",
+  "bytes": 3475,
+  "sha256": "b01496db55ff36ef26b57ee8ac0505138c41537e9725b8c715b091378a169dba",
+  "remote_size_verified": true,
+  "remote_sha256_verified": true,
+  "github_stop_record_commit": "9b60b975510f2e824017df8698f6fd354dd4e5b7",
+  "all_local_task01_services_stopped": true,
+  "formal_production_pointer_modified": false
+}
