@@ -240,3 +240,41 @@ def test_inventory_revalidates_real_parquet_before_upload(tmp_path, config, clie
     partition.write_bytes(b"corrupted file")
     with pytest.raises(dp.PublishError, match="Local Critical acceptance failed"):
         dp.inventory(tmp_path, config, prepared)
+
+
+def test_lost_chunk_response_reconciles_confirmed_offset(tmp_path, monkeypatch):
+    path = tmp_path / "data.parquet"
+    path.write_bytes(b"payload")
+    calls = []
+    class Session:
+        def request(self, method, url, **kwargs):
+            if url.endswith("generateIds"):
+                return SimpleNamespace(status_code=200, json=lambda: {"ids": ["allocated"]})
+            if method == "POST":
+                return SimpleNamespace(status_code=200, headers={"Location": dp.UPLOAD + "?upload_id=test"})
+            calls.append(kwargs["headers"]["Content-Range"])
+            if len(calls) <= 3:
+                import requests
+                raise requests.ConnectionError("simulated")
+            return SimpleNamespace(status_code=308, headers={"Range": "bytes=0-6"})
+    monkeypatch.setattr(dp.time, "sleep", lambda _: None)
+    assert dp.Drive(Session()).upload("parent", path.name, path) == "allocated"
+    assert calls[-1] == "bytes */7"
+
+
+def test_lost_chunk_response_with_wrong_offset_stops(tmp_path, monkeypatch):
+    path = tmp_path / "data.parquet"
+    path.write_bytes(b"payload")
+    class Session:
+        def request(self, method, url, **kwargs):
+            if url.endswith("generateIds"):
+                return SimpleNamespace(status_code=200, json=lambda: {"ids": ["allocated"]})
+            if method == "POST":
+                return SimpleNamespace(status_code=200, headers={"Location": dp.UPLOAD + "?upload_id=test"})
+            if kwargs["headers"]["Content-Range"].startswith("bytes */"):
+                return SimpleNamespace(status_code=308, headers={"Range": "bytes=0-2"})
+            import requests
+            raise requests.ConnectionError("simulated")
+    monkeypatch.setattr(dp.time, "sleep", lambda _: None)
+    with pytest.raises(dp.PublishError, match="offset mismatch"):
+        dp.Drive(Session()).upload("parent", path.name, path)
