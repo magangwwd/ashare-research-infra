@@ -1,0 +1,281 @@
+{
+  "schema_version": "1.0",
+  "recorded_at": "2026-10-23T07:07:40.355474+00:00",
+  "service": "ashare-task01",
+  "request": "Stop all local Task 01 services after a durable handoff archive, per explicit user instruction.",
+  "phase": "ARCHIVED_SHUTDOWN_PENDING",
+  "local_stop_verified": false,
+  "github_production_takeover_verified": false,
+  "archive": {
+    "created_at": "2026-10-23T07:01:15.862703+00:00",
+    "archive_name": "task01-handoff-recovery.tar.gz",
+    "bytes": 30430548,
+    "sha256": "318aa4c36885b286258fac765f5cb49bed851fe0b3e8f2eb738e0f08e125c515",
+    "verified_members": 218,
+    "member_validation_passed": true,
+    "secret_scan_passed": true,
+    "source_git_commit": "bc1d08bb7fd378957671d83baf00f117a6e43504",
+    "local_clean_residual_files": 0,
+    "local_raw_retained": true,
+    "local_raw_included_in_archive": false,
+    "production_pointer_modified": false,
+    "full_database_recovery_drill_passed": false,
+    "verified_at": "2026-10-23T07:04:30.922104+00:00",
+    "drive_folder_id": "171cgvEJNff-OcfikVyeeMMCfEa4CV6Ef",
+    "drive_file_id": "1PAfWwbMbIpYnGqJqf3agkZ1ZfCj_l1CK",
+    "drive_filename": "cloud-stop-20261023-318aa4c36885b286258fac765f5cb49bed851fe0b3e8f2eb738e0f08e125c515.tar.gz",
+    "remote_size_verified": true,
+    "remote_sha256_verified": true,
+    "reused_existing_object": false,
+    "existing_data_deleted": false
+  },
+  "working_checkpoint": {
+    "checked_at": "2026-10-23T06:59:17.348220+00:00",
+    "drive_target_folder_id": "1rkC99Ymgp8mjvAcJNRPJMlOGLdI9_bue",
+    "working_folder_id": "1R3Y0GdYzthmsSHRg2ufRo-aLdwGfN-Bc",
+    "pointer_file_id": "1eMos543XPXcAA2c6Q72ifOAyQoUm8Mzs",
+    "manifest_file_id": "17tsRQv8MsCN9VteI1GkzKDaa4NKKSjiF",
+    "manifest_bytes": 2276740,
+    "manifest_sha256": "eb2596b6d988aa52aa45994e4670bba2827ae06f8306b96bc31b73ee24fa4e8c",
+    "manifest_checksum_passed": true,
+    "matches_local_working_manifest": true,
+    "manifest_schema": "working-2",
+    "manifest_created_at": "2026-10-22T21:19:41.301794+00:00",
+    "logical_files": 5682,
+    "logical_bytes": 2507546653,
+    "history_complete": false,
+    "all_referenced_objects_verified_this_handoff": false,
+    "full_recovery_drill_passed_this_handoff": false,
+    "formal_production_pointer_modified": false
+  },
+  "archive_recovery_drill": {
+    "verified_at": "2026-10-23T07:04:59.035719+00:00",
+    "drive_file_id": "1PAfWwbMbIpYnGqJqf3agkZ1ZfCj_l1CK",
+    "bytes": 30430548,
+    "sha256": "318aa4c36885b286258fac765f5cb49bed851fe0b3e8f2eb738e0f08e125c515",
+    "download_sha256_passed": true,
+    "verified_archive_members": 218,
+    "member_checksums_passed": true,
+    "requests_sqlite_integrity_passed": true,
+    "handoff_archive_recovery_drill_passed": true,
+    "full_database_recovery_drill_passed": false,
+    "production_pointer_modified": false,
+    "note": "Only the handoff recovery archive was restored/verified; referenced historical Clean objects were not fully downloaded or validated."
+  },
+  "pre_stop_processes": [
+    {
+      "pid": 22241,
+      "ppid": 1,
+      "state": "S",
+      "start_ticks": 2107568,
+      "service": "data_pipeline.runtime_guard",
+      "cwd": "/workspace/ashare-research-infra"
+    },
+    {
+      "pid": 22259,
+      "ppid": 1,
+      "state": "S",
+      "start_ticks": 2108468,
+      "service": "data_pipeline.recovery_notifier",
+      "cwd": "/workspace/ashare-research-infra"
+    },
+    {
+      "pid": 23076,
+      "ppid": 1,
+      "state": "S",
+      "start_ticks": 2174159,
+      "service": "data_pipeline.runtime_lifecycle",
+      "cwd": "/workspace/ashare-research-infra"
+    }
+  ],
+  "local_root": "/workspace/ashare-task01-resumed-20261018",
+  "local_runtime": "/workspace/task01-runtime",
+  "local_handoff_root": "/workspace/task01-handoff-20261023T065808Z",
+  "source_archive_git_base": "bc1d08bb7fd378957671d83baf00f117a6e43504",
+  "historical_status": {
+    "status": "PASS_FINISHED",
+    "as_of": "2026-10-12",
+    "updated_at": "2026-10-22T21:00:16.213161+00:00",
+    "market_history_complete": false,
+    "counters": {
+      "examined": 413346,
+      "attempted": 354,
+      "reused": 412992
+    },
+    "datasets": {
+      "daily": {
+        "total": 1639,
+        "complete": 1635,
+        "pending": 4
+      },
+      "adj_factor": {
+        "total": 1639,
+        "complete": 1639,
+        "pending": 0
+      },
+      "daily_basic": {
+        "total": 1639,
+        "complete": 1639,
+        "pending": 0
+      },
+      "income": {
+        "total": 37345,
+        "complete": 37345,
+        "pending": 0
+      },
+      "balancesheet": {
+        "total": 37345,
+        "complete": 37345,
+        "pending": 0
+      },
+      "cashflow": {
+        "total": 37345,
+        "complete": 37345,
+        "pending": 0
+      },
+      "fina_indicator": {
+        "total": 37345,
+        "complete": 37345,
+        "pending": 0
+      },
+      "forecast": {
+        "total": 37345,
+        "complete": 37345,
+        "pending": 0
+      },
+      "express": {
+        "total": 37345,
+        "complete": 37345,
+        "pending": 0
+      },
+      "dividend": {
+        "total": 5916,
+        "complete": 5916,
+        "pending": 0
+      },
+      "namechange": {
+        "total": 37345,
+        "complete": 37345,
+        "pending": 0
+      },
+      "suspend_d": {
+        "total": 1639,
+        "complete": 1639,
+        "pending": 0
+      },
+      "stk_limit": {
+        "total": 1639,
+        "complete": 1639,
+        "pending": 0
+      },
+      "index_daily": {
+        "total": 902,
+        "complete": 902,
+        "pending": 0
+      },
+      "index_weight": {
+        "total": 902,
+        "complete": 902,
+        "pending": 0
+      },
+      "index_member_all": {
+        "total": 11832,
+        "complete": 11832,
+        "pending": 0
+      },
+      "margin": {
+        "total": 1639,
+        "complete": 1639,
+        "pending": 0
+      },
+      "margin_detail": {
+        "total": 1639,
+        "complete": 1639,
+        "pending": 0
+      },
+      "block_trade": {
+        "total": 1639,
+        "complete": 1639,
+        "pending": 0
+      },
+      "top_list": {
+        "total": 1639,
+        "complete": 1639,
+        "pending": 0
+      },
+      "stk_holdernumber": {
+        "total": 37345,
+        "complete": 37345,
+        "pending": 0
+      },
+      "stk_holdertrade": {
+        "total": 37345,
+        "complete": 37345,
+        "pending": 0
+      },
+      "share_float": {
+        "total": 37345,
+        "complete": 37345,
+        "pending": 0
+      },
+      "stk_mins": {
+        "total": 5593,
+        "complete": 5243,
+        "pending": 350
+      }
+    }
+  },
+  "local_inventory": {
+    "files": 9316,
+    "physical_files": 1497,
+    "matching_physical_files": 2,
+    "stubs": 7819,
+    "matching_stubs": 5555,
+    "residual_files": 3759,
+    "residual_bytes": 651690599,
+    "all_local_bytes": 653086212
+  },
+  "residual_clean_files": 0,
+  "residual_raw_files": 3759,
+  "local_raw_deleted": false,
+  "validation_failure": {
+    "type": "ValidationError",
+    "failure_at": "2026-10-22T22:06:05.355835+00:00",
+    "original_exception_message_available": false,
+    "frames": [
+      {
+        "file": "recovery_runner.py",
+        "function": "main",
+        "line": 29
+      },
+      {
+        "file": "full_backfill.py",
+        "function": "execute",
+        "line": 482
+      },
+      {
+        "file": "full_backfill.py",
+        "function": "fill_target",
+        "line": 444
+      }
+    ]
+  },
+  "github_evidence": {
+    "archive_pr": "https://github.com/magangwwd/ashare-research-infra/pull/93",
+    "pr_merged_at_last_check": false,
+    "latest_checked_task01_run": "https://github.com/magangwwd/ashare-research-infra/actions/runs/39864704830",
+    "latest_checked_task01_run_conclusion": "failure",
+    "failed_step": "Publish accepted snapshot to Drive"
+  },
+  "historical_completion_certified": false,
+  "all_remote_clean_objects_revalidated": false,
+  "formal_production_pointer_modified": false,
+  "github_workflows_changed_this_stop": false,
+  "notes": [
+    "The old target ends 2026-10-12; later trading days remain outside the shown pending counts.",
+    "All local Clean content or stub identities matched the freshly downloaded working manifest; all referenced remote content was NOT revalidated.",
+    "The successful recovery drill covers the handoff archive and SQLite integrity, NOT the complete historical database.",
+    "Current scope is existing datasets from 2020 and 15-minute bars from 2026.",
+    "Do not remove STOP or run a cloud resume/start command after Actions becomes the writer."
+  ]
+}
