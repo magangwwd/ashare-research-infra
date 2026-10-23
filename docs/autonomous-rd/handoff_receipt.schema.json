@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Autonomous R&D Handoff Receipt v1.0",
+  "title": "Autonomous R&D Handoff Receipt v1.0.1",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -43,6 +43,7 @@
     "github_event": {
       "enum": [
         "push",
+        "pull_request",
         "schedule",
         "workflow_dispatch",
         "workflow_run",
