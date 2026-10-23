@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "announcement_date": "2025-06-11",
+  "registration_date": "2025-06-17",
+  "ex_dividend_date": "2025-06-18",
+  "dividend_per_share_cny": 0.088,
+  "announced_payment_date": "2025-06-27",
+  "issuer_to_csd_date": "2025-06-25",
+  "csd_to_broker_date": "2025-06-26",
+  "investor_cash_available_date": null,
+  "investor_cash_availability_grade": "UNVERIFIED_BROKER_SPECIFIC_SETTLEMENT",
+  "source_quality": "ISSUER_NOTICE_REPRODUCED_BY_MARKET_DATA_PORTAL_WITH_SSE_EX_DATE_CORROBORATION",
+  "issuer_notice_reproduction": {
+    "url": "https://data.eastmoney.com/notices/detail/510300/AN202506101688338609.html",
+    "title": "华泰柏瑞沪深300交易型开放式指数证券投资基金分红公告",
+    "disclosed_on": "2025-06-11",
+    "payment_caveat": "For holders with designated broker trading, issuer notice says cash can be collected on 2025-06-27; holders without designated trading have a separate process. This is NOT independently verified account-level spendable cash."
+  },
+  "independent_exchange_crosscheck": {
+    "url": "https://big5.sse.com.cn/site/cht/www.sse.com.cn/assortment/options/disclo/update/c/c_20250611_10781544.shtml",
+    "date": "2025-06-11",
+    "confirmed": "510300.SH ex-dividend date 2025-06-18 and option contract adjustments"
+  },
+  "limitations": [
+    "Direct original issuer-hosted PDF and full historical 510300 dividend series not independently retrieved.",
+    "Issuer payment date and transfer dates do not prove a given investor account's available cash.",
+    "Do not add this cash to a fund_adj-adjusted price total-return series without independent economic-return reconciliation.",
+    "Do not modify frozen strategy, performance, or trading signals from this research note."
+  ],
+  "status": "REVIEW_REQUIRED_NOT_FOR_TRADING",
+  "next_action": "Verify original issuer notice, remaining 510300 cash events, account-level cash availability, and independent raw/fund_adj return math; run scoped CI and Drive readback before acceptance."
+}
