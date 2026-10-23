@@ -29,7 +29,18 @@ class CleanResearchData:
     def load(self, dataset: str) -> pd.DataFrame:
         return read_dataset(self.current, "clean", dataset)
 
-    def market(self, start: date | None = None, end: date | None = None) -> pd.DataFrame:
+    def market(
+        self,
+        start: date | None = None,
+        end: date | None = None,
+        include_limits: bool = False,
+    ) -> pd.DataFrame:
+        """Merged daily / adj_factor / daily_basic panel.
+
+        include_limits=True left-joins the stk_limit up/down limit prices so the
+        backtester can refuse limit-up buys and limit-down sells. Rows without a
+        stk_limit record keep NaN limits and are treated as tradable.
+        """
         daily = self.load("daily")
         factor = self.load("adj_factor")
         basic = self.load("daily_basic")
@@ -45,6 +56,15 @@ class CleanResearchData:
             basic[basic_cols], on=keys, how="inner", validate="one_to_one",
             suffixes=("", "_basic"),
         )
+        if include_limits:
+            limits = self.load("stk_limit")
+            if limits.empty:
+                frame = frame.assign(up_limit=float("nan"), down_limit=float("nan"))
+            else:
+                frame = frame.merge(
+                    limits[keys + ["up_limit", "down_limit"]],
+                    on=keys, how="left", validate="one_to_one",
+                )
         if start is not None:
             frame = frame.loc[frame["trade_date"] >= start]
         if end is not None:

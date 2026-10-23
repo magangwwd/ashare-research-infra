@@ -5,6 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import requests
 
 from data_pipeline import drive_publish as dp
 
@@ -240,3 +241,55 @@ def test_inventory_revalidates_real_parquet_before_upload(tmp_path, config, clie
     partition.write_bytes(b"corrupted file")
     with pytest.raises(dp.PublishError, match="Local Critical acceptance failed"):
         dp.inventory(tmp_path, config, prepared)
+
+
+class _StreamingSession:
+    """Serves one file; the first `fail_attempts` streams drop mid-body."""
+
+    def __init__(self, body, fail_attempts=0):
+        self.body = body
+        self.fail_attempts = fail_attempts
+        self.requests = 0
+
+    def request(self, method, url, **kwargs):
+        self.requests += 1
+        body = self.body
+        drop = self.requests <= self.fail_attempts
+
+        class Response:
+            status_code = 200
+
+            def iter_content(self, size):
+                yield body[:4]
+                if drop:
+                    raise requests.exceptions.ChunkedEncodingError("connection dropped")
+                yield body[4:]
+
+            def close(self):
+                pass
+
+        return Response()
+
+
+def test_download_retries_a_stream_that_drops_midway(tmp_path, monkeypatch):
+    monkeypatch.setattr(dp.time, "sleep", lambda _seconds: None)
+    body = b"parquet payload bytes"
+    session = _StreamingSession(body, fail_attempts=2)
+    target = tmp_path / "nested" / "part-000.parquet"
+    size, checksum = dp.Drive(session).download("file-id", target)
+    assert (size, checksum) == (len(body), hashlib.sha256(body).hexdigest())
+    assert target.read_bytes() == body
+    assert session.requests == 3
+    assert not list(target.parent.glob("*.download-*"))
+
+
+def test_download_gives_up_with_a_safe_error_and_leaves_no_partial_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(dp.time, "sleep", lambda _seconds: None)
+    session = _StreamingSession(b"parquet payload bytes", fail_attempts=99)
+    target = tmp_path / "part-000.parquet"
+    with pytest.raises(dp.PublishError, match="interrupted") as error:
+        dp.Drive(session).download("file-id", target)
+    assert "connection dropped" not in str(error.value)
+    assert session.requests == 3
+    assert not target.exists()
+    assert not list(tmp_path.glob("*.download-*"))

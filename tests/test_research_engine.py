@@ -155,3 +155,152 @@ def test_readiness_requires_recent_consecutive_common_core_sessions():
     assert report["latest_common_core_session"] == "2026-01-08"
     assert report["recent_consecutive_core_sessions"] == 1
     assert report["levels"]["engineering"]["ready"] is False
+
+
+def _two_stock_market(extra=None):
+    rows = []
+    for sec, opens in {"A": [10., 10., 10., 10.], "B": [10., 10., 10., 10.]}.items():
+        for day, price in zip(pd.bdate_range("2026-01-05", periods=4).date, opens):
+            row = {"security_id": sec, "trade_date": day, "open": price, "high": price,
+                   "low": price, "close": price, "pre_close": price, "adj_factor": 1., "vol": 100.}
+            row.update((extra or {}).get((sec, day), {}))
+            rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def test_delisted_holding_is_written_off_instead_of_carried_forever():
+    days = list(pd.bdate_range("2026-01-05", periods=4).date)
+    market = add_adjusted_prices(_two_stock_market())
+    # A stops quoting after the second session, as a delisted stock would.
+    market = market.loc[~((market["security_id"] == "A") & (market["trade_date"] > days[1]))]
+    targets = pd.DataFrame([{"signal_date": days[0], "security_id": "A", "target_weight": 1.0}])
+    delistings = pd.DataFrame([{"security_id": "A", "delist_date": days[2]}])
+
+    carried = run_backtest(market, targets)
+    written_off = run_backtest(market, targets, delistings=delistings)
+
+    assert carried.nav["nav"].iloc[-1] == pytest.approx(1_000_000)
+    assert written_off.nav["nav"].iloc[-1] == pytest.approx(0.0)
+    delist = written_off.trades.loc[written_off.trades["side"] == "DELIST"]
+    assert delist["trade_date"].tolist() == [days[2]]
+
+
+def test_delisting_recovery_ratio_credits_part_of_last_mark():
+    days = list(pd.bdate_range("2026-01-05", periods=4).date)
+    market = add_adjusted_prices(_two_stock_market())
+    market = market.loc[~((market["security_id"] == "A") & (market["trade_date"] > days[1]))]
+    targets = pd.DataFrame([{"signal_date": days[0], "security_id": "A", "target_weight": 1.0}])
+    delistings = pd.DataFrame([{"security_id": "A", "delist_date": pd.Timestamp(days[2])}])
+    result = run_backtest(market, targets, BacktestConfig(delisting_recovery_ratio=0.25), delistings)
+    assert result.nav["nav"].iloc[-1] == pytest.approx(250_000)
+
+
+def test_delisting_not_applied_while_security_still_quotes():
+    days = list(pd.bdate_range("2026-01-05", periods=4).date)
+    market = add_adjusted_prices(_two_stock_market())
+    targets = pd.DataFrame([{"signal_date": days[0], "security_id": "A", "target_weight": 1.0}])
+    delistings = pd.DataFrame([{"security_id": "A", "delist_date": days[1]}])
+    result = run_backtest(market, targets, delistings=delistings)
+    assert "DELIST" not in set(result.trades["side"])
+    assert result.nav["nav"].iloc[-1] == pytest.approx(1_000_000)
+
+
+def test_limit_up_open_blocks_buy_and_limit_down_open_blocks_sell():
+    days = list(pd.bdate_range("2026-01-05", periods=4).date)
+    limits = {}
+    for sec in ("A", "B"):
+        for day in days:
+            limits[(sec, day)] = {"up_limit": 11.0, "down_limit": 9.0}
+    limits[("A", days[1])] = {"up_limit": 10.0, "down_limit": 9.0}   # A opens at its up limit
+    limits[("B", days[2])] = {"up_limit": 11.0, "down_limit": 10.0}  # B opens at its down limit
+    market = add_adjusted_prices(_two_stock_market(limits))
+    targets = pd.DataFrame([
+        {"signal_date": days[0], "security_id": "A", "target_weight": 0.5},
+        {"signal_date": days[0], "security_id": "B", "target_weight": 0.5},
+        {"signal_date": days[1], "security_id": "A", "target_weight": 0.5},
+        {"signal_date": days[1], "security_id": "B", "target_weight": 0.0},
+    ])
+
+    blocked = run_backtest(market, targets)
+    bought = blocked.trades.loc[blocked.trades["side"] == "BUY"]
+    sold = blocked.trades.loc[blocked.trades["side"] == "SELL"]
+    # A opens at its up limit on days[1], so its first buy slips to days[2].
+    assert bought.loc[bought["security_id"] == "A", "trade_date"].tolist() == [days[2]]
+    assert bought.loc[bought["security_id"] == "B", "trade_date"].tolist() == [days[1]]
+    # B's sell is attempted on days[2], when it opens at its down limit.
+    assert sold.empty
+
+    free = run_backtest(market, targets, BacktestConfig(enforce_price_limits=False))
+    assert free.trades.loc[free.trades["side"] == "BUY", "security_id"].tolist() == ["A", "B"]
+    assert free.trades.loc[free.trades["side"] == "SELL", "security_id"].tolist() == ["B"]
+
+
+def test_missing_limit_columns_keep_previous_behavior():
+    market = add_adjusted_prices(_two_stock_market())
+    targets = pd.DataFrame([{"signal_date": date(2026, 1, 5), "security_id": "A", "target_weight": 1.0}])
+    assert not run_backtest(market, targets).trades.empty
+
+
+def test_backtest_rejects_nan_inf_and_duplicate_targets():
+    market = add_adjusted_prices(_market_rows())
+    day = date(2026, 1, 2)
+    for bad in (float("nan"), float("inf")):
+        targets = pd.DataFrame([{"signal_date": day, "security_id": "A", "target_weight": bad}])
+        with pytest.raises(ValueError, match="finite"):
+            run_backtest(market, targets)
+    duplicated = pd.DataFrame([
+        {"signal_date": day, "security_id": "A", "target_weight": 0.3},
+        {"signal_date": day, "security_id": "A", "target_weight": 0.4},
+    ])
+    with pytest.raises(ValueError, match="duplicate"):
+        run_backtest(market, duplicated)
+
+
+def test_backtest_config_rejects_invalid_delisting_recovery():
+    with pytest.raises(ValueError):
+        BacktestConfig(delisting_recovery_ratio=1.5).validate()
+
+
+class _TablesData:
+    """CleanResearchData.market() against in-memory tables (no parquet needed)."""
+
+    def __new__(cls, tables):
+        from research_engine.data import CleanResearchData
+
+        class Data(CleanResearchData):
+            def __init__(self):
+                self._tables = tables
+
+            def load(self, name):
+                return self._tables.get(name, pd.DataFrame())
+
+        return Data()
+
+
+def _core_tables(day=date(2026, 1, 5)):
+    keys = {"security_id": ["A", "B"], "trade_date": [day, day]}
+    return {
+        "daily": pd.DataFrame({**keys, "open": [10., 10.], "close": [10., 10.]}),
+        "adj_factor": pd.DataFrame({**keys, "adj_factor": [1., 1.]}),
+        "daily_basic": pd.DataFrame({**keys, "turnover_rate": [1., 2.]}),
+    }
+
+
+def test_market_include_limits_left_joins_stk_limit_and_keeps_unmatched_rows():
+    tables = _core_tables()
+    tables["stk_limit"] = pd.DataFrame({
+        "security_id": ["A"], "trade_date": [date(2026, 1, 5)],
+        "up_limit": [11.0], "down_limit": [9.0],
+    })
+    frame = _TablesData(tables).market(include_limits=True)
+    assert len(frame) == 2
+    row_a = frame.loc[frame["security_id"] == "A"].iloc[0]
+    row_b = frame.loc[frame["security_id"] == "B"].iloc[0]
+    assert (row_a["up_limit"], row_a["down_limit"]) == (11.0, 9.0)
+    assert pd.isna(row_b["up_limit"]) and pd.isna(row_b["down_limit"])
+
+
+def test_market_include_limits_without_stk_limit_data_gives_nan_limits():
+    frame = _TablesData(_core_tables()).market(include_limits=True)
+    assert frame["up_limit"].isna().all() and frame["down_limit"].isna().all()
+    assert "up_limit" not in _TablesData(_core_tables()).market().columns
