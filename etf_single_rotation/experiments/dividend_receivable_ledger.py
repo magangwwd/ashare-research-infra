@@ -6,6 +6,7 @@ explicit record-date share snapshot for each cash event; missing fails closed.
 from __future__ import annotations
 
 from datetime import date
+from decimal import Decimal
 from math import isfinite
 
 from etf_single_rotation.experiments.audit_corporate_actions import validate_events
@@ -156,18 +157,58 @@ def record_date_snapshots_from_fills(registry, opening_date, opening_positions, 
         if shares <= 0 or not shares.is_integer():
             raise ValueError("Fill shares must be positive whole units")
         normalized.append((day, symbol, side, int(shares)))
+    # Opening positions are end-of-day: events on/before opening_date are
+    # already reflected in the supplied shares. Apply later unit events exactly
+    # once before computing record-date entitlements. Never infer brokerage
+    # registration rounding for consolidations.
+    last_record_day = record_dates[-1][1]
+    unit_events = [
+        event for event in events
+        if event["type"] in ("UNIT_SPLIT", "UNIT_CONSOLIDATION")
+        and start < _day(event["event_date"]) <= last_record_day
+    ]
+    fill_keys = {(day, symbol) for day, symbol, _, _ in normalized}
+    for event in unit_events:
+        if (_day(event["event_date"]), event["symbol"]) in fill_keys:
+            raise ValueError("Ambiguous same-day corporate event and fill")
+    timeline = [(day, 1, symbol, side, shares, None)
+                for day, symbol, side, shares in normalized]
+    timeline.extend(
+        (_day(event["event_date"]), 0, event["symbol"], "UNIT_EVENT", 0, event)
+        for event in unit_events
+    )
+    timeline.sort(key=lambda item: (item[0], item[1]))
+
     snapshots = {}
     index = 0
     for symbol, record_day in record_dates:
-        while index < len(normalized) and normalized[index][0] <= record_day:
-            day = normalized[index][0]
-            while index < len(normalized) and normalized[index][0] == day:
-                _, traded, side, shares = normalized[index]
-                positions[traded] = positions.get(traded, 0) + (
-                    shares if side == "BUY" else -shares
-                )
-                if positions[traded] < 0:
-                    raise ValueError("Sell exceeds held ETF shares")
+        while index < len(timeline) and timeline[index][0] <= record_day:
+            day = timeline[index][0]
+            while index < len(timeline) and timeline[index][0] == day:
+                _, _, traded, side, shares, event = timeline[index]
+                if side == "UNIT_EVENT":
+                    held = positions.get(traded, 0)
+                    if held:
+                        if event["type"] == "UNIT_CONSOLIDATION":
+                            raise ValueError(
+                                "Held consolidation requires issuer-specific "
+                                "registered-unit rounding and account evidence"
+                            )
+                        converted = Decimal(held) * Decimal(
+                            str(event["new_units_per_old_unit"])
+                        )
+                        if converted != converted.to_integral_value():
+                            raise ValueError(
+                                "Split creates fractional registered units; "
+                                "issuer rounding is unverified"
+                            )
+                        positions[traded] = int(converted)
+                else:
+                    positions[traded] = positions.get(traded, 0) + (
+                        shares if side == "BUY" else -shares
+                    )
+                    if positions[traded] < 0:
+                        raise ValueError("Sell exceeds held ETF shares")
                 index += 1
             if sum(v > 0 for v in positions.values()) > 1:
                 raise ValueError("More than one ETF held at day end")

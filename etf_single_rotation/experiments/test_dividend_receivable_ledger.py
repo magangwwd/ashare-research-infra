@@ -177,5 +177,75 @@ class RecordDateFillSnapshotTests(unittest.TestCase):
 
 
 
+class RecordDateCorporateActionTests(unittest.TestCase):
+    """Synthetic unit changes must precede later dividend registration."""
+
+    def setUp(self):
+        self.registry = {
+            "schema_version": 1,
+            "events": [unit_event("UNIT_SPLIT", 2), dividend()],
+        }
+        self.key = ("512690.SH", "2021-12-30")
+
+    def snapshots(self, opening_date="2021-05-12", opening=None, fills=None, registry=None):
+        return record_date_snapshots_from_fills(
+            registry or self.registry, opening_date,
+            opening if opening is not None else {"512690.SH": 100},
+            fills or [],
+        )
+
+    def test_split_before_record_date_doubles_cash_entitlement(self):
+        snapshots = self.snapshots()
+        self.assertEqual(snapshots[self.key], 200)
+        detail = cash_entitlement_ledger(
+            self.registry, snapshots, ["2021-12-31", "2022-01-06"]
+        )
+        self.assertEqual(detail["events"][0]["cash_entitlement_cny"], 70.0)
+
+    def test_post_split_purchase_is_not_doubled(self):
+        snap = self.snapshots(opening={}, fills=[
+            {"date": "2021-05-17", "symbol": "512690.SH",
+             "side": "BUY", "shares": 10},
+        ])
+        self.assertEqual(snap[self.key], 10)
+
+    def test_sale_after_split_uses_registered_new_units(self):
+        snap = self.snapshots(fills=[
+            {"date": "2021-05-17", "symbol": "512690.SH",
+             "side": "SELL", "shares": 100},
+        ])
+        self.assertEqual(snap[self.key], 100)
+
+    def test_split_before_opening_date_not_applied_twice(self):
+        self.assertEqual(
+            self.snapshots(opening_date="2021-06-01",
+                           opening={"512690.SH": 10})[self.key], 10
+        )
+
+    def test_same_day_fill_and_split_fails_closed(self):
+        with self.assertRaisesRegex(ValueError, "same-day corporate event"):
+            self.snapshots(opening={}, fills=[
+                {"date": "2021-05-14", "symbol": "512690.SH",
+                 "side": "BUY", "shares": 10},
+            ])
+
+    def test_fractional_split_requires_issuer_rounding(self):
+        registry = {"schema_version": 1,
+                    "events": [unit_event("UNIT_SPLIT", 1.5), dividend()]}
+        with self.assertRaisesRegex(ValueError, "fractional registered"):
+            self.snapshots(opening={"512690.SH": 1}, registry=registry)
+
+    def test_held_consolidation_requires_account_rounding(self):
+        registry = {"schema_version": 1,
+                    "events": [unit_event("UNIT_CONSOLIDATION", 0.36555), dividend()]}
+        with self.assertRaisesRegex(ValueError, "issuer-specific"):
+            self.snapshots(registry=registry)
+
+    def test_zero_holding_consolidation_does_not_create_units(self):
+        registry = {"schema_version": 1,
+                    "events": [unit_event("UNIT_CONSOLIDATION", 0.36555), dividend()]}
+        self.assertEqual(self.snapshots(opening={}, registry=registry)[self.key], 0)
+
+
 if __name__ == "__main__":
     unittest.main()
