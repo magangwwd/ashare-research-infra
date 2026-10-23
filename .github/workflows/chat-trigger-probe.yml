@@ -1,0 +1,20 @@
+name: Chat Actions trigger probe
+on:
+  push:
+    branches:
+      - test/chat-actions-trigger-20261023
+    paths:
+      - .github/workflows/chat-trigger-probe.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify GitHub runner startup
+        run: |
+          echo 'CHAT_ACTIONS_TRIGGER_PROBE_OK'
+          echo "run_id=$GITHUB_RUN_ID"
+          echo "event=$GITHUB_EVENT_NAME"
