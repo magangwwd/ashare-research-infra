@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "research_only": true,
+  "trading_status": "NOT_FOR_TRADING",
+  "evidence_kind": "ISSUER_AUTHORED_NOTICE_TEXT_AT_THIRD_PARTY_PDF_MIRROR_NOT_EXCHANGE_OR_ISSUER_HOSTED",
+  "checked_on_utc": "2026-10-23",
+  "source": {
+    "issuer": "华泰柏瑞基金管理有限公司",
+    "notice_date": "2022-01-12",
+    "url": "https://pdf.dfcfw.com/pdf/H2_AN202201121539913641_1.pdf",
+    "pdf_pages": 1,
+    "extraction": "All 52 indexed PDF text lines inspected, including distribution and CSDC/broker remittance timetable",
+    "source_host": "pdf.dfcfw.com (third-party mirror, NOT issuer or SSE original host)",
+    "pdf_bytes_downloaded": false,
+    "pdf_sha256": null,
+    "byte_download_blocker": "Container DNS resolution failed; indexed PDF text is available through web, but bytes not obtained"
+  },
+  "event": {
+    "fund_code": "510300",
+    "distribution_period_label_in_notice": "2021年第一次分红",
+    "dividend_per_10_shares_cny": "0.7500",
+    "dividend_per_share_cny": "0.0750",
+    "registration_date": "2022-01-18",
+    "ex_dividend_date": "2022-01-19",
+    "announced_payment_date": "2022-01-24",
+    "issuer_to_csd_date": "2022-01-20",
+    "csd_to_broker_date": "2022-01-21",
+    "investor_cash_available_date": null,
+    "entitlement": "Registered holder after SSE market close on 2022-01-18",
+    "cash_only": true,
+    "settlement_caveat": "Notice says designated-trading investors may collect cash on 2022-01-24; actual account-level spendability is unverified. Non-designated trading investors may receive later."
+  },
+  "crosscheck": {
+    "candidate_registry": "etf_single_rotation/metadata/510300_dividend_coverage_gap_20261024.json",
+    "candidate_amount_and_dates_match": true,
+    "same_supplier_factor_audit": "etf_single_rotation/metadata/510300_dividend_factor_artifact_drive_audit_20261024.json",
+    "factor_event_return_difference_bp": "-0.73368",
+    "factor_implied_dividend_per_share_cny": "0.0750472",
+    "factor_difference_is_not_independent_price_verification": true
+  },
+  "limitations": [
+    "Issuer notice is mirrored by a third party; no issuer/SSE original-host source URL or source PDF byte hash has been verified.",
+    "Same-supplier Tushare raw_close and fund_adj cannot independently establish market accuracy or total return.",
+    "No registered portfolio share balances or CSDC/broker account statement were obtained.",
+    "Announced payment and CSDC-to-broker dates do not certify actual investor cash spendability.",
+    "No new historical backtest, no new DIV-004 Artifact/Drive write or readback; no performance edits or dependency unlock."
+  ],
+  "status": "REVIEW_REQUIRED",
+  "next_action": "Find issuer/SSE-hosted original PDF and byte hash; verify 2019/2021 remaining notices and 2025 original-host source, second-supplier market prices, actual shares and cash settlement; reconcile portfolio-level returns and independently accept DIV-004 before PAPER-005."
+}
