@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "research_only": true,
+  "trading_status": "NOT_FOR_TRADING",
+  "evidence_kind": "PRIMARY_SSE_HOSTED_ISSUER_NOTICE_TEXT_VERIFIED_NOT_PDF_BYTE_VERIFIED",
+  "checked_utc": "2026-10-23T19:07:00Z",
+  "source": {
+    "publisher": "Shanghai Stock Exchange (SSE), issuer Huatai-PineBridge Fund",
+    "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2024-01-11/510300_20240111_QQFV.pdf",
+    "notice_date": "2024-01-11",
+    "pdf_pages": 3,
+    "pdf_downloaded": false,
+    "pdf_sha256": null,
+    "extraction": "Exchange-hosted PDF publicly indexed and full 3-page text inspected"
+  },
+  "event": {
+    "registration_date": "2024-01-17",
+    "ex_dividend_date": "2024-01-18",
+    "dividend_per_10_shares_cny": "0.6900",
+    "dividend_per_share_cny": "0.0690",
+    "announced_payment_date": "2024-01-23",
+    "issuer_to_csd_date": "2024-01-19",
+    "csd_to_broker_date": "2024-01-22",
+    "investor_cash_available_date": null,
+    "entitlement": "Registered holders after SSE market close on 2024-01-17"
+  },
+  "crosscheck": {
+    "candidate_registry": "etf_single_rotation/metadata/510300_dividend_coverage_gap_20261024.json",
+    "listed_amount_date_consistent": true,
+    "factor_audit": "etf_single_rotation/metadata/510300_dividend_factor_artifact_drive_audit_20261024.json",
+    "factor_event_return_difference_bp": "2.79465",
+    "factor_implied_dividend_per_share_cny": "0.0689581",
+    "factor_difference_is_not_independent_price_verification": true
+  },
+  "limitations": [
+    "Issuer published payment and CSD/broker transfers are not verified actual account-level spendable cash.",
+    "Factor comparison uses same-source Tushare raw_close/fund_adj, not independent market close.",
+    "Original PDF was read as indexed text, but bytes and SHA256 were not obtained.",
+    "Do not credit dividend cash in addition to adjusted-price return without economic reconciliation.",
+    "Do not change performance, frozen 8 ETF universe, execution, or unblock PAPER-005."
+  ],
+  "status": "REVIEW_REQUIRED",
+  "next_action": "Obtain remaining issuer notices for 510300 research-window dividends, independent raw market prices and investor cash availability; complete portfolio-level ledger and Drive acceptance. Keep ETF-DIV-004 REVIEW_REQUIRED and ETF-PAPER-005 blocked."
+}
