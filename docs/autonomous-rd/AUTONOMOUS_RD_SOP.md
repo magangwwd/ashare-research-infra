@@ -1,6 +1,6 @@
 # 通用自主研发与 GPT 审核接力自动化标准方案
 
-> 标准：AUTO-RD-SOP-001 | 版本：v1.0.0 | 2026-10-21 | 范围：BTC、ETF、A股和后续研发项目  
+> 标准：AUTO-RD-SOP-001 | 版本：v1.0.1 | 2026-10-21 | 范围：BTC、ETF、A股和后续研发项目  
 > 规范代码以 GitHub 主分支版本为准；Google Docs 是易读副本。严格区分“设计方案”“已部署程序”“真实端到端验收”。所有量化研究默认 NOT_FOR_TRADING。
 
 ## 一、总原则与目标
@@ -29,6 +29,8 @@
 7. **自我评估与治理**：每周检验成果、时效、成本、出错/误报、权限和策略有效性；改变研究方案必须进行有对照的真实测试。
 
 ## 四、状态机与有据接续
+
+**Receipt 事件真实性（v1.0.1）**：GitHub PR 触发的独立 CI 必须在收据中记录真实事件 `pull_request`；Schema 已兼容该枚举。不得为使校验通过而伪写为 `manual_external` 或 `push`。本次为向后兼容的枚举补充，现存 Receipt 的 `schema_version: 1.0.0` 不变。
 
 状态：NEW → READY → CLAIMED → RUNNING → VERIFYING → REVIEW_REQUIRED → VERIFIED_DONE；失败进入RETRYABLE_FAILED或BLOCKED；可进入CANCELLED。只有证据完整并由验收程序复核才是VERIFIED_DONE；策略层另有NOT_FOR_TRADING安全状态。
 
