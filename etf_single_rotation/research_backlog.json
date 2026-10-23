@@ -65,27 +65,29 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "Review draft PR #92: split-before-dividend entitlement logic has 60/60 scoped synthetic CI tests at 07687da1 (run 39973893899). Independently verify raw market closes/fund_adj, issuer dividend coverage, actual CSDC/broker share and cash dates, and real Artifact/Drive readback before VERIFIED_DONE. Do not start PAPER-005.",
+      "next_action": "Review draft PR #92 and primary/mirrored issuer notices. 2022-01-12 issuer-authored PDF mirror confirms 510300 cash 0.075/share, record 2022-01-18, ex 2022-01-19, issuer/CSDC/broker/payment timetable; original issuer/SSE PDF and actual account cash remain unverified. Verify remaining 2019/2021 issuer notices and 2025 original, independent market prices, registered shares and actual broker settlement, then portfolio total-return and new Artifact/Drive acceptance before VERIFIED_DONE. PAPER-005 dependency remains blocked.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
-        "review_head_sha": "07687da1c19c72335a6b05bce5fabb2cd9d6bc3c",
-        "tested": "SIX_SYNTHETIC_TESTS_LOCALLY_PREVIOUSLY; NO_GITHUB_CI_RUN",
+        "review_head_sha": "c2c119704c356e0d4a0a2d4a044243c9d273d756",
+        "tested": "SCOPED_SYNTHETIC_CI_60_OF_60_PASS_AT_C2C11970_RUN_40015272119; NEW_2022_METADATA_COMMIT_EB2A0D6_NOT_CI_TESTED",
         "artifact_drive_readback": "NOT_PERFORMED_FOR_THIS_CHANGE",
         "blockers": [
-          "Independent issuer dividend coverage incomplete",
-          "Independent market raw close/fund_adj reconciliation incomplete",
-          "Actual broker share register and investor cash availability unverified",
-          "No real price Artifact/Drive write/readback for this change",
-          "Main SOP v1.0.0 still rejects pull_request receipts; draft PR #98 pending"
+          "Original issuer/SSE-hosted 2022 notice PDF and byte SHA unverified (mirrored issuer text verified)",
+          "Independent issuer dividend coverage for 2019/2021/2025 still incomplete",
+          "Independent second-source market raw closes and fund_adj reconciliation incomplete",
+          "Actual registered share balances and broker cash availability unverified",
+          "No new DIV-004 code Artifact/Drive upload-readback; scoped CI only",
+          "Main SOP v1.0.0 still rejects pull_request receipts; draft PR #98 unmerged"
         ],
-        "last_checked_utc": "2026-10-23T14:56:24Z",
-        "github_ci_run_id": 39973893899,
-        "github_ci_job_id": 120483368235,
-        "github_ci_event": "push",
+        "last_checked_utc": "2026-10-23T21:16:26Z",
+        "github_ci_run_id": 40015272119,
+        "github_ci_job_id": 120625628326,
+        "github_ci_event": "pull_request",
         "github_ci_conclusion": "success",
         "tests_verified": 60,
-        "test_scope": "SYNTHETIC_ACCOUNTING_ONLY"
+        "test_scope": "SYNTHETIC_ACCOUNTING_ONLY",
+        "new_issuer_evidence": "etf_single_rotation/metadata/510300_20220112_dividend_issuer_mirror_crosscheck.json"
       }
     },
     {
@@ -113,5 +115,5 @@
   "latest_verified_run": 39599580852,
   "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 13 sequential stages; 38 tests OK; 48 Drive uploads; all 5 declared ETF halts source-matched",
   "last_known_research_status": "NOT_FOR_TRADING",
-  "updated_utc": "2026-10-23T14:56:24Z"
+  "updated_utc": "2026-10-23T21:16:26Z"
 }
