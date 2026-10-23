@@ -1,0 +1,22 @@
+name: Exam intelligence pilot
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 1 * * *'
+permissions:
+  contents: read
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Unit tests
+        run: python -m unittest discover -s exam_intelligence/tests
+      - name: Source readiness check
+        run: python exam_intelligence/collector.py --dry-run
+      - name: Live collection only after source verification
+        if: ${{ vars.EXAM_ENABLE_LIVE == 'true' }}
+        run: python exam_intelligence/collector.py

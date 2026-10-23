@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "regions": [
+    "JS",
+    "AH",
+    "ZJ",
+    "SH"
+  ],
+  "sources": [
+    {
+      "id": "js_hrss",
+      "region": "JS",
+      "topic": "vocational",
+      "organization": "江苏省人力资源和社会保障厅",
+      "url": "https://jshrss.jiangsu.gov.cn/",
+      "enabled": false,
+      "verification": "official entry point; notice endpoint pending review"
+    },
+    {
+      "id": "ah_hrss",
+      "region": "AH",
+      "topic": "vocational",
+      "organization": "安徽省人力资源和社会保障厅",
+      "url": "https://hrss.ah.gov.cn/",
+      "enabled": false,
+      "verification": "official entry point; notice endpoint pending review"
+    },
+    {
+      "id": "zj_hrss",
+      "region": "ZJ",
+      "topic": "vocational",
+      "organization": "浙江省人力资源和社会保障厅",
+      "url": "https://rlsbt.zj.gov.cn/",
+      "enabled": false,
+      "verification": "official entry point; notice endpoint pending review"
+    },
+    {
+      "id": "sh_hrss",
+      "region": "SH",
+      "topic": "vocational",
+      "organization": "上海市人力资源和社会保障局",
+      "url": "https://rsj.sh.gov.cn/",
+      "enabled": false,
+      "verification": "official entry point; notice endpoint pending review"
+    },
+    {
+      "id": "samr",
+      "region": "CN",
+      "topic": "special_equipment",
+      "organization": "国家市场监督管理总局",
+      "url": "https://www.samr.gov.cn/",
+      "enabled": false,
+      "verification": "specific regulations and permitted fetch routes pending review"
+    }
+  ]
+}
