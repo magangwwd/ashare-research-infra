@@ -10,10 +10,12 @@ on:
       - "etf_single_rotation/experiments/dividend_receivable_ledger.py"
       - "etf_single_rotation/experiments/dividend_cash_availability.py"
       - "etf_single_rotation/experiments/registered_consolidation_512100.py"
+      - "etf_single_rotation/experiments/registered_consolidation_510500.py"
       - "etf_single_rotation/experiments/test_corporate_action_audit.py"
       - "etf_single_rotation/experiments/test_dividend_receivable_ledger.py"
       - "etf_single_rotation/experiments/test_dividend_cash_availability.py"
       - "etf_single_rotation/experiments/test_registered_consolidation_512100.py"
+      - "etf_single_rotation/experiments/test_registered_consolidation_510500.py"
   pull_request:
     branches:
       - feature/etf-single-rotation-v1
@@ -50,7 +52,8 @@ jobs:
             etf_single_rotation.experiments.test_corporate_action_audit \
             etf_single_rotation.experiments.test_dividend_receivable_ledger \
             etf_single_rotation.experiments.test_dividend_cash_availability \
-            etf_single_rotation.experiments.test_registered_consolidation_512100
+            etf_single_rotation.experiments.test_registered_consolidation_512100 \
+            etf_single_rotation.experiments.test_registered_consolidation_510500
       - name: Explicitly retain non-trading research gate
         run: |
           echo "REVIEW_REQUIRED / NOT_FOR_TRADING"
