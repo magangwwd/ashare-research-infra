@@ -1,5 +1,10 @@
 # 通用自主研发标准变更记录
 
+## v1.0.1 / 2026-10-23
+- 修复 Receipt Schema 未接受真实 `pull_request` GitHub 事件的问题；已存在的 ETF-DIV-004 scoped CI 收据 `39941628093` 真实事件为 `pull_request`，按 v1.0.0 枚举会校验失败。
+- 只扩展事件枚举、补充回归测试和说明；保留 `schema_version: 1.0.0` 兼容旧收据，不修改ETF研究队列、冻结策略、CI调度或任何验收状态。
+- 不把 44/44 合成测试当作分红总回报或 Drive 验收；ETF-DIV-004 仍 REVIEW_REQUIRED / NOT_FOR_TRADING。
+
 ## v1.0.0 / 2026-10-21
 - 首次制定跨项目“自主接续”标准，结合ETF任务队列与BTC巡检/去重/故障处理。
 - 记录ETF真实成功run 39597990839、BTC真实schedule run 39596575303、BTC前后两次去重验收run 39589940046。
