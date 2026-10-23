@@ -1,0 +1,57 @@
+name: ETF DIV-004 scoped audit unit tests
+# Isolated research-only validation. No market downloads, Drive writes or trading.
+on:
+  push:
+    branches:
+      - research/etf-div004-event-audit-20261021
+    paths:
+      - ".github/workflows/etf-div004-scoped-ci.yml"
+      - "etf_single_rotation/experiments/audit_corporate_actions.py"
+      - "etf_single_rotation/experiments/dividend_receivable_ledger.py"
+      - "etf_single_rotation/experiments/dividend_cash_availability.py"
+      - "etf_single_rotation/experiments/registered_consolidation_512100.py"
+      - "etf_single_rotation/experiments/test_corporate_action_audit.py"
+      - "etf_single_rotation/experiments/test_dividend_receivable_ledger.py"
+      - "etf_single_rotation/experiments/test_dividend_cash_availability.py"
+      - "etf_single_rotation/experiments/test_registered_consolidation_512100.py"
+  pull_request:
+    branches:
+      - feature/etf-single-rotation-v1
+    paths:
+      - ".github/workflows/etf-div004-scoped-ci.yml"
+      - "etf_single_rotation/experiments/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-div004-scoped-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  synthetic-unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact event head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Log exact tested SHA
+        run: git rev-parse HEAD
+      - name: Synthetic accounting unit tests only
+        run: |
+          python -m unittest -v \
+            etf_single_rotation.experiments.test_corporate_action_audit \
+            etf_single_rotation.experiments.test_dividend_receivable_ledger \
+            etf_single_rotation.experiments.test_dividend_cash_availability \
+            etf_single_rotation.experiments.test_registered_consolidation_512100
+      - name: Explicitly retain non-trading research gate
+        run: |
+          echo "REVIEW_REQUIRED / NOT_FOR_TRADING"
+          echo "Synthetic unit tests do not certify issuer events, market prices, Drive readback, or total return."
