@@ -65,7 +65,7 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "2019-12-05 issuer-authored 510300 dividend PDF third-party mirror + 2019-12-10 primary SSE ex-date crosscheck committed at 2eb0dbf3; original issuer/SSE PDF bytes not yet verified. Next obtain original PDFs for 2019 events and remaining primary notices, independent raw prices, registered shares and actual broker cash settlement, portfolio-level return reconciliation, scoped CI and DIV004 Artifact/Drive readback. PR #92 stays draft; PAPER-005 remains dependency blocked.",
+      "next_action": "2019-01-16 ex-date crosschecked to SSE 2019-01-15 OPTIONS FULL SIMULATION notice (official date only; NOT issuer dividend amount or cash settlement); evidence file 510300_20190115_dividend_sse_simulation_exdate_crosscheck.json commit 742cd5ee. Obtain original issuer PDF, verify dividend amount, record/payment dates and actual broker cash availability; independently reconcile prices and fund_adj, then new DIV004 Artifact/Drive readback. Draft PR #92 and PAPER-005 dependency gate remain unchanged.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
@@ -79,7 +79,7 @@
           "No new DIV004 Artifact and Google Drive write/readback",
           "Main SOP v1.0.0 rejects truthful pull_request receipts; draft PR #98 pending"
         ],
-        "last_checked_utc": "2026-10-23T23:08:00Z",
+        "last_checked_utc": "2026-10-23T23:34:39.722Z",
         "github_ci_run_id": 40015272119,
         "github_ci_job_id": 120625628326,
         "github_ci_event": "pull_request",
@@ -87,13 +87,13 @@
         "tests_verified": 60,
         "test_scope": "SYNTHETIC_ACCOUNTING_ONLY",
         "new_issuer_evidence": "etf_single_rotation/metadata/510300_20220112_dividend_issuer_mirror_crosscheck.json",
-        "latest_new_evidence_path": "etf_single_rotation/metadata/510300_20191205_dividend_issuer_pdf_mirror_sse_crosscheck.json",
-        "latest_new_evidence_commit": "2eb0dbf3f303ad17e76718d3315135ee11d984e2",
-        "latest_new_evidence_readback_blob_sha": "f051c28b84f437c37240c0da68d7d17485e16cb0",
-        "last_verified_scoped_ci_run": 40030140323,
-        "last_verified_scoped_ci_head": "38b1146bcb13ced3d2f10d601e8c415ce989439c",
+        "latest_new_evidence_path": "etf_single_rotation/metadata/510300_20190115_dividend_sse_simulation_exdate_crosscheck.json",
+        "latest_new_evidence_commit": "742cd5eea29157e8d6c1b65aef964bb8ef75982d",
+        "latest_new_evidence_readback_blob_sha": "4acfb1f8cfd13dc35b4d4a203770b34af1c3cae9",
+        "last_verified_scoped_ci_run": 40038201680,
+        "last_verified_scoped_ci_head": "90ff7244bea6df56f3b93661b6b934a585ab1e99",
         "last_verified_scoped_ci_tests": "60/60 SYNTHETIC ONLY",
-        "latest_new_evidence_ci": "NOT_VERIFIED_AT_TIME_OF_BACKLOG_UPDATE"
+        "latest_new_evidence_ci": "PENDING_NEW_SCOPED_CI; latest prior 60/60 run 40038201680 at head 90ff7244"
       }
     },
     {
@@ -121,5 +121,5 @@
   "latest_verified_run": 39599580852,
   "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 13 sequential stages; 38 tests OK; 48 Drive uploads; all 5 declared ETF halts source-matched",
   "last_known_research_status": "NOT_FOR_TRADING",
-  "updated_utc": "2026-10-23T23:08:00Z"
+  "updated_utc": "2026-10-23T23:34:39.722Z"
 }
