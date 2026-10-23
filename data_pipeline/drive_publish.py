@@ -121,21 +121,22 @@ class Drive:
             while offset < size:
                 block = source.read(8 * 1024 * 1024)
                 end = offset + len(block) - 1
-                recovered_complete = False
                 try:
                     reply = self.request("PUT", location, expected=(200, 201, 308), data=block,
                                          headers={"Content-Length": str(len(block)),
                                                   "Content-Range": f"bytes {offset}-{end}/{size}"})
                 except PublishError:
                     # Resolve a lost response before sending the next chunk.
-                    probe = self.request("PUT", location, expected=(308,),
+                    probe = self.request("PUT", location, expected=(200, 201, 308),
                                          data=b"", headers={"Content-Length": "0",
                                                            "Content-Range": f"bytes */{size}"})
-                    if probe.headers.get("Range") != f"bytes=0-{end}":
-                        raise PublishError("Upload offset mismatch; production pointer unchanged.")
-                    recovered_complete = end + 1 == size
+                    if probe.status_code == 308:
+                        if probe.headers.get("Range") != f"bytes=0-{end}":
+                            raise PublishError("Upload offset mismatch; production pointer unchanged.")
+                    elif end + 1 != size:
+                        raise PublishError("Upload completed before all bytes were sent.")
                     reply = probe
-                if end + 1 == size and reply.status_code == 308 and not recovered_complete:
+                if end + 1 == size and reply.status_code == 308:
                     raise PublishError("Upload was not completed.")
                 if end + 1 < size and reply.status_code != 308:
                     raise PublishError("Upload ended before all bytes were sent.")
