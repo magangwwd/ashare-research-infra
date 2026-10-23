@@ -29,7 +29,14 @@ class SchemaTests(unittest.TestCase):
             r=mod.inspect_archive(path,digest)
             self.assertEqual(r["format"],"JSON_LINES")
             self.assertEqual(r["json_record_keys"],["bids","ts"])
-            self.assertNotIn("123",str(r))
+            # Hashes are opaque: a digest can coincidentally contain the digits "123".
+            # Check the report structure instead of searching arbitrary hash text.
+            self.assertNotIn("ts", r)
+            self.assertNotIn("bids", r)
+            self.assertTrue(all(
+                isinstance(value, (str, int, float, bool))
+                for key, value in r.items() if key != "json_record_keys"
+            ))
             self.assertFalse(r["raw_market_events_in_report"])
 
     def test_csv_header_only(self):
