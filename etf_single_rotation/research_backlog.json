@@ -65,7 +65,7 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "Review PR #92 issuer evidence, verify original issuer notices and investor cash availability for all 8 ETFs, reconcile raw/fund_adj returns, run scoped CI on exact PR SHA and independently verify new Drive artifacts. Remain REVIEW_REQUIRED; PAPER-005 dependency blocked.",
+      "next_action": "Review draft PR #92; add record-date dividend entitlement tests and issuer-verified dividend registry in isolated PR; run scoped CI and independent price/Drive readback before VERIFIED_DONE. PAPER-005 remains dependency blocked.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
@@ -78,16 +78,7 @@
           "Record-date cash receivable/payment ledger unverified",
           "Cloud CI and Drive audit for new code not run"
         ],
-        "last_checked_utc": "2026-10-23T03:06:34Z",
-        "issuer_crosscheck_510300_2025": {
-          "commit_sha": "b5c50369c6e3eacb24368dbcd7fa21906c5f14b7",
-          "path": "etf_single_rotation/metadata/510300_20250618_dividend_date_crosscheck.json",
-          "sse_ex_date_crosschecked": true,
-          "original_issuer_hosted_pdf_verified": false,
-          "investor_cash_available_date_verified": false,
-          "github_ci_verified": false,
-          "drive_readback_verified": false
-        }
+        "last_checked_utc": "2026-10-21T22:26:42Z"
       }
     },
     {
