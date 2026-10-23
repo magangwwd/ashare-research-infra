@@ -103,3 +103,73 @@ def cash_entitlement_ledger(registry, record_date_shares, observation_dates):
             "status": "RESEARCH_ACCOUNTING_NOT_TOTAL_RETURN_CERTIFICATION",
         })
     return {"events": details, "daily": rows, "status": "REVIEW_REQUIRED_NOT_FOR_TRADING"}
+
+
+def record_date_snapshots_from_fills(registry, opening_date, opening_positions, fills):
+    """Derive end-of-record-date holdings from an explicit ordered fill ledger.
+
+    Synthetic/research accounting only. opening_positions are shares at the
+    *end* of opening_date; all fills must occur strictly later. Same-day fills
+    must be supplied in actual execution order. No prices, brokerage settlement,
+    or market-data certification is implied. Enforces a single ETF at each EOD.
+    """
+    events = validate_events(registry)
+    record_dates = sorted({
+        (event["symbol"], _day(event["registration_date"]))
+        for event in events if event["type"] == "CASH_DIVIDEND"
+    }, key=lambda pair: (pair[1], pair[0]))
+    if not record_dates:
+        raise ValueError("No cash-dividend record dates")
+    start = _day(opening_date)
+    if start >= record_dates[0][1]:
+        raise ValueError("Opening date must precede earliest record date")
+    allowed = {
+        "510300.SH", "510500.SH", "159915.SZ", "510050.SH",
+        "510880.SH", "518880.SH", "512100.SH", "512690.SH",
+    }
+    positions = {}
+    for symbol, shares in opening_positions.items():
+        if symbol not in allowed:
+            raise ValueError("Unexpected ETF in opening positions")
+        amount = _nonnegative(shares, "opening shares")
+        if not amount.is_integer():
+            raise ValueError("Opening shares must be whole units")
+        positions[symbol] = int(amount)
+    if sum(v > 0 for v in positions.values()) > 1:
+        raise ValueError("More than one ETF held at opening")
+    prior_day = start
+    normalized = []
+    for fill in fills:
+        if not isinstance(fill, dict):
+            raise ValueError("Invalid fill")
+        symbol = fill.get("symbol")
+        if symbol not in allowed:
+            raise ValueError("Unexpected ETF in fill")
+        day = _day(fill.get("date"))
+        if day <= start or day < prior_day:
+            raise ValueError("Fills must be chronological and after opening")
+        prior_day = day
+        side = fill.get("side")
+        if side not in ("BUY", "SELL"):
+            raise ValueError("Invalid fill side")
+        shares = _nonnegative(fill.get("shares"), "fill shares")
+        if shares <= 0 or not shares.is_integer():
+            raise ValueError("Fill shares must be positive whole units")
+        normalized.append((day, symbol, side, int(shares)))
+    snapshots = {}
+    index = 0
+    for symbol, record_day in record_dates:
+        while index < len(normalized) and normalized[index][0] <= record_day:
+            day = normalized[index][0]
+            while index < len(normalized) and normalized[index][0] == day:
+                _, traded, side, shares = normalized[index]
+                positions[traded] = positions.get(traded, 0) + (
+                    shares if side == "BUY" else -shares
+                )
+                if positions[traded] < 0:
+                    raise ValueError("Sell exceeds held ETF shares")
+                index += 1
+            if sum(v > 0 for v in positions.values()) > 1:
+                raise ValueError("More than one ETF held at day end")
+        snapshots[(symbol, record_day.isoformat())] = positions.get(symbol, 0)
+    return snapshots
