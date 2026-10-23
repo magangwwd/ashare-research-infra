@@ -3,8 +3,8 @@
   "recorded_at": "2026-10-23T07:07:40.355474+00:00",
   "service": "ashare-task01",
   "request": "Stop all local Task 01 services after a durable handoff archive, per explicit user instruction.",
-  "phase": "ARCHIVED_SHUTDOWN_PENDING",
-  "local_stop_verified": false,
+  "phase": "INTENTIONALLY_STOPPED_AFTER_VERIFIED_ARCHIVE",
+  "local_stop_verified": true,
   "github_production_takeover_verified": false,
   "archive": {
     "created_at": "2026-10-23T07:01:15.862703+00:00",
@@ -277,5 +277,9 @@
     "The successful recovery drill covers the handoff archive and SQLite integrity, NOT the complete historical database.",
     "Current scope is existing datasets from 2020 and 15-minute bars from 2026.",
     "Do not remove STOP or run a cloud resume/start command after Actions becomes the writer."
-  ]
+  ],
+  "stopped_at": "2026-10-23T07:10:01.672284+00:00",
+  "stop_verification": "stop-verification.json",
+  "post_stop_live_process_scan_passed": true,
+  "runtime_startup_dry_run_verified_no_services_started": true
 }
