@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF fixed-8 single-rotation research",
+  "task_id": "ETF-DIV-004",
+  "run_id": 39973893899,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "07687da1c19c72335a6b05bce5fabb2cd9d6bc3c",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": null,
+    "provenance": "Synthetic-only split-before-record-date entitlement checks; issuer notice for 512690.SH 2021-05-14 split ratio 2x (reproduced, not account registration). No new historical price dataset."
+  },
+  "checks": {
+    "tests_passed": 60,
+    "tests_failed": 0,
+    "output_sha256": null
+  },
+  "artifact_urls": [],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Independently reconcile event-window unadjusted prices and fund_adj, actual registered shares and cash availability, full 8-ETF dividend coverage; obtain real output SHA/Drive readback before ETF-DIV-004 acceptance. Keep PAPER-005 blocked.",
+  "created_at_utc": "2026-10-23T14:56:24Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "60 synthetic tests pass; actual holder registration, raw price/fund_adj and cash settlement plus new Artifact/Drive readback unverified. Not for trading.",
+  "fingerprint": "scoped-ci:07687da1c19c72335a6b05bce5fabb2cd9d6bc3c:39973893899:1",
+  "agent_review_id": "ETF-DIV-004-SPLIT-39973893899"
+}
