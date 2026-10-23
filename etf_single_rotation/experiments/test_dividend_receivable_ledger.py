@@ -4,6 +4,7 @@ import unittest
 from etf_single_rotation.experiments.dividend_receivable_ledger import (
     apply_unit_change,
     cash_entitlement_ledger,
+    record_date_snapshots_from_fills,
 )
 
 
@@ -101,6 +102,79 @@ class CashEntitlementTests(unittest.TestCase):
             apply_unit_change(10, unit_event("UNIT_SPLIT", 0.5))
         with self.assertRaisesRegex(ValueError, "Expected a unit-changing"):
             apply_unit_change(10, dividend())
+
+
+
+class RecordDateFillSnapshotTests(unittest.TestCase):
+    """Synthetic fills, not actual strategy executions or account settlement."""
+
+    def setUp(self):
+        self.registry = {"schema_version": 1, "events": [dividend()]}
+        self.start = "2021-12-29"
+
+    def snapshots(self, opening=None, fills=None):
+        return record_date_snapshots_from_fills(
+            self.registry, self.start, opening or {}, fills or []
+        )
+
+    def test_record_date_buy_is_entitled(self):
+        snap = self.snapshots(fills=[
+            {"date": "2021-12-30", "symbol": "512690.SH", "side": "BUY", "shares": 10}
+        ])
+        self.assertEqual(snap[("512690.SH", "2021-12-30")], 10)
+        rows = cash_entitlement_ledger(
+            self.registry, snap, ["2021-12-30", "2021-12-31", "2022-01-06"]
+        )["daily"]
+        self.assertEqual(rows[1]["cash_receivable_cny"], 3.5)
+
+    def test_record_date_sell_is_not_entitled(self):
+        snap = self.snapshots(opening={"512690.SH": 10}, fills=[
+            {"date": "2021-12-30", "symbol": "512690.SH", "side": "SELL", "shares": 10}
+        ])
+        self.assertEqual(snap[("512690.SH", "2021-12-30")], 0)
+
+    def test_buy_after_record_date_does_not_backdate_entitlement(self):
+        snap = self.snapshots(fills=[
+            {"date": "2021-12-31", "symbol": "512690.SH", "side": "BUY", "shares": 10}
+        ])
+        self.assertEqual(snap[("512690.SH", "2021-12-30")], 0)
+
+    def test_same_day_switch_to_dividend_fund(self):
+        snap = self.snapshots(opening={"510300.SH": 10}, fills=[
+            {"date": "2021-12-30", "symbol": "510300.SH", "side": "SELL", "shares": 10},
+            {"date": "2021-12-30", "symbol": "512690.SH", "side": "BUY", "shares": 20},
+        ])
+        self.assertEqual(snap[("512690.SH", "2021-12-30")], 20)
+
+    def test_sell_more_than_held_fails_closed(self):
+        with self.assertRaisesRegex(ValueError, "Sell exceeds"):
+            self.snapshots(fills=[
+                {"date": "2021-12-30", "symbol": "512690.SH", "side": "SELL", "shares": 1}
+            ])
+
+    def test_dual_end_of_day_holdings_fail_closed(self):
+        with self.assertRaisesRegex(ValueError, "More than one ETF"):
+            self.snapshots(opening={"510300.SH": 10}, fills=[
+                {"date": "2021-12-30", "symbol": "512690.SH", "side": "BUY", "shares": 1}
+            ])
+
+    def test_bad_fill_order_or_fractional_units_fail_closed(self):
+        with self.assertRaisesRegex(ValueError, "chronological"):
+            self.snapshots(fills=[
+                {"date": "2021-12-30", "symbol": "512690.SH", "side": "BUY", "shares": 1},
+                {"date": "2021-12-29", "symbol": "512690.SH", "side": "SELL", "shares": 1},
+            ])
+        with self.assertRaisesRegex(ValueError, "whole units"):
+            self.snapshots(fills=[
+                {"date": "2021-12-30", "symbol": "512690.SH", "side": "BUY", "shares": 1.5}
+            ])
+
+    def test_missing_pre_record_opening_baseline_fails_closed(self):
+        with self.assertRaisesRegex(ValueError, "Opening date"):
+            record_date_snapshots_from_fills(
+                self.registry, "2021-12-30", {}, []
+            )
+
 
 
 if __name__ == "__main__":
