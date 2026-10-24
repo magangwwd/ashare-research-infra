@@ -146,6 +146,17 @@ class RecordDateFillSnapshotTests(unittest.TestCase):
         ])
         self.assertEqual(snap[("512690.SH", "2021-12-30")], 20)
 
+    def test_intraday_overlap_cannot_be_hidden_by_later_same_day_sale(self):
+        # Synthetic order matters: BUY before SELL briefly holds two ETFs.
+        # The end-of-day portfolio alone would misleadingly appear valid.
+        with self.assertRaisesRegex(ValueError, "More than one ETF"):
+            self.snapshots(opening={"510300.SH": 10}, fills=[
+                {"date": "2021-12-30", "symbol": "512690.SH",
+                 "side": "BUY", "shares": 20},
+                {"date": "2021-12-30", "symbol": "510300.SH",
+                 "side": "SELL", "shares": 10},
+            ])
+
     def test_sell_more_than_held_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "Sell exceeds"):
             self.snapshots(fills=[
