@@ -7,6 +7,7 @@ import collections
 import datetime as dt
 import hashlib
 import json
+import math
 from pathlib import Path
 import tarfile
 
@@ -17,15 +18,23 @@ MAX_LINE_BYTES = 16 * 1024 * 1024
 
 
 def validate_price_levels(levels):
+    """Fail closed on every price/size entry, not only the first and last.
+
+    The official JSONL update may contain zero size (level deletion).
+    Finite positive prices and finite nonnegative sizes are required;
+    this is shape validation, NOT lossless sequence reconstruction.
+    """
     if not isinstance(levels, list):
         raise ValueError("Orderbook side is not an array")
-    if levels and (not isinstance(levels[0], list) or len(levels[0]) < 2):
-        raise ValueError("Unexpected orderbook price level shape")
-    for level in (levels[0:1] + levels[-1:] if levels else []):
+    for level in levels:
         if not isinstance(level, list) or len(level) < 2:
-            raise ValueError("Unexpected orderbook price level")
-        if float(level[0]) <= 0 or float(level[1]) < 0:
-            raise ValueError("Nonpositive price or negative size")
+            raise ValueError("Unexpected orderbook price level shape")
+        try:
+            price, size = float(level[0]), float(level[1])
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise ValueError("Non-numeric orderbook price or size") from exc
+        if not math.isfinite(price) or not math.isfinite(size) or price <= 0 or size < 0:
+            raise ValueError("Nonfinite or invalid orderbook price or size")
 
 
 def audit_stream(lines, utc_date=DAY):
