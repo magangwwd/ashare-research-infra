@@ -26,7 +26,13 @@ class CashAvailabilityTests(unittest.TestCase):
             "2025-06-17", "2025-06-18", "2025-06-26",
             "2025-06-27", "2025-06-30", "2025-07-01",
         ]
-        self.availability = {("510300.SH", "2025-06-17"): "2025-06-30"}
+        self.availability = {
+            ("510300.SH", "2025-06-17"): {
+                "available_date": "2025-06-30",
+                "evidence_reference": "SYNTHETIC_FIXTURE_NO_REAL_ACCOUNT",
+                "evidence_sha256": "a" * 64,
+            }
+        }
 
     def run_ledger(self, availability=None, snapshots=None):
         return cash_availability_ledger(
@@ -49,12 +55,38 @@ class CashAvailabilityTests(unittest.TestCase):
             self.run_ledger(availability={})
 
     def test_early_availability_fails_closed(self):
+        evidence = dict(self.availability[("510300.SH", "2025-06-17")])
+        evidence["available_date"] = "2025-06-26"
         with self.assertRaisesRegex(ValueError, "cannot precede issuer payment"):
-            self.run_ledger(availability={("510300.SH", "2025-06-17"): "2025-06-26"})
+            self.run_ledger(availability={("510300.SH", "2025-06-17"): evidence})
 
     def test_bad_date_fails_closed(self):
+        evidence = dict(self.availability[("510300.SH", "2025-06-17")])
+        evidence["available_date"] = "2025-06-99"
         with self.assertRaisesRegex(ValueError, "Invalid availability date"):
-            self.run_ledger(availability={("510300.SH", "2025-06-17"): "2025-06-99"})
+            self.run_ledger(availability={("510300.SH", "2025-06-17"): evidence})
+
+    def test_bare_date_cannot_be_mislabelled_verified(self):
+        with self.assertRaisesRegex(ValueError, "dated evidence metadata"):
+            self.run_ledger(availability={
+                ("510300.SH", "2025-06-17"): "2025-06-30"
+            })
+
+    def test_missing_reference_fails_closed(self):
+        evidence = dict(self.availability[("510300.SH", "2025-06-17")])
+        evidence["evidence_reference"] = " "
+        with self.assertRaisesRegex(ValueError, "reference is missing"):
+            self.run_ledger(availability={
+                ("510300.SH", "2025-06-17"): evidence
+            })
+
+    def test_malformed_evidence_sha_fails_closed(self):
+        evidence = dict(self.availability[("510300.SH", "2025-06-17")])
+        evidence["evidence_sha256"] = "not-a-sha"
+        with self.assertRaisesRegex(ValueError, "SHA256"):
+            self.run_ledger(availability={
+                ("510300.SH", "2025-06-17"): evidence
+            })
 
     def test_zero_entitlement_does_not_require_availability(self):
         rows = self.run_ledger(availability={}, snapshots={("510300.SH", "2025-06-17"): 0})
