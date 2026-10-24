@@ -65,7 +65,7 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "SSE-hosted 510300 2023 audited annual-report §7.4.11 page 52 independently inspected (source evidence commit e6ffa8b0831139505e33bd89b7c41ce812786ad3): record 2023-01-13, ex 2023-01-16, 0.6400 CNY/10 units, fund-level total 1193215211.55 CNY; 2024 subsequent-event declaration also corroborated. Original PDF bytes/SHA256, independent market prices/fund_adj, strategy record-date shares/broker cash and new audit Artifact/Drive readback still missing. This is source evidence, NOT economic total-return acceptance. Keep REVIEW_REQUIRED/NOT_FOR_TRADING and PAPER-005 blocked.",
+      "next_action": "Review exact-share accumulation/split overflow guard at 582f3a9cde7f6b4b75894888d0eac38943223a51 (68/68 scoped synthetic tests, Run 40089792842). Still require original issuer PDF SHA, independent raw price/fund_adj economic-return audit, actual record-date holdings and broker cash, new Artifact/Drive readback and schema PR #98 review; remain REVIEW_REQUIRED/NOT_FOR_TRADING; PAPER-005 blocked.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
@@ -90,9 +90,9 @@
         "latest_new_evidence_path": "etf_single_rotation/metadata/510300_20220112_dividend_issuer_mirror_crosscheck.json",
         "latest_new_evidence_commit": "70580947033f9cb6645160a02b2805be1c1709f1",
         "latest_new_evidence_readback_blob_sha": "6fa4bb4ff304bffaeea0ed4453557f5ef30521de",
-        "last_verified_scoped_ci_run": 40070195131,
-        "last_verified_scoped_ci_head": "b00fa0dbcf1366d675e374f59855accfd3a10805",
-        "last_verified_scoped_ci_tests": "66/66 SYNTHETIC ONLY, BEFORE EVIDENCE-ONLY COMMIT",
+        "last_verified_scoped_ci_run": 40089792842,
+        "last_verified_scoped_ci_head": "582f3a9cde7f6b4b75894888d0eac38943223a51",
+        "last_verified_scoped_ci_tests": "68/68 SYNTHETIC, EXACT CHECKOUT SHA; NO ARTIFACT/DRIVE",
         "latest_new_evidence_ci": "EXACT_SHA_SCOPED_CI_40066630564_JOB_120791154910_66_OF_66_SYNTHETIC_ONLY_NO_ARTIFACT",
         "latest_2022_issuer_annual_report_sse_exdate_crosscheck": "etf_single_rotation/metadata/510300_20220112_dividend_issuer_mirror_crosscheck.json",
         "latest_2022_issuer_annual_report_evidence_commit": "ea2a8a9f322841ed984b25cff6dc0a341a2b6c30",
@@ -101,9 +101,11 @@
         "latest_2022_scope": "SSE_HOSTED_ORIGINAL_ANNUAL_REPORT_TEXT_AND_PAGE_IMAGE_VERIFIED_NO_PDF_BYTES_SHA_NO_ACCOUNT_CASH",
         "latest_2022_primary_page_verified": "2022 annual report §7.4.11 printed page 161, PDF page index 160",
         "latest_2022_primary_report_evidence_commit": "70580947033f9cb6645160a02b2805be1c1709f1",
-        "last_verified_scoped_ci_job": 120801770743,
+        "last_verified_scoped_ci_job": 120859962433,
         "latest_primary_issuer_evidence_path": "etf_single_rotation/metadata/510300_2023_audited_annual_report_dividend_crosscheck.json",
-        "latest_primary_issuer_evidence_commit": "e6ffa8b0831139505e33bd89b7c41ce812786ad3"
+        "latest_primary_issuer_evidence_commit": "e6ffa8b0831139505e33bd89b7c41ce812786ad3",
+        "latest_overflow_guard_receipt": "etf_single_rotation/metadata/receipts/ETF_DIV004_exact_share_overflow_scoped_ci_40089792842.json",
+        "latest_overflow_guard_scope": "Reject combined fills or post-split holdings above 2**53-1 before record-date snapshots; synthetic only"
       }
     },
     {
