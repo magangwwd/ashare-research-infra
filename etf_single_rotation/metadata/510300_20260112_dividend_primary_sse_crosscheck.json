@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "research_only": true,
+  "trading_status": "NOT_FOR_TRADING",
+  "checked_on_utc": "2026-10-23",
+  "primary_source": {
+    "publisher": "Shanghai Stock Exchange (SSE) original hosted issuer announcement",
+    "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-01-12/510300_20260112_VTCZ.pdf",
+    "title": "华泰柏瑞沪深300交易型开放式指数证券投资基金分红公告",
+    "notice_date": "2026-01-12",
+    "source_status": "PRIMARY_EXCHANGE_HOSTED_PDF_TEXT_READ_VERIFIED",
+    "pdf_page_count": 3,
+    "pdf_byte_sha256": null,
+    "pdf_bytes_downloaded": false
+  },
+  "event": {
+    "registration_date": "2026-01-16",
+    "ex_dividend_date": "2026-01-19",
+    "dividend_per_10_shares_cny": "1.2300",
+    "dividend_per_share_cny": "0.1230",
+    "announced_payment_date": "2026-01-27",
+    "issuer_to_csd_date": "2026-01-23",
+    "csd_to_broker_date": "2026-01-26",
+    "investor_cash_available_date": null,
+    "entitled_holders": "CSDC Shanghai registered holders after SSE market close on 2026-01-16"
+  },
+  "independent_corrob": {
+    "source": "https://data.eastmoney.com/notices/detail/510300/AN202601111816921512.html",
+    "status": "ISSUER_NOTICE_MIRROR_NOT_INDEPENDENT_PRIMARY"
+  },
+  "accounting_constraints": [
+    "Registration date fixes holder entitlement; ex-date may affect market price and fund_adj; never book both fund_adj total return and duplicate cash without reconciliation.",
+    "Issuer-to-CSD transfer 2026-01-23 and CSD-to-broker transfer 2026-01-26 are not investor-spendable cash dates.",
+    "Issuer-announced 2026-01-27 payment is not independently verified broker/account-level cash availability.",
+    "Do not infer supplier fund_adj error or strategy performance change from event dates alone."
+  ],
+  "evidence_scope": "One of eight 510300.SH cash dividend events within 2019-2026; the other seven and other seven ETF event registries remain unverified at primary-source level.",
+  "tests_for_this_evidence": "NOT_RUN_NO_EXECUTABLE_CODE_CHANGE",
+  "market_raw_price_and_fund_adj_reconciliation": "NOT_PERFORMED",
+  "drive_write_readback": "NOT_PERFORMED",
+  "status": "REVIEW_REQUIRED",
+  "next_action": "Verify remaining 7 research-window 510300 issuer notices, raw prices/fund_adj economic-return bridge, exact account cash availability and independent artifact/Drive readback. Keep ETF-PAPER-005 blocked."
+}

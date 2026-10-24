@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF fixed-8 single-rotation research",
+  "task_id": "ETF-DIV-004",
+  "run_id": 39969496740,
+  "run_attempt": 1,
+  "github_event": "pull_request",
+  "head_sha": "35e9fe25f03b88612679b69faca971864a3bc001",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": null,
+    "provenance": "Issuer 2015-04-15 510500.SH registered-share conversion result (https://pdf.dfcfw.com/pdf/H2_AN201504150009203406_1.pdf); synthetic tests only, not historical raw-price validation."
+  },
+  "checks": {
+    "tests_passed": 52,
+    "tests_failed": 0,
+    "output_sha256": null
+  },
+  "artifact_urls": [],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Verify independent raw closes/fund_adj and actual account-level post-consolidation units; resolve SOP schema PR #98 to accept truthful pull_request event; independently verify research artifact/Drive readback before DIV004 VERIFIED_DONE. PAPER-005 remains blocked.",
+  "created_at_utc": "2026-10-23T14:25:50Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "52 synthetic CI tests pass, but 510500 actual CSDC register, economic returns, other issuer dividends and Drive readback are not independently certified. Main v1.0.0 schema does not yet accept the truthful pull_request event; PR #98 is draft.",
+  "fingerprint": "scoped-ci:35e9fe25f03b88612679b69faca971864a3bc001:39969496740:1",
+  "agent_review_id": "ETF-DIV-004-510500-39969496740"
+}

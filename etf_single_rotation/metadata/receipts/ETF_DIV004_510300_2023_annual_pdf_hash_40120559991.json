@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40120559991,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "3b58e742a20e8491ac647dddeea51118b43e3d50",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": "cbe1900cb617a67a804dc463e6658f662917b04361266bef51b7bd139a6433be",
+    "provenance": "Official SSE-hosted 510300.SH 2023 audited annual report, https://www.sse.com.cn/disclosure/fund/announcement/c/new/2024-03-30/510300_20240330_437H.pdf; 871278 PDF bytes downloaded by scoped GitHub job; exact original-byte SHA256 verified in Artifact manifest."
+  },
+  "checks": {
+    "tests_passed": 0,
+    "tests_failed": 0,
+    "output_sha256": "f9aebce3207f3b97a9ae2d4d974dce9da19dc601de4f099d4761e243f8e549cf"
+  },
+  "artifact_urls": [
+    "https://github.com/magangwwd/ashare-research-infra/actions/runs/40120559991/artifacts/12570996758"
+  ],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Independently reconcile 8-ETF raw_close/fund_adj, complete issuer dividend coverage, and verify record-date holdings and broker cash availability. Require fresh DIV004 Drive upload and byte readback before acceptance; do not unlock PAPER-005.",
+  "created_at_utc": "2026-10-24T18:24:45Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Source-byte hash and downloaded Artifact manifest are verified, but no independent price/total-return reconciliation, actual broker cash, or Google Drive write/readback; no full research acceptance.",
+  "fingerprint": "ETF-DIV-004:40120559991:3b58e742a20e8491ac647dddeea51118b43e3d50:cbe1900cb617a67a804dc463e6658f662917b04361266bef51b7bd139a6433be"
+}

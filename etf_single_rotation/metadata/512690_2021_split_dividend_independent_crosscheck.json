@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "task_id": "ETF-DIV-004",
+  "symbol": "512690.SH",
+  "research_only": true,
+  "trading_status": "NOT_FOR_TRADING",
+  "reviewed_on_utc": "2026-10-23",
+  "source_quality": "ISSUER_NOTICE_TEXT_REPRODUCED_BY_NEWS_PORTALS_AND_INDEPENDENT_SECONDARY_FUND_LISTINGS_NOT_DIRECT_ISSUER_HOSTED_ORIGINAL",
+  "unit_split": {
+    "record_date": "2021-05-13",
+    "effective_date": "2021-05-14",
+    "exchange_trading_suspended_on_effective_date": true,
+    "exchange_trading_resumed": "2021-05-17",
+    "new_units_per_old_unit": 2,
+    "pre_total_fund_units": 1217625087,
+    "post_total_fund_units": 2435250174,
+    "pre_unit_nav_cny": 2.6959,
+    "post_unit_nav_cny": 1.348,
+    "arithmetic_crosscheck": "1217625087 * 2 = 2435250174; issuer rounded per-unit NAV does not certify secondary-market closing price or total return.",
+    "issuer_result_announcement_reproduction": {
+      "url": "https://www.sohu.com/a/466808768_120988533",
+      "attribution": "中国证券报转载鹏华基金2021-05-17份额拆分结果及恢复交易公告"
+    },
+    "issuer_pre_event_announcement_reproduction": {
+      "url": "https://finance.sina.com.cn/roll/2021-05-11/doc-ikmxzfmm1691646.shtml",
+      "attribution": "鹏华基金实施份额拆分第二次提示性公告转载"
+    },
+    "secondary_listing": {
+      "url": "https://fundf10.eastmoney.com/fhsp_512690.html",
+      "type": "fund corporate action table"
+    },
+    "source_verification": "ISSUER_NOTICE_TEXT_REPRODUCTION_CORROBORATED_NOT_ORIGINAL_PDF",
+    "price_gap_interpretation": "2021-05-14 was a suspension/split day; do not invent a 2021-05-14 trade. Compare actual unadjusted closing prices on the surrounding traded dates, not a synthetic split-day price."
+  },
+  "cash_dividend": {
+    "announcement_date": "2021-12-29",
+    "registration_date": "2021-12-30",
+    "ex_dividend_date": "2021-12-31",
+    "issuer_announced_cash_payment_date": "2022-01-06",
+    "dividend_per_10_units_cny": 3.5,
+    "dividend_per_current_unit_cny": 0.35,
+    "distribution_mode": "CASH_ONLY",
+    "record_date_buy_entitled": true,
+    "record_date_sell_entitled": false,
+    "issuer_announcement_text_reproduction": {
+      "url": "https://vip.stock.finance.sina.com.cn/fund/go.php/vAkFundInfo_JJGKXX/q/2609129.phtml",
+      "attribution": "中国证券报2021-12-29鹏华基金2021年第1次分红公告原文转载"
+    },
+    "independent_secondary_listings": [
+      "https://basic.10jqka.com.cn/512690/bonus.html",
+      "https://fund.stockstar.com/funds/f10/fundfh_512690.html",
+      "https://fundf10.eastmoney.com/fhsp_512690.html"
+    ],
+    "investor_account_cash_available_date": null,
+    "availability_status": "NOT_VERIFIED_ISSUER_PAYMENT_DATE_NOT_PROOF_OF_BROKER_SPENDABLE_CASH",
+    "source_verification": "ISSUER_NOTICE_TEXT_REPRODUCTION_CORROBORATED_NOT_ACCOUNT_LEVEL_CASH_PROOF"
+  },
+  "existing_registry_consistency": {
+    "registry_path": "etf_single_rotation/metadata/corporate_action_evidence.json",
+    "split_ratio_and_date_match": true,
+    "dividend_amount_registration_ex_and_payment_dates_match": true,
+    "note": "Comparison to the current registry is metadata consistency only, not price/fund_adj or broker settlement certification."
+  },
+  "open_gaps": [
+    "Retrieve issuer-hosted originals and immutable copies if permitted.",
+    "Independently reconcile actual raw market closes and fund_adj across May 13/17 and Dec 30/31, including real market movement; investigate -200.738bp and -21.527bp diagnostics without assuming vendor error.",
+    "Validate record-date strategy share snapshots and real broker-available cash dates; prevent double counting adjusted prices and cash dividends.",
+    "Reconcile all eight ETFs and obtain independent artifact SHA/Drive readback; scoped CI alone does not unlock ETF-DIV-004."
+  ],
+  "acceptance_state": "REVIEW_REQUIRED",
+  "next_action": "Compare genuine event-window raw close and fund_adj from independent dated source to registered share/cash ledger; keep ETF-PAPER-005 dependency blocked."
+}

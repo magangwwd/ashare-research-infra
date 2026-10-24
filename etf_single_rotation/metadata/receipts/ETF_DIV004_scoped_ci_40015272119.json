@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40015272119,
+  "run_attempt": 1,
+  "github_event": "pull_request",
+  "head_sha": "c2c119704c356e0d4a0a2d4a044243c9d273d756",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": null,
+    "provenance": "Synthetic-only corporate action and dividend ledger unit tests; no market downloads or issuer PDF bytes in this run. The 2022-01-12 issuer-mirror evidence file was added AFTER this CI head and is NOT certified by this run."
+  },
+  "checks": {
+    "tests_passed": 60,
+    "tests_failed": 0,
+    "output_sha256": null
+  },
+  "artifact_urls": [],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Review 2022 issuer-authored mirror and obtain original-host PDF bytes, remaining 2019/2021/2025 notices, independent market prices, actual share/cash settlement, and DIV004 Artifact/Drive acceptance. Main v1.0.0 SOP Receipt schema still rejects truthful pull_request until PR #98 is reviewed; keep PAPER-005 dependency blocked.",
+  "created_at_utc": "2026-10-23T21:16:26Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "CI success is synthetic only; issuer mirror bytes, second-source prices, actual broker cash, and DIV004 Drive outputs unverified. This truthful pull_request event is incompatible with main SOP v1.0.0 schema pending draft PR #98.",
+  "fingerprint": "etf-div004:scoped-ci:c2c119704c35:40015272119:attempt1",
+  "agent_review_id": "ETF-DIV-004-SCOPED-40015272119"
+}

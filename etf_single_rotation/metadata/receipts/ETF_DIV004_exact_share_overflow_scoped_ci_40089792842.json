@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF fixed-8 single-rotation research",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40089792842,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "582f3a9cde7f6b4b75894888d0eac38943223a51",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": null,
+    "provenance": "Synthetic ETF share-count arithmetic fixtures only; no real issuer/market/broker or total-return certification"
+  },
+  "checks": {
+    "tests_passed": 68,
+    "tests_failed": 0,
+    "output_sha256": null
+  },
+  "artifact_urls": [],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Independent issuer-original PDF bytes/hash, 8-ETF raw-close/fund_adj event-window reconciliation, record-date registered holdings and broker cash availability; produce audit artifact and independently verify Drive write/readback before acceptance. PAPER-005 blocked.",
+  "created_at_utc": "2026-10-24T11:25:23.660Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Synthetic 68/68 tests cover exact-share arithmetic but do not establish real-market dividend total return or artifact/Drive acceptance.",
+  "fingerprint": "etf-div004:synthetic-exact-share-overflow:582f3a9cde7f6b4b75894888d0eac38943223a51:40089792842:1",
+  "agent_review_id": "ETF-DIV-004-40089792842"
+}

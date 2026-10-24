@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "kind": "READ_ONLY_DIAGNOSTIC_NOT_SOP_RUN_RECEIPT",
+  "checked_utc": "2026-10-23T17:36:03Z",
+  "input": {
+    "run_id": 39599580852,
+    "job_id": 119220366735,
+    "main_run_head_sha": "bf4c18614c9b1ea516b602e8535011abcb2ab101",
+    "actual_research_checkout_sha": "6b23db083817085d1ac88c82ade91befc2a23ae1",
+    "artifact_id": 12345747366,
+    "artifact_zip_sha256": "f3b68edfb3eefe30d4849064e1abb0a81ce08c9c076fd1db42c3860318cbabc0",
+    "artifact_price_path": "data/prices.csv",
+    "prices_sha256": "b873df69a4694bbe8a7ce78ff29ebbfd073aeed45946f280e285e003ca3265a4",
+    "price_data_cutoff": "2026-10-21",
+    "price_source": "Tushare raw_close and fund_adj, same supplier; NOT independent market price confirmation"
+  },
+  "drive_readback": {
+    "performed_this_run": true,
+    "original_drive_file_id": "1fJPG1gR3FpDzUOWmajRczXFfW_yDajCs",
+    "original_file_name": "prices_39599580852_907031e_b873df69a469.csv",
+    "byte_identical_to_github_artifact": true,
+    "sha256": "b873df69a4694bbe8a7ce78ff29ebbfd073aeed45946f280e285e003ca3265a4",
+    "matching_files": 1,
+    "differences": 0,
+    "note": "This readback confirms source archival integrity, NOT independent price accuracy; no new audit result uploaded to Drive."
+  },
+  "event_source": {
+    "candidate_list": "etf_single_rotation/metadata/510300_dividend_coverage_gap_20261024.json",
+    "issuer_crosschecks": [
+      "etf_single_rotation/metadata/510300_20250618_dividend_date_crosscheck.json",
+      "etf_single_rotation/metadata/510300_20260112_dividend_primary_sse_crosscheck.json"
+    ],
+    "issuer_primary_verified_for_all_8": false,
+    "note": "2019-2024 entries are secondary-list candidates; 2025 issuer notice mirrored; 2026 SSE original notice crosschecked separately."
+  },
+  "formula": {
+    "factor_implied_dividend": "P_before * (1 - A_before/A_ex)",
+    "raw_plus_cash_return": "(P_ex + dividend)/P_before - 1",
+    "adjusted_return": "(P_ex*A_ex)/(P_before*A_before) - 1",
+    "difference_bp": "10000*(adjusted_return - raw_plus_cash_return)",
+    "tolerance": "absolute difference <3bp and implied-dividend error <0.00030 CNY; diagnostic not acceptance"
+  },
+  "events": [
+    {
+      "ex_date": "2019-01-16",
+      "previous_actual_trade_date": "2019-01-15",
+      "previous_raw_close_cny": "3.188",
+      "ex_date_raw_close_cny": "3.129",
+      "previous_adj_factor": "1.0930",
+      "ex_date_adj_factor": "1.1137",
+      "secondary_listed_dividend_per_share_cny": "0.0590",
+      "factor_implied_dividend_per_share_cny": "0.0592544",
+      "adjusted_minus_raw_plus_cash_event_return_bp": "0.81303"
+    },
+    {
+      "ex_date": "2019-12-11",
+      "previous_actual_trade_date": "2019-12-10",
+      "previous_raw_close_cny": "3.956",
+      "ex_date_raw_close_cny": "3.900",
+      "previous_adj_factor": "1.1137",
+      "ex_date_adj_factor": "1.1314",
+      "secondary_listed_dividend_per_share_cny": "0.0620",
+      "factor_implied_dividend_per_share_cny": "0.0618890",
+      "adjusted_minus_raw_plus_cash_event_return_bp": "-0.04403"
+    },
+    {
+      "ex_date": "2021-01-18",
+      "previous_actual_trade_date": "2021-01-15",
+      "previous_raw_close_cny": "5.526",
+      "ex_date_raw_close_cny": "5.513",
+      "previous_adj_factor": "1.1314",
+      "ex_date_adj_factor": "1.1463",
+      "secondary_listed_dividend_per_share_cny": "0.0720",
+      "factor_implied_dividend_per_share_cny": "0.0718288",
+      "adjusted_minus_raw_plus_cash_event_return_bp": "1.09227"
+    },
+    {
+      "ex_date": "2022-01-19",
+      "previous_actual_trade_date": "2022-01-18",
+      "previous_raw_close_cny": "4.881",
+      "ex_date_raw_close_cny": "4.780",
+      "previous_adj_factor": "1.1463",
+      "ex_date_adj_factor": "1.1642",
+      "secondary_listed_dividend_per_share_cny": "0.0750",
+      "factor_implied_dividend_per_share_cny": "0.0750472",
+      "adjusted_minus_raw_plus_cash_event_return_bp": "-0.73368"
+    },
+    {
+      "ex_date": "2023-01-16",
+      "previous_actual_trade_date": "2023-01-13",
+      "previous_raw_close_cny": "4.144",
+      "ex_date_raw_close_cny": "4.143",
+      "previous_adj_factor": "1.1642",
+      "ex_date_adj_factor": "1.1825",
+      "secondary_listed_dividend_per_share_cny": "0.0640",
+      "factor_implied_dividend_per_share_cny": "0.0641312",
+      "adjusted_minus_raw_plus_cash_event_return_bp": "2.71140"
+    },
+    {
+      "ex_date": "2024-01-18",
+      "previous_actual_trade_date": "2024-01-17",
+      "previous_raw_close_cny": "3.292",
+      "ex_date_raw_close_cny": "3.268",
+      "previous_adj_factor": "1.1825",
+      "ex_date_adj_factor": "1.2078",
+      "secondary_listed_dividend_per_share_cny": "0.0690",
+      "factor_implied_dividend_per_share_cny": "0.0689581",
+      "adjusted_minus_raw_plus_cash_event_return_bp": "2.79465"
+    },
+    {
+      "ex_date": "2025-06-18",
+      "previous_actual_trade_date": "2025-06-17",
+      "previous_raw_close_cny": "3.989",
+      "ex_date_raw_close_cny": "3.904",
+      "previous_adj_factor": "1.2078",
+      "ex_date_adj_factor": "1.2350",
+      "secondary_listed_dividend_per_share_cny": "0.0880",
+      "factor_implied_dividend_per_share_cny": "0.0878549",
+      "adjusted_minus_raw_plus_cash_event_return_bp": "-0.20258"
+    },
+    {
+      "ex_date": "2026-01-19",
+      "previous_actual_trade_date": "2026-01-16",
+      "previous_raw_close_cny": "4.859",
+      "ex_date_raw_close_cny": "4.738",
+      "previous_adj_factor": "1.2350",
+      "ex_date_adj_factor": "1.2671",
+      "secondary_listed_dividend_per_share_cny": "0.1230",
+      "factor_implied_dividend_per_share_cny": "0.1230952",
+      "adjusted_minus_raw_plus_cash_event_return_bp": "0.30796"
+    }
+  ],
+  "checks": {
+    "event_dates_matched": 8,
+    "total_events": 8,
+    "all_factor_jumps_positive": true,
+    "all_return_differences_below_3bp": true,
+    "max_abs_difference_bp": "2.79465",
+    "all_implied_dividend_errors_below_0_00030_cny": true,
+    "max_abs_implied_dividend_error_cny": "0.0002544",
+    "artifact_sha_and_checkpoint_verified": true,
+    "drive_byte_readback_verified": true,
+    "new_full_backtest": false,
+    "independent_second_market_source": false,
+    "account_cash_available_date_verified": false,
+    "portfolio_total_return_verified": false,
+    "new_div004_drive_upload": false
+  },
+  "conclusion": "8/8 listed 510300 cash events have Tushare fund_adj jumps consistent with listed cash amounts within rounding tolerances; adjusted prices appear to incorporate cash effects. Adding an independent cash credit on top of adjusted-price returns may double count. This does NOT prove supplier correctness, actual strategy double counting, full economic total return, issuer completeness or account cash settlement. No strategy metrics or trading rules changed.",
+  "next_action": "Verify six remaining 510300 primary issuer notices, independent second-source raw prices, actual registered units and broker cash settlement, then portfolio-level cash/factor reconciliation and new artifact/Drive acceptance; ETF-DIV-004 remains REVIEW_REQUIRED, ETF-PAPER-005 blocked."
+}

@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "task_id": "ETF-DIV-004",
+  "symbol": "510880.SH",
+  "issuer_announcement_date": "2017-01-17",
+  "registration_date": "2017-01-20",
+  "ex_dividend_date": "2017-01-23",
+  "dividend_per_share_cny": 0.091,
+  "announced_payment_date": "2017-01-26",
+  "investor_cash_available_date": null,
+  "investor_cash_availability_grade": "UNVERIFIED_ORIGINAL_NOTICE_PROSE_CONFLICT",
+  "issuer_notice": {
+    "url": "https://pdf.dfcfw.com/pdf/H2_AN201701170272969808_1.pdf",
+    "payment_field_date": "2017-01-26",
+    "issuer_to_csd_date": "2017-01-24",
+    "csd_to_broker_date": "2017-01-25",
+    "investor_collection_prose_date_as_printed": "2016-01-26"
+  },
+  "secondary_crosschecks": [
+    {
+      "name": "Sina Finance",
+      "url": "https://stock.finance.sina.com.cn/fundInfo/view/FundInfo_JJFH.php?symbol=510880",
+      "payment_date": "2017-01-26",
+      "dividend_per_share_cny": 0.091
+    },
+    {
+      "name": "Tonghuashun",
+      "url": "https://basic.10jqka.com.cn/510880/bonus.html",
+      "payment_date": "2017-01-26",
+      "dividend_per_share_cny": 0.091
+    },
+    {
+      "name": "Stockstar",
+      "url": "https://fund.stockstar.com/funds/f10/fundfh_510880.html",
+      "payment_date": "2017-01-26",
+      "dividend_per_share_cny": 0.091
+    }
+  ],
+  "conclusion": "2017-01-26 issuer-announced payment date corroborated by three secondary listings, but investor actual cash availability is unverified; secondary sites may share an upstream feed. Preserve 2016-01-26 typo as printed; never treat 2017-01-25 broker settlement as investor spendable cash.",
+  "status": "REVIEW_REQUIRED_NOT_FOR_TRADING"
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40106851290,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "75b7e3a2ddb2343ceea8453ff0372de4abd41e47",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": "68f2227ae25acec3b831d50d042b87f12696dc0df1514ef9dacb36e018d571d7",
+    "provenance": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2023-01-09/510300_20230109_0ED5.pdf (official source PDF bytes only; no content text extraction in this run)"
+  },
+  "checks": {
+    "tests_passed": 0,
+    "tests_failed": 0,
+    "output_sha256": "d85d9f8533c1c2aed9dfee85cbfa260b8fc0a0f3ad99b7076487b20bc9602de6"
+  },
+  "artifact_urls": [
+    "https://api.github.com/repos/magangwwd/ashare-research-infra/actions/artifacts/12564743482"
+  ],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Independently extract and verify issuer notice contents and remaining seven ETF source events; reconcile independent raw prices/fund_adj and broker cash settlement; upload and read back a new DIV004 research artifact before any task acceptance. Separate same-SHA scoped CI run 40106853572 passed 71 synthetic tests, not counted as tests in this source-byte run.",
+  "created_at_utc": "2026-10-24T15:25:38.664Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Source-byte hash alone does not certify issuer dates, eight-ETF registry, second-source market data, account settlement or new Drive readback.",
+  "fingerprint": "ETF-DIV-004:40106851290:75b7e3a2ddb2343ceea8453ff0372de4abd41e47:68f2227ae25acec3b831d50d042b87f12696dc0df1514ef9dacb36e018d571d7"
+}

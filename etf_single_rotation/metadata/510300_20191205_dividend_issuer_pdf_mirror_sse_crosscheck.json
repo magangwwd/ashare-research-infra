@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "research_only": true,
+  "trading_status": "NOT_FOR_TRADING",
+  "evidence_kind": "ISSUER_AUTHORED_PDF_THIRD_PARTY_MIRROR_PLUS_PRIMARY_SSE_EX_DATE",
+  "checked_on_utc": "2026-10-23",
+  "sources": [
+    {
+      "url": "https://pdf.dfcfw.com/pdf/H2_AN201912051371585727_1.pdf",
+      "host_type": "THIRD_PARTY_PDF_MIRROR",
+      "document_title": "华泰柏瑞沪深300交易型开放式指数证券投资基金收益分配公告",
+      "notice_date": "2019-12-05",
+      "pages": 2,
+      "issuer": "华泰柏瑞基金管理有限公司",
+      "pdf_text_read_from_web": true,
+      "pdf_bytes_downloaded": false,
+      "pdf_sha256": null,
+      "original_issuer_or_sse_hosted_pdf_verified": false
+    },
+    {
+      "url": "https://guba.eastmoney.com/news,sh510300,890094686.html",
+      "host_type": "THIRD_PARTY_REPRODUCED_ISSUER_TEXT",
+      "notice_date": "2019-12-05"
+    },
+    {
+      "url": "https://big5.sse.com.cn/site/cht/www.sse.com.cn/assortment/options/mnjyzxxx/c/c_20200728_5163548.shtml",
+      "host_type": "PRIMARY_SSE_OPTIONS_SIMULATION_NOTICE",
+      "notice_date": "2019-12-10",
+      "scope": "Confirms 510300 ex-dividend date 2019-12-11, not dividend amount, record-date holdings, or actual payment."
+    }
+  ],
+  "event": {
+    "dividend_per_10_shares_cny": "0.6200",
+    "dividend_per_share_cny": "0.0620",
+    "distribution_base_date": "2019-11-22",
+    "registration_date": "2019-12-10",
+    "ex_dividend_date": "2019-12-11",
+    "announced_payment_date": "2019-12-16",
+    "issuer_to_csd_date": "2019-12-12",
+    "csd_to_broker_date": "2019-12-13",
+    "investor_account_cash_available_date": null,
+    "registered_entitlement": "CSDC Shanghai-registered holders at record-date SSE close, plus shares subscribed on record date and not sold that day and registered next session; actual account entitlement requires verification.",
+    "special_payment_note": "For record-date subscribed ETF units not sold, issuer notice states issuer directly transfers to designated broker on 2019-12-13. Undesignated-trading holders may receive cash later; payment timetable does not prove spendable cash."
+  },
+  "crosscheck": {
+    "candidate_registry_path": "etf_single_rotation/metadata/510300_dividend_coverage_gap_20261024.json",
+    "candidate_dates_and_amount_match": true,
+    "same_supplier_factor_audit_path": "etf_single_rotation/metadata/510300_dividend_factor_artifact_drive_audit_20261024.json",
+    "factor_implied_dividend_per_share_cny": "0.0618890",
+    "adjusted_minus_raw_plus_cash_event_return_bp": "-0.04403",
+    "market_source_independence": "NONE; both raw_close and fund_adj from Tushare",
+    "calculation_diagnostic_only": true
+  },
+  "limitations": [
+    "Issuer PDF was viewed as web-extracted text on a third-party PDF host; original issuer/SSE-hosted PDF bytes and SHA256 not verified.",
+    "SSE options simulation notice independently confirms ex-date only; do not infer actual fund holder entitlement or broker cash availability from it.",
+    "No independent market raw price, actual account-level registered units, or cash ledger reconciliation; no new DIV004 Artifact/Drive readback.",
+    "This is evidence enrichment, not portfolio P&L correction; no strategy/universe/cron/trading changes.",
+    "Keep ETF-DIV-004 REVIEW_REQUIRED, ETF-PAPER-005 dependency blocked, and NOT_FOR_TRADING."
+  ],
+  "status": "REVIEW_REQUIRED",
+  "next_action": "Find original issuer/SSE-hosted 2019-12 dividend notice PDF and hash; verify independent raw closes and account-level registration/cash; complete remaining issuer coverage and DIV004 Artifact/Drive acceptance."
+}
