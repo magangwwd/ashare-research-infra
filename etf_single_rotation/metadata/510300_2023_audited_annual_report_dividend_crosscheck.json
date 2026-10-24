@@ -28,8 +28,13 @@
       "pdf_page_index_zero_based": 45
     },
     "text_and_page_image_inspected": true,
-    "original_pdf_bytes_downloaded": false,
-    "original_pdf_sha256": null
+    "original_pdf_bytes_downloaded": true,
+    "original_pdf_sha256": "cbe1900cb617a67a804dc463e6658f662917b04361266bef51b7bd139a6433be",
+    "original_pdf_byte_count": 871278,
+    "original_pdf_source_hash_run": 40120559991,
+    "original_pdf_hash_artifact_id": 12570996758,
+    "original_pdf_hash_manifest_sha256": "f9aebce3207f3b97a9ae2d4d974dce9da19dc601de4f099d4761e243f8e549cf",
+    "original_pdf_hash_scope": "Official SSE PDF bytes fetched in bounded GitHub job; manifest downloaded and independently read back; content and market returns not certified."
   },
   "verified_2023_dividend": {
     "record_date": "2023-01-13",
@@ -72,11 +77,11 @@
     "do_not_interpret_fund_level_total_as_strategy_cash": true
   },
   "limitations": [
-    "Annual report is a primary issuer disclosure on SSE and PDF page image was inspected, but original PDF bytes and SHA256 were not obtained.",
+    "Official 2023 PDF bytes and SHA256 now verified in scoped GitHub Run 40120559991; this is source provenance only, not issuer coverage or economic total-return acceptance.",
     "Report does not establish 2023 investor-level cash availability or actual registered strategy shares.",
     "No independent raw market prices or fund_adj data were retrieved; no economic total-return acceptance.",
     "This evidence-only change has no new research Artifact or Drive upload/readback.",
     "Do not modify strategy returns, frozen ETF universe, workflow cadence, or unlock ETF-PAPER-005."
   ],
-  "next_action": "Obtain original source PDF bytes/hash when access permits, independently verify raw market prices and account-level cash/registered shares, cover all 8 ETFs, then verify actual Artifact/Drive readback. Keep REVIEW_REQUIRED/NOT_FOR_TRADING."
+  "next_action": "Independently verify raw market prices and fund_adj, record-date strategy holdings, broker cash availability, and all eight ETF dividend coverage; require fresh DIV004 Drive write/readback. Keep REVIEW_REQUIRED/NOT_FOR_TRADING and PAPER-005 locked."
 }
