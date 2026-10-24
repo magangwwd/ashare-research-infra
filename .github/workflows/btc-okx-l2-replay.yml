@@ -68,3 +68,70 @@ jobs:
       - name: Erase temporary Drive secret
         if: always()
         run: rm -f "$RUNNER_TEMP/rclone.conf"
+
+  public-approved-day-replay:
+    # One bounded, read-only public-archive acceptance run on PR #102 sync.
+    # This job has NO Drive secrets, NO write token and never publishes raw ticks.
+    # It is distinct from the main-only private Drive byte-verification gate.
+    if: github.event_name == 'pull_request' && github.event.action == 'synchronize' && github.event.pull_request.number == 102
+    needs: offline-replay-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Fetch exactly one SHA-approved public OKX day with bounded HTTP ranges
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import os
+          from pathlib import Path
+          import sys
+
+          sys.path.insert(0, "btc-quant/data")
+          from okx_official_l2_download import CHUNK_SIZE, bounded_fetch
+
+          name = "BTC-USDT-SWAP-L2orderbook-400lv-2026-10-10.tar.gz"
+          url = ("https://static.okx.com/cdn/okx/match/orderbook/pro/L2/"
+                 "400lv/daily/20261010/" + name)
+          expected_bytes = 172_934_071
+          expected_sha = "829b1393dcf7b9072383092f620039ba15b8be0d7e0fd422e9b66a8afd8b5a7e"
+          _, total = bounded_fetch(url, 0, 0)
+          if total != expected_bytes:
+              raise ValueError("Official archive size changed; refuse replay")
+          dest = Path(os.environ["RUNNER_TEMP"]) / "approved_day.tar.gz"
+          digest = hashlib.sha256()
+          with dest.open("xb") as out:
+              for start in range(0, total, CHUNK_SIZE):
+                  end = min(start + CHUNK_SIZE, total) - 1
+                  data, reported_total = bounded_fetch(url, start, end)
+                  if reported_total != total:
+                      raise ValueError("Official archive changed during bounded fetch")
+                  out.write(data)
+                  digest.update(data)
+          if digest.hexdigest() != expected_sha:
+              dest.unlink(missing_ok=True)
+              raise ValueError("Official archive SHA256 mismatch")
+          print(f"Public approved archive SHA256 PASS: bytes={total} sha256={expected_sha}")
+          PY
+      - name: Replay full official day without private credentials
+        run: |
+          set -euo pipefail
+          python btc-quant/data/okx_l2_replay.py \
+            --archive "$RUNNER_TEMP/approved_day.tar.gz" \
+            --out "$RUNNER_TEMP/quality/l2_public_replay_2026-10-10.json"
+      - name: Upload aggregate-only evidence (never raw L2 archive)
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-okx-l2-public-replay-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/quality/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Erase downloaded public raw archive
+        if: always()
+        run: rm -f "$RUNNER_TEMP/approved_day.tar.gz"
