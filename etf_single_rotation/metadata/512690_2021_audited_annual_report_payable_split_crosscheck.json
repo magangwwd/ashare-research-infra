@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "task_id": "ETF-DIV-004",
+  "symbol": "512690.SH",
+  "research_only": true,
+  "trading_status": "NOT_FOR_TRADING",
+  "evidence_checked_utc": "2026-10-24",
+  "report": {
+    "title": "鹏华中证酒交易型开放式指数证券投资基金2021年年度报告",
+    "issuer": "鹏华基金管理有限公司",
+    "custodian": "中国建设银行股份有限公司",
+    "report_date": "2021-12-31",
+    "published_date": "2022-03-30",
+    "pdf_url": "https://pdf.dfcfw.com/pdf/H2_AN202203301555950614_1.pdf",
+    "source_classification": "ISSUER_AUTHORED_AUDITED_REPORT_ON_THIRD_PARTY_PDF_MIRROR",
+    "source_pdf_bytes_downloaded": false,
+    "source_pdf_sha256": null,
+    "issuer_or_exchange_hosted_original_verified": false,
+    "web_text_verified": true
+  },
+  "independent_accounting_crosscheck": {
+    "profit_distribution_section": "§7.4.11, printed pp.40-41",
+    "record_date": "2021-12-30",
+    "ex_dividend_date": "2021-12-31",
+    "cash_dividend_per_10_units_cny": "3.5000",
+    "cash_dividend_per_unit_cny": "0.3500",
+    "fund_total_distribution_cny": "2110132560.90",
+    "reinvestment_distribution_cny": "0.00",
+    "year_end_balance_sheet_section": "§7.4.1, printed p.19",
+    "year_end_dividend_payable_liability_cny": "2110132560.90",
+    "year_end_units_section": "§7.4.7.9, printed p.32",
+    "year_end_units": "6322650174",
+    "record_date_implied_entitled_units": "6028950174",
+    "year_end_units_minus_implied_record_date_units": "293700000",
+    "naive_year_end_units_overcount_cny": "102795000.00",
+    "calculation": "2110132560.90 / 0.35 = 6028950174 record-date entitled fund units; 6322650174 year-end units would overcount 293700000 units, or CNY 102795000.00, if misused as record-date holdings.",
+    "audit_opinion": "STANDARD_UNQUALIFIED_2021_FINANCIAL_STATEMENTS",
+    "custodian_reported_distribution_cny": "2110132560.90"
+  },
+  "split_crosscheck": {
+    "section": "§7.4.7.9, printed p.32",
+    "split_date": "2021-05-14",
+    "split_ratio_new_per_old": "2",
+    "fund_units_before": "1217625087",
+    "fund_units_after": "2435250174",
+    "nav_before_cny": "2.6959",
+    "nav_after_cny": "1.3480",
+    "registration_agency": "CSDC Shanghai",
+    "scope": "FUND_LEVEL_SHARE_SPLIT_NOT_INVESTOR_ACCOUNT_CONFIRMATION"
+  },
+  "separate_issuer_notice_mirror": {
+    "url": "https://vip.stock.finance.sina.com.cn/fund/go.php/vAkFundInfo_JJGKXX/q/2609129.phtml",
+    "announcement_date": "2021-12-29",
+    "announced_payment_date": "2022-01-06",
+    "status": "ISSUER_NOTICE_REPRODUCED_ON_THIRD_PARTY_NOT_ACTUAL_BROKER_CASH_RECEIPT"
+  },
+  "result": "NEW_INDEPENDENT_AUDITED_FUND_LEVEL_ACCOUNTING_CROSSCHECK_ONLY",
+  "implications": [
+    "Fund-level 2021 year-end dividend payable is not investor cash available; do not treat 2021-12-31 as cash payment date.",
+    "Entitlement must use record-date registered units, not year-end fund units, and never invent investor-specific holdings.",
+    "2021 share split ratio/date and fund aggregate totals corroborated, but 2021-05-13/17 independent exchange prices and fund_adj still unresolved.",
+    "Issuer-authored report hosted by third-party mirror is stronger than an unverified data-provider event row, but original issuer/SSE PDF bytes and SHA256 remain unverified."
+  ],
+  "unresolved": [
+    "Original issuer/exchange PDF and byte SHA256",
+    "Independent actual ETF raw market price and fund_adj economic reconciliation for split and dividend windows",
+    "Investor-specific record-date units and brokerage cash spendability",
+    "Fresh DIV004 Artifact and Google Drive upload/readback",
+    "Formal SOP receipt pull_request event schema PR #98"
+  ],
+  "task_state": "REVIEW_REQUIRED",
+  "dependent_task": "ETF-PAPER-005_BLOCKED_BY_DEPENDENCY",
+  "strategy_status": "NOT_FOR_TRADING"
+}
