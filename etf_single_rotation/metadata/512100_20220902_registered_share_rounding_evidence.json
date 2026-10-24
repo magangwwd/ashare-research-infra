@@ -17,5 +17,32 @@
   "issuer_reported_post_nav_per_unit_cny": "2.7109",
   "resumption_date": "2022-09-05",
   "caveat": "Manager-funded ceiling is per registered holder; aggregate residual from rounded published ratio is not independently verified cash or a precise subsidy amount. No actual holder register, market price reconciliation, total-return certification, or strategy performance impact established.",
-  "status": "REVIEW_REQUIRED_NOT_FOR_TRADING"
+  "status": "REVIEW_REQUIRED_NOT_FOR_TRADING",
+  "primary_pdf_review_20261024": {
+    "source_url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2022-09-05/512100_20220905_1_UJdHwEYe.pdf",
+    "document": "Issuer share-consolidation result and resumption announcement, 2022-09-05, 2 pages",
+    "review_scope": "Directly inspected exchange-hosted PDF text; original PDF bytes and SHA256 NOT obtained",
+    "issuer_ratio_formula_inputs_20220822": {
+      "net_assets_cny": "11361439164.78",
+      "fund_units": "10660692000",
+      "index_close": "7288.577",
+      "formula": "(net_assets_cny / fund_units) / (index_close * 4 / 10000)",
+      "recomputed_unrounded_ratio": "0.3655486745762832250296755066",
+      "published_rounded_ratio": "0.36555"
+    },
+    "registration_and_effective_dates": {
+      "record_date": "2022-09-01",
+      "consolidation_date": "2022-09-02",
+      "trading_resumption": "2022-09-05"
+    },
+    "reported_units_on_effective_date": {
+      "pre_units": "10207092000",
+      "post_units": "3731217646",
+      "naive_pre_units_times_published_ratio": "3731202480.60000",
+      "reported_post_minus_naive_aggregate_units": "15165.40000"
+    },
+    "interpretation": "The 15,165.4-unit arithmetic gap is between reported post-event registered units and a naive aggregate product of pre-event units and a five-decimal rounded ratio. The issuer specifies CEILING rounding separately for each holder, funded by the manager. Neither this aggregate gap nor the published ratio identifies individual holders, exact manager funding, raw market return, or a vendor fund_adj error.",
+    "source_scope": "Issuer notice pages 1-2 directly confirms ratio, per-holder ceiling, aggregate units and dates. No CSDC holder register, brokerage account statement, independent second-source prices, or PDF byte SHA.",
+    "status": "REVIEW_REQUIRED_NOT_FOR_TRADING"
+  }
 }
