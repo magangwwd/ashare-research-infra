@@ -220,13 +220,16 @@ def record_date_snapshots_from_fills(registry, opening_date, opening_positions, 
                                 "Split creates fractional registered units; "
                                 "issuer rounding is unverified"
                             )
-                        positions[traded] = int(converted)
+                        positions[traded] = _whole_units(int(converted), "post-split shares")
                 else:
                     positions[traded] = positions.get(traded, 0) + (
                         shares if side == "BUY" else -shares
                     )
                     if positions[traded] < 0:
                         raise ValueError("Sell exceeds held ETF shares")
+                    # Individually valid fills can overflow the exact integer
+                    # limit after accumulation. Never emit an unsafe snapshot.
+                    positions[traded] = _whole_units(positions[traded], "resulting shares")
                 # The one-ETF mandate applies after EACH execution, not
                 # merely at the close; an intraday overlap cannot be hidden
                 # by a later sale on the same date.
