@@ -223,6 +223,14 @@ class RecordDateFillSnapshotTests(unittest.TestCase):
                  "side": "BUY", "shares": fractional},
             ])
 
+    def test_cumulative_buy_overflow_fails_closed(self):
+        # Each input is individually exact, but their sum exceeds 2**53-1.
+        with self.assertRaisesRegex(ValueError, "exact integer range"):
+            self.snapshots(opening={"512690.SH": 2**53 - 2}, fills=[
+                {"date": "2021-12-30", "symbol": "512690.SH",
+                 "side": "BUY", "shares": 2},
+            ])
+
     def test_missing_pre_record_opening_baseline_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "Opening date"):
             record_date_snapshots_from_fills(
@@ -282,6 +290,11 @@ class RecordDateCorporateActionTests(unittest.TestCase):
                 {"date": "2021-05-14", "symbol": "512690.SH",
                  "side": "BUY", "shares": 10},
             ])
+
+    def test_post_split_share_overflow_fails_closed(self):
+        # A valid integer holding can become unsafe after a 2:1 split.
+        with self.assertRaisesRegex(ValueError, "exact integer range"):
+            self.snapshots(opening={"512690.SH": 2**52})
 
     def test_fractional_split_requires_issuer_rounding(self):
         registry = {"schema_version": 1,
