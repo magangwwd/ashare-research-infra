@@ -180,6 +180,10 @@ def record_date_snapshots_from_fills(registry, opening_date, opening_positions, 
     # once before computing record-date entitlements. Never infer brokerage
     # registration rounding for consolidations.
     last_record_day = record_dates[-1][1]
+    # Reject fills outside the entitlement snapshot window; otherwise later
+    # executions silently evade the single-position and no-oversell checks.
+    if normalized and normalized[-1][0] > last_record_day:
+        raise ValueError("Fill after final record date is outside snapshot scope")
     unit_events = [
         event for event in events
         if event["type"] in ("UNIT_SPLIT", "UNIT_CONSOLIDATION")

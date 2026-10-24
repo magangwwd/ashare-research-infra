@@ -231,6 +231,19 @@ class RecordDateFillSnapshotTests(unittest.TestCase):
                  "side": "BUY", "shares": 2},
             ])
 
+    def test_post_final_record_date_fills_fail_closed(self):
+        # A later fill must not bypass per-execution risk checks unnoticed.
+        for fill in (
+            {"date": "2021-12-31", "symbol": "510300.SH",
+             "side": "BUY", "shares": 1},
+            {"date": "2022-01-06", "symbol": "512690.SH",
+             "side": "SELL", "shares": 1},
+        ):
+            with self.subTest(fill=fill), self.assertRaisesRegex(
+                ValueError, "after final record date"
+            ):
+                self.snapshots(opening={"512690.SH": 10}, fills=[fill])
+
     def test_missing_pre_record_opening_baseline_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "Opening date"):
             record_date_snapshots_from_fills(
