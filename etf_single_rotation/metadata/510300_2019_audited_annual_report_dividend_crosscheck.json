@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "verified_at_utc": "2026-10-24",
+  "evidence_type": "PRIMARY_EXCHANGE_HOSTED_ISSUER_AUDITED_ANNUAL_REPORT",
+  "source": {
+    "publisher": "Huatai-PineBridge Fund Management Co., Ltd.",
+    "host": "Shanghai Stock Exchange",
+    "document": "Huatai-PineBridge CSI 300 ETF 2019 Annual Report",
+    "published_date": "2020-03-30",
+    "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/2020-03-30/510300_2019_n.pdf",
+    "pdf_page_number_1_based": 45,
+    "section": "7.4.11 利润分配情况",
+    "report_line_scope": "L1454-L1485",
+    "source_role": "Independent primary issuer disclosure for record date, ex-dividend date and declared per-10-unit distribution; annual report was audited; PDF bytes not downloaded/hashed by this check"
+  },
+  "confirmed_events": [
+    {
+      "record_date": "2019-01-15",
+      "ex_dividend_date": "2019-01-16",
+      "dividend_cny_per_10_units": "0.59",
+      "dividend_cny_per_unit": "0.059",
+      "issuer_report_total_cash_distribution_cny": "632024975.22",
+      "payment_date_from_primary_report": null,
+      "previous_secondary_candidate_payment_date": "2019-01-21",
+      "payment_date_grade": "SECONDARY_ONLY_UNVERIFIED"
+    },
+    {
+      "record_date": "2019-12-10",
+      "ex_dividend_date": "2019-12-11",
+      "dividend_cny_per_10_units": "0.62",
+      "dividend_cny_per_unit": "0.062",
+      "issuer_report_total_cash_distribution_cny": "542629436.27",
+      "payment_date_from_primary_report": null,
+      "previous_secondary_candidate_payment_date": "2019-12-16",
+      "payment_date_grade": "SECONDARY_ONLY_UNVERIFIED"
+    }
+  ],
+  "crosscheck": {
+    "previous_event_registry": "etf_single_rotation/metadata/510300_dividend_coverage_gap_20261024.json",
+    "previous_same_supplier_factor_audit": "etf_single_rotation/metadata/510300_dividend_factor_artifact_drive_audit_20261024.json",
+    "primary_verified_event_count_this_document": 2,
+    "not_independent_price_verification": true,
+    "no_new_full_backtest": true,
+    "no_new_drive_readback": true,
+    "no_cash_ledger_adjustment": true,
+    "no_change_to_frozen_strategy": true
+  },
+  "limitations": [
+    "This is an issuer-authored annual report hosted on the exchange, not the original dated 2019 distribution notice. It confirms two 2019 record/ex dates and amounts, but not announced payment dates or actual broker spendable cash.",
+    "Reported fund-wide cash distributions do not prove a particular investor's registered share count or account credit.",
+    "Prior Tushare factor alignment is same-source and cannot prove independent raw market prices or correct economic total return.",
+    "No new ETF research artifact or Drive write/readback, and no change to strategy P&L or executable corporate-action registry.",
+    "Prior scoped CI run 40040517990 tested commit 9229d71d, not this evidence-only commit; a new exact-head CI must be checked before claiming tests for this revision."
+  ],
+  "next_action": "Complete issuer/exchange evidence for other ETF cash and unit events; verify independent raw prices, economic share entitlements, payment dates, account cash availability and full portfolio returns, then artifact/Drive readback. Do not unlock ETF-PAPER-005."
+}
