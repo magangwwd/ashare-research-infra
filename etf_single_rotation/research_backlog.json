@@ -65,7 +65,7 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "ETF-DIV-004 remains REVIEW_REQUIRED: obtain original issuer PDF bytes/SHA, independent market raw_close/fund_adj and account-level registration/cash evidence; use the 512100 2022-09-05 issuer ratio arithmetic diagnostic only, not as proof of vendor error or total-return acceptance. New DIV004 Artifact/Drive readback and SOP PR #98 review remain outstanding; PAPER-005 blocked.",
+      "next_action": "Continue ETF-DIV-004: official 2023 510300 annual report bytes SHA256 verified by Run 40120559991; now independently reconcile 8-ETF raw_close/fund_adj, issuer event completeness, actual registered shares and cash, and fresh Artifact/Drive write-readback. PR #92 remains draft; PAPER-005 locked.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
@@ -113,7 +113,13 @@
           "issuer_published_ratio": "0.36555",
           "naive_aggregate_gap_units": "15165.4",
           "interpretation": "Per-holder ceiling and published-ratio rounding; not an independent price or account settlement check"
-        }
+        },
+        "latest_2023_original_pdf_sha256": "cbe1900cb617a67a804dc463e6658f662917b04361266bef51b7bd139a6433be",
+        "latest_2023_original_pdf_bytes": 871278,
+        "latest_2023_pdf_hash_run": 40120559991,
+        "latest_2023_pdf_hash_artifact": 12570996758,
+        "latest_2023_pdf_hash_receipt": "etf_single_rotation/metadata/receipts/ETF_DIV004_510300_2023_annual_pdf_hash_40120559991.json",
+        "latest_2023_pdf_hash_scope": "Official SSE PDF bytes and downloaded manifest read back; no price/total-return, broker cash or Drive verification"
       }
     },
     {
@@ -141,5 +147,5 @@
   "latest_verified_run": 39599580852,
   "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 13 sequential stages; 38 tests OK; 48 Drive uploads; all 5 declared ETF halts source-matched",
   "last_known_research_status": "NOT_FOR_TRADING",
-  "updated_utc": "2026-10-24"
+  "updated_utc": "2026-10-24T18:25:00Z"
 }
