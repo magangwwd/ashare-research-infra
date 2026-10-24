@@ -35,6 +35,7 @@ class BacklogDependencyGuardTests(unittest.TestCase):
         self.assertTrue(any("ETF-DIV-004" in e for e in check_backlog(self.data)))
 
     def test_only_all_verified_done_dependencies_unlock(self):
+        self.task("ETF-BENCH-002")["status"] = "VERIFIED_DONE"
         self.task("ETF-DATA-003")["status"] = "VERIFIED_DONE"
         self.task("ETF-DIV-004")["status"] = "VERIFIED_DONE"
         self.task("ETF-PAPER-005")["status"] = "READY"
