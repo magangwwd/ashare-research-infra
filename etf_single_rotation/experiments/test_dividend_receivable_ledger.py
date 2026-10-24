@@ -78,6 +78,19 @@ class CashEntitlementTests(unittest.TestCase):
                     self.registry, {("512690.SH", "2021-12-30"): bad}, self.days
                 )
 
+    def test_fractional_or_boolean_record_date_units_fail_closed(self):
+        for bad in (0.5, 10.25, True, False):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                cash_entitlement_ledger(
+                    self.registry, {("512690.SH", "2021-12-30"): bad}, self.days
+                )
+
+    def test_unsafe_large_record_date_units_fail_closed(self):
+        with self.assertRaisesRegex(ValueError, "exact integer range"):
+            cash_entitlement_ledger(
+                self.registry, {("512690.SH", "2021-12-30"): 2**53}, self.days
+            )
+
     def test_duplicate_or_unsorted_dates_fails_closed(self):
         for days in (["2021-12-31", "2021-12-30"], ["2021-12-30", "2021-12-30"], []):
             with self.subTest(days=days), self.assertRaisesRegex(ValueError, "Observation dates"):
@@ -178,6 +191,15 @@ class RecordDateFillSnapshotTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "whole units"):
             self.snapshots(fills=[
                 {"date": "2021-12-30", "symbol": "512690.SH", "side": "BUY", "shares": 1.5}
+            ])
+
+    def test_boolean_opening_and_fill_units_fail_closed(self):
+        with self.assertRaisesRegex(ValueError, "Invalid opening shares"):
+            self.snapshots(opening={"512690.SH": True})
+        with self.assertRaisesRegex(ValueError, "Invalid fill shares"):
+            self.snapshots(fills=[
+                {"date": "2021-12-30", "symbol": "512690.SH",
+                 "side": "BUY", "shares": True},
             ])
 
     def test_missing_pre_record_opening_baseline_fails_closed(self):

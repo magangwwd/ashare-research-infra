@@ -34,6 +34,18 @@ def _nonnegative(value, label):
     return number
 
 
+def _whole_units(value, label):
+    """Fail closed on fractional, boolean, or imprecisely represented ETF units."""
+    if isinstance(value, bool):
+        raise ValueError(f"Invalid {label}")
+    units = _nonnegative(value, label)
+    if units > 2**53 - 1:
+        raise ValueError(f"Unsafe {label}: exceeds exact integer range")
+    if not units.is_integer():
+        raise ValueError(f"{label} must be whole units")
+    return int(units)
+
+
 def apply_unit_change(shares, event):
     """Return post-split/consolidation economic units; no synthetic cash."""
     units = _nonnegative(shares, "held shares")
@@ -65,7 +77,7 @@ def cash_entitlement_ledger(registry, record_date_shares, observation_dates):
         key = (event["symbol"], event["registration_date"])
         if key not in record_date_shares:
             raise ValueError(f"Missing record-date share snapshot: {key}")
-        shares = _nonnegative(record_date_shares[key], "record-date shares")
+        shares = _whole_units(record_date_shares[key], "record-date shares")
         amount = shares * float(event["dividend_per_current_share_cny"])
         if not isfinite(amount):
             raise ValueError("Overflow in cash entitlement")
@@ -132,10 +144,8 @@ def record_date_snapshots_from_fills(registry, opening_date, opening_positions, 
     for symbol, shares in opening_positions.items():
         if symbol not in allowed:
             raise ValueError("Unexpected ETF in opening positions")
-        amount = _nonnegative(shares, "opening shares")
-        if not amount.is_integer():
-            raise ValueError("Opening shares must be whole units")
-        positions[symbol] = int(amount)
+        amount = _whole_units(shares, "opening shares")
+        positions[symbol] = amount
     if sum(v > 0 for v in positions.values()) > 1:
         raise ValueError("More than one ETF held at opening")
     prior_day = start
@@ -153,8 +163,8 @@ def record_date_snapshots_from_fills(registry, opening_date, opening_positions, 
         side = fill.get("side")
         if side not in ("BUY", "SELL"):
             raise ValueError("Invalid fill side")
-        shares = _nonnegative(fill.get("shares"), "fill shares")
-        if shares <= 0 or not shares.is_integer():
+        shares = _whole_units(fill.get("shares"), "fill shares")
+        if shares <= 0:
             raise ValueError("Fill shares must be positive whole units")
         normalized.append((day, symbol, side, int(shares)))
     # Opening positions are end-of-day: events on/before opening_date are
