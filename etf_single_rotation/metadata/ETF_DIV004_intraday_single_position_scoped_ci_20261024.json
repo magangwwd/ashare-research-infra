@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "kind": "SCOPED_CI_EVIDENCE_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "task_status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "finding": "Record-date fill replay previously checked the one-ETF constraint only after all same-day fills; buying a second ETF before selling the first could create a transient dual holding that passed the end-of-day check.",
+  "fix": "Reject more than one positive ETF position immediately after every ordered fill or unit event; preserve sell-before-buy switches.",
+  "code_commit_sha": "e67290838648b0af315f7e39d1e7940c3fda1103",
+  "exact_tested_head_sha": "1612e95d6dd92183679a1fe3624ea783f241d68f",
+  "github_event": "pull_request",
+  "run_id": 40051233379,
+  "run_attempt": 1,
+  "job_id": 120744168417,
+  "run_url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/40051233379",
+  "job_url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/40051233379/job/120744168417",
+  "checks": {
+    "tests_passed": 61,
+    "tests_failed": 0,
+    "new_regression": "test_intraday_overlap_cannot_be_hidden_by_later_same_day_sale",
+    "run_status": "completed",
+    "run_conclusion": "success"
+  },
+  "artifact_urls": [],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "sop_schema_note": "Main AUTO-RD-SOP-001 v1.0.0 handoff_receipt.schema.json does not accept the truthful pull_request event; PR #98 proposes this correction. This JSON is an explicitly non-SOP diagnostic evidence note, not a schema-valid immutable receipt.",
+  "limits": [
+    "Synthetic ledger tests only; not actual market fills, price reconciliation, account settlement, or full strategy backtest.",
+    "No new Artifact/output SHA or Drive write/readback; no independent dividend total-return acceptance.",
+    "PAPER-005 dependency remains blocked; no strategy P&L or frozen ETF universe changed."
+  ],
+  "next_action": "Obtain independent issuer/broker cash entitlement and availability evidence, independent raw-price/fund_adj reconciliation and new DIV004 Artifact+Drive readback; resolve PR98 schema before a formally valid PR-triggered SOP receipt; keep REVIEW_REQUIRED and NOT_FOR_TRADING."
+}
