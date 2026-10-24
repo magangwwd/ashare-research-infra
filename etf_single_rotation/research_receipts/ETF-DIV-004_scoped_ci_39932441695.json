@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 39932441695,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "22ef6bf8dcd3ee57c9c464b8de3a04403469ff1b",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": null,
+    "provenance": "SYNTHETIC_UNIT_TEST_FIXTURES_ONLY; no independent real ETF price, issuer full-coverage, or market-data audit performed by this scoped run"
+  },
+  "checks": {
+    "tests_passed": 36,
+    "tests_failed": 0,
+    "output_sha256": null
+  },
+  "artifact_urls": [],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Review draft PR #92 exact head 22ef6bf8; independently verify all 8 ETF issuer dividend/unit events, registration/ex/payment/investor cash availability, reconcile genuine market prices and fund_adj to economic-share/cash ledger; add non-synthetic tests, independent output hash and Drive readback before VERIFIED_DONE. PAPER-005 remains blocked.",
+  "created_at_utc": "2026-10-23T09:31:43Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Synthetic scoped CI is green, but independent issuer and market-price reconciliation, true cash availability, output artifact SHA, and Drive readback remain absent.",
+  "fingerprint": null,
+  "agent_review_id": null
+}
