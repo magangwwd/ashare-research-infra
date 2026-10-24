@@ -1,5 +1,6 @@
 """Synthetic-only regression tests for non-trading ETF cash entitlement accounting."""
 import unittest
+from decimal import Decimal
 
 from etf_single_rotation.experiments.dividend_receivable_ledger import (
     apply_unit_change,
@@ -90,6 +91,16 @@ class CashEntitlementTests(unittest.TestCase):
             cash_entitlement_ledger(
                 self.registry, {("512690.SH", "2021-12-30"): 2**53}, self.days
             )
+
+    def test_subfloat_fractional_record_date_units_fail_closed(self):
+        # Old float conversion rounded these fractional values to integers.
+        for bad in (Decimal("10.0000000000000001"),
+                    "10.0000000000000001",
+                    Decimal("9007199254740990.5")):
+            with self.subTest(bad=str(bad)), self.assertRaisesRegex(ValueError, "whole units"):
+                cash_entitlement_ledger(
+                    self.registry, {("512690.SH", "2021-12-30"): bad}, self.days
+                )
 
     def test_duplicate_or_unsorted_dates_fails_closed(self):
         for days in (["2021-12-31", "2021-12-30"], ["2021-12-30", "2021-12-30"], []):
@@ -200,6 +211,16 @@ class RecordDateFillSnapshotTests(unittest.TestCase):
             self.snapshots(fills=[
                 {"date": "2021-12-30", "symbol": "512690.SH",
                  "side": "BUY", "shares": True},
+            ])
+
+    def test_subfloat_fractional_opening_and_fill_units_fail_closed(self):
+        fractional = Decimal("10.0000000000000001")
+        with self.assertRaisesRegex(ValueError, "whole units"):
+            self.snapshots(opening={"512690.SH": fractional})
+        with self.assertRaisesRegex(ValueError, "whole units"):
+            self.snapshots(fills=[
+                {"date": "2021-12-30", "symbol": "512690.SH",
+                 "side": "BUY", "shares": fractional},
             ])
 
     def test_missing_pre_record_opening_baseline_fails_closed(self):
