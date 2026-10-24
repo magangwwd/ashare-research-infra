@@ -112,7 +112,7 @@ def record_date_snapshots_from_fills(registry, opening_date, opening_positions, 
     Synthetic/research accounting only. opening_positions are shares at the
     *end* of opening_date; all fills must occur strictly later. Same-day fills
     must be supplied in actual execution order. No prices, brokerage settlement,
-    or market-data certification is implied. Enforces a single ETF at each EOD.
+    or market-data certification is implied. Enforces a single ETF after each ordered execution and unit event.
     """
     events = validate_events(registry)
     record_dates = sorted({
@@ -209,8 +209,11 @@ def record_date_snapshots_from_fills(registry, opening_date, opening_positions, 
                     )
                     if positions[traded] < 0:
                         raise ValueError("Sell exceeds held ETF shares")
+                # The one-ETF mandate applies after EACH execution, not
+                # merely at the close; an intraday overlap cannot be hidden
+                # by a later sale on the same date.
+                if sum(v > 0 for v in positions.values()) > 1:
+                    raise ValueError("More than one ETF held at any execution step")
                 index += 1
-            if sum(v > 0 for v in positions.values()) > 1:
-                raise ValueError("More than one ETF held at day end")
         snapshots[(symbol, record_day.isoformat())] = positions.get(symbol, 0)
     return snapshots
