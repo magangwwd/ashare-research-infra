@@ -1,0 +1,68 @@
+name: BTC OKX L2 bounded replay research (no trading)
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/btc-okx-l2-replay.yml'
+      - 'btc-quant/data/okx_l2_replay.py'
+      - 'btc-quant/tests/test_okx_l2_replay.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-replay-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Fail-closed synthetic replay tests (no network or secrets)
+        run: python -m unittest discover -s btc-quant/tests -p 'test_okx_l2_replay.py' -v
+
+  private-approved-day-replay:
+    if: github.event_name == 'workflow_dispatch'
+    needs: offline-replay-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Restore exact approved private official day (read-only)
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64"
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          src="gdrive:BTC_Quant_System_OKX/market_data/OKX/official_portal/L2_400lv/BTC-USDT-SWAP/2026-10-10/run_39356335318_1/BTC-USDT-SWAP-L2orderbook-400lv-2026-10-10.tar.gz"
+          rclone --config "$RUNNER_TEMP/rclone.conf" copyto "$src" "$RUNNER_TEMP/approved_day.tar.gz"
+      - name: Bounded structural snapshot/update replay (aggregate report only)
+        run: |
+          set -euo pipefail
+          python btc-quant/data/okx_l2_replay.py \
+            --archive "$RUNNER_TEMP/approved_day.tar.gz" \
+            --out "$RUNNER_TEMP/quality/l2_replay_2026-10-10.json"
+      - name: Save non-raw replay summary in GitHub artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-okx-l2-replay-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/quality/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Append immutable private report and byte-verify Drive
+        run: |
+          set -euo pipefail
+          dest="gdrive:BTC_Quant_System_OKX/market_data/OKX/official_portal/L2_400lv/BTC-USDT-SWAP/2026-10-10/replay_quality/run_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          rclone --config "$RUNNER_TEMP/rclone.conf" copy "$RUNNER_TEMP/quality" "$dest" --immutable
+          rclone --config "$RUNNER_TEMP/rclone.conf" check "$RUNNER_TEMP/quality" "$dest" --one-way --download
+      - name: Erase temporary Drive secret
+        if: always()
+        run: rm -f "$RUNNER_TEMP/rclone.conf"
