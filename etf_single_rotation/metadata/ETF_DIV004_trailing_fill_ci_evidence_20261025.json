@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "task_id": "ETF-DIV-004",
+  "scope": "Trailing fills in synthetic record-date entitlement snapshot validation",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "pr_number": 92,
+  "failed_attempt": {
+    "run_id": 40142526065,
+    "job_id": 121017058597,
+    "head_sha": "ff10b3e12490d11777bc3f67eeb3886ad56cddb8",
+    "reason": "Overstrict rejection of a valid post-record-date BUY broke existing no-backdating test; 80/81 tests passed."
+  },
+  "corrected": {
+    "head_sha": "c834f486778840f033e18d7486c16b566e69a220",
+    "behavior": "Process and risk-check later fills without changing prior record-date entitlement; include intervening unit events up to final supplied fill.",
+    "push_ci": {
+      "run_id": 40142597924,
+      "job_id": 121017272641,
+      "conclusion": "success",
+      "tests_passed": 81,
+      "tests_failed": 0
+    },
+    "pr_ci": {
+      "run_id": 40142599160,
+      "job_id": 121017276205,
+      "conclusion": "success"
+    },
+    "artifacts_created": 0,
+    "drive_new_upload": false,
+    "drive_readback_performed": false
+  },
+  "limitations": [
+    "Synthetic tests only, not real strategy fills or market-price validation",
+    "No issuer/CSDC cash credit verified",
+    "PR remains draft; formal DIV-004 acceptance not achieved",
+    "No full historical backtest or live trading performed"
+  ],
+  "next_action": "Review PR #92, verify issuer events/independent prices/real cash and Drive; keep ETF-PAPER-005 BLOCKED."
+}
