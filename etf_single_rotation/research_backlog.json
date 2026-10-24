@@ -65,7 +65,7 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "New synthetic accounting precision guard fixes fractional ETF units silently rounded by float; exact SHA 699d3c3d8ae9d7abfeee8a7200aab9c123adb6cc, scoped CI run 40066630564/job 120791154910 passed 66/66. Diagnostic ETF_DIV004_subfloat_precision_scoped_ci_20261024.json; original 512690 issuer annual-report payable evidence remains at 512690_2021_audited_annual_report_payable_split_crosscheck.json. Still require original issuer PDF bytes/SHA, independent real market prices/fund_adj and registered units/broker cash, fresh DIV004 Artifact+Drive readback, PR #98 schema. PAPER-005 dependency locked; NOT_FOR_TRADING.",
+      "next_action": "New issuer annual-report/SSE 2022 dividend crosscheck in 510300_20220112_dividend_issuer_mirror_crosscheck.json, evidence commit ea2a8a9f322841ed984b25cff6dc0a341a2b6c30: fund-level 863,564,082.15 CNY / 0.075 = 11,514,187,762 entitled units; prior year-end shares differ by 173,700,072. Original SSE-hosted PDF bytes/SHA, account holdings/cash, independent prices/fund_adj and new DIV004 Artifact+Drive readback remain unverified. Keep REVIEW_REQUIRED, NOT_FOR_TRADING; PAPER-005 dependency blocked.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
@@ -79,7 +79,7 @@
           "No new DIV004 Artifact and Google Drive write/readback",
           "Main SOP v1.0.0 rejects truthful pull_request receipts; draft PR #98 pending"
         ],
-        "last_checked_utc": "2026-10-24T05:32:14Z",
+        "last_checked_utc": "2026-10-24T06:26:02.223Z",
         "github_ci_run_id": 40015272119,
         "github_ci_job_id": 120625628326,
         "github_ci_event": "pull_request",
@@ -93,7 +93,12 @@
         "last_verified_scoped_ci_run": 40066630564,
         "last_verified_scoped_ci_head": "699d3c3d8ae9d7abfeee8a7200aab9c123adb6cc",
         "last_verified_scoped_ci_tests": "66/66 SYNTHETIC ONLY",
-        "latest_new_evidence_ci": "EXACT_SHA_SCOPED_CI_40066630564_JOB_120791154910_66_OF_66_SYNTHETIC_ONLY_NO_ARTIFACT"
+        "latest_new_evidence_ci": "EXACT_SHA_SCOPED_CI_40066630564_JOB_120791154910_66_OF_66_SYNTHETIC_ONLY_NO_ARTIFACT",
+        "latest_2022_issuer_annual_report_sse_exdate_crosscheck": "etf_single_rotation/metadata/510300_20220112_dividend_issuer_mirror_crosscheck.json",
+        "latest_2022_issuer_annual_report_evidence_commit": "ea2a8a9f322841ed984b25cff6dc0a341a2b6c30",
+        "latest_2022_original_pdf_bytes_sha": "NOT_VERIFIED",
+        "latest_2022_fund_level_entitlement_units": "11514187762",
+        "latest_2022_scope": "ISSUER_ANNUAL_REPORT_MIRROR_TEXT_AND_SSE_EX_DATE_ONLY_NO_NEW_CI_ARTIFACT_DRIVE"
       }
     },
     {
@@ -121,5 +126,5 @@
   "latest_verified_run": 39599580852,
   "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 13 sequential stages; 38 tests OK; 48 Drive uploads; all 5 declared ETF halts source-matched",
   "last_known_research_status": "NOT_FOR_TRADING",
-  "updated_utc": "2026-10-24T05:32:14Z"
+  "updated_utc": "2026-10-24T06:26:02.223Z"
 }
