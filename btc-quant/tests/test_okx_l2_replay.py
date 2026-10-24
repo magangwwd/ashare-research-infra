@@ -41,6 +41,26 @@ class ReplayTests(unittest.TestCase):
         self.assertEqual(x["comparison_diagnostics"]["snapshots_differ_from_prior_replay"], 1)
         self.assertIn("NOT_EXCHANGE_CONTINUITY_PROOF", x["status"])
 
+    def test_boundary_mismatch_rank_price_size_and_timing_are_aggregate_only(self):
+        rows = [
+            event(0, "snapshot"),
+            event(1, "snapshot", [["100", "3"], ["99", "2"]]),
+            event(2, "snapshot", [["100", "3"], ["98", "2"]]),
+        ]
+        result = mod.replay_stream(rows)
+        diag = result["comparison_diagnostics"]
+        self.assertEqual(diag["snapshots_differ_from_prior_replay"], 2)
+        self.assertEqual(diag["bid_top1_boundaries_different"], 1)
+        self.assertEqual(diag["bid_top10_boundaries_different"], 2)
+        self.assertEqual(diag["bid_same_price_size_difference"], 1)
+        self.assertEqual(diag["bid_new_price_not_in_replay"], 1)
+        self.assertEqual(diag["bid_old_price_not_in_snapshot"], 1)
+        self.assertNotIn("ask_top1_boundaries_different", diag)
+        timing = result["boundary_timing_diagnostics"]
+        self.assertEqual(timing["mismatched_positive_gap"], 2)
+        self.assertEqual(timing["max_prior_event_gap_ms"], 1000)
+        self.assertFalse(result["raw_market_events_in_report"])
+
     def test_snapshot_visible_depth_ignores_retained_deeper_levels(self):
         rows = [event(0, "snapshot"),
                 event(1, "update", [["98", "1"]], [["103", "1"]]),

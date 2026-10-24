@@ -137,6 +137,7 @@ def replay_stream(lines, *, utc_day=APPROVED_DAY, max_events=MAX_EVENTS,
     book = Book(max_levels)
     counts = Counter()
     mismatch = Counter()
+    boundary_timing = Counter()
     previous_ts = None
     for raw in lines:
         if not raw.strip():
@@ -161,6 +162,7 @@ def replay_stream(lines, *, utc_day=APPROVED_DAY, max_events=MAX_EVENTS,
             raise ValueError("L2 event outside expected UTC day")
         if previous_ts is not None and ts < previous_ts:
             raise ValueError("Out-of-order L2 timestamp")
+        prior_event_ts = previous_ts
         previous_ts = ts
         snapshot = action in ("snapshot", "partial")
         bids = _levels(event.get("bids"), side="bids", snapshot=snapshot)
@@ -175,14 +177,33 @@ def replay_stream(lines, *, utc_day=APPROVED_DAY, max_events=MAX_EVENTS,
                 old_bids = {p: book.bids[p] for p in heapq.nlargest(len(bids), book.bids)}
                 old_asks = {p: book.asks[p] for p in heapq.nsmallest(len(asks), book.asks)}
                 new_bids, new_asks = dict(bids), dict(asks)
-                if old_bids != new_bids or old_asks != new_asks:
+                different = old_bids != new_bids or old_asks != new_asks
+                # The preceding event is not necessarily synchronized to the
+                # exchange snapshot; timing is diagnostic, not gap evidence.
+                gap_ms = ts - prior_event_ts
+                boundary_timing["max_prior_event_gap_ms"] = max(
+                    boundary_timing["max_prior_event_gap_ms"], gap_ms)
+                boundary_timing["mismatched" if different else "matched"] += 1
+                boundary_timing[("mismatched" if different else "matched") +
+                                ("_same_timestamp" if gap_ms == 0 else "_positive_gap")] += 1
+                if different:
                     mismatch["snapshots_differ_from_prior_replay"] += 1
-                    mismatch["bid_price_levels_different"] += sum(
-                        old_bids.get(p) != new_bids.get(p)
-                        for p in old_bids.keys() | new_bids.keys())
-                    mismatch["ask_price_levels_different"] += sum(
-                        old_asks.get(p) != new_asks.get(p)
-                        for p in old_asks.keys() | new_asks.keys())
+                    for side, before, after, visible in (
+                            ("bid", old_bids, new_bids, bids),
+                            ("ask", old_asks, new_asks, asks)):
+                        mismatch[f"{side}_price_levels_different"] += sum(
+                            before.get(p) != after.get(p)
+                            for p in before.keys() | after.keys())
+                        mismatch[f"{side}_new_price_not_in_replay"] += sum(
+                            p not in before for p in after)
+                        mismatch[f"{side}_old_price_not_in_snapshot"] += sum(
+                            p not in after for p in before)
+                        mismatch[f"{side}_same_price_size_difference"] += sum(
+                            before[p] != after[p] for p in before.keys() & after.keys())
+                        old_visible = sorted(before.items(), reverse=(side == "bid"))
+                        for depth in (1, 10, 50, 100, 400):
+                            if old_visible[:depth] != visible[:depth]:
+                                mismatch[f"{side}_top{depth}_boundaries_different"] += 1
             book.replace(bids, asks)
             counts["snapshots"] += 1
         else:
@@ -202,6 +223,7 @@ def replay_stream(lines, *, utc_day=APPROVED_DAY, max_events=MAX_EVENTS,
         "snapshot_comparisons": counts["snapshot_comparisons"],
         "snapshot_comparison_scope": "VISIBLE_DEPTH_ONLY_DIAGNOSTIC_NOT_SEQUENCE_PROOF",
         "comparison_diagnostics": dict(sorted(mismatch.items())),
+        "boundary_timing_diagnostics": dict(sorted(boundary_timing.items())),
         "last_book_level_counts": {"bids": len(book.bids), "asks": len(book.asks)},
         "exchange_sequence_continuity": "NOT_VERIFIED_NO_SEQUENCE_IN_EXPOSED_JSON_FIELDS",
         "perfect_tick_reconstruction": "NOT_CLAIMED",
