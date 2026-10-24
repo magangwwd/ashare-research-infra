@@ -1,0 +1,32 @@
+name: BTC 2018 historical 1m+5m gap forensic audit (read only)
+on:
+  push:
+    branches: [research/btc-2018-gap-15m-pilot-20261021]
+    paths:
+      - '.github/workflows/btc-gap-1m-5m-forensic.yml'
+      - 'btc-quant/data/audit_short_interval_gap.py'
+      - 'btc-quant/tests/test_short_interval_gap.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Check no-imputation and timeframe tests
+        run: python -m unittest discover -s btc-quant/tests -p 'test_short_interval_gap.py' -v
+      - name: Validate official 2018-02 BTCUSDT 1m and 5m monthly ZIP checksums and gaps
+        run: python btc-quant/data/audit_short_interval_gap.py --out "$RUNNER_TEMP/btc_short_gap_audit.json"
+      - name: Retain official-source gap evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: btc-1m-5m-gap-forensics-${{ github.run_id }}
+          path: ${{ runner.temp }}/btc_short_gap_audit.json
+          retention-days: 30
+          if-no-files-found: error
