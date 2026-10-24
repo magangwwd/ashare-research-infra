@@ -24,7 +24,9 @@ jobs:
         run: python -m unittest discover -s btc-quant/tests -p 'test_okx_l2_replay.py' -v
 
   private-approved-day-replay:
-    if: github.event_name == 'workflow_dispatch'
+    # Never expose private Drive credentials to code checked out from a PR branch.
+    # Manual private replay is allowed only after review/merge to default branch.
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     needs: offline-replay-tests
     runs-on: ubuntu-latest
     timeout-minutes: 60
