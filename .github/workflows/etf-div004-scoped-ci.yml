@@ -53,7 +53,8 @@ jobs:
             etf_single_rotation.experiments.test_dividend_receivable_ledger \
             etf_single_rotation.experiments.test_dividend_cash_availability \
             etf_single_rotation.experiments.test_registered_consolidation_512100 \
-            etf_single_rotation.experiments.test_registered_consolidation_510500
+            etf_single_rotation.experiments.test_registered_consolidation_510500 \
+            etf_single_rotation.experiments.test_backlog_dependency_guard
       - name: Explicitly retain non-trading research gate
         run: |
           echo "REVIEW_REQUIRED / NOT_FOR_TRADING"
