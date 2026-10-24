@@ -65,11 +65,11 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "2021 audited 512690 issuer-authored annual report (third-party PDF mirror) corroborates split 1:2 on 2021-05-14 and 2021-12-30/31 cash dividend CNY 0.35/unit; fund-level payable CNY 2,110,132,560.90 implies 6,028,950,174 entitled units, NOT 6,322,650,174 year-end units (difference 293,700,000). Evidence 512690_2021_audited_annual_report_payable_split_crosscheck.json read back at blob 0b946c22; exact-SHA scoped CI run 40062254857/job 120778085664 on f86100b2 passed 64/64 synthetic tests. Next: original issuer/SSE PDF bytes+SHA, independent actual event-window prices/fund_adj, investor record-date units and broker cash availability, new DIV004 Artifact/Drive readback, PR #98 schema resolution. Do not unlock PAPER-005; NOT_FOR_TRADING.",
+      "next_action": "New synthetic accounting precision guard fixes fractional ETF units silently rounded by float; exact SHA 699d3c3d8ae9d7abfeee8a7200aab9c123adb6cc, scoped CI run 40066630564/job 120791154910 passed 66/66. Diagnostic ETF_DIV004_subfloat_precision_scoped_ci_20261024.json; original 512690 issuer annual-report payable evidence remains at 512690_2021_audited_annual_report_payable_split_crosscheck.json. Still require original issuer PDF bytes/SHA, independent real market prices/fund_adj and registered units/broker cash, fresh DIV004 Artifact+Drive readback, PR #98 schema. PAPER-005 dependency locked; NOT_FOR_TRADING.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
-        "review_head_sha": "28228e435bfffc6915c4bf79201d13bd9f8a942e",
+        "review_head_sha": "699d3c3d8ae9d7abfeee8a7200aab9c123adb6cc",
         "tested": "EXACT_SHA_SCOPED_GITHUB_CI_40056676910_64_OF_64_SYNTHETIC",
         "artifact_drive_readback": "NOT_PERFORMED_FOR_THIS_CHANGE",
         "blockers": [
@@ -79,7 +79,7 @@
           "No new DIV004 Artifact and Google Drive write/readback",
           "Main SOP v1.0.0 rejects truthful pull_request receipts; draft PR #98 pending"
         ],
-        "last_checked_utc": "2026-10-24T04:25:11Z",
+        "last_checked_utc": "2026-10-24T05:32:14Z",
         "github_ci_run_id": 40015272119,
         "github_ci_job_id": 120625628326,
         "github_ci_event": "pull_request",
@@ -87,13 +87,13 @@
         "tests_verified": 60,
         "test_scope": "SYNTHETIC_ACCOUNTING_ONLY",
         "new_issuer_evidence": "etf_single_rotation/metadata/510300_20220112_dividend_issuer_mirror_crosscheck.json",
-        "latest_new_evidence_path": "etf_single_rotation/metadata/512690_2021_audited_annual_report_payable_split_crosscheck.json",
+        "latest_new_evidence_path": "etf_single_rotation/metadata/ETF_DIV004_subfloat_precision_scoped_ci_20261024.json",
         "latest_new_evidence_commit": "f86100b21a8b8d93c2d38770d7cf06c02784b0da",
-        "latest_new_evidence_readback_blob_sha": "0b946c22f3f4207b1d7da18395925ab429598ad0",
-        "last_verified_scoped_ci_run": 40062254857,
-        "last_verified_scoped_ci_head": "f86100b21a8b8d93c2d38770d7cf06c02784b0da",
-        "last_verified_scoped_ci_tests": "64/64 SYNTHETIC ONLY",
-        "latest_new_evidence_ci": "EXACT_SHA_SCOPED_CI_40062254857_JOB_120778085664_64_OF_64_SYNTHETIC_ONLY_NO_ARTIFACT"
+        "latest_new_evidence_readback_blob_sha": "2f7717fcc883a5a245f4bd37e58ba5260c04dc4c",
+        "last_verified_scoped_ci_run": 40066630564,
+        "last_verified_scoped_ci_head": "699d3c3d8ae9d7abfeee8a7200aab9c123adb6cc",
+        "last_verified_scoped_ci_tests": "66/66 SYNTHETIC ONLY",
+        "latest_new_evidence_ci": "EXACT_SHA_SCOPED_CI_40066630564_JOB_120791154910_66_OF_66_SYNTHETIC_ONLY_NO_ARTIFACT"
       }
     },
     {
@@ -121,5 +121,5 @@
   "latest_verified_run": 39599580852,
   "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 13 sequential stages; 38 tests OK; 48 Drive uploads; all 5 declared ETF halts source-matched",
   "last_known_research_status": "NOT_FOR_TRADING",
-  "updated_utc": "2026-10-24T04:25:11Z"
+  "updated_utc": "2026-10-24T05:32:14Z"
 }
