@@ -41,7 +41,7 @@
     "factor_difference_is_not_independent_price_verification": true
   },
   "limitations": [
-    "Issuer notice is mirrored by a third party; no issuer/SSE original-host source URL or source PDF byte hash has been verified.",
+    "2022 issuer dividend notice is third-party mirrored; original SSE-hosted 2022 annual-report text and dividend table image were inspected directly, but original PDF bytes/SHA256 remain unverified.",
     "Same-supplier Tushare raw_close and fund_adj cannot independently establish market accuracy or total return.",
     "No registered portfolio share balances or CSDC/broker account statement were obtained.",
     "Announced payment and CSDC-to-broker dates do not certify actual investor cash spendability.",
@@ -49,7 +49,7 @@
     "2022 issuer annual report fund-level aggregate arithmetic cannot substitute for record-date strategy fills, actual registered account holdings, or broker cash settlement; original SSE PDF bytes and SHA remain unverified."
   ],
   "status": "REVIEW_REQUIRED",
-  "next_action": "Obtain and hash SSE-hosted original 2022 annual report/issuer notice; reconcile record-date strategy holdings and actual cash settlement, independent market prices and fund_adj, then DIV004 Artifact/Drive readback; keep REVIEW_REQUIRED and PAPER-005 locked.",
+  "next_action": "Obtain and hash original issuer/exchange PDF bytes; independently verify raw market prices and fund_adj, account-level record-date registered shares and actual broker cash availability; perform DIV004 Artifact/Drive readback; remain REVIEW_REQUIRED and keep PAPER-005 blocked.",
   "issuer_2022_annual_report_crosscheck": {
     "checked_on_utc": "2026-10-24",
     "primary_exchange_pdf_url_identified": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2023-03-31/510300_20230331_TLSG.pdf",
@@ -68,7 +68,32 @@
     "primary_sse_annual_report_bytes_downloaded": false,
     "primary_sse_annual_report_sha256": null,
     "mirror_text_inspected": true,
-    "verification_scope": "Issuer annual-report text at mirror and independent SSE options announcement; original SSE PDF URL identified but PDF bytes/hash NOT verified; fund-level aggregate is NOT account-level entitlement or broker cash proof",
-    "status": "PRIMARY_LINK_FOUND_MIRROR_TEXT_AND_EX_DATE_CROSSCHECK_ONLY"
+    "verification_scope": "SSE-hosted original 2022 annual-report PDF directly text-inspected, with §7.4.11 page image visually verified: 2022-01-18 registration, 2022-01-19 ex-date, 0.7500 CNY/10 shares, 863564082.15 CNY aggregate. Original PDF bytes and SHA256 NOT obtained; original 2022 issuer distribution notice remains third-party mirrored; fund-level amounts are not account-level entitlement or cash receipt.",
+    "status": "PRIMARY_SSE_PDF_TEXT_AND_PAGE_IMAGE_VERIFIED_BYTES_UNHASHED",
+    "primary_sse_annual_report_text_inspected": true,
+    "primary_sse_annual_report_page_verified": {
+      "pdf_page_index": 160,
+      "printed_page": 161,
+      "section": "7.4.11 利润分配情况",
+      "registration_date": "2022-01-18",
+      "ex_dividend_date": "2022-01-19",
+      "per_10_units_cny": "0.7500",
+      "fund_aggregate_dividend_cny": "863564082.15",
+      "verification": "SSE-hosted PDF text extraction AND page image visually checked on 2026-10-24; no source bytes downloaded or hashed"
+    },
+    "primary_sse_annual_report_other_sections_verified": [
+      {
+        "pdf_page_index": 15,
+        "printed_page": 16,
+        "section": "4.8",
+        "finding": "2022-01-19; 0.75 CNY per 10 units; fund aggregate 863564082.15 CNY"
+      },
+      {
+        "pdf_page_index": 35,
+        "printed_page": 36,
+        "section": "7.4.7.10",
+        "finding": "2021-12-31 fund units 11340487690; not record-date investor units"
+      }
+    ]
   }
 }
