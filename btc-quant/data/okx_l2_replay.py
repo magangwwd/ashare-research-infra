@@ -96,15 +96,19 @@ class Book:
         for side, rows in (("bids", bids), ("asks", asks)):
             data = self.bids if side == "bids" else self.asks
             heap = self.bid_heap if side == "bids" else self.ask_heap
+            # An update is a batch: delete levels first, then insert/change.
+            # Enforce the bound BEFORE each new allocation, not only afterward.
+            # This also permits a valid full-capacity delete+insert batch.
             for price, size in rows:
                 if size == 0:
                     data.pop(price, None)
-                else:
+            for price, size in rows:
+                if size != 0:
                     if price not in data:
+                        if len(data) >= self.max_levels:
+                            raise ValueError("L2 side exceeds bounded memory cap")
                         heapq.heappush(heap, -price if side == "bids" else price)
                     data[price] = size
-            if len(data) > self.max_levels:
-                raise ValueError("L2 side exceeds bounded memory cap")
             if len(heap) > max(4096, 4 * len(data)):
                 self._rebuild(side)
         self.check()
