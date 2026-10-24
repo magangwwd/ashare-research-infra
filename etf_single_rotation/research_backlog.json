@@ -65,7 +65,7 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "New issuer annual-report/SSE 2022 dividend crosscheck in 510300_20220112_dividend_issuer_mirror_crosscheck.json, evidence commit ea2a8a9f322841ed984b25cff6dc0a341a2b6c30: fund-level 863,564,082.15 CNY / 0.075 = 11,514,187,762 entitled units; prior year-end shares differ by 173,700,072. Original SSE-hosted PDF bytes/SHA, account holdings/cash, independent prices/fund_adj and new DIV004 Artifact+Drive readback remain unverified. Keep REVIEW_REQUIRED, NOT_FOR_TRADING; PAPER-005 dependency blocked.",
+      "next_action": "SSE-hosted 510300 2022 audited annual-report PDF §7.4.11 text and page image independently checked (evidence commit 70580947033f9cb6645160a02b2805be1c1709f1): registration 2022-01-18, ex-date 2022-01-19, 0.7500 CNY/10 units, fund aggregate 863564082.15 CNY. Original PDF bytes/SHA256, independent raw prices/fund_adj, account-level registered shares/broker cash, new DIV004 Artifact/Drive readback still missing. Prior scoped synthetic CI run 40070195131 passed 66/66 at head b00fa0db (BEFORE this evidence-only update). Keep REVIEW_REQUIRED/NOT_FOR_TRADING; PAPER-005 blocked.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
@@ -87,18 +87,21 @@
         "tests_verified": 60,
         "test_scope": "SYNTHETIC_ACCOUNTING_ONLY",
         "new_issuer_evidence": "etf_single_rotation/metadata/510300_20220112_dividend_issuer_mirror_crosscheck.json",
-        "latest_new_evidence_path": "etf_single_rotation/metadata/ETF_DIV004_subfloat_precision_scoped_ci_20261024.json",
-        "latest_new_evidence_commit": "f86100b21a8b8d93c2d38770d7cf06c02784b0da",
-        "latest_new_evidence_readback_blob_sha": "2f7717fcc883a5a245f4bd37e58ba5260c04dc4c",
-        "last_verified_scoped_ci_run": 40066630564,
-        "last_verified_scoped_ci_head": "699d3c3d8ae9d7abfeee8a7200aab9c123adb6cc",
-        "last_verified_scoped_ci_tests": "66/66 SYNTHETIC ONLY",
+        "latest_new_evidence_path": "etf_single_rotation/metadata/510300_20220112_dividend_issuer_mirror_crosscheck.json",
+        "latest_new_evidence_commit": "70580947033f9cb6645160a02b2805be1c1709f1",
+        "latest_new_evidence_readback_blob_sha": "6fa4bb4ff304bffaeea0ed4453557f5ef30521de",
+        "last_verified_scoped_ci_run": 40070195131,
+        "last_verified_scoped_ci_head": "b00fa0dbcf1366d675e374f59855accfd3a10805",
+        "last_verified_scoped_ci_tests": "66/66 SYNTHETIC ONLY, BEFORE EVIDENCE-ONLY COMMIT",
         "latest_new_evidence_ci": "EXACT_SHA_SCOPED_CI_40066630564_JOB_120791154910_66_OF_66_SYNTHETIC_ONLY_NO_ARTIFACT",
         "latest_2022_issuer_annual_report_sse_exdate_crosscheck": "etf_single_rotation/metadata/510300_20220112_dividend_issuer_mirror_crosscheck.json",
         "latest_2022_issuer_annual_report_evidence_commit": "ea2a8a9f322841ed984b25cff6dc0a341a2b6c30",
         "latest_2022_original_pdf_bytes_sha": "NOT_VERIFIED",
         "latest_2022_fund_level_entitlement_units": "11514187762",
-        "latest_2022_scope": "ISSUER_ANNUAL_REPORT_MIRROR_TEXT_AND_SSE_EX_DATE_ONLY_NO_NEW_CI_ARTIFACT_DRIVE"
+        "latest_2022_scope": "SSE_HOSTED_ORIGINAL_ANNUAL_REPORT_TEXT_AND_PAGE_IMAGE_VERIFIED_NO_PDF_BYTES_SHA_NO_ACCOUNT_CASH",
+        "latest_2022_primary_page_verified": "2022 annual report §7.4.11 printed page 161, PDF page index 160",
+        "latest_2022_primary_report_evidence_commit": "70580947033f9cb6645160a02b2805be1c1709f1",
+        "last_verified_scoped_ci_job": 120801770743
       }
     },
     {
