@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40102994203,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "4a5c43d8de67c64c8b5e980c8e683ea16c7bc675",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": null,
+    "provenance": "SYNTHETIC_ONLY: unit tests use generated fixture events and fake evidence reference/hash; no live broker/CSDC statements, independent market prices, or real dividend settlement data."
+  },
+  "checks": {
+    "tests_passed": 71,
+    "tests_failed": 0,
+    "output_sha256": null
+  },
+  "artifact_urls": [],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Obtain and independently verify private broker/CSDC cash-availability statement and its SHA256 outside public GitHub; verify issuer event dates and independent raw prices/fund_adj for all eight ETFs, then produce immutable Artifact and real Drive readback. Do not advance PAPER-005.",
+  "created_at_utc": "2026-10-24T14:33:41.492Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Synthetic CI tests and evidence metadata validation do NOT establish real cash availability, broker statement authenticity, independent prices, total return, or new Drive publication.",
+  "fingerprint": "scoped-ci:4a5c43d8de67c64c8b5e980c8e683ea16c7bc675:71tests",
+  "agent_review_id": null
+}
