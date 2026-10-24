@@ -296,3 +296,50 @@ def test_unconfirmed_final_chunk_stays_failed(tmp_path, monkeypatch):
     monkeypatch.setattr(dp.time, "sleep", lambda _: None)
     with pytest.raises(dp.PublishError, match="not completed"):
         dp.Drive(Session()).upload("parent", path.name, path)
+
+
+def test_cross_run_resume_reuses_verified_file_and_preserves_pointer(tmp_path):
+    drive = MemoryDrive(fault="interrupted")
+    items = snapshot(tmp_path)
+    before = drive.read("pointer")
+    with pytest.raises(dp.PublishError, match="interrupted"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path)
+    assert drive.read("pointer") == before
+    assert drive.upload_count == 2
+    drive.fault = None
+    report = dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path)
+    assert report["passed"]
+    # One missing data file + manifest; first data file is not reuploaded.
+    assert drive.upload_count == 4
+    assert json.loads(drive.read("pointer"))["version"] != "old"
+
+
+def test_cross_run_resume_rejects_corrupt_existing_file(tmp_path):
+    drive = MemoryDrive(fault="interrupted")
+    items = snapshot(tmp_path)
+    before = drive.read("pointer")
+    with pytest.raises(dp.PublishError):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path)
+    uploaded = [v for v in drive.files.values() if v["name"] == "part-000.parquet"]
+    assert len(uploaded) == 1
+    uploaded[0]["body"] = b"x" + uploaded[0]["body"][1:]
+    drive.fault = None
+    with pytest.raises(dp.PublishError, match="SHA256"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path)
+    assert drive.read("pointer") == before
+    assert drive.upload_count == 2
+
+
+def test_cross_run_resume_rejects_duplicate_stage_identity(tmp_path):
+    drive = MemoryDrive(fault="interrupted")
+    items = snapshot(tmp_path)
+    with pytest.raises(dp.PublishError):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path)
+    staging = drive.folder("root", "staging")
+    original = next(v for v in drive.files.values() if staging in v.get("parents", []) and v["mimeType"] == dp.FOLDER)
+    drive.create_folder(staging, original["name"])
+    drive.fault = None
+    before = drive.read("pointer")
+    with pytest.raises(dp.PublishError, match="Ambiguous resumable"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path)
+    assert drive.read("pointer") == before

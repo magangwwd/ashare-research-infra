@@ -321,26 +321,50 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None):
         old_manifest_bytes = verify_previous_snapshot(drive, old_pointer)
     staging = drive.folder(target, "staging")
     versions = drive.folder(target, "versions")
-    version = utcnow().replace(":", "").replace("+", "_") + "-" + uuid.uuid4().hex[:8]
-    stage = drive.create_folder(staging, version)
-    print(f"SUCCESS staging created folder_id={stage} files={len(items)} bytes={total}; current pointer unchanged")
+    # Content-addressed staging identity survives GitHub Actions restarts.
+    # Never reuse a folder whose accepted inventory fingerprint differs.
+    identity = [{"path": i["path"], "bytes": i["bytes"], "sha256": i["sha256"]}
+                for i in sorted(items, key=lambda entry: entry["path"])]
+    if len({i["path"] for i in identity}) != len(identity):
+        raise PublishError("Duplicate local snapshot paths; publication blocked.")
+    fingerprint = hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    version = "snapshot-" + fingerprint
+    candidates = [f for f in drive.children(staging) if f["name"] == version]
+    if len(candidates) > 1 or candidates and candidates[0]["mimeType"] != FOLDER:
+        raise PublishError("Ambiguous resumable staging identity; publication blocked.")
+    stage = candidates[0]["id"] if candidates else drive.create_folder(staging, version)
+    print(f"SUCCESS staging {'resumed' if candidates else 'created'} folder_id={stage} files={len(items)} bytes={total}; current pointer unchanged")
     directories = {"": stage}
     files = []
+    reused = 0
     for item in items:
         path = Path(item["path"])
+        if path.is_absolute() or ".." in path.parts or path.as_posix() != item["path"]:
+            raise PublishError("Unsafe local snapshot path; publication blocked.")
         parts = path.parent.parts
         for count in range(1, len(parts) + 1):
             relative = "/".join(parts[:count])
             if relative not in directories:
                 parent = "/".join(parts[:count - 1])
-                directories[relative] = drive.create_folder(directories[parent], parts[count - 1])
+                directories[relative] = drive.folder(directories[parent], parts[count - 1])
         source = Path(item["local_path"])
         if digest(source) != (item["bytes"], item["sha256"]):
             raise PublishError("Local snapshot changed during upload.")
-        file_id = drive.upload(directories[path.parent.as_posix() if parts else ""], path.name, source)
+        parent_id = directories[path.parent.as_posix() if parts else ""]
+        existing = [f for f in drive.children(parent_id) if f["name"] == path.name]
+        if len(existing) > 1 or existing and existing[0]["mimeType"] == FOLDER:
+            raise PublishError("Ambiguous remote file path; publication blocked.")
+        if existing:
+            remote = existing[0]
+            if int(remote.get("size", -1)) != item["bytes"] or drive.remote_digest(remote["id"]) != (item["bytes"], item["sha256"]):
+                raise PublishError("Resumable remote SHA256 or size mismatch; publication blocked.")
+            file_id = remote["id"]
+            reused += 1
+        else:
+            file_id = drive.upload(parent_id, path.name, source)
         files.append({k: v for k, v in item.items() if k != "local_path"} | {"file_id": file_id})
         if len(files) % 100 == 0:
-            print(f"SUCCESS staged files={len(files)}/{len(items)}; remote verification pending")
+            print(f"SUCCESS staged files={len(files)}/{len(items)} reused={reused}; remote verification pending")
     observed = remote_inventory(drive, stage)
     if set(observed) != {i["path"] for i in files}:
         raise PublishError("Remote file inventory does not match the accepted local snapshot.")
