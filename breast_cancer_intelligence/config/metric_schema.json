@@ -1,0 +1,22 @@
+{
+  "required": [
+    "hospital_id",
+    "metric_type",
+    "value",
+    "unit",
+    "observation_year",
+    "scope",
+    "source_url",
+    "retrieved_at",
+    "verification_state"
+  ],
+  "metric_types": [
+    "new_breast_cancer_patients",
+    "breast_cancer_surgeries",
+    "all_breast_surgeries",
+    "outpatient_visits",
+    "inpatient_visits",
+    "trial_enrollment"
+  ],
+  "notes": "Do not treat surgical procedures or visits as unique patients. Missing values remain null."
+}

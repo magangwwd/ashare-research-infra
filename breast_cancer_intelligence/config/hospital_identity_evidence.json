@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "updated_utc": "2026-10-18",
+  "scope": "public hospital identity and historical-alias evidence only; not clinical outcomes or current service verification",
+  "records": [
+    {
+      "hospital_id": "east_theater_general",
+      "claim_type": "formation_from_predecessors",
+      "claim": "东部战区总医院于2018年组建，以原南京军区南京总医院、原第八十一医院及其他机构为组建基础",
+      "sources": [
+        {
+          "url": "https://yxx.hnvtc.edu.cn/info/1062/1555.htm",
+          "publisher": "高校医学院实习基地页面",
+          "published": "2022-05-15",
+          "evidence_level": "institutional-secondary"
+        },
+        {
+          "url": "https://yxyxy.sdsmu.edu.cn/2023/0428/c363a116543/page.htm",
+          "publisher": "山东第二医科大学医学影像学院",
+          "published": "2023-04-25",
+          "evidence_level": "institutional-secondary"
+        }
+      ],
+      "status": "historical_identity_corroborated_current_structure_requires_primary_verification",
+      "limitations": "Does not confirm current breast specialty, appointments, annual breast cancer patients, or current hospital-level attribution"
+    },
+    {
+      "hospital_id": "pla_fifth",
+      "claim_type": "breast_cancer_discipline_public_reference",
+      "claim": "公开报道记载解放军总医院肿瘤医学部乳腺疾病诊疗中心于2024年举行启动仪式；须区分肿瘤医学部和第五医学中心的行政与门诊归属",
+      "sources": [
+        {
+          "url": "https://cmtopdr.com/post/detail/5aafb563-5d80-4c96-9dd5-a444537f49a8",
+          "publisher": "壹生资讯",
+          "published": "2024-05-03",
+          "evidence_level": "professional-media-secondary"
+        }
+      ],
+      "status": "historical_department_event_not_current_service_verified",
+      "limitations": "No current doctor roster or patient denominator verified"
+    }
+  ]
+}
