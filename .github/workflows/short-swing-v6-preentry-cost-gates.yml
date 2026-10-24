@@ -1,0 +1,135 @@
+name: A-share V6 conservative pre-entry cost gates PAPER
+on:
+  push:
+    branches:
+      - feat/mainboard-short-swing-3to5-paper-20261020
+    paths:
+      - '.github/workflows/short-swing-v6-preentry-cost-gates.yml'
+      - 'astock-quant/stock_state_strategy/short_swing_v6_preentry_cost_gates.py'
+      - 'astock-quant/stock_state_strategy/test_short_swing_v6_preentry_cost_gates.py'
+  pull_request:
+    paths:
+      - '.github/workflows/short-swing-v6-preentry-cost-gates.yml'
+      - 'astock-quant/stock_state_strategy/short_swing_v6_preentry_cost_gates.py'
+      - 'astock-quant/stock_state_strategy/test_short_swing_v6_preentry_cost_gates.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  v6-offline-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install 'pandas>=2.2,<4' 'pyarrow>=18'
+      - name: Offline checks V6 signal-time 2-gates and untouched V1/V2/V5
+        working-directory: astock-quant/stock_state_strategy
+        run: python -m unittest -v test_short_swing_3to5_v1.py test_short_swing_3to5_v2_research.py test_short_swing_3to5_v5_causal_ranking.py test_short_swing_v6_preentry_cost_gates.py
+
+  gold-v6-conservative-compare:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       github.event.pull_request.head.ref == 'feat/mainboard-short-swing-3to5-paper-20261020')
+    needs: v6-offline-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      START: '2024-01-01'
+      END: '2026-10-16'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install parquet runtime
+        run: python -m pip install 'pandas>=2.2,<4' 'pyarrow>=18'
+      - name: Configure existing Drive secret in temporary directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo '::error::Missing GDRIVE_RCLONE_CONFIG_B64'; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Fetch historical Gold and point-in-time risk records, abort if absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from datetime import date
+          start=date.fromisoformat(os.environ['START'])
+          end=date.fromisoformat(os.environ['END'])
+          assert date(2024,1,1) <= start <= end, 'Bad backtest period'
+          assert end <= date.today(), 'Cannot request future Gold data'
+          PY
+          base='gdrive:down_data/data/gold/main_board'
+          mkdir -p "$RUNNER_TEMP/gold" "$RUNNER_TEMP/risk/name_history"
+          rclone copyto "$base/manifest.json" "$RUNNER_TEMP/gold/manifest.json"
+          from_year="$((10#${START:0:4}-1))"
+          to_year="${END:0:4}"
+          for year in $(seq "$from_year" "$to_year"); do
+            for dataset in daily_prices adjustment_factors; do
+              rclone copy "$base/$dataset/year=$year" "$RUNNER_TEMP/gold/$dataset/year=$year" --checkers 12 --transfers 8
+            done
+            for dataset in daily_limits suspension_events; do
+              rclone copy "$base/$dataset/year=$year" "$RUNNER_TEMP/risk/$dataset/year=$year" --checkers 12 --transfers 8
+            done
+          done
+          rclone copyto "$base/name_history.parquet" "$RUNNER_TEMP/risk/name_history/data.parquet"
+      - name: Run V6 3 predeclared entry filters at 0.1, 0.3 and 0.5 percent one-side slip
+        shell: bash
+        run: |
+          set -euo pipefail
+          python astock-quant/stock_state_strategy/short_swing_v6_preentry_cost_gates.py \
+            --market-root "$RUNNER_TEMP/gold" --risk-root "$RUNNER_TEMP/risk" \
+            --start "$START" --end "$END" \
+            --gold-manifest-sha256 56003f3eab3ea4ad405ac692e11cb7ff42bb0b700d177903311b8829cd24ded6 \
+            --output "$RUNNER_TEMP/mainboard-v6/comparison.json"
+          python - <<'PY'
+          import json,os,pathlib
+          d=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'mainboard-v6/comparison.json').read_text())
+          assert d['mode']=='RESEARCH_ONLY_NOT_LIVE_NOT_OOS'
+          assert [s['each_side_slippage'] for s in d['slippage_results']]==[.001,.003,.005]
+          assert [z['name'] for z in d['slippage_results'][0]['runs']]==[
+            'V5_LOW_RUNUP_BASELINE','V6_PRIOR5_MAX_08','V6_BREAKOUT_MAX_025']
+          assert all(len(g['runs'])==3 and all(v['summary']['closed_trades']>0 and
+            not v['open_position'] for v in g['runs']) for g in d['slippage_results'])
+          base=d['slippage_results'][0]['runs'][0]['summary']
+          assert .40 < base['total_return'] < .45 and -.20 < base['max_drawdown'] < -.17, 'V5 unguarded baseline drift'
+          for group in d['slippage_results']:
+            print('V6_FULL_CASH_PAPER',group['each_side_slippage'],[
+              (v['name'],v['summary']['total_return'],v['summary']['max_drawdown'],
+               v['summary']['closed_trades']) for v in group['runs']])
+          print('HISTORICAL_V6_NOT_OUT_OF_SAMPLE_OR_EXECUTION_VERIFIED')
+          PY
+      - name: Archive immutable V6 PAPER results and check Google Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/short_swing_3to5_v6_preentry_cost_gates/$END/run_$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/mainboard-v6" "$dest" --immutable --transfers 2
+          rclone check "$RUNNER_TEMP/mainboard-v6" "$dest" --one-way --checkers 4
+          echo "V6_RESEARCH_ARCHIVE=$dest/comparison.json"
+      - name: Attach CI audit JSON for quick review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v6-preentry-cost-gates-paper-results
+          path: ${{ runner.temp }}/mainboard-v6/
+          if-no-files-found: warn
+          retention-days: 30

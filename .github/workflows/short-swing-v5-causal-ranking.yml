@@ -1,0 +1,150 @@
+name: A-share V5 causal ranking research checks
+on:
+  push:
+    branches:
+      - feat/mainboard-short-swing-3to5-paper-20261020
+    paths:
+      - '.github/workflows/short-swing-v5-causal-ranking.yml'
+      - 'astock-quant/stock_state_strategy/short_swing_3to5_v5_causal_ranking.py'
+      - 'astock-quant/stock_state_strategy/test_short_swing_3to5_v5_causal_ranking.py'
+      - 'astock-quant/stock_state_strategy/short_swing_3to5_v5_slippage_stress.py'
+  pull_request:
+    paths:
+      - '.github/workflows/short-swing-v5-causal-ranking.yml'
+      - 'astock-quant/stock_state_strategy/short_swing_3to5_v5_causal_ranking.py'
+      - 'astock-quant/stock_state_strategy/test_short_swing_3to5_v5_causal_ranking.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  v5-offline-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install 'pandas>=2.2,<4' 'pyarrow>=18'
+      - name: Offline checks of V5 ranking and unchanged V1/V2 policy
+        working-directory: astock-quant/stock_state_strategy
+        run: python -m unittest -v test_short_swing_3to5_v1.py test_short_swing_3to5_v2_research.py test_short_swing_3to5_v5_causal_ranking.py
+
+  gold-v5-causal-compare:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       github.event.pull_request.head.ref == 'feat/mainboard-short-swing-3to5-paper-20261020')
+    needs: v5-offline-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      START: '2024-01-01'
+      END: '2026-10-16'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.13'}
+      - name: Install parquet runtime
+        run: python -m pip install 'pandas>=2.2,<4' 'pyarrow>=18'
+      - name: Configure existing Drive secret in temporary directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GDRIVE_RCLONE_CONFIG_B64" || { echo '::error::Missing GDRIVE_RCLONE_CONFIG_B64'; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+          (umask 077; printf '%s' "$GDRIVE_RCLONE_CONFIG_B64" | base64 --decode > "$RUNNER_TEMP/rclone.conf")
+          echo "RCLONE_CONFIG=$RUNNER_TEMP/rclone.conf" >> "$GITHUB_ENV"
+          RCLONE_CONFIG="$RUNNER_TEMP/rclone.conf" rclone listremotes | grep -qx 'gdrive:'
+      - name: Fetch historical Gold and point-in-time risk records, abort if absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          from datetime import date
+          start=date.fromisoformat(os.environ['START'])
+          end=date.fromisoformat(os.environ['END'])
+          assert date(2024,1,1) <= start <= end, 'Bad backtest period'
+          assert end <= date.today(), 'Cannot request future Gold data'
+          PY
+          base='gdrive:down_data/data/gold/main_board'
+          mkdir -p "$RUNNER_TEMP/gold" "$RUNNER_TEMP/risk/name_history"
+          rclone copyto "$base/manifest.json" "$RUNNER_TEMP/gold/manifest.json"
+          from_year="$((10#${START:0:4}-1))"
+          to_year="${END:0:4}"
+          for year in $(seq "$from_year" "$to_year"); do
+            for dataset in daily_prices adjustment_factors; do
+              rclone copy "$base/$dataset/year=$year" "$RUNNER_TEMP/gold/$dataset/year=$year" --checkers 12 --transfers 8
+            done
+            for dataset in daily_limits suspension_events; do
+              rclone copy "$base/$dataset/year=$year" "$RUNNER_TEMP/risk/$dataset/year=$year" --checkers 12 --transfers 8
+            done
+          done
+          rclone copyto "$base/name_history.parquet" "$RUNNER_TEMP/risk/name_history/data.parquet"
+      - name: Full single-position V2 vs causal ranking gold simulation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python astock-quant/stock_state_strategy/short_swing_3to5_v5_causal_ranking.py \
+            --market-root "$RUNNER_TEMP/gold" --risk-root "$RUNNER_TEMP/risk" \
+            --start "$START" --end "$END" \
+            --output "$RUNNER_TEMP/mainboard-v5/comparison.json"
+          python - <<'PY'
+          import json,os,pathlib
+          d=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'mainboard-v5/comparison.json').read_text())
+          assert d['mode']=='RESEARCH_ONLY_NO_LIVE_TRADING'
+          assert [x['name'] for x in d['variants']]==[
+            'V2_LOOSE_UNCHANGED','LESS_EXTENDED_BREAKOUT_FIRST','LESS_RECENT_RUNUP_FIRST']
+          assert all(x['summary']['closed_trades'] and not x['unclosed_position'] for x in d['variants'])
+          print('V5_FULL_CASH_PATH_PAPER_CHECKED', [
+             (x['name'],x['summary']['total_return'],x['summary']['max_drawdown'],
+              x['summary']['closed_trades']) for x in d['variants']])
+          PY
+      - name: Recompute portfolio at adverse per-side slippage 0.3 and 0.5 pct
+        shell: bash
+        run: |
+          set -euo pipefail
+          python astock-quant/stock_state_strategy/short_swing_3to5_v5_slippage_stress.py \
+            --market-root "$RUNNER_TEMP/gold" --risk-root "$RUNNER_TEMP/risk" \
+            --start "$START" --end "$END" \
+            --gold-manifest-sha256 56003f3eab3ea4ad405ac692e11cb7ff42bb0b700d177903311b8829cd24ded6 \
+            --output "$RUNNER_TEMP/mainboard-v5/stress.json"
+          python - <<'PY'
+          import json,os,pathlib
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])/'mainboard-v5'
+          base=json.loads((root/'comparison.json').read_text())
+          stress=json.loads((root/'stress.json').read_text())
+          assert base['gold_source']['sha256']==stress['gold_manifest_sha256']
+          assert stress['predeclared_slippage_each_fill']==[.003,.005]
+          assert len(stress['runs'])==2
+          assert all([x['name'] for x in row['results']]==[v['name'] for v in base['variants']]
+                     for row in stress['runs'])
+          print('STRESS_PAPER_CAPITAL_PATH_VALIDATED')
+          PY
+      - name: Archive immutable V5 paper-only result and check Google Drive
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest="gdrive:stock_state_strategy/output/short_swing_3to5_v5_causal_rank/$END/run_$GITHUB_RUN_ID"
+          rclone copy "$RUNNER_TEMP/mainboard-v5" "$dest" --immutable --transfers 2
+          rclone check "$RUNNER_TEMP/mainboard-v5" "$dest" --one-way --checkers 4
+          echo "V5_RESEARCH_ARCHIVE=$dest/comparison.json"
+      - name: Attach CI audit JSON for quick review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5-causal-ranked-paper-results
+          path: ${{ runner.temp }}/mainboard-v5/
+          if-no-files-found: warn
+          retention-days: 30
