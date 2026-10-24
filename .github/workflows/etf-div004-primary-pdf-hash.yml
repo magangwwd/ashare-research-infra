@@ -1,0 +1,100 @@
+name: ETF DIV-004 official PDF byte-hash evidence (research only)
+# Read-only source-byte provenance check; never executes downloaded content.
+# No secrets, no trading, no price changes, no recurring schedule.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/etf-div004-event-audit-20261021
+    paths:
+      - .github/workflows/etf-div004-primary-pdf-hash.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-div004-primary-pdf-hash
+  cancel-in-progress: false
+
+jobs:
+  source-byte-hash:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact source revision without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download official exchange-hosted 510300 2023 dividend notice
+        env:
+          SOURCE_URL: https://www.sse.com.cn/disclosure/fund/announcement/c/new/2023-01-09/510300_20230109_0ED5.pdf
+        run: |
+          curl --fail --location --silent --show-error \
+            --retry 2 --retry-all-errors --retry-delay 2 \
+            --connect-timeout 15 --max-time 55 --max-filesize 25000000 \
+            --proto '=https' --proto-redir '=https' \
+            --output "$RUNNER_TEMP/issuer_notice.pdf" \
+            --write-out '%{url_effective}' "$SOURCE_URL" > "$RUNNER_TEMP/effective_url.txt"
+      - name: Verify PDF bytes and emit truthful research-only manifest
+        env:
+          SOURCE_URL: https://www.sse.com.cn/disclosure/fund/announcement/c/new/2023-01-09/510300_20230109_0ED5.pdf
+        run: |
+          python - <<'PY'
+          import datetime
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          from urllib.parse import urlparse
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          raw = (temp / "issuer_notice.pdf").read_bytes()
+          effective = (temp / "effective_url.txt").read_text().strip()
+          parsed = urlparse(effective)
+          if parsed.scheme != "https" or parsed.hostname != "www.sse.com.cn":
+              raise SystemExit("FAIL_CLOSED: unexpected PDF download host")
+          if not (128 <= len(raw) <= 25_000_000 and raw.startswith(b"%PDF-")):
+              raise SystemExit("FAIL_CLOSED: response is not a plausible PDF")
+          if b"%%EOF" not in raw[-2048:]:
+              raise SystemExit("FAIL_CLOSED: missing PDF end marker")
+          result = {
+              "schema_version": 1,
+              "task_id": "ETF-DIV-004",
+              "research_only": True,
+              "status": "SOURCE_BYTES_HASHED_NOT_CONTENT_OR_MARKET_ACCEPTED",
+              "trading_status": "NOT_FOR_TRADING",
+              "source_url": os.environ["SOURCE_URL"],
+              "effective_url": effective,
+              "downloaded_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "github_run_id": int(os.environ["GITHUB_RUN_ID"]),
+              "github_run_attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
+              "github_checkout_sha": os.environ["GITHUB_SHA"],
+              "bytes": len(raw),
+              "pdf_sha256": hashlib.sha256(raw).hexdigest(),
+              "pdf_header_valid": True,
+              "pdf_eof_marker_present": True,
+              "content_text_extracted": False,
+              "issuer_dates_independently_verified_in_this_run": False,
+              "independent_market_price_checked": False,
+              "account_cash_settlement_checked": False,
+              "drive_readback_performed": False,
+              "limitations": [
+                  "A source byte hash does not independently certify the dividend contents.",
+                  "Only one 510300 notice was fetched; eight-ETF registry is incomplete.",
+                  "No new prices, strategy results, broker cash, or Drive data were validated.",
+                  "No real trading or backtest was run."
+              ],
+          }
+          output = Path("etf_div004_primary_pdf_hash_manifest.json")
+          output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+          print("PRIMARY_PDF_SHA256", result["pdf_sha256"])
+          print("PRIMARY_PDF_BYTES", result["bytes"])
+          print("REVIEW_REQUIRED / NOT_FOR_TRADING")
+          PY
+      - name: Preserve manifest as a new, scoped Actions Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: etf-div004-primary-pdf-hash-manifest
+          path: etf_div004_primary_pdf_hash_manifest.json
+          if-no-files-found: error
+          retention-days: 30
