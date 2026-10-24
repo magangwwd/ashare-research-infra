@@ -1,0 +1,29 @@
+{
+  "pilot_id": "WORK-RELAY-PILOT-20261021",
+  "status": "READY",
+  "task_id": "RELAY-001",
+  "goal": "Verify actual PR event starts Work review and dispatches a bounded GitHub task",
+  "max_tasks": 2,
+  "max_automatic_write_rounds": 3,
+  "allowed_branch": "test/work-pr-relay-20261021",
+  "allowed_paths": [
+    "docs/work-relay-pilot/20261021/",
+    ".github/workflows/work-pr-relay-pilot.yml"
+  ],
+  "no_merge": true,
+  "no_secrets": true,
+  "no_trading": true,
+  "acceptance": [
+    "Work run starts from actual PR event, not run_now",
+    "review cites exact PR head SHA",
+    "next task committed",
+    "GitHub Actions run and artifact verified"
+  ],
+  "reliability_tests_required": [
+    "normal",
+    "failed validation",
+    "duplicate event"
+  ],
+  "scheduled_fallback": "unchanged",
+  "initial_evidence": "trigger created; no event execution proven"
+}

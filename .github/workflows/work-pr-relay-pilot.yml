@@ -1,0 +1,38 @@
+name: Work PR relay isolated pilot
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'docs/work-relay-pilot/20261021/**'
+permissions:
+  contents: read
+jobs:
+  validate:
+    if: >-
+      github.repository == 'magangwwd/ashare-research-infra' &&
+      github.event.pull_request.number == 89 &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref == 'test/work-pr-relay-20261021' &&
+      startsWith(github.event.pull_request.title, '[WORK-RELAY-PILOT-20261021]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          sparse-checkout: docs/work-relay-pilot/20261021
+      - name: Validate read-only JSON with isolated network namespace
+        env:
+          PILOT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          sudo unshare --net python3 -I -B docs/work-relay-pilot/20261021/validate.py "$PILOT_HEAD_SHA" > "$RUNNER_TEMP/work-relay-result.json"
+          cat "$RUNNER_TEMP/work-relay-result.json"
+      - name: Upload acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-relay-pilot-${{ github.event.pull_request.head.sha }}
+          path: ${{ runner.temp }}/work-relay-result.json
+          if-no-files-found: error
+          retention-days: 7
