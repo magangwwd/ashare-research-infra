@@ -38,10 +38,18 @@ def _whole_units(value, label):
     """Fail closed on fractional, boolean, or imprecisely represented ETF units."""
     if isinstance(value, bool):
         raise ValueError(f"Invalid {label}")
-    units = _nonnegative(value, label)
+    # Validate the original decimal representation BEFORE converting to float.
+    # float(Decimal("10.0000000000000001")) == 10.0 would otherwise
+    # silently accept fractional registered shares.
+    try:
+        units = Decimal(str(value))
+    except (ValueError, TypeError, ArithmeticError) as exc:
+        raise ValueError(f"Invalid {label}") from exc
+    if not units.is_finite() or units < 0:
+        raise ValueError(f"Invalid {label}")
     if units > 2**53 - 1:
         raise ValueError(f"Unsafe {label}: exceeds exact integer range")
-    if not units.is_integer():
+    if units != units.to_integral_value():
         raise ValueError(f"{label} must be whole units")
     return int(units)
 
