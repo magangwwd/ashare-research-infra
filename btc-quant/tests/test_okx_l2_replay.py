@@ -54,6 +54,35 @@ class ReplayTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "memory cap"):
             mod.replay_stream([event(0, "snapshot")], max_levels=1)
 
+    def test_update_batch_never_transiently_exceeds_cap(self):
+        # A delete and insert in one message must never temporarily allocate
+        # a third level when the two-level side is already full.
+        class GuardDict(dict):
+            def __setitem__(self, key, value):
+                if key not in self and len(self) >= 2:
+                    raise AssertionError("transient level-cap breach")
+                super().__setitem__(key, value)
+
+        book = mod.Book(max_levels=2)
+        book.replace([(100, 1), (99, 2)], [(101, 1), (102, 2)])
+        book.bids = GuardDict(book.bids)
+        # Insert intentionally precedes delete in the incoming update.
+        book.update([(98, 3), (100, 0)], [])
+        self.assertEqual(set(book.bids), {99, 98})
+
+    def test_update_over_capacity_rejected_before_new_allocation(self):
+        class GuardDict(dict):
+            def __setitem__(self, key, value):
+                if key not in self and len(self) >= 2:
+                    raise AssertionError("transient level-cap breach")
+                super().__setitem__(key, value)
+
+        book = mod.Book(max_levels=2)
+        book.replace([(100, 1), (99, 2)], [(101, 1), (102, 2)])
+        book.bids = GuardDict(book.bids)
+        with self.assertRaisesRegex(ValueError, "memory cap"):
+            book.update([(98, 3)], [])
+
     def test_update_before_snapshot_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "before first"):
             mod.replay_stream([event(0, "update")])
