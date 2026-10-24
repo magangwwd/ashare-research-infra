@@ -1,0 +1,42 @@
+{
+  "schema_version": "ETF_SAFETY_REVIEW_NOTE_V1_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-PAPER-005",
+  "status": "BLOCKED",
+  "trading_status": "NOT_FOR_TRADING",
+  "observed_utc": "2026-10-24T20:30:00Z",
+  "base_branch": "feature/etf-single-rotation-v1",
+  "queue_fix_commit_sha": "9d02b410020981a14135d4db30d4eb655aaee842",
+  "problem": "Authoritative feature branch queue still marked PAPER-005 READY while DIV-004 is REVIEW_REQUIRED; draft PR #92 had a corrected queue but is not merged.",
+  "change": "Change only authoritative feature queue PAPER-005 to BLOCKED and preserve fixed eight, max one holding/cash, 25% historical drawdown target and NOT_FOR_TRADING.",
+  "local_deterministic_checks": {
+    "performed": true,
+    "result": "PASS",
+    "checks": [
+      "ETF-PAPER-005 status BLOCKED",
+      "ETF-DIV-004 status REVIEW_REQUIRED",
+      "no active task with an unmet VERIFIED_DONE dependency",
+      "mandate unchanged"
+    ]
+  },
+  "github_ci_for_this_change": {
+    "performed": false,
+    "run_id": null,
+    "reason": "No dispatch or one-shot run; existing scoped CI 40125631738 tested related guard on different SHA and is not acceptance of this commit."
+  },
+  "related_existing_ci": {
+    "run_id": 40125631738,
+    "head_sha": "49e06b7275cbd18bbe9f37a4d977a4064d5d3829",
+    "scope": "80 synthetic tests, PR #92, different SHA, no Artifact/Drive"
+  },
+  "artifact": {
+    "produced": false
+  },
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "formal_receipt_status": "NOT_ISSUED_MAIN_SCHEMA_V1_0_0_DOES_NOT_SUPPORT_PULL_REQUEST_EVENT; PR_98_DRAFT",
+  "next_action": "Review/merge narrow safety PR after independent verification; do not unlock PAPER-005 until DIV-004 and DATA-003 are VERIFIED_DONE with independent price, dividend and cash/Drive evidence."
+}
