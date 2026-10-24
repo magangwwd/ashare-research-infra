@@ -65,7 +65,7 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "2019-01-16 ex-date crosschecked to SSE 2019-01-15 OPTIONS FULL SIMULATION notice (official date only; NOT issuer dividend amount or cash settlement); evidence file 510300_20190115_dividend_sse_simulation_exdate_crosscheck.json commit 742cd5ee. Obtain original issuer PDF, verify dividend amount, record/payment dates and actual broker cash availability; independently reconcile prices and fund_adj, then new DIV004 Artifact/Drive readback. Draft PR #92 and PAPER-005 dependency gate remain unchanged.",
+      "next_action": "Scoped intraday one-ETF invariant fixed and 61/61 tests passed at exact SHA 1612e95d (run 40051233379, job 120744168417); diagnostic evidence ETF_DIV004_intraday_single_position_scoped_ci_20261024.json. Still obtain issuer/broker cash settlement and independent raw-price/fund_adj economic return evidence, then new Artifact/Drive readback. PR #98 SOP receipt event compatibility remains unresolved. PAPER-005 stays dependency blocked; NOT_FOR_TRADING.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
@@ -121,5 +121,5 @@
   "latest_verified_run": 39599580852,
   "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 13 sequential stages; 38 tests OK; 48 Drive uploads; all 5 declared ETF halts source-matched",
   "last_known_research_status": "NOT_FOR_TRADING",
-  "updated_utc": "2026-10-23T23:34:39.722Z"
+  "updated_utc": "2026-10-24T01:46:33.039Z"
 }
