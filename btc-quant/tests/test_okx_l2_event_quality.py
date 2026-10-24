@@ -42,6 +42,28 @@ class FullDayQualityTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mod.audit_stream([event(0,bids=[["-12","1"]]).encode()])
 
+    def test_invalid_middle_levels_rejected(self):
+        # Old audit checked only first and last, missing corrupted middle levels.
+        valid = [["100", "1"], ["99", "2"], ["98", "3"]]
+        for middle in (["99", "-2"], ["99"], ["0", "1"],
+                       ["99", "NaN"], ["Infinity", "1"], ["99", "inf"],
+                       ["oops", "1"]):
+            with self.subTest(middle=middle), self.assertRaises(ValueError):
+                mod.audit_stream([event(0, bids=[valid[0], middle, valid[-1]]).encode()], DAY)
+
+    def test_zero_size_update_and_full_depth_valid(self):
+        # Size zero is a legitimate deletion; do not reject valid L2 updates.
+        levels = [["100", "1"], ["99", "0"], ["98", "3"]]
+        result = mod.audit_stream([event(0, "update", bids=levels).encode()], DAY)
+        self.assertEqual(result["schema_validation"], "PASS")
+        self.assertEqual(result["events_parsed"], 1)
+        self.assertEqual(result["exchange_sequence_continuity"],
+                         "NOT_VERIFIED_NO_SEQUENCE_IN_EXPOSED_JSON_FIELDS")
+
+    def test_invalid_middle_ask_rejected(self):
+        with self.assertRaises(ValueError):
+            mod.audit_stream([event(0, asks=[["101", "1"], ["102", "-1"], ["103", "1"]]).encode()], DAY)
+
     def test_outside_day_rejected_over_ten(self):
         records=[event(24*60*60+i).encode() for i in range(11)]
         with self.assertRaises(ValueError):
