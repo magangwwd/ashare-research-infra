@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "verified_on_utc": "2026-10-24",
+  "evidence_kind": "PRIMARY_SSE_HOSTED_AUDITED_ISSUER_ANNUAL_REPORT_TEXT_AND_PAGE_IMAGE_CHECKED",
+  "source": {
+    "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2024-03-30/510300_20240330_437H.pdf",
+    "issuer": "Huatai-PineBridge Fund Management Co., Ltd.",
+    "report": "510300.SH 2023 Annual Report",
+    "report_date": "2024-03-30",
+    "page_count": 109,
+    "primary_dividend_table": {
+      "section": "7.4.11 利润分配情况",
+      "page_1_based": 52,
+      "pdf_page_index_zero_based": 51
+    },
+    "three_year_summary": {
+      "section": "3.3 过去三年基金的利润分配情况",
+      "page_1_based": 9,
+      "pdf_page_index_zero_based": 8
+    },
+    "subsequent_event_note": {
+      "section": "7.4.8.2 资产负债表日后事项",
+      "page_1_based": 46,
+      "pdf_page_index_zero_based": 45
+    },
+    "text_and_page_image_inspected": true,
+    "original_pdf_bytes_downloaded": false,
+    "original_pdf_sha256": null
+  },
+  "verified_2023_dividend": {
+    "record_date": "2023-01-13",
+    "ex_dividend_date": "2023-01-16",
+    "cash_cny_per_10_units": "0.6400",
+    "cash_cny_per_unit": "0.0640",
+    "issuer_report_aggregate_cash_cny": "1193215211.55",
+    "issuer_report_reinvestment_cny": "0",
+    "announced_payment_date_from_this_annual_report": null,
+    "actual_broker_cash_available_date": null
+  },
+  "three_year_cash_summary": [
+    {
+      "calendar_year": 2021,
+      "cash_cny_per_10_units": "0.7200",
+      "total_cash_cny": "635399113.28"
+    },
+    {
+      "calendar_year": 2022,
+      "cash_cny_per_10_units": "0.7500",
+      "total_cash_cny": "863564082.15"
+    },
+    {
+      "calendar_year": 2023,
+      "cash_cny_per_10_units": "0.6400",
+      "total_cash_cny": "1193215211.55"
+    }
+  ],
+  "after_balance_sheet_2024_notice": {
+    "declared_on": "2024-01-11",
+    "record_date": "2024-01-17",
+    "cash_cny_per_10_units": "0.6900",
+    "note": "Subsequent-event disclosure only, not part of 2023 cash-distribution total. Independently matches prior 2024 issuer notice."
+  },
+  "crosscheck": {
+    "candidate_registry": "etf_single_rotation/metadata/510300_dividend_coverage_gap_20261024.json",
+    "same_source_price_factor_diagnostic": "etf_single_rotation/metadata/510300_dividend_factor_artifact_drive_audit_20261024.json",
+    "primary_2023_record_ex_date_and_amount_match_candidate": true,
+    "primary_2024_declaration_matches_prior_issuer_notice": true,
+    "do_not_interpret_fund_level_total_as_strategy_cash": true
+  },
+  "limitations": [
+    "Annual report is a primary issuer disclosure on SSE and PDF page image was inspected, but original PDF bytes and SHA256 were not obtained.",
+    "Report does not establish 2023 investor-level cash availability or actual registered strategy shares.",
+    "No independent raw market prices or fund_adj data were retrieved; no economic total-return acceptance.",
+    "This evidence-only change has no new research Artifact or Drive upload/readback.",
+    "Do not modify strategy returns, frozen ETF universe, workflow cadence, or unlock ETF-PAPER-005."
+  ],
+  "next_action": "Obtain original source PDF bytes/hash when access permits, independently verify raw market prices and account-level cash/registered shares, cover all 8 ETFs, then verify actual Artifact/Drive readback. Keep REVIEW_REQUIRED/NOT_FOR_TRADING."
+}
