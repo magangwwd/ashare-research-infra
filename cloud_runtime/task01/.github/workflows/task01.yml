@@ -1,0 +1,345 @@
+name: Task 01 data infrastructure
+run-name: ${{ github.event_name == 'schedule' && 'Task 01 scheduled' || (inputs.watchdog_trigger && 'Task 01 watchdog' || 'Task 01 manual') }}
+
+on:
+  # Beijing (UTC+08): primary 21:17, backup 23:30, next-day backup 03:23.
+  # GitHub schedule is best-effort; an independent watchdog also monitors it.
+  schedule:
+    - cron: '17 13 * * *'  # 21:17 same local day
+    - cron: '30 15 * * *'  # 23:30 same local day
+    - cron: '23 19 * * *'  # 03:23 next local day
+  workflow_dispatch:
+    inputs:
+      verify_drive_auth:
+        description: 'Only verify Drive OAuth; no downloads or Drive uploads'
+        type: boolean
+        default: false
+      publish_drive_snapshot:
+        description: 'Upload latest accepted checkpoint to Drive; no new Tushare downloads'
+        type: boolean
+        default: false
+      force_drive_restore:
+        description: 'Disaster-recovery drill: ignore GitHub checkpoint and restore current Drive production'
+        type: boolean
+        default: false
+      watchdog_trigger:
+        description: 'External watchdog trigger; enables daily duplicate guard'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: task01-data
+  cancel-in-progress: false
+
+jobs:
+  daily-guard:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.watchdog_trigger)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_run: ${{ steps.guard.outputs.should_run }}
+    steps:
+      - name: Skip a delayed duplicate after another accepted data run today
+        id: guard
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/task01.yml/runs?per_page=50" > /tmp/task01-runs.json
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from datetime import datetime, timedelta
+          from zoneinfo import ZoneInfo
+
+          repo = os.environ["GITHUB_REPOSITORY"]
+          current = int(os.environ["GITHUB_RUN_ID"])
+          now = datetime.now(ZoneInfo("Asia/Shanghai"))
+          # Align duplicate guard with the data session, not the calendar date.
+          # At 03:23, an accepted run from 21:17 or 23:30 must suppress duplicates.
+          cutoff = now.replace(hour=18, minute=0, second=0, microsecond=0)
+          if now < cutoff:
+              cutoff -= timedelta(days=1)
+          runs = json.load(open("/tmp/task01-runs.json", encoding="utf-8"))["workflow_runs"]
+          duplicate = None
+
+          for run in runs:
+              if int(run["id"]) == current or run.get("conclusion") != "success":
+                  continue
+              created = datetime.fromisoformat(run["created_at"].replace("Z", "+00:00")).astimezone(ZoneInfo("Asia/Shanghai"))
+              if created < cutoff:
+                  continue
+              # A successful data run publishes this artifact. Drive-only/auth-only
+              # dispatches do not, so they cannot suppress the daily data task.
+              raw = subprocess.check_output([
+                  "gh", "api", f"repos/{repo}/actions/runs/{run['id']}/artifacts?per_page=100"
+              ], text=True)
+              artifacts = json.loads(raw).get("artifacts", [])
+              if any(a.get("name") == "task01-validation-report" and not a.get("expired") for a in artifacts):
+                  duplicate = run
+                  break
+
+          should_run = duplicate is None
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"should_run={'true' if should_run else 'false'}\n")
+          if duplicate:
+              print(f"SUCCESS daily duplicate guard: accepted run {duplicate['id']} already exists since {cutoff.isoformat()}; skipping")
+          else:
+              print(f"SUCCESS daily duplicate guard: no accepted data run exists since {cutoff.isoformat()}; proceeding")
+          PY
+
+  drive-auth:
+    if: github.event_name == 'workflow_dispatch' && inputs.verify_drive_auth && !inputs.publish_drive_snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Drive authorization dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Verify offline OAuth and target folder access
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        run: python -m data_pipeline.drive_auth verify --report metadata/drive_auth.json
+      - name: Publish safe authorization and capacity evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: task01-drive-auth-report
+          path: metadata/drive_auth.json
+          retention-days: 30
+          if-no-files-found: error
+  task01:
+    needs: [daily-guard]
+    if: >-
+      always() &&
+      (needs.daily-guard.result == 'skipped' || needs.daily-guard.outputs.should_run == 'true') &&
+      (github.event_name != 'workflow_dispatch' || (!inputs.verify_drive_auth && !inputs.publish_drive_snapshot))
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install and unit tests
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pytest -q
+      - name: Restore the latest resumable checkpoint
+        id: restore
+        shell: bash
+        env:
+          FORCE_DRIVE_RESTORE: ${{ github.event_name == 'workflow_dispatch' && inputs.force_drive_restore }}
+        run: |
+          set -euo pipefail
+          if [ "$FORCE_DRIVE_RESTORE" = "true" ]; then
+            echo "checkpoint_found=false" >> "$GITHUB_OUTPUT"
+            echo "SUCCESS forced Drive recovery drill; GitHub checkpoint intentionally ignored"
+            exit 0
+          fi
+          gh api --method GET "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100&name=task01-checkpoint" > /tmp/task01-artifacts.json
+          artifact_id=$(python - <<'PY'
+          import json
+          artifacts = json.load(open('/tmp/task01-artifacts.json'))['artifacts']
+          available = [a for a in artifacts if not a['expired']]
+          available.sort(key=lambda a: a['created_at'], reverse=True)
+          print(available[0]['id'] if available else '')
+          PY
+          )
+          if [ -n "$artifact_id" ]; then
+            rm -rf /tmp/task01-checkpoint-restore
+            mkdir -p /tmp/task01-checkpoint-restore
+            if gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > /tmp/task01-checkpoint.zip \
+              && unzip -p /tmp/task01-checkpoint.zip task01-state.tar.gz > /tmp/task01-state.tar.gz \
+              && tar -xzf /tmp/task01-state.tar.gz -C /tmp/task01-checkpoint-restore; then
+              rm -rf data metadata
+              [ ! -d /tmp/task01-checkpoint-restore/data ] || cp -a /tmp/task01-checkpoint-restore/data .
+              [ ! -d /tmp/task01-checkpoint-restore/metadata ] || cp -a /tmp/task01-checkpoint-restore/metadata .
+              echo "checkpoint_found=true" >> "$GITHUB_OUTPUT"
+            else
+              rm -rf data metadata /tmp/task01-checkpoint-restore
+              echo "checkpoint_found=false" >> "$GITHUB_OUTPUT"
+              echo "WARNING checkpoint unavailable or corrupt; falling back to Google Drive production"
+            fi
+          else
+            echo "checkpoint_found=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Restore current production from Google Drive when checkpoint is unavailable
+        id: drive_restore
+        if: steps.restore.outputs.checkpoint_found != 'true'
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        run: python -m data_pipeline.drive_restore
+      - name: Live Tushare smoke gate
+        run: python -m data_pipeline.run_task01 --mode smoke
+      - name: Daily update or maintenance
+        id: daily_update
+        run: python -m data_pipeline.run_task01 --mode auto
+      - name: Production acceptance
+        run: python -m data_pipeline.validate
+      - name: Live trading-day replay and production recovery drill
+        env:
+          TASK01_RECOVERY_ROOT: .
+        run: python -m pytest -q tests/test_live_recovery.py
+      - name: Publish acceptance evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: task01-validation-report
+          path: |
+            metadata/acceptance.json
+            metadata/history_progress.json
+            metadata/history_progress.md
+            metadata/manifest/gaps.json
+            metadata/recovery_drill.json
+            metadata/trading_day_replay.json
+            metadata/drive_restore.json
+            metadata/effective_config.json
+            metadata/manifest/history.json
+            metadata/manifest/partitions.json
+            metadata/capabilities/latest.json
+            metadata/capabilities/history_ranges.json
+            data/current/acceptance.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Publish accepted snapshot to Drive
+        id: drive_publish
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        run: python -m data_pipeline.drive_publish
+      - name: Publish Drive publication evidence
+        if: always() && steps.drive_publish.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: task01-drive-publication-report
+          path: metadata/drive_publish.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Package recovery state, including unfinished work
+        # Smoke only writes temporary diagnostic data; do not checkpoint a full
+        # restored baseline when live API probes fail before any daily update.
+        # Keep pre-existing checkpoints, and checkpoint any attempted update.
+        if: always() && steps.restore.outcome == 'success' && steps.daily_update.outcome != 'skipped' && steps.drive_publish.outcome != 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -d metadata ]; then
+            if [ -d data ]; then
+              tar -czf task01-state.tar.gz data metadata
+            else
+              tar -czf task01-state.tar.gz metadata
+            fi
+          fi
+      - name: Save recovery checkpoint
+        if: always() && steps.restore.outcome == 'success' && steps.daily_update.outcome != 'skipped' && steps.drive_publish.outcome != 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: task01-checkpoint
+          path: task01-state.tar.gz
+          retention-days: 3
+          if-no-files-found: ignore
+          compression-level: 0
+      - name: Prune superseded recovery checkpoints
+        # No new checkpoint was produced if the live smoke gate blocked updates;
+        # leave the previous recovery checkpoint untouched for the next run.
+        if: always() && steps.restore.outcome == 'success' && steps.daily_update.outcome != 'skipped'
+        shell: bash
+        env:
+          DRIVE_PUBLISHED: ${{ steps.drive_publish.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          # Once this run has published to Drive, Drive is the source of truth: drop every
+          # GitHub checkpoint so the next run restores from Drive. Otherwise keep only the
+          # newest checkpoint so an unfinished run can resume.
+          if [ "$DRIVE_PUBLISHED" = "true" ]; then keep=0; else keep=1; fi
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100&name=task01-checkpoint" \
+            --jq '.artifacts[] | select(.expired | not) | [.created_at, .id] | @tsv' \
+            | sort -r | tail -n +"$((keep + 1))" | cut -f2 \
+            | while read -r id; do
+                [ -n "$id" ] || continue
+                gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id"
+                echo "deleted task01-checkpoint $id"
+              done
+      - name: Generate Task 02 readiness (non-blocking)
+        id: task02_readiness
+        if: success()
+        continue-on-error: true
+        run: python -m research_engine.readiness --write
+      - name: Publish Task 02 readiness
+        if: steps.task02_readiness.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: task02-backtest-readiness
+          path: metadata/backtest_readiness.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Run Task 02 engineering smoke (non-blocking)
+        id: task02_smoke
+        if: steps.task02_readiness.outcome == 'success'
+        continue-on-error: true
+        run: python -m research_engine.run_engineering_demo --factor momentum_20d --top-n 10 > metadata/task02_engineering_smoke.json
+      - name: Publish Task 02 engineering smoke
+        if: steps.task02_smoke.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: task02-engineering-smoke
+          path: metadata/task02_engineering_smoke.json
+          retention-days: 30
+          if-no-files-found: error
+  drive-publish:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_drive_snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install and test publication failure protection
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pytest -q
+      - name: Restore published data from latest checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method GET "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100&name=task01-checkpoint" > /tmp/task01-artifacts.json
+          artifact_id=$(python - <<'PY'
+          import json
+          artifacts = json.load(open('/tmp/task01-artifacts.json'))['artifacts']
+          available = sorted((a for a in artifacts if not a['expired']), key=lambda a: a['created_at'], reverse=True)
+          if not available:
+              raise SystemExit('No resumable checkpoint exists; upload blocked')
+          print(available[0]['id'])
+          PY
+          )
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > /tmp/task01-checkpoint.zip
+          unzip -p /tmp/task01-checkpoint.zip task01-state.tar.gz > /tmp/task01-state.tar.gz
+          tar -xzf /tmp/task01-state.tar.gz
+      - name: Revalidate, stage, verify remote bytes, and commit production pointer
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        run: python -m data_pipeline.drive_publish
+      - name: Save credential-free publication evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: task01-drive-publication-report
+          path: metadata/drive_publish.json
+          retention-days: 30
+          if-no-files-found: error

@@ -1,0 +1,14 @@
+{
+  "verified_at": "2026-10-23T07:04:59.035719+00:00",
+  "drive_file_id": "1PAfWwbMbIpYnGqJqf3agkZ1ZfCj_l1CK",
+  "bytes": 30430548,
+  "sha256": "318aa4c36885b286258fac765f5cb49bed851fe0b3e8f2eb738e0f08e125c515",
+  "download_sha256_passed": true,
+  "verified_archive_members": 218,
+  "member_checksums_passed": true,
+  "requests_sqlite_integrity_passed": true,
+  "handoff_archive_recovery_drill_passed": true,
+  "full_database_recovery_drill_passed": false,
+  "production_pointer_modified": false,
+  "note": "Only the handoff recovery archive was restored/verified; referenced historical Clean objects were not fully downloaded or validated."
+}

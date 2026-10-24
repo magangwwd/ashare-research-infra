@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "stopped_at": "2026-10-23T07:10:01.672284+00:00",
+  "archive_verified_before_stop": true,
+  "github_archive_commit_published_before_stop": "672cccc5cafacc0a6484cf71f527dbfb876a8de7",
+  "archive_drive_file_id": "1PAfWwbMbIpYnGqJqf3agkZ1ZfCj_l1CK",
+  "archive_sha256": "318aa4c36885b286258fac765f5cb49bed851fe0b3e8f2eb738e0f08e125c515",
+  "stop_marker": "/workspace/task01-runtime/STOP",
+  "stop_marker_present": true,
+  "queued_resume_removed": false,
+  "signal_actions": [
+    {
+      "role": "wechat",
+      "pid": 22259,
+      "start_ticks": 2108468,
+      "sigterm_sent": true
+    },
+    {
+      "role": "observer",
+      "pid": 23076,
+      "start_ticks": 2174159,
+      "sigterm_sent": true
+    },
+    {
+      "role": "watchdog",
+      "pid": 22241,
+      "start_ticks": 2107568,
+      "sigterm_sent": true
+    }
+  ],
+  "forced_kill_pids": [],
+  "remaining_local_services": {
+    "worker": [],
+    "watchdog": [],
+    "wechat": [],
+    "observer": [],
+    "external_heartbeat": []
+  },
+  "remaining_foreign_worker_pids": [],
+  "all_task01_services_stopped": true,
+  "auto_restart_enabled": false,
+  "runtime_startup_policy": "INTENTIONALLY_STOPPED",
+  "local_data_deleted": false,
+  "production_drive_pointer_modified": false,
+  "github_workflows_changed": false,
+  "container_restarted": false,
+  "github_production_takeover_verified": false,
+  "historical_completion_certified": false,
+  "post_stop_checked_at": "2026-10-23T07:11:56.484170+00:00",
+  "post_stop_live_process_scan_passed": true,
+  "service_locks_released": [
+    "guard.lock",
+    "wechat.lock",
+    "lifecycle.lock"
+  ],
+  "runtime_startup_dry_run_action": "INTENTIONALLY_STOPPED",
+  "runtime_startup_dry_run_started": {}
+}

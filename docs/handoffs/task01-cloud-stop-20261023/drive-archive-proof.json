@@ -1,0 +1,23 @@
+{
+  "created_at": "2026-10-23T07:01:15.862703+00:00",
+  "archive_name": "task01-handoff-recovery.tar.gz",
+  "bytes": 30430548,
+  "sha256": "318aa4c36885b286258fac765f5cb49bed851fe0b3e8f2eb738e0f08e125c515",
+  "verified_members": 218,
+  "member_validation_passed": true,
+  "secret_scan_passed": true,
+  "source_git_commit": "bc1d08bb7fd378957671d83baf00f117a6e43504",
+  "local_clean_residual_files": 0,
+  "local_raw_retained": true,
+  "local_raw_included_in_archive": false,
+  "production_pointer_modified": false,
+  "full_database_recovery_drill_passed": false,
+  "verified_at": "2026-10-23T07:04:30.922104+00:00",
+  "drive_folder_id": "171cgvEJNff-OcfikVyeeMMCfEa4CV6Ef",
+  "drive_file_id": "1PAfWwbMbIpYnGqJqf3agkZ1ZfCj_l1CK",
+  "drive_filename": "cloud-stop-20261023-318aa4c36885b286258fac765f5cb49bed851fe0b3e8f2eb738e0f08e125c515.tar.gz",
+  "remote_size_verified": true,
+  "remote_sha256_verified": true,
+  "reused_existing_object": false,
+  "existing_data_deleted": false
+}

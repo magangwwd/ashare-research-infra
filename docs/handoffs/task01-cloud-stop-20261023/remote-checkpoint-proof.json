@@ -1,0 +1,19 @@
+{
+  "checked_at": "2026-10-23T06:59:17.348220+00:00",
+  "drive_target_folder_id": "1rkC99Ymgp8mjvAcJNRPJMlOGLdI9_bue",
+  "working_folder_id": "1R3Y0GdYzthmsSHRg2ufRo-aLdwGfN-Bc",
+  "pointer_file_id": "1eMos543XPXcAA2c6Q72ifOAyQoUm8Mzs",
+  "manifest_file_id": "17tsRQv8MsCN9VteI1GkzKDaa4NKKSjiF",
+  "manifest_bytes": 2276740,
+  "manifest_sha256": "eb2596b6d988aa52aa45994e4670bba2827ae06f8306b96bc31b73ee24fa4e8c",
+  "manifest_checksum_passed": true,
+  "matches_local_working_manifest": true,
+  "manifest_schema": "working-2",
+  "manifest_created_at": "2026-10-22T21:19:41.301794+00:00",
+  "logical_files": 5682,
+  "logical_bytes": 2507546653,
+  "history_complete": false,
+  "all_referenced_objects_verified_this_handoff": false,
+  "full_recovery_drill_passed_this_handoff": false,
+  "formal_production_pointer_modified": false
+}
