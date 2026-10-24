@@ -65,13 +65,13 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "Scoped intraday one-ETF invariant fixed and 61/61 tests passed at exact SHA 1612e95d (run 40051233379, job 120744168417); diagnostic evidence ETF_DIV004_intraday_single_position_scoped_ci_20261024.json. Still obtain issuer/broker cash settlement and independent raw-price/fund_adj economic return evidence, then new Artifact/Drive readback. PR #98 SOP receipt event compatibility remains unresolved. PAPER-005 stays dependency blocked; NOT_FOR_TRADING.",
+      "next_action": "Exact-SHA scoped CI run 40056676910/job 120761063694 passed 64/64 synthetic tests on 28228e435bfffc6915c4bf79201d13bd9f8a942e; fractional, boolean and unsafe (>2^53-1) ETF record-date/fill units now fail closed. Diagnostic note ETF_DIV004_whole_unit_scoped_ci_20261024.json. Still require independent issuer/broker settlement, independent raw-price/fund_adj economic-return reconciliation, new research Artifact and Drive readback, and PR #98 schema resolution. Do not unlock PAPER-005; NOT_FOR_TRADING.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
-        "review_head_sha": "c2c119704c356e0d4a0a2d4a044243c9d273d756",
-        "tested": "SCOPED_SYNTHETIC_CI_60_OF_60_PASS_AT_C2C11970_RUN_40015272119; NEW_2022_METADATA_COMMIT_EB2A0D6_NOT_CI_TESTED",
-        "artifact_drive_readback": "NO_NEW_DIV004_ARTIFACT_OR_DRIVE_READBACK",
+        "review_head_sha": "28228e435bfffc6915c4bf79201d13bd9f8a942e",
+        "tested": "EXACT_SHA_SCOPED_GITHUB_CI_40056676910_64_OF_64_SYNTHETIC",
+        "artifact_drive_readback": "NOT_PERFORMED_FOR_THIS_CHANGE",
         "blockers": [
           "Original issuer/SSE-hosted dividend PDF bytes and SHA256 not verified for 2019 events",
           "Independent second-source raw market prices/fund_adj economic return and issuer completeness not accepted",
@@ -79,7 +79,7 @@
           "No new DIV004 Artifact and Google Drive write/readback",
           "Main SOP v1.0.0 rejects truthful pull_request receipts; draft PR #98 pending"
         ],
-        "last_checked_utc": "2026-10-23T23:34:39.722Z",
+        "last_checked_utc": "2026-10-24T03:02:40Z",
         "github_ci_run_id": 40015272119,
         "github_ci_job_id": 120625628326,
         "github_ci_event": "pull_request",
@@ -121,5 +121,5 @@
   "latest_verified_run": 39599580852,
   "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 13 sequential stages; 38 tests OK; 48 Drive uploads; all 5 declared ETF halts source-matched",
   "last_known_research_status": "NOT_FOR_TRADING",
-  "updated_utc": "2026-10-24T01:46:33.039Z"
+  "updated_utc": "2026-10-24T03:02:40Z"
 }
