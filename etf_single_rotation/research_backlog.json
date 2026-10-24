@@ -65,7 +65,7 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "Review exact-share accumulation/split overflow guard at 582f3a9cde7f6b4b75894888d0eac38943223a51 (68/68 scoped synthetic tests, Run 40089792842). Still require original issuer PDF SHA, independent raw price/fund_adj economic-return audit, actual record-date holdings and broker cash, new Artifact/Drive readback and schema PR #98 review; remain REVIEW_REQUIRED/NOT_FOR_TRADING; PAPER-005 blocked.",
+      "next_action": "ETF-DIV-004 remains REVIEW_REQUIRED: obtain original issuer PDF bytes/SHA, independent market raw_close/fund_adj and account-level registration/cash evidence; use the 512100 2022-09-05 issuer ratio arithmetic diagnostic only, not as proof of vendor error or total-return acceptance. New DIV004 Artifact/Drive readback and SOP PR #98 review remain outstanding; PAPER-005 blocked.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
@@ -105,7 +105,15 @@
         "latest_primary_issuer_evidence_path": "etf_single_rotation/metadata/510300_2023_audited_annual_report_dividend_crosscheck.json",
         "latest_primary_issuer_evidence_commit": "e6ffa8b0831139505e33bd89b7c41ce812786ad3",
         "latest_overflow_guard_receipt": "etf_single_rotation/metadata/receipts/ETF_DIV004_exact_share_overflow_scoped_ci_40089792842.json",
-        "latest_overflow_guard_scope": "Reject combined fills or post-split holdings above 2**53-1 before record-date snapshots; synthetic only"
+        "latest_overflow_guard_scope": "Reject combined fills or post-split holdings above 2**53-1 before record-date snapshots; synthetic only",
+        "latest_512100_primary_ratio_review": {
+          "evidence_path": "etf_single_rotation/metadata/512100_20220902_registered_share_rounding_evidence.json",
+          "commit_sha": "233eb01ac23c87535f0c230d85b0512068d296fa",
+          "original_pdf_sha256": "NOT_VERIFIED",
+          "issuer_published_ratio": "0.36555",
+          "naive_aggregate_gap_units": "15165.4",
+          "interpretation": "Per-holder ceiling and published-ratio rounding; not an independent price or account settlement check"
+        }
       }
     },
     {
