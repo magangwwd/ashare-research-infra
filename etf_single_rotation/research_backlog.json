@@ -65,7 +65,7 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "SSE-hosted 510300 2022 audited annual-report PDF §7.4.11 text and page image independently checked (evidence commit 70580947033f9cb6645160a02b2805be1c1709f1): registration 2022-01-18, ex-date 2022-01-19, 0.7500 CNY/10 units, fund aggregate 863564082.15 CNY. Original PDF bytes/SHA256, independent raw prices/fund_adj, account-level registered shares/broker cash, new DIV004 Artifact/Drive readback still missing. Prior scoped synthetic CI run 40070195131 passed 66/66 at head b00fa0db (BEFORE this evidence-only update). Keep REVIEW_REQUIRED/NOT_FOR_TRADING; PAPER-005 blocked.",
+      "next_action": "SSE-hosted 510300 2023 audited annual-report §7.4.11 page 52 independently inspected (source evidence commit e6ffa8b0831139505e33bd89b7c41ce812786ad3): record 2023-01-13, ex 2023-01-16, 0.6400 CNY/10 units, fund-level total 1193215211.55 CNY; 2024 subsequent-event declaration also corroborated. Original PDF bytes/SHA256, independent market prices/fund_adj, strategy record-date shares/broker cash and new audit Artifact/Drive readback still missing. This is source evidence, NOT economic total-return acceptance. Keep REVIEW_REQUIRED/NOT_FOR_TRADING and PAPER-005 blocked.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
@@ -79,7 +79,7 @@
           "No new DIV004 Artifact and Google Drive write/readback",
           "Main SOP v1.0.0 rejects truthful pull_request receipts; draft PR #98 pending"
         ],
-        "last_checked_utc": "2026-10-24T06:26:02.223Z",
+        "last_checked_utc": "2026-10-24",
         "github_ci_run_id": 40015272119,
         "github_ci_job_id": 120625628326,
         "github_ci_event": "pull_request",
@@ -101,7 +101,9 @@
         "latest_2022_scope": "SSE_HOSTED_ORIGINAL_ANNUAL_REPORT_TEXT_AND_PAGE_IMAGE_VERIFIED_NO_PDF_BYTES_SHA_NO_ACCOUNT_CASH",
         "latest_2022_primary_page_verified": "2022 annual report §7.4.11 printed page 161, PDF page index 160",
         "latest_2022_primary_report_evidence_commit": "70580947033f9cb6645160a02b2805be1c1709f1",
-        "last_verified_scoped_ci_job": 120801770743
+        "last_verified_scoped_ci_job": 120801770743,
+        "latest_primary_issuer_evidence_path": "etf_single_rotation/metadata/510300_2023_audited_annual_report_dividend_crosscheck.json",
+        "latest_primary_issuer_evidence_commit": "e6ffa8b0831139505e33bd89b7c41ce812786ad3"
       }
     },
     {
@@ -129,5 +131,5 @@
   "latest_verified_run": 39599580852,
   "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 13 sequential stages; 38 tests OK; 48 Drive uploads; all 5 declared ETF halts source-matched",
   "last_known_research_status": "NOT_FOR_TRADING",
-  "updated_utc": "2026-10-24T06:26:02.223Z"
+  "updated_utc": "2026-10-24"
 }
