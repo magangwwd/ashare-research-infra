@@ -41,6 +41,19 @@ class ReplayTests(unittest.TestCase):
         self.assertEqual(x["comparison_diagnostics"]["snapshots_differ_from_prior_replay"], 1)
         self.assertIn("NOT_EXCHANGE_CONTINUITY_PROOF", x["status"])
 
+    def test_snapshot_visible_depth_ignores_retained_deeper_levels(self):
+        rows = [event(0, "snapshot"),
+                event(1, "update", [["98", "1"]], [["103", "1"]]),
+                event(2, "snapshot")]
+        result = mod.replay_stream(rows)
+        self.assertEqual(result["snapshot_comparisons"], 1)
+        self.assertEqual(result["comparison_diagnostics"], {})
+        self.assertIn("VISIBLE_DEPTH_ONLY", result["snapshot_comparison_scope"])
+
+    def test_initial_snapshot_respects_memory_cap(self):
+        with self.assertRaisesRegex(ValueError, "memory cap"):
+            mod.replay_stream([event(0, "snapshot")], max_levels=1)
+
     def test_update_before_snapshot_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "before first"):
             mod.replay_stream([event(0, "update")])

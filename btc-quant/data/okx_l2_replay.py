@@ -84,6 +84,8 @@ class Book:
             self.ask_heap = heap
 
     def replace(self, bids, asks):
+        if len(bids) > self.max_levels or len(asks) > self.max_levels:
+            raise ValueError("L2 snapshot exceeds bounded memory cap")
         self.bids = dict(bids)
         self.asks = dict(asks)
         self._rebuild("bids")
@@ -163,12 +165,20 @@ def replay_stream(lines, *, utc_day=APPROVED_DAY, max_events=MAX_EVENTS,
             if counts["snapshots"]:
                 counts["snapshot_comparisons"] += 1
                 # Diagnostic only: absence of sequence IDs makes equality inconclusive.
-                if book.bids != dict(bids) or book.asks != dict(asks):
+                # Compare only the visible depth of the incoming snapshot.
+                # The replay intentionally retains older, deeper price levels;
+                # comparing the entire book creates false mismatch reports.
+                old_bids = {p: book.bids[p] for p in heapq.nlargest(len(bids), book.bids)}
+                old_asks = {p: book.asks[p] for p in heapq.nsmallest(len(asks), book.asks)}
+                new_bids, new_asks = dict(bids), dict(asks)
+                if old_bids != new_bids or old_asks != new_asks:
                     mismatch["snapshots_differ_from_prior_replay"] += 1
                     mismatch["bid_price_levels_different"] += sum(
-                        book.bids.get(p) != size for p, size in bids)
+                        old_bids.get(p) != new_bids.get(p)
+                        for p in old_bids.keys() | new_bids.keys())
                     mismatch["ask_price_levels_different"] += sum(
-                        book.asks.get(p) != size for p, size in asks)
+                        old_asks.get(p) != new_asks.get(p)
+                        for p in old_asks.keys() | new_asks.keys())
             book.replace(bids, asks)
             counts["snapshots"] += 1
         else:
@@ -186,6 +196,7 @@ def replay_stream(lines, *, utc_day=APPROVED_DAY, max_events=MAX_EVENTS,
         "snapshots": counts["snapshots"],
         "updates": counts["updates"],
         "snapshot_comparisons": counts["snapshot_comparisons"],
+        "snapshot_comparison_scope": "VISIBLE_DEPTH_ONLY_DIAGNOSTIC_NOT_SEQUENCE_PROOF",
         "comparison_diagnostics": dict(sorted(mismatch.items())),
         "last_book_level_counts": {"bids": len(book.bids), "asks": len(book.asks)},
         "exchange_sequence_continuity": "NOT_VERIFIED_NO_SEQUENCE_IN_EXPOSED_JSON_FIELDS",
