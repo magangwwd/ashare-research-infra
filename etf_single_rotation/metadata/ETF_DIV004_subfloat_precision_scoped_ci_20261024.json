@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "kind": "SCOPED_CI_EVIDENCE_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "risk_tier": "LOW",
+  "bug": "Prior float(value) rounded fractional Decimal/string ETF share units to whole numbers (e.g. 10.0000000000000001 to 10.0), silently accepting invalid registered units.",
+  "fix": "Validate original Decimal(str(value)) for finite nonnegative whole integer and <=2^53-1 before conversion to int; reject fractional values before float precision loss.",
+  "code_commit_sha": "4bbde79b1693791779d38d415c935b2520e7f387",
+  "exact_tested_sha": "699d3c3d8ae9d7abfeee8a7200aab9c123adb6cc",
+  "github_event": "pull_request",
+  "github_run_id": 40066630564,
+  "github_job_id": 120791154910,
+  "github_run_url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/40066630564",
+  "github_conclusion": "completed/success",
+  "checks": {
+    "tests_passed": 66,
+    "tests_failed": 0,
+    "new_synthetic_tests": [
+      "test_subfloat_fractional_record_date_units_fail_closed",
+      "test_subfloat_fractional_opening_and_fill_units_fail_closed"
+    ]
+  },
+  "research_checkout_sha": "699d3c3d8ae9d7abfeee8a7200aab9c123adb6cc",
+  "market_data_cutoff": null,
+  "artifact_sha256": null,
+  "artifact_urls": [],
+  "drive_write_readback": "NOT_PERFORMED",
+  "issuer_market_independent_reconciliation": "NOT_PERFORMED",
+  "formal_sop_receipt": "UNAVAILABLE_MAIN_SCHEMA_1_0_0_REJECTS_PULL_REQUEST_EVENT_PR_98_UNMERGED",
+  "constraints": {
+    "fixed_etf_count": 8,
+    "max_positions": 1,
+    "may_hold_cash": true,
+    "drawdown_target_historical": 0.25,
+    "real_trading": false
+  },
+  "next_action": "Obtain independently sourced actual market prices/fund_adj and original issuer dividend documents plus investor-specific registered shares/cash settlement, then independent artifact/Drive readback. Keep ETF-DIV-004 REVIEW_REQUIRED and PAPER-005 dependency locked; review PR #98 schema separately.",
+  "limitations": [
+    "Synthetic accounting unit tests only, not independent real-market validation",
+    "No full ETF one-shot rerun or new Drive upload",
+    "Draft PR #92 remains unmerged; no trading authorization"
+  ]
+}
