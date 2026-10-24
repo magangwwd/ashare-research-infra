@@ -45,8 +45,30 @@
     "Same-supplier Tushare raw_close and fund_adj cannot independently establish market accuracy or total return.",
     "No registered portfolio share balances or CSDC/broker account statement were obtained.",
     "Announced payment and CSDC-to-broker dates do not certify actual investor cash spendability.",
-    "No new historical backtest, no new DIV-004 Artifact/Drive write or readback; no performance edits or dependency unlock."
+    "No new historical backtest, no new DIV-004 Artifact/Drive write or readback; no performance edits or dependency unlock.",
+    "2022 issuer annual report fund-level aggregate arithmetic cannot substitute for record-date strategy fills, actual registered account holdings, or broker cash settlement; original SSE PDF bytes and SHA remain unverified."
   ],
   "status": "REVIEW_REQUIRED",
-  "next_action": "Find issuer/SSE-hosted original PDF and byte hash; verify 2019/2021 remaining notices and 2025 original-host source, second-supplier market prices, actual shares and cash settlement; reconcile portfolio-level returns and independently accept DIV-004 before PAPER-005."
+  "next_action": "Obtain and hash SSE-hosted original 2022 annual report/issuer notice; reconcile record-date strategy holdings and actual cash settlement, independent market prices and fund_adj, then DIV004 Artifact/Drive readback; keep REVIEW_REQUIRED and PAPER-005 locked.",
+  "issuer_2022_annual_report_crosscheck": {
+    "checked_on_utc": "2026-10-24",
+    "primary_exchange_pdf_url_identified": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2023-03-31/510300_20230331_TLSG.pdf",
+    "issuer_authored_mirror_pdf_url": "https://pdf.dfcfw.com/pdf/H2_AN202303311584735997_1.pdf",
+    "annual_report_section": "2022 annual report §4.8, printed page 16 (PDF page index 15); fund shares §7.4.7.10, printed page 36 (PDF index 35)",
+    "observed_issuer_report_text": "2022-01-19 distribution; CNY 0.75 per 10 units; total fund-level distribution CNY 863,564,082.15",
+    "issuer_report_dividend_per_share_cny": "0.075",
+    "fund_aggregate_dividend_cny": "863564082.15",
+    "fund_record_date_entitled_units_implied": "11514187762",
+    "fund_units_at_2021_12_31": "11340487690",
+    "record_date_vs_previous_year_end_unit_difference": "173700072",
+    "naive_use_of_2021_12_31_units_understates_fund_aggregate_cny": "13027505.40",
+    "math_check": "863564082.15 / 0.075 = 11514187762; (11514187762 - 11340487690) * 0.075 = 13027505.40",
+    "sse_independent_ex_date_notice_url": "https://big5.sse.com.cn/site/cht/www.sse.com.cn/assortment/options/disclo/update/c/c_20220112_5681396.shtml",
+    "sse_independent_ex_date_confirmed": "2022-01-19",
+    "primary_sse_annual_report_bytes_downloaded": false,
+    "primary_sse_annual_report_sha256": null,
+    "mirror_text_inspected": true,
+    "verification_scope": "Issuer annual-report text at mirror and independent SSE options announcement; original SSE PDF URL identified but PDF bytes/hash NOT verified; fund-level aggregate is NOT account-level entitlement or broker cash proof",
+    "status": "PRIMARY_LINK_FOUND_MIRROR_TEXT_AND_EX_DATE_CROSSCHECK_ONLY"
+  }
 }
