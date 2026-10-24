@@ -180,14 +180,13 @@ def record_date_snapshots_from_fills(registry, opening_date, opening_positions, 
     # once before computing record-date entitlements. Never infer brokerage
     # registration rounding for consolidations.
     last_record_day = record_dates[-1][1]
-    # Reject fills outside the entitlement snapshot window; otherwise later
-    # executions silently evade the single-position and no-oversell checks.
-    if normalized and normalized[-1][0] > last_record_day:
-        raise ValueError("Fill after final record date is outside snapshot scope")
+    # Process through the last supplied fill as well, so future fills cannot
+    # silently bypass position checks. They never change prior snapshots.
+    last_check_day = max(last_record_day, normalized[-1][0]) if normalized else last_record_day
     unit_events = [
         event for event in events
         if event["type"] in ("UNIT_SPLIT", "UNIT_CONSOLIDATION")
-        and start < _day(event["event_date"]) <= last_record_day
+        and start < _day(event["event_date"]) <= last_check_day
     ]
     fill_keys = {(day, symbol) for day, symbol, _, _ in normalized}
     for event in unit_events:
@@ -203,8 +202,10 @@ def record_date_snapshots_from_fills(registry, opening_date, opening_positions, 
 
     snapshots = {}
     index = 0
-    for symbol, record_day in record_dates:
-        while index < len(timeline) and timeline[index][0] <= record_day:
+
+    def process_until(cutoff):
+        nonlocal index
+        while index < len(timeline) and timeline[index][0] <= cutoff:
             day = timeline[index][0]
             while index < len(timeline) and timeline[index][0] == day:
                 _, _, traded, side, shares, event = timeline[index]
@@ -240,5 +241,10 @@ def record_date_snapshots_from_fills(registry, opening_date, opening_positions, 
                 if sum(v > 0 for v in positions.values()) > 1:
                     raise ValueError("More than one ETF held at any execution step")
                 index += 1
+    for symbol, record_day in record_dates:
+        process_until(record_day)
         snapshots[(symbol, record_day.isoformat())] = positions.get(symbol, 0)
+    # Validate all later supplied fills too, but never backdate entitlement.
+    if timeline:
+        process_until(timeline[-1][0])
     return snapshots

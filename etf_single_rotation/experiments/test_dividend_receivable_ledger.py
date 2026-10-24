@@ -231,18 +231,24 @@ class RecordDateFillSnapshotTests(unittest.TestCase):
                  "side": "BUY", "shares": 2},
             ])
 
-    def test_post_final_record_date_fills_fail_closed(self):
-        # A later fill must not bypass per-execution risk checks unnoticed.
-        for fill in (
-            {"date": "2021-12-31", "symbol": "510300.SH",
-             "side": "BUY", "shares": 1},
-            {"date": "2022-01-06", "symbol": "512690.SH",
-             "side": "SELL", "shares": 1},
-        ):
-            with self.subTest(fill=fill), self.assertRaisesRegex(
-                ValueError, "after final record date"
-            ):
-                self.snapshots(opening={"512690.SH": 10}, fills=[fill])
+    def test_post_record_date_fills_checked_without_backdating(self):
+        # Later valid trades do not change earlier registered entitlement.
+        snap = self.snapshots(opening={"512690.SH": 10}, fills=[
+            {"date": "2021-12-31", "symbol": "512690.SH",
+             "side": "SELL", "shares": 10},
+        ])
+        self.assertEqual(snap[("512690.SH", "2021-12-30")], 10)
+        # But an invalid later execution cannot evade the single-ETF gate.
+        with self.assertRaisesRegex(ValueError, "More than one ETF"):
+            self.snapshots(opening={"512690.SH": 10}, fills=[
+                {"date": "2021-12-31", "symbol": "510300.SH",
+                 "side": "BUY", "shares": 1},
+            ])
+        with self.assertRaisesRegex(ValueError, "Sell exceeds"):
+            self.snapshots(opening={"512690.SH": 10}, fills=[
+                {"date": "2022-01-06", "symbol": "512690.SH",
+                 "side": "SELL", "shares": 11},
+            ])
 
     def test_missing_pre_record_opening_baseline_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "Opening date"):
