@@ -1,0 +1,249 @@
+{
+  "pilot_id": "WORK-RELAY-R2-20261021",
+  "repository": "magangwwd/ashare-research-infra",
+  "pr": 90,
+  "reviewed_head_sha": "057630c5f58ad43fdf1fa0e947ecebefb2fd14ac",
+  "observed_head_sha": "057630c5f58ad43fdf1fa0e947ecebefb2fd14ac",
+  "event_head_sha": null,
+  "dedup_key": "magangwwd/ashare-research-infra#90@057630c5f58ad43fdf1fa0e947ecebefb2fd14ac",
+  "event_sha_attribution": "No SHA supplied in webhook metadata. Observed unchanged head and matching notify logs correlate the completed computation with received events; payload SHA is not asserted.",
+  "events": [
+    {
+      "action": "ready_for_review",
+      "actor": "github-actions[bot]",
+      "delivery_id": "d0897370-cd51-11f1-9ea0-2df5076b69dd",
+      "gpt_run_context_started_at_utc": "2026-10-21T13:18:47Z"
+    },
+    {
+      "action": "ready_for_review",
+      "actor": "github-actions[bot]",
+      "delivery_id": "d1a39600-cd51-11f1-95be-40bd20c75b0c",
+      "gpt_run_context_started_at_utc": "2026-10-21T13:19:59Z",
+      "decision": "COALESCED_WITH_ACTIVE_FINAL_REVIEW_NO_ADDITIONAL_DISPATCH"
+    }
+  ],
+  "gpt_started_at_utc": "2026-10-21T13:18:47Z",
+  "gpt_start_source": "provided runtime context; second event arrived during active verification",
+  "computation_jobs_completed_at": "2026-10-21T13:17:44Z",
+  "run": {
+    "id": 39606712054,
+    "url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/39606712054",
+    "status": "completed",
+    "conclusion": "success",
+    "updated_at": "2026-10-21T13:17:53Z"
+  },
+  "jobs": [
+    {
+      "id": 119244666748,
+      "name": "validate (fault)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-21T13:17:37Z",
+      "completed_at": "2026-10-21T13:17:44Z",
+      "runner_name": "GitHub Actions 1000001590"
+    },
+    {
+      "id": 119244667085,
+      "name": "validate (normal)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-21T13:17:37Z",
+      "completed_at": "2026-10-21T13:17:42Z",
+      "runner_name": "GitHub Actions 1000001591"
+    },
+    {
+      "id": 119244746286,
+      "name": "notify",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-21T13:17:46Z",
+      "completed_at": "2026-10-21T13:17:52Z",
+      "runner_name": "GitHub Actions 1000001592"
+    }
+  ],
+  "notification_job_id": 119244746286,
+  "notifications": [
+    {
+      "event_action": "ready_for_review",
+      "notification": 1,
+      "head_sha": "057630c5f58ad43fdf1fa0e947ecebefb2fd14ac",
+      "pr": 90,
+      "run_id": "39606712054",
+      "normal": "inspect matrix jobs and artifacts",
+      "fault": "success",
+      "emitted_at": "2026-10-21T13:17:50.057912+00:00"
+    },
+    {
+      "event_action": "ready_for_review",
+      "notification": 2,
+      "head_sha": "057630c5f58ad43fdf1fa0e947ecebefb2fd14ac",
+      "pr": 90,
+      "run_id": "39606712054",
+      "normal": "inspect matrix jobs and artifacts",
+      "fault": "success",
+      "emitted_at": "2026-10-21T13:17:51.987604+00:00"
+    }
+  ],
+  "task_raw_checksum": "673dd5e3e9e1cd00aabb24eb200c65d957cc332e383e52c78f8af3866ca8107f",
+  "artifacts": [
+    {
+      "id": 12347669347,
+      "name": "relay-r2-normal-057630c5f58ad43fdf1fa0e947ecebefb2fd14ac",
+      "digest": "sha256:a3a86e9e3dc8a64a07a09c24fdca24c6de6097d9e4933e5a46a4ece451b22904",
+      "head_sha": "057630c5f58ad43fdf1fa0e947ecebefb2fd14ac",
+      "zip_digest_verified": true,
+      "result_json_verified": true,
+      "task_raw_checksum_verified": true,
+      "task_id": "R2-NORMAL",
+      "status": "PASS"
+    },
+    {
+      "id": 12347469634,
+      "name": "relay-r2-fault-057630c5f58ad43fdf1fa0e947ecebefb2fd14ac",
+      "digest": "sha256:03a60a01ca22dd772a6f82ca82371836fe6e2997dbcf1fb85ec6a6e0def73625",
+      "head_sha": "057630c5f58ad43fdf1fa0e947ecebefb2fd14ac",
+      "zip_digest_verified": true,
+      "result_json_verified": true,
+      "task_raw_checksum_verified": true,
+      "task_id": "R2-REPAIR",
+      "status": "PASS"
+    }
+  ],
+  "original_normal_and_expected_failure_evidence": {
+    "pilot_id": "WORK-RELAY-R2-20261021",
+    "pr": 90,
+    "repository": "magangwwd/ashare-research-infra",
+    "reviewed_head_sha": "47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+    "dedup_key": "magangwwd/ashare-research-infra#90@47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+    "event_head_sha": null,
+    "observed_head_sha": "47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+    "event_sha_attribution": "Webhook omitted SHA; notification logs bind this unchanged observed head to both transitions.",
+    "event": {
+      "action": "ready_for_review",
+      "actor": "github-actions[bot]",
+      "delivery_id": "63690cb0-cd51-11f1-8e47-d54112ca44db",
+      "received_at_utc": "2026-10-21T13:14:48.135000+00:00"
+    },
+    "duplicate_event": {
+      "action": "ready_for_review",
+      "actor": "github-actions[bot]",
+      "delivery_id": "6546f470-cd51-11f1-848d-d8039ffa6781",
+      "received_at_utc": "2026-10-21T13:14:51.182000+00:00",
+      "decision": "COALESCED_NO_SECOND_DISPATCH"
+    },
+    "gpt_started_at_utc": "2026-10-21T13:15:31Z",
+    "gpt_start_source": "provided task-run start context; separate platform execution telemetry unavailable",
+    "run": {
+      "id": 39606264671,
+      "url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/39606264671",
+      "status": "completed",
+      "conclusion": "failure",
+      "updated_at": "2026-10-21T13:14:52Z",
+      "note": "Expected injected failure; workflow is not successful."
+    },
+    "jobs": [
+      {
+        "id": 119243122808,
+        "name": "validate (fault)",
+        "status": "completed",
+        "conclusion": "failure",
+        "started_at": "2026-10-21T13:14:34Z",
+        "completed_at": "2026-10-21T13:14:39Z",
+        "runner_name": "GitHub Actions 1000001587"
+      },
+      {
+        "id": 119243123279,
+        "name": "validate (normal)",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-10-21T13:14:34Z",
+        "completed_at": "2026-10-21T13:14:41Z",
+        "runner_name": "GitHub Actions 1000001588"
+      },
+      {
+        "id": 119243201971,
+        "name": "notify",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-10-21T13:14:43Z",
+        "completed_at": "2026-10-21T13:14:51Z",
+        "runner_name": "GitHub Actions 1000001589"
+      }
+    ],
+    "computation_jobs_completed_at": "2026-10-21T13:14:41Z",
+    "notification_job_id": 119243201971,
+    "notifications": [
+      {
+        "event_action": "ready_for_review",
+        "notification": 1,
+        "head_sha": "47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+        "pr": 90,
+        "run_id": "39606264671",
+        "normal": "inspect matrix jobs and artifacts",
+        "fault": "failure",
+        "emitted_at": "2026-10-21T13:14:47.045983+00:00"
+      },
+      {
+        "event_action": "ready_for_review",
+        "notification": 2,
+        "head_sha": "47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+        "pr": 90,
+        "run_id": "39606264671",
+        "normal": "inspect matrix jobs and artifacts",
+        "fault": "failure",
+        "emitted_at": "2026-10-21T13:14:50.152213+00:00"
+      }
+    ],
+    "task_raw_checksum": "5a19c11e0f30c679bc462df811a551e5d315452aee3653e90ff82355e703dc64",
+    "artifacts": [
+      {
+        "id": 12347164833,
+        "name": "relay-r2-fault-47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+        "digest": "sha256:b6844039d43cde119572b06d3ca495109f009dd3104991851cc8e73427ec672e",
+        "head_sha": "47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+        "zip_digest_verified": true,
+        "result_json_verified": true,
+        "checksum": "5a19c11e0f30c679bc462df811a551e5d315452aee3653e90ff82355e703dc64",
+        "task_id": "R2-FAILURE",
+        "status": "FAIL"
+      },
+      {
+        "id": 12346914907,
+        "name": "relay-r2-normal-47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+        "digest": "sha256:0dbec7eee7ab470849a3044ea5493bf3e527299cec46408a43c144d986a59f3f",
+        "head_sha": "47a83c717e04f44c5183ffe6d93c21e90cc852e7",
+        "zip_digest_verified": true,
+        "result_json_verified": true,
+        "checksum": "5a19c11e0f30c679bc462df811a551e5d315452aee3653e90ff82355e703dc64",
+        "task_id": "R2-NORMAL",
+        "status": "PASS"
+      }
+    ],
+    "expected_failure_identified": true,
+    "decision": "REPAIR_DISPATCHED",
+    "agent_commit_round": 1,
+    "remaining_dispatch": 1,
+    "duplicate_delivery_observed": true,
+    "batch_duplicate_coalesced": true,
+    "persisted_receipt_replay_tested": false,
+    "next_action": "Await new ready_for_review event for repaired head. No manual advance.",
+    "reliability_proven": false
+  },
+  "repair_commit": "057630c5f58ad43fdf1fa0e947ecebefb2fd14ac",
+  "agent_commit_round": 2,
+  "status": "BOUNDED_TEST_COMPLETE",
+  "decision": "ACCEPT_REPAIR_AND_STOP_DISPATCH",
+  "remaining_dispatch": 0,
+  "duplicate_delivery_observed": true,
+  "duplicate_events_coalesced_without_additional_dispatch": true,
+  "persisted_receipt_replay_tested": false,
+  "acceptance_limits": [
+    "One bounded synthetic JSON fixture cycle completed; production reliability is unproven.",
+    "Duplicate events were actually delivered and coalesced during active review; post-commit receipt replay was not separately tested.",
+    "Webhook SHA absent; notification log correlation used without inventing payload SHA."
+  ],
+  "reliability_proven": false,
+  "existing_scheduled_checks_unchanged": true,
+  "webhook_listener_remains_enabled": true,
+  "no_merge": true
+}
