@@ -56,7 +56,9 @@ def _whole_units(value, label):
 
 def apply_unit_change(shares, event):
     """Return post-split/consolidation economic units; no synthetic cash."""
-    units = _nonnegative(shares, "held shares")
+    # Registered holdings must be exact whole ETF units; only the resulting
+    # economic conversion may be fractional pending issuer rounding evidence.
+    units = _whole_units(shares, "held shares")
     kind = event.get("type")
     if kind not in ("UNIT_SPLIT", "UNIT_CONSOLIDATION"):
         raise ValueError("Expected a unit-changing event")
