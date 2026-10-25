@@ -98,7 +98,17 @@ def analyze(registry, prices):
         symbol, trading_day = row["symbol"], row["date"]
         if symbol not in ETF_SET:
             raise ValueError("Unexpected price symbol")
-        day = date.fromisoformat(str(trading_day))
+        # Python accepts compact YYYYMMDD, but the research ledger and
+        # evidence manifests require canonical YYYY-MM-DD market dates.
+        # Reject malformed/non-string dates instead of silently normalizing.
+        if not isinstance(trading_day, str):
+            raise ValueError("Invalid real price date")
+        try:
+            day = date.fromisoformat(trading_day)
+        except ValueError as exc:
+            raise ValueError("Invalid real price date") from exc
+        if day.isoformat() != trading_day:
+            raise ValueError("Noncanonical real price date")
         key = (symbol, day)
         if key in seen:
             raise ValueError("Duplicate real price quote")
