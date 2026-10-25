@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40180629888,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "90822418bd439c3261dceebcdc59f3ac4237a9ac",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": null,
+    "provenance": "Isolated draft PR #92, synthetic-only unit conversion guard. Original registered holdings must be exact whole ETF units; post-conversion economic units may be fractional pending issuer rounding. No real market data or account evidence used."
+  },
+  "checks": {
+    "tests_passed": 85,
+    "tests_failed": 0,
+    "output_sha256": null
+  },
+  "artifact_urls": [],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Review issuer cash dividend completeness for all eight ETFs, independently reconcile raw prices/fund_adj and account cash availability, verify Artifact/Drive write-readback, and review draft PR #92/#103/#98. Do not unlock PAPER-005.",
+  "created_at_utc": "2026-10-25T09:26:38.248Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Scoped synthetic CI only; no issuer completeness, independent prices, real broker cash, or Drive verification. PR #92 remains draft. PAPER-005 blocked by DIV-004.",
+  "fingerprint": "etf-div004-whole-registered-units-90822418bd439c3261dceebcdc59f3ac4237a9ac"
+}
