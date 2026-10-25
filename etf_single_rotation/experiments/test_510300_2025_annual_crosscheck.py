@@ -33,7 +33,7 @@ class Annual2025CrosscheckTests(unittest.TestCase):
             for row in changed["events"]:
                 if row["ex_dividend_date"] == "2025-06-18":
                     row["dividend_per_share_cny"] = value
-            with self.subTest(amount=value), self.assertRaisesRegex(ValueError, "dividend"):
+            with self.subTest(amount=value), self.assertRaisesRegex(ValueError, "(?i)dividend"):
                 validate_annual_crosscheck(source, changed)
         changed = copy.deepcopy(candidates)
         for row in changed["events"]:
