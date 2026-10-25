@@ -196,6 +196,40 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
             candidate_dividend_coverage({"schema_version": 1, "events": [action("CASH_DIVIDEND")]}, candidates)
 
 
+    def test_primary_sse_2022_notice_matches_candidate_without_claiming_cash_verification(self):
+        # Research-only provenance crosscheck: inspected exchange-hosted PDF
+        # text/images, NOT raw PDF bytes, market prices or brokerage cash.
+        from decimal import Decimal
+        from urllib.parse import urlparse
+
+        metadata = Path(__file__).resolve().parents[1] / "metadata"
+        source = json.loads((metadata /
+            "510300_20220112_primary_sse_issuer_notice_crosscheck_20261025.json"
+        ).read_text(encoding="utf-8"))
+        candidates = json.loads((metadata /
+            "510300_dividend_coverage_gap_20261024.json"
+        ).read_text(encoding="utf-8"))
+        event = source["issuer_notice_event"]
+        matching = [row for row in candidates["events"]
+                    if row["ex_dividend_date"] == event["ex_dividend_date"]]
+        self.assertEqual(len(matching), 1)
+        candidate = matching[0]
+        self.assertEqual(source["symbol"], "510300.SH")
+        self.assertEqual(source["task_id"], "ETF-DIV-004")
+        self.assertEqual(urlparse(source["primary_source"]["url"]).hostname, "www.sse.com.cn")
+        self.assertEqual(event["record_date"], candidate["registration_date"])
+        self.assertEqual(event["announced_payment_date"], candidate["announced_payment_date"])
+        self.assertEqual(Decimal(event["dividend_per_share_cny"]),
+                         Decimal(candidate["dividend_per_share_cny"]))
+        self.assertEqual(Decimal(event["dividend_per_10_shares_cny"]),
+                         Decimal(event["dividend_per_share_cny"]) * 10)
+        self.assertFalse(source["primary_source"]["pdf_bytes_downloaded"])
+        self.assertIsNone(source["primary_source"]["pdf_sha256"])
+        self.assertIsNone(event["actual_investor_spendable_cash_date"])
+        self.assertEqual(source["status"], "REVIEW_REQUIRED")
+        self.assertEqual(source["trading_status"], "NOT_FOR_TRADING")
+
+
 
 if __name__ == "__main__":
     unittest.main()
