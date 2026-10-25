@@ -69,6 +69,15 @@ jobs:
               raise SystemExit("FAIL_CLOSED: invalid PDF response")
           if b"%%EOF" not in raw[-2048:]:
               raise SystemExit("FAIL_CLOSED: PDF EOF marker missing")
+          # Fail closed if the exchange changes the original notice bytes.
+          # A new source version needs separate review; no silent re-acceptance.
+          pinned_sha = metadata.get("source_bytes_sha256")
+          if not isinstance(pinned_sha, str) or len(pinned_sha) != 64 or any(ch not in "0123456789abcdef" for ch in pinned_sha):
+              raise SystemExit("FAIL_CLOSED: missing or malformed reviewed source SHA256")
+          if hashlib.sha256(raw).hexdigest() != pinned_sha:
+              raise SystemExit("FAIL_CLOSED: official notice bytes differ from reviewed source SHA256")
+          if metadata.get("source_bytes_length") != len(raw):
+              raise SystemExit("FAIL_CLOSED: official notice byte length differs from reviewed source")
           result = {
               "schema_version": 1, "project": "ETF_SINGLE_ROTATION",
               "task_id": "ETF-DIV-004", "symbol": "510300.SH",
