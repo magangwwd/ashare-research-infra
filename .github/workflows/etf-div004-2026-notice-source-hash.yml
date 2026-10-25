@@ -1,0 +1,120 @@
+name: ETF DIV-004 510300 2026 official dividend PDF provenance
+# One bounded source-byte verification; research only. No secrets, orders, cron or market backtest.
+on:
+  push:
+    branches:
+      - research/etf-div004-2026-notice-pdf-sha-20261026
+    paths:
+      - .github/workflows/etf-div004-2026-notice-source-hash.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-div004-510300-2026-primary-notice-hash
+  cancel-in-progress: false
+
+jobs:
+  primary-notice-byte-hash:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact push revision, no persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download primary SSE issuer PDF with strict bounds
+        env:
+          SOURCE_URL: https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-01-12/510300_20260112_VTCZ.pdf
+        run: |
+          curl --fail --location --silent --show-error \
+            --retry 1 --retry-delay 2 \
+            --connect-timeout 15 --max-time 75 --max-filesize 25000000 \
+            --proto '=https' --proto-redir '=https' \
+            --output "$RUNNER_TEMP/notice.pdf" \
+            --write-out '%{url_effective}' "$SOURCE_URL" > "$RUNNER_TEMP/effective_url.txt"
+      - name: Verify PDF bytes, event metadata, and record SHA256
+        env:
+          SOURCE_URL: https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-01-12/510300_20260112_VTCZ.pdf
+        run: |
+          python - <<'PY'
+          import datetime
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          from urllib.parse import urlparse
+
+          metadata = json.loads(Path("etf_single_rotation/metadata/510300_2026_primary_notice_text_20261026.json").read_text(encoding="utf-8"))
+          expected = {
+              "task_id": "ETF-DIV-004", "symbol": "510300.SH",
+              "notice_date": "2026-01-12", "record_date": "2026-01-16",
+              "ex_dividend_date": "2026-01-19", "announced_payment_date": "2026-01-27",
+              "dividend_per_10_shares_cny": "1.2300",
+              "dividend_per_share_cny": "0.1230",
+              "status": "REVIEW_REQUIRED", "trading_status": "NOT_FOR_TRADING",
+          }
+          for key, value in expected.items():
+              if metadata.get(key) != value:
+                  raise SystemExit("FAIL_CLOSED: issuer event metadata mismatch: " + key)
+          if metadata.get("source_url") != os.environ["SOURCE_URL"]:
+              raise SystemExit("FAIL_CLOSED: source URL mismatch")
+          temp = Path(os.environ["RUNNER_TEMP"])
+          raw = (temp / "notice.pdf").read_bytes()
+          effective = (temp / "effective_url.txt").read_text(encoding="utf-8").strip()
+          parsed = urlparse(effective)
+          if parsed.scheme != "https" or parsed.hostname != "www.sse.com.cn":
+              raise SystemExit("FAIL_CLOSED: source left official SSE domain")
+          if not (128 <= len(raw) <= 25_000_000 and raw.startswith(b"%PDF-")):
+              raise SystemExit("FAIL_CLOSED: invalid PDF response")
+          if b"%%EOF" not in raw[-2048:]:
+              raise SystemExit("FAIL_CLOSED: PDF EOF marker missing")
+          # Fail closed if the exchange changes the original notice bytes.
+          # A new source version needs separate review; no silent re-acceptance.
+          pinned_sha = metadata.get("source_bytes_sha256")
+          if not isinstance(pinned_sha, str) or len(pinned_sha) != 64 or any(ch not in "0123456789abcdef" for ch in pinned_sha):
+              raise SystemExit("FAIL_CLOSED: missing or malformed reviewed source SHA256")
+          if hashlib.sha256(raw).hexdigest() != pinned_sha:
+              raise SystemExit("FAIL_CLOSED: official notice bytes differ from reviewed source SHA256")
+          if metadata.get("source_bytes_length") != len(raw):
+              raise SystemExit("FAIL_CLOSED: official notice byte length differs from reviewed source")
+          result = {
+              "schema_version": 1, "project": "ETF_SINGLE_ROTATION",
+              "task_id": "ETF-DIV-004", "symbol": "510300.SH",
+              "event_ex_date": metadata["ex_dividend_date"],
+              "status": "SOURCE_BYTES_HASHED_NOT_ECONOMIC_RETURNS_ACCEPTED",
+              "trading_status": "NOT_FOR_TRADING",
+              "source_url": os.environ["SOURCE_URL"],
+              "effective_url": effective,
+              "retrieved_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "github_run_id": int(os.environ["GITHUB_RUN_ID"]),
+              "github_run_attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
+              "github_sha": os.environ["GITHUB_SHA"],
+              "pdf_bytes": len(raw), "pdf_sha256": hashlib.sha256(raw).hexdigest(),
+              "pdf_header_valid": True, "pdf_eof_marker_present": True,
+              "issuer_notice_text_reviewed_separately": True,
+              "notice_text_machine_rechecked_in_this_run": False,
+              "independent_market_prices_checked": False,
+              "broker_cash_availability_checked": False,
+              "drive_readback_performed": False,
+              "limitations": [
+                  "PDF SHA256 proves fetched bytes, not independent economic return correctness.",
+                  "Event fields match separately inspected SSE text metadata, not parsed PDF in this job.",
+                  "Issuer payment date does not establish actual brokerage cash availability.",
+                  "No fund_adj/raw-price reconciliation, source completeness or trading acceptance.",
+                  "No research model, universe, portfolio, executable event registry or schedule changed."
+              ],
+          }
+          Path("etf_div004_510300_2026_primary_notice_pdf_hash.json").write_text(
+              json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print("PRIMARY_2026_NOTICE_SHA256", result["pdf_sha256"])
+          print("PRIMARY_2026_NOTICE_BYTES", result["pdf_bytes"])
+          print("REVIEW_REQUIRED / NOT_FOR_TRADING")
+          PY
+      - name: Archive manifest only (no PDF redistribution)
+        uses: actions/upload-artifact@v4
+        with:
+          name: etf-div004-510300-2026-primary-notice-hash
+          path: etf_div004_510300_2026_primary_notice_pdf_hash.json
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40216544875,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "53a50d91383a2162d86daac8ea911697756f88b3",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": "c8ff747d02fa90db72320458c38249f73720b932d61b7e088f033583aab63992",
+    "provenance": "SSE-hosted 2026-01-12 issuer dividend PDF, 510300.SH. Source bytes 139671 and SHA256 pinned to separately reviewed original PDF; one bounded GitHub workflow re-downloaded and verified exact bytes."
+  },
+  "checks": {
+    "tests_passed": 0,
+    "tests_failed": 0,
+    "output_sha256": "6f8c179301b6efd5f9fd25d45133c302421f3ae5ddc8db8f0116e7a0ddd7ecd8"
+  },
+  "artifact_urls": [
+    "https://github.com/magangwwd/ashare-research-infra/actions/runs/40216544875/artifacts/12607667652"
+  ],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Review draft PR #105; independently verify all relevant issuer dividends, raw close/fund_adj, registered holdings and actual broker cash availability, then independently audit Drive write/readback before DIV-004 acceptance. Keep PAPER-005 BLOCKED and NOT_FOR_TRADING.",
+  "created_at_utc": "2026-10-25T17:28:07.828Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Source bytes and Artifact manifest hash readback verified, but economic return, all issuer event coverage, actual broker cash and Drive readback remain unverified; no executable event registry updated.",
+  "fingerprint": "ETF-DIV-004:40216544875:53a50d91383a2162d86daac8ea911697756f88b3:c8ff747d02fa90db72320458c38249f73720b932d61b7e088f033583aab63992"
+}

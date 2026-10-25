@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "source_grade": "SSE_HOSTED_PRIMARY_ISSUER_NOTICE_TEXT_REVIEWED_AND_SOURCE_BYTES_HASHED",
+  "source_url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-01-12/510300_20260112_VTCZ.pdf",
+  "notice_date": "2026-01-12",
+  "record_date": "2026-01-16",
+  "ex_dividend_date": "2026-01-19",
+  "announced_payment_date": "2026-01-27",
+  "dividend_per_10_shares_cny": "1.2300",
+  "dividend_per_share_cny": "0.1230",
+  "issuer_to_csdc_date": "2026-01-23",
+  "csdc_to_broker_date": "2026-01-26",
+  "actual_investor_spendable_cash_date": null,
+  "source_review": "SSE-hosted PDF text inspected separately; original PDF bytes hashed in successful GitHub Run 40212059657 and Artifact manifest read back. Neither source hash nor announced payment date verifies investor cash settlement or independent economic return.",
+  "source_bytes_sha256": "c8ff747d02fa90db72320458c38249f73720b932d61b7e088f033583aab63992",
+  "limitations": [
+    "Do not infer spendable cash from announced distribution date.",
+    "Do not insert event into executable registry without independent market/holding reconciliation.",
+    "Official PDF SHA256 confirms bytes fetched in Run 40212059657; issuer PDF text was inspected separately and not parsed by that job.",
+    "Other ETF distributions and fund_adj remain unverified.",
+    "No strategy changes, historical backtest, live trading or Drive write/readback."
+  ],
+  "source_bytes_length": 139671,
+  "source_bytes_verified_run_id": 40212059657,
+  "source_bytes_verified_artifact_id": 12606126863
+}

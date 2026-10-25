@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40212059657,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "fbda57b5aaff8de477e3822874d4475eb66facd4",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": "c8ff747d02fa90db72320458c38249f73720b932d61b7e088f033583aab63992",
+    "provenance": "Original SSE 2026-01-12 issuer notice 510300.SH, PDF bytes fetched on GitHub Actions, source URL https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-01-12/510300_20260112_VTCZ.pdf; text/date facts inspected separately, not machine-parsed in this job."
+  },
+  "checks": {
+    "tests_passed": 0,
+    "tests_failed": 0,
+    "output_sha256": "212939fef18df465365c51fdff845801768501651b40bcd0ead0c28974d21476"
+  },
+  "artifact_urls": [
+    "https://github.com/magangwwd/ashare-research-infra/actions/runs/40212059657/artifacts/12606126863"
+  ],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Review 2026 issuer notice provenance with draft PR #105; independently reconcile 510300 raw quotes/fund_adj, record-date registered holdings and broker spendable cash; verify other ETF issuer events and Google Drive write/readback before DIV-004 acceptance. PAPER-005 remains blocked.",
+  "created_at_utc": "2026-10-25T16:31:41.752Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "PDF byte provenance and Artifact manifest readback verified, but no independent market prices, cash settlement, issuer completeness or Drive readback; PR draft unmerged.",
+  "fingerprint": "ETF-DIV-004:40212059657:fbda57b5aaff8de477e3822874d4475eb66facd4:c8ff747d02fa90db72320458c38249f73720b932d61b7e088f033583aab63992"
+}
