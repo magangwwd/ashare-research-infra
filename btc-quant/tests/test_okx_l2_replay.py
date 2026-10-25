@@ -124,6 +124,38 @@ class ReplayTests(unittest.TestCase):
             with self.subTest(bids=bids, asks=asks), self.assertRaises(ValueError):
                 mod.replay_stream([event(0, "snapshot", bids, asks)])
 
+    def test_file_like_lines_are_bounded_before_reading(self):
+        class GuardReader(io.BytesIO):
+            def __init__(self, payload, expected_limit):
+                super().__init__(payload)
+                self.expected_limit = expected_limit
+                self.read_sizes = []
+
+            def __iter__(self):
+                raise AssertionError("Unbounded file iterator used")
+
+            def readline(self, size=-1):
+                if size != self.expected_limit:
+                    raise AssertionError(f"Unbounded readline size: {size}")
+                self.read_sizes.append(size)
+                return super().readline(size)
+
+        good = GuardReader(event(0, "snapshot"), mod.MAX_LINE_BYTES + 1)
+        self.assertEqual(mod.replay_stream(good)["events_parsed"], 1)
+        self.assertTrue(good.read_sizes)
+
+        # Tiny test cap proves rejection before a physical line is consumed.
+        oversized = GuardReader(b"x" * 33 + b"\\n", 33)
+        with self.assertRaisesRegex(ValueError, "line bound exceeded"):
+            list(mod._bounded_lines(oversized, max_line_bytes=32))
+        self.assertEqual(oversized.read_sizes, [33])
+
+        final_no_newline = GuardReader(b"x" * 32, 33)
+        self.assertEqual(list(mod._bounded_lines(final_no_newline, max_line_bytes=32)),
+                         [b"x" * 32])
+        with self.assertRaisesRegex(ValueError, "line bound exceeded"):
+            list(mod._bounded_lines([b"x" * 33], max_line_bytes=32))
+
     def test_memory_event_and_line_bounds(self):
         with self.assertRaisesRegex(ValueError, "memory cap"):
             mod.replay_stream([event(0, "snapshot"), event(1, "update", [["98", "1"]], [])], max_levels=2)

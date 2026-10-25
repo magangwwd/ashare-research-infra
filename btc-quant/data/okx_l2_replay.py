@@ -129,6 +129,36 @@ class Book:
             raise ValueError("Crossed or locked reconstructed order book")
 
 
+
+def _bounded_lines(lines, *, max_line_bytes=MAX_LINE_BYTES):
+    """Bound each physical JSONL line *during* reading from a file-like stream.
+
+    Archive extraction uses a file-like object with readline(size). Generic
+    pre-materialized iterables are still checked, but cannot undo allocations
+    made by their producer before yielding an element.
+    """
+    if not 0 < max_line_bytes <= MAX_LINE_BYTES:
+        raise ValueError("Invalid L2 line cap")
+    if hasattr(lines, "readline"):
+        while True:
+            raw = lines.readline(max_line_bytes + 1)
+            if not raw:
+                return
+            if len(raw) > max_line_bytes:
+                raise ValueError("L2 replay event/line bound exceeded")
+            # A final unterminated line exactly at the cap is allowed only
+            # when EOF follows; never split a longer physical line into events.
+            if len(raw) == max_line_bytes and not raw.endswith((b"\\n", "\\n")):
+                if lines.read(1):
+                    raise ValueError("L2 replay event/line bound exceeded")
+            yield raw
+    else:
+        for raw in lines:
+            if len(raw) > max_line_bytes:
+                raise ValueError("L2 replay event/line bound exceeded")
+            yield raw
+
+
 def replay_stream(lines, *, utc_day=APPROVED_DAY, max_events=MAX_EVENTS,
                   max_levels=MAX_LEVELS_PER_SIDE):
     """Replay events in archive order, reset on snapshots; emit aggregates only."""
@@ -139,7 +169,7 @@ def replay_stream(lines, *, utc_day=APPROVED_DAY, max_events=MAX_EVENTS,
     mismatch = Counter()
     boundary_timing = Counter()
     previous_ts = None
-    for raw in lines:
+    for raw in _bounded_lines(lines):
         if not raw.strip():
             continue
         counts["events"] += 1
