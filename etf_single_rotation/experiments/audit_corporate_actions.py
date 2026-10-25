@@ -162,6 +162,78 @@ def analyze(registry, prices):
     return diagnostics
 
 
+
+def candidate_dividend_coverage(registry, candidates, *, start_date="2019-01-02"):
+    """Expose missing *candidate* cash events, without treating lists as primary proof.
+
+    This comparison cannot certify issuer completeness, account settlement,
+    adjusted prices, or total returns. It never mutates the event registry.
+    """
+    from decimal import Decimal, InvalidOperation
+
+    events = validate_events(registry)
+    if candidates.get("schema_version") != 1 or candidates.get("symbol") not in ETF_SET:
+        raise ValueError("Invalid dividend candidate metadata")
+    symbol = candidates["symbol"]
+    cutoff = date.fromisoformat(start_date)
+    if cutoff.isoformat() != start_date:
+        raise ValueError("Noncanonical candidate cutoff")
+    raw = candidates.get("events")
+    if not isinstance(raw, list) or not raw:
+        raise ValueError("Missing dividend candidate rows")
+    known = {
+        (event["symbol"], event["event_date"]): event
+        for event in events if event["type"] == "CASH_DIVIDEND"
+    }
+    seen, missing, mismatched, checked = set(), [], [], 0
+    for row in raw:
+        if not isinstance(row, dict):
+            raise ValueError("Invalid dividend candidate row")
+        fields = ("registration_date", "ex_dividend_date",
+                  "announced_payment_date")
+        for field in fields:
+            value = row.get(field)
+            if not isinstance(value, str):
+                raise ValueError("Invalid candidate date")
+            try:
+                parsed = date.fromisoformat(value)
+            except ValueError as exc:
+                raise ValueError("Invalid candidate date") from exc
+            if parsed.isoformat() != value:
+                raise ValueError("Noncanonical candidate date")
+        ex_date = row["ex_dividend_date"]
+        if ex_date in seen:
+            raise ValueError("Duplicate dividend candidate")
+        seen.add(ex_date)
+        if not (row["registration_date"] <= ex_date <= row["announced_payment_date"]):
+            raise ValueError("Invalid candidate dividend chronology")
+        try:
+            amount = Decimal(str(row["dividend_per_share_cny"]))
+        except (KeyError, InvalidOperation, ValueError, TypeError) as exc:
+            raise ValueError("Invalid candidate dividend amount") from exc
+        if not amount.is_finite() or amount <= 0:
+            raise ValueError("Invalid candidate dividend amount")
+        if ex_date < start_date:
+            continue
+        checked += 1
+        registered = known.get((symbol, ex_date))
+        if registered is None:
+            missing.append(ex_date)
+        elif (registered["registration_date"] != row["registration_date"]
+              or registered["cash_payment_date"] != row["announced_payment_date"]
+              or Decimal(str(registered["dividend_per_current_share_cny"])) != amount):
+            mismatched.append(ex_date)
+    return {
+        "scope_symbol": symbol,
+        "research_window_start": start_date,
+        "candidate_events_in_window": checked,
+        "missing_from_executable_registry": missing,
+        "conflicting_registry_events": mismatched,
+        "source_grade": "SECONDARY_CANDIDATES_NOT_PRIMARY_ISSUER_VERIFICATION",
+        "status": "REVIEW_REQUIRED_NOT_FOR_TRADING",
+        "warning": "Coverage of this one symbol is not completeness for all eight ETFs; no prices, broker cash, or strategy results were certified.",
+    }
+
 def main():
     if not REGISTRY.is_file() or not PRICES.is_file():
         raise SystemExit("Real corporate-action registry and Tushare prices.csv required")
@@ -175,9 +247,19 @@ def main():
         writer = csv.DictWriter(stream, fieldnames=list(diagnostics[0]))
         writer.writeheader()
         writer.writerows(diagnostics)
+    candidate_file = ROOT / "metadata" / "510300_dividend_coverage_gap_20261024.json"
+    candidate_report = None
+    if candidate_file.is_file():
+        candidates = json.loads(candidate_file.read_text(encoding="utf-8"))
+        candidate_report = candidate_dividend_coverage(registry, candidates)
+        (OUT / "corporate_action_candidate_coverage.json").write_text(
+            json.dumps(candidate_report, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
     result = {
         "status": "REVIEW_REQUIRED_NOT_FOR_TRADING",
         "events_diagnosed": len(diagnostics),
+        "secondary_candidate_coverage": candidate_report,
         "events_needing_manual_review": sum(x["needs_manual_review"] for x in diagnostics),
         "source_registry_sha256": hashlib.sha256(REGISTRY.read_bytes()).hexdigest(),
         "price_input_sha256": hashlib.sha256(PRICES.read_bytes()).hexdigest(),
