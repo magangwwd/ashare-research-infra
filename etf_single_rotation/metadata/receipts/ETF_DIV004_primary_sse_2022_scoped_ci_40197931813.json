@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40197931813,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "067f9660135abac11ba753be38a3ffe815234aae",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": null,
+    "provenance": "Primary SSE-hosted 2022-01-12 510300 dividend PDF text and page images inspected; raw PDF bytes/SHA256 NOT obtained; crosschecked with secondary candidate list; no market data used."
+  },
+  "checks": {
+    "tests_passed": 90,
+    "tests_failed": 0,
+    "output_sha256": null
+  },
+  "artifact_urls": [],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Review draft PR #92 and original SSE PDF byte hash; independently verify real raw_close/fund_adj, record-date registered shares and broker cash availability, then new artifact and Drive readback. Keep ETF-DIV-004 REVIEW_REQUIRED and ETF-PAPER-005 blocked.",
+  "created_at_utc": "2026-10-25T13:31:17.514Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Original SSE PDF raw bytes/hash, independent market and broker settlement, new artifact/Drive readback and PR review remain outstanding.",
+  "fingerprint": "DIV004-510300-2022-primary-SSE-text-image-20261025"
+}
