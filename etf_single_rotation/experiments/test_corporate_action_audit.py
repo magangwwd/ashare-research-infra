@@ -83,6 +83,25 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "Invalid"):
                     analyze({"schema_version": 1, "events": [action()]}, rows)
 
+    def test_dividend_record_and_payment_dates_must_be_canonical(self):
+        # date.fromisoformat accepts YYYYMMDD, which would not match the
+        # YYYY-MM-DD snapshot keys used by the entitlement ledger.
+        for field, bad in (
+            ("registration_date", "20211230"),
+            ("cash_payment_date", "20220106"),
+            ("registration_date", "2021-12-99"),
+            ("cash_payment_date", None),
+        ):
+            with self.subTest(field=field, bad=bad):
+                item = action("CASH_DIVIDEND")
+                item[field] = bad
+                with self.assertRaisesRegex(ValueError, "date"):
+                    validate_events({"schema_version": 1, "events": [item]})
+        item = action("CASH_DIVIDEND")
+        del item["registration_date"]
+        with self.assertRaisesRegex(ValueError, "date"):
+            validate_events({"schema_version": 1, "events": [item]})
+
     def test_missing_or_duplicate_price_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "No genuine quotes"):
             analyze({"schema_version": 1, "events": [action()]}, [])

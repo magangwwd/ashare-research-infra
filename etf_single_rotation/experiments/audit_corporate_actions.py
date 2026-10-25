@@ -61,8 +61,21 @@ def validate_events(registry):
             raise ValueError("Corporate action lacks HTTPS source")
         if kind == "CASH_DIVIDEND":
             _positive(event.get("dividend_per_current_share_cny"), "dividend")
-            registration = date.fromisoformat(event["registration_date"])
-            payment = date.fromisoformat(event["cash_payment_date"])
+            # Python accepts compact YYYYMMDD as ISO, but downstream record-
+            # date keys and cash-availability evidence require YYYY-MM-DD.
+            # Reject missing, non-string and noncanonical dates at ingestion.
+            try:
+                registration_raw = event["registration_date"]
+                payment_raw = event["cash_payment_date"]
+                if not isinstance(registration_raw, str) or not isinstance(payment_raw, str):
+                    raise ValueError("Date fields must be strings")
+                registration = date.fromisoformat(registration_raw)
+                payment = date.fromisoformat(payment_raw)
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError("Invalid cash dividend registration/payment date") from exc
+            if (registration.isoformat() != registration_raw
+                    or payment.isoformat() != payment_raw):
+                raise ValueError("Noncanonical cash dividend registration/payment date")
             if not (registration <= date.fromisoformat(event_date) <= payment):
                 raise ValueError("Cash dividend registration/payment chronology invalid")
         else:
