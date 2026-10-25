@@ -102,6 +102,16 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "date"):
             validate_events({"schema_version": 1, "events": [item]})
 
+    def test_noncanonical_real_price_dates_fail_closed(self):
+        # Python date.fromisoformat accepts YYYYMMDD, but source rows and
+        # evidence manifests must use exact YYYY-MM-DD to avoid silent coercion.
+        for bad in ("20210513", "2021-05-99", None, 20210513):
+            with self.subTest(bad=bad):
+                rows = quotes(2, 1, 1, 2, "2021-05-13", "2021-05-17")
+                rows[0]["date"] = bad
+                with self.assertRaisesRegex(ValueError, "price date"):
+                    analyze({"schema_version": 1, "events": [action()]}, rows)
+
     def test_missing_or_duplicate_price_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "No genuine quotes"):
             analyze({"schema_version": 1, "events": [action()]}, [])
