@@ -96,7 +96,7 @@ def validate_annual_crosscheck(source, candidates):
         "notice_date": annual["notice_date"],
         "record_date": annual["record_date"],
         "ex_dividend_date": row["ex_dividend_date"],
-        "dividend_per_share_cny": str(per_10 / Decimal("10")),
+        "dividend_per_share_cny": str((per_10 / Decimal("10")).quantize(Decimal("0.0001"))),
         "announced_payment_date": row["announced_payment_date"],
         "status": "REVIEW_REQUIRED",
         "trading_status": "NOT_FOR_TRADING",
