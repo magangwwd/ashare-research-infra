@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40233658756,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "aec04cd7fbd2243377f920016f14af5f2d7718d8",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": "165ddaec9b36480ff4cbc738227043db7b7acc4f80ac31bedaa0e4f5c4001f4b",
+    "provenance": "Official SSE-hosted 2024-01-11 510300.SH dividend issuer notice, https://www.sse.com.cn/disclosure/fund/announcement/c/new/2024-01-11/510300_20240111_QQFV.pdf . Run 40233658756 fetched original PDF (68219 bytes), checked exact HTTPS source URL, PDF header/EOF, and SHA256. This verifies byte identity, not independent market quotes, cash settlement, or all eight ETFs."
+  },
+  "checks": {
+    "tests_passed": 7,
+    "tests_failed": 0,
+    "output_sha256": "f6e1e23e24a2a3989ed0ba53ba48090bd9c24abe9a00a5eba024b08d5331dd98"
+  },
+  "artifact_urls": [
+    "https://github.com/magangwwd/ashare-research-infra/actions/runs/40233658756/artifacts/12614320957"
+  ],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Keep draft PR #108 for review. Independently verify raw_close/fund_adj, record-date holdings, spendable cash, full 8-ETF event coverage and Google Drive write/readback before accepting DIV-004; keep PAPER-005 blocked and NOT_FOR_TRADING.",
+  "created_at_utc": "2026-10-25T21:04:30.578Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "The 2024 official PDF bytes are hashed and Artifact downloaded/read back (ZIP SHA256 1185befe1187dec3aba266b270cee62b43ef5b791be44ce46af1a66446cdaef1). No independent price/factor source, investor cash settlement, executable dividend registry acceptance or Drive readback was verified."
+}
