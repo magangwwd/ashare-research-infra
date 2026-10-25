@@ -6,6 +6,7 @@ on:
       - research/etf-div004-2025-annual-crosscheck-20261026
     paths:
       - .github/workflows/etf-div004-2025-annual-primary-crosscheck.yml
+      - etf_single_rotation/experiments/test_510300_2025_annual_crosscheck.py
 
 permissions:
   contents: read
