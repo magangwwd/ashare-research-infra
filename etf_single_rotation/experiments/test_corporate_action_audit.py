@@ -51,6 +51,35 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
         self.assertAlmostEqual(result["fund_adj_event_window_return"], 0)
         self.assertEqual(result["cash_payment_date"], "2022-01-06")
 
+    def test_cash_dividend_missing_exact_ex_date_quote_flags_review(self):
+        # Synthetic only: next available quote is 2022-01-03, not the
+        # dividend ex-date 2021-12-31. Matching arithmetic is insufficient.
+        registry = {"schema_version": 1, "events": [action("CASH_DIVIDEND")]}
+        missing = analyze(
+            registry,
+            quotes(2, 1.65, 1, 2 / 1.65, "2021-12-30", "2022-01-03"),
+        )[0]
+        self.assertEqual(missing["quote_after"], "2022-01-03")
+        self.assertTrue(missing["ex_date_quote_missing"])
+        self.assertTrue(missing["needs_manual_review"])
+        self.assertAlmostEqual(missing["fund_adj_minus_event_return_bp"], 0)
+
+        exact = analyze(
+            registry,
+            quotes(2, 1.65, 1, 2 / 1.65, "2021-12-30", "2021-12-31"),
+        )[0]
+        self.assertFalse(exact["ex_date_quote_missing"])
+        self.assertFalse(exact["needs_manual_review"])
+
+    def test_non_dividend_suspension_quote_gap_does_not_claim_cash_issue(self):
+        # Share-consolidation event dates can coincide with a halt; this
+        # new indicator is specifically for CASH_DIVIDEND diagnostics.
+        row = analyze(
+            {"schema_version": 1, "events": [action("UNIT_SPLIT")]},
+            quotes(2, 1, 1, 2, "2021-05-13", "2021-05-17"),
+        )[0]
+        self.assertFalse(row["ex_date_quote_missing"])
+
     def test_factor_gap_flags_review(self):
         result = analyze(
             {"schema_version": 1, "events": [action()]},
