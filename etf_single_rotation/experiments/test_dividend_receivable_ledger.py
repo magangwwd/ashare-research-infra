@@ -121,6 +121,15 @@ class CashEntitlementTests(unittest.TestCase):
             apply_unit_change(10, unit_event("UNIT_CONSOLIDATION", 0.36555)), 3.6555
         )
 
+    def test_unit_conversion_requires_whole_registered_input(self):
+        # Economic post-consolidation units may be fractional, but the
+        # investor's original registered holdings cannot be.
+        for bad in (True, False, 10.5, Decimal("10.0000000000000001")):
+            with self.subTest(bad=str(bad)), self.assertRaises(ValueError):
+                apply_unit_change(bad, unit_event("UNIT_SPLIT", 2))
+        with self.assertRaisesRegex(ValueError, "exact integer range"):
+            apply_unit_change(2**53, unit_event("UNIT_SPLIT", 2))
+
     def test_bad_unit_event_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "contradicts"):
             apply_unit_change(10, unit_event("UNIT_SPLIT", 0.5))
