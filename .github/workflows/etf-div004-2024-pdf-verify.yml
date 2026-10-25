@@ -1,0 +1,114 @@
+name: ETF DIV-004 510300 2024 official PDF byte provenance
+# Single bounded source verification; no secrets, cron, backtest or orders.
+on:
+  push:
+    branches:
+      - research/etf-div004-2024-pdf-sha-20261026
+    paths:
+      - .github/workflows/etf-div004-2024-pdf-verify.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-div004-2024-pdf-verify
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact source without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run seven fail-closed offline source tests
+        run: python -m unittest etf_single_rotation.experiments.test_510300_2024_pdf_source -v
+      - name: Download official SSE 2024 PDF (bounded)
+        env:
+          SOURCE_URL: https://www.sse.com.cn/disclosure/fund/announcement/c/new/2024-01-11/510300_20240111_QQFV.pdf
+        run: |
+          curl --fail --location --silent --show-error \
+            --retry 2 --retry-all-errors --retry-delay 2 \
+            --connect-timeout 15 --max-time 65 --max-filesize 25000000 \
+            --proto '=https' --proto-redir '=https' \
+            --output "$RUNNER_TEMP/issuer_notice.pdf" \
+            --write-out '%{url_effective}' "$SOURCE_URL" > "$RUNNER_TEMP/effective_url.txt"
+      - name: Validate official byte provenance and write limited manifest
+        env:
+          SOURCE_URL: https://www.sse.com.cn/disclosure/fund/announcement/c/new/2024-01-11/510300_20240111_QQFV.pdf
+        run: |
+          python - <<'PY'
+          import datetime
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          from urllib.parse import urlsplit
+
+          from etf_single_rotation.experiments.verify_510300_2024_pdf_source import (
+              EXPECTED_URL, validate_2024_source,
+          )
+
+          metadata = Path("etf_single_rotation/metadata")
+          source = json.loads((metadata / "510300_20240111_dividend_primary_sse_crosscheck.json").read_text(encoding="utf-8"))
+          candidates = json.loads((metadata / "510300_dividend_coverage_gap_20261024.json").read_text(encoding="utf-8"))
+          verified = validate_2024_source(source, candidates)
+          if os.environ["SOURCE_URL"] != EXPECTED_URL:
+              raise SystemExit("FAIL_CLOSED: URL differs from pinned source")
+          tmp = Path(os.environ["RUNNER_TEMP"])
+          effective = (tmp / "effective_url.txt").read_text(encoding="utf-8").strip()
+          p, e = urlsplit(effective), urlsplit(EXPECTED_URL)
+          if (p.scheme != "https" or p.hostname != "www.sse.com.cn"
+                  or p.path != e.path or p.query or p.fragment
+                  or p.username or p.password or p.port is not None):
+              raise SystemExit("FAIL_CLOSED: unexpected effective URL")
+          raw = (tmp / "issuer_notice.pdf").read_bytes()
+          if not (128 <= len(raw) <= 25_000_000 and raw.startswith(b"%PDF-")
+                  and b"%%EOF" in raw[-2048:]):
+              raise SystemExit("FAIL_CLOSED: not a plausible original PDF")
+          manifest = {
+              "schema_version": 1,
+              "project": "ETF_SINGLE_ROTATION",
+              "task_id": "ETF-DIV-004",
+              "symbol": "510300.SH",
+              "event_ex_date": verified["ex_dividend_date"],
+              "event_dividend_per_share_cny": verified["amount_cny_per_share"],
+              "source_url": EXPECTED_URL,
+              "effective_url": effective,
+              "downloaded_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "github_run_id": int(os.environ["GITHUB_RUN_ID"]),
+              "github_run_attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
+              "github_checkout_sha": os.environ["GITHUB_SHA"],
+              "original_pdf_bytes": len(raw),
+              "original_pdf_sha256": hashlib.sha256(raw).hexdigest(),
+              "pdf_header_and_eof_checked": True,
+              "offline_tests": 7,
+              "status": "REVIEW_REQUIRED",
+              "trading_status": "NOT_FOR_TRADING",
+              "independent_market_prices_verified": False,
+              "broker_cash_verified": False,
+              "drive_write_readback_verified": False,
+              "executable_event_registry_updated": False,
+              "limitations": [
+                  "PDF bytes and source URL alone do not certify dividend economics.",
+                  "Same-source factor differences are not independent price validation.",
+                  "No actual investor cash, Drive readback or strategy backtest was checked."
+              ]
+          }
+          Path("etf_div004_510300_2024_pdf_provenance.json").write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+          )
+          print("PDF_SHA256", manifest["original_pdf_sha256"])
+          print("PDF_BYTES", manifest["original_pdf_bytes"])
+          print("REVIEW_REQUIRED / NOT_FOR_TRADING")
+          PY
+      - name: Preserve read-only source provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: etf-div004-510300-2024-original-pdf-provenance
+          path: etf_div004_510300_2024_pdf_provenance.json
+          if-no-files-found: warn
+          retention-days: 30
