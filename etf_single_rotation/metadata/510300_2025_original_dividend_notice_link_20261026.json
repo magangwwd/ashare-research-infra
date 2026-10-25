@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "evidence_role": "OFFICIAL_ORIGINAL_NOTICE_LINK_TEXT_ONLY",
+  "source": {
+    "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-06-11/510300_20250611_ZAU4.pdf",
+    "issuer": "华泰柏瑞基金管理有限公司",
+    "notice_date": "2025-06-11",
+    "pdf_pages": 3,
+    "official_pdf_text_inspected": true,
+    "original_pdf_sha256": null,
+    "original_pdf_bytes_readback_verified": false
+  },
+  "announced_distribution": {
+    "dividend_per_10_shares_cny": "0.8800",
+    "record_date": "2025-06-17",
+    "ex_dividend_date": "2025-06-18",
+    "announced_payment_date": "2025-06-27"
+  },
+  "acceptance": {
+    "status": "REVIEW_REQUIRED",
+    "trading_status": "NOT_FOR_TRADING",
+    "independent_market_prices_verified": false,
+    "broker_spendable_cash_verified": false,
+    "drive_write_readback_verified": false,
+    "executable_event_registry_updated": false
+  },
+  "evidence_scope": "Official SSE-hosted original 2025-06-11 issuer notice: source PDF text inspected, no verified downloaded PDF bytes, SHA256, broker settlement, independent price reconciliation or Drive readback.",
+  "next_action": "Download original official PDF in a bounded GitHub read-only job, verify SHA256 and Artifact readback; then independent market/entitlement/cash/Drive evidence before DIV-004 acceptance. PAPER-005 remains blocked."
+}

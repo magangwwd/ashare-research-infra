@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40229104323,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "911a136f66e810e5d6b7d42dfc6f1a1e58fe34b9",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": "9a2f554b8ba5e340c79905171388f65225e9239027a36794522aa6bb4a82be67",
+    "provenance": "Official SSE-hosted original 2025-06-11 510300.SH issuer dividend notice PDF, https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-06-11/510300_20250611_ZAU4.pdf ; GitHub runner downloaded 139491 bytes and checked PDF header/EOF and exact effective HTTPS URL. Source text was reviewed separately; this CI checks bytes, not PDF economic semantics."
+  },
+  "checks": {
+    "tests_passed": 7,
+    "tests_failed": 0,
+    "output_sha256": "9eae8c834a5485019e9bce42c80c2271f40049506330dbc1d11c2be5cafffa8d"
+  },
+  "artifact_urls": [
+    "https://github.com/magangwwd/ashare-research-infra/actions/runs/40229104323/artifacts/12612642298"
+  ],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Keep PR #107 draft. Continue independent market raw_close/fund_adj and record-date entitlement/cash reconciliation plus Drive write/readback before DIV-004 acceptance; keep PAPER-005 blocked and NOT_FOR_TRADING.",
+  "created_at_utc": "2026-10-25T20:06:05.326Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Only the 2025 official notice PDF byte identity and seven offline gates were verified; no independently reconciled market prices, registered holdings, broker spendable cash, complete eight-ETF dividend registry, or Google Drive write/readback.",
+  "fingerprint": "ETF-DIV-004:40229104323:911a136f66e810e5d6b7d42dfc6f1a1e58fe34b9:9a2f554b8ba5e340c79905171388f65225e9239027a36794522aa6bb4a82be67",
+  "agent_review_id": "ETF-DIV004-510300-2025-ORIGINAL-NOTICE-20261026"
+}

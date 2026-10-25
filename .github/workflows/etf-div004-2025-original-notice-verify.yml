@@ -1,0 +1,110 @@
+name: ETF DIV-004 510300 2025 original notice byte provenance
+# One bounded read-only source verification. No secrets, schedule, backtest, or trading.
+on:
+  push:
+    branches:
+      - research/etf-div004-2025-original-notice-20261026
+    paths:
+      - .github/workflows/etf-div004-2025-original-notice-verify.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-div004-2025-original-notice-verify
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact source SHA without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Test seven offline source and safety gates
+        run: python -m unittest etf_single_rotation.experiments.test_510300_2025_original_notice -v
+      - name: Download original SSE PDF with bounded HTTPS request
+        env:
+          SOURCE_URL: https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-06-11/510300_20250611_ZAU4.pdf
+        run: |
+          curl --fail --location --silent --show-error \
+            --retry 2 --retry-all-errors --retry-delay 2 \
+            --connect-timeout 15 --max-time 65 --max-filesize 25000000 \
+            --proto '=https' --proto-redir '=https' \
+            --output "$RUNNER_TEMP/issuer_notice.pdf" \
+            --write-out '%{url_effective}' "$SOURCE_URL" > "$RUNNER_TEMP/effective_url.txt"
+      - name: Hash original bytes and record research-only limitations
+        env:
+          SOURCE_URL: https://www.sse.com.cn/disclosure/fund/announcement/c/new/2025-06-11/510300_20250611_ZAU4.pdf
+        run: |
+          python - <<'PY'
+          import datetime
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          from urllib.parse import urlparse
+
+          meta = json.loads(Path("etf_single_rotation/metadata/510300_2025_original_dividend_notice_link_20261026.json").read_text(encoding="utf-8"))
+          source_url = os.environ["SOURCE_URL"]
+          if meta["source"]["url"] != source_url:
+              raise SystemExit("FAIL_CLOSED: source URL differs from reviewed metadata")
+          tmp = Path(os.environ["RUNNER_TEMP"])
+          effective = (tmp / "effective_url.txt").read_text(encoding="utf-8").strip()
+          parsed = urlparse(effective)
+          original = urlparse(source_url)
+          if (parsed.scheme != "https" or parsed.hostname != "www.sse.com.cn"
+                  or parsed.path != original.path or parsed.query or parsed.fragment
+                  or parsed.username or parsed.password or parsed.port is not None):
+              raise SystemExit("FAIL_CLOSED: unexpected effective source URL")
+          raw = (tmp / "issuer_notice.pdf").read_bytes()
+          if not (128 <= len(raw) <= 25_000_000 and raw.startswith(b"%PDF-")):
+              raise SystemExit("FAIL_CLOSED: response is not a plausible PDF")
+          if b"%%EOF" not in raw[-2048:]:
+              raise SystemExit("FAIL_CLOSED: PDF EOF marker missing")
+          evidence = {
+              "schema_version": 1,
+              "project": "ETF_SINGLE_ROTATION",
+              "task_id": "ETF-DIV-004",
+              "symbol": "510300.SH",
+              "source_url": source_url,
+              "effective_url": effective,
+              "downloaded_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "github_run_id": int(os.environ["GITHUB_RUN_ID"]),
+              "github_run_attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
+              "github_checkout_sha": os.environ["GITHUB_SHA"],
+              "original_pdf_bytes": len(raw),
+              "original_pdf_sha256": hashlib.sha256(raw).hexdigest(),
+              "pdf_header_valid": True,
+              "pdf_eof_marker_present": True,
+              "offline_tests": 7,
+              "status": "REVIEW_REQUIRED",
+              "trading_status": "NOT_FOR_TRADING",
+              "content_semantics_independently_verified_by_this_run": False,
+              "independent_prices_verified": False,
+              "broker_cash_verified": False,
+              "drive_write_readback_verified": False,
+              "executable_event_registry_updated": False,
+              "limitations": [
+                  "A PDF byte hash does not prove dividend economics or complete event coverage.",
+                  "The source is one 2025 510300 notice, not the full eight-ETF event registry.",
+                  "No market prices, actual cash, Drive readback, strategy or trading was checked."
+              ]
+          }
+          Path("etf_div004_510300_2025_original_notice_manifest.json").write_text(
+              json.dumps(evidence, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+          )
+          print("PDF_SHA256", evidence["original_pdf_sha256"])
+          print("PDF_BYTES", evidence["original_pdf_bytes"])
+          print("REVIEW_REQUIRED / NOT_FOR_TRADING")
+          PY
+      - name: Preserve scoped provenance manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: etf-div004-510300-2025-original-notice-provenance
+          path: etf_div004_510300_2025_original_notice_manifest.json
+          if-no-files-found: warn
+          retention-days: 30
