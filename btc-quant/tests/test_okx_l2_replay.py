@@ -145,7 +145,7 @@ class ReplayTests(unittest.TestCase):
         self.assertTrue(good.read_sizes)
 
         # Tiny test cap proves rejection before a physical line is consumed.
-        oversized = GuardReader(b"x" * 33 + b"\\n", 33)
+        oversized = GuardReader(b"x" * 33 + b"\n", 33)
         with self.assertRaisesRegex(ValueError, "line bound exceeded"):
             list(mod._bounded_lines(oversized, max_line_bytes=32))
         self.assertEqual(oversized.read_sizes, [33])

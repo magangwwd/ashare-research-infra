@@ -148,7 +148,7 @@ def _bounded_lines(lines, *, max_line_bytes=MAX_LINE_BYTES):
                 raise ValueError("L2 replay event/line bound exceeded")
             # A final unterminated line exactly at the cap is allowed only
             # when EOF follows; never split a longer physical line into events.
-            if len(raw) == max_line_bytes and not raw.endswith((b"\\n", "\\n")):
+            if len(raw) == max_line_bytes and not raw.endswith((b"\n", "\n")):
                 if lines.read(1):
                     raise ValueError("L2 replay event/line bound exceeded")
             yield raw
