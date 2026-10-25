@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "research_only": true,
+  "trading_status": "NOT_FOR_TRADING",
+  "evidence_kind": "PRIMARY_SSE_HOSTED_ISSUER_NOTICE_FULL_TEXT_VERIFIED_NOT_PDF_BYTE_VERIFIED",
+  "checked_on_utc": "2026-10-23",
+  "source": {
+    "publisher": "Shanghai Stock Exchange (SSE), issuer Huatai-PineBridge Fund",
+    "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2023-01-09/510300_20230109_0ED5.pdf",
+    "notice_date": "2023-01-09",
+    "pdf_pages": 3,
+    "pdf_bytes_downloaded": false,
+    "pdf_sha256": null,
+    "extraction": "SSE-hosted public PDF, all 3 pages indexed text inspected; direct PDF byte download unsuccessful"
+  },
+  "event": {
+    "registration_date": "2023-01-13",
+    "ex_dividend_date": "2023-01-16",
+    "dividend_per_10_shares_cny": "0.6400",
+    "dividend_per_share_cny": "0.0640",
+    "announced_payment_date": "2023-01-19",
+    "issuer_to_csd_date": "2023-01-17",
+    "csd_to_broker_date": "2023-01-18",
+    "investor_cash_available_date": null,
+    "entitlement": "Registered holders after SSE market close on 2023-01-13",
+    "settlement_caveat": "Issuer states investors with designated broker trading may collect on announced payment date 2023-01-19; non-designated accounts require later process; actual strategy/broker spendable cash is unverified."
+  },
+  "crosscheck": {
+    "candidate_registry": "etf_single_rotation/metadata/510300_dividend_coverage_gap_20261024.json",
+    "candidate_amount_and_dates_match": true,
+    "same_supplier_factor_audit": "etf_single_rotation/metadata/510300_dividend_factor_artifact_drive_audit_20261024.json",
+    "factor_event_return_difference_bp": "2.71140",
+    "factor_implied_dividend_per_share_cny": "0.0641312",
+    "factor_difference_is_not_independent_price_verification": true
+  },
+  "limitations": [
+    "No actual broker/CSDC account statement or registered strategy shares were independently retrieved.",
+    "Factor comparison uses Tushare raw_close/fund_adj from the same supplier; not independent price confirmation.",
+    "SSE PDF text inspected but source PDF bytes and SHA256 were not obtained.",
+    "Issuer-announced payment is not proven account-level spendable cash.",
+    "Do not double-count fund_adj-adjusted returns and dividend cash; do not change strategy metrics or release PAPER-005."
+  ],
+  "status": "REVIEW_REQUIRED",
+  "next_action": "Verify remaining 2019/2021/2022 510300 issuer notices and 2025 original, independent raw prices, registered shares and actual broker settlement, then portfolio-level accounting and DIV004 artifact/Drive acceptance; keep PAPER-005 blocked."
+}

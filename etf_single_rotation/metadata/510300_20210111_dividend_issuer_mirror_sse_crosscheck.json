@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "research_only": true,
+  "trading_status": "NOT_FOR_TRADING",
+  "evidence_kind": "ISSUER_AUTHORED_NOTICE_REPRODUCED_BY_THIRD_PARTY_PLUS_PRIMARY_SSE_EX_DATE_CORROBORATION",
+  "checked_on_utc": "2026-10-23",
+  "sources": [
+    {
+      "url": "https://jingzhifunds.hexun.com/fundsreport/detail_2012_1209079800.shtml",
+      "type": "ISSUER_NOTICE_TEXT_REPRODUCED_ON_THIRD_PARTY_SITE",
+      "issuer": "华泰柏瑞基金管理有限公司",
+      "notice_date": "2021-01-11",
+      "pages_reproduced": 3,
+      "original_issuer_or_exchange_pdf_byte_verified": false
+    },
+    {
+      "url": "https://big5.sse.com.cn/site/cht/www.sse.com.cn/assortment/options/disclo/update/c/c_20210111_5299412.shtml",
+      "type": "PRIMARY_EXCHANGE_OPTIONS_ADJUSTMENT_NOTICE",
+      "date": "2021-01-11",
+      "scope": "Confirms issuer's 510300 dividend notice and ex-dividend date 2021-01-18; does not independently establish amount, record date or cash receipt."
+    }
+  ],
+  "event": {
+    "distribution_period_label_in_notice": "2020年第一次分红",
+    "dividend_per_10_shares_cny": "0.7200",
+    "dividend_per_share_cny": "0.0720",
+    "registration_date": "2021-01-15",
+    "ex_dividend_date": "2021-01-18",
+    "announced_payment_date": "2021-01-21",
+    "issuer_to_csd_date": "2021-01-19",
+    "csd_to_broker_date": "2021-01-20",
+    "investor_account_cash_available_date": null,
+    "entitlement": "Registered units at Shanghai Stock Exchange close on 2021-01-15; purchases/sales need actual registration verification.",
+    "cash_only": true,
+    "note": "Designated-trading holders may collect cash on announced 2021-01-21 payment date; account-level spendability unverified. Unregistered designated trading may delay receipt."
+  },
+  "crosscheck": {
+    "candidate_registry_path": "etf_single_rotation/metadata/510300_dividend_coverage_gap_20261024.json",
+    "candidate_dates_and_amount_match": true,
+    "same_supplier_factor_audit_path": "etf_single_rotation/metadata/510300_dividend_factor_artifact_drive_audit_20261024.json",
+    "factor_implied_dividend_per_share_cny": "0.0718288",
+    "adjusted_minus_raw_plus_cash_event_return_bp": "1.09227",
+    "market_source_independence": "NONE; raw_close and fund_adj both Tushare",
+    "calculation_diagnostic_only": true
+  },
+  "limitations": [
+    "Primary SSE notice confirms ex-date only; the issuer notice text is third-party hosted and its original PDF bytes/SHA256 were not verified.",
+    "Announced CSDC/broker transfer and payment dates do not prove actual account-level spendable cash.",
+    "The same-source factor comparison cannot certify economic total return or eliminate potential double counting.",
+    "No new full backtest, no new Drive audit artifact or new Drive readback; ETF-DIV-004 remains REVIEW_REQUIRED and ETF-PAPER-005 dependency blocked."
+  ],
+  "status": "REVIEW_REQUIRED",
+  "next_action": "Find original issuer/SSE-hosted notice and hash; reconcile independent raw prices, fund_adj, actual registered shares and account-level cash settlement for 510300 and remaining ETF events before acceptance."
+}

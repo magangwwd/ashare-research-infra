@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "evidence_type": "EX_DATE_OFFICIAL_EXCHANGE_SECONDARY_CONTEXT_ONLY",
+  "source": {
+    "url": "https://www.sse.com.cn/assortment/options/mnjyzxxx/c/c_20200728_5163527.shtml",
+    "publisher": "Shanghai Stock Exchange, Product Innovation Center",
+    "document_date": "2019-01-15",
+    "document_title": "关于全真模拟环境沪深300ETF（510300）期权合约调整的通知",
+    "verified_text": "根据基金公司公告，沪深300ETF（510300）将于2019年1月16日除息。",
+    "important_scope_limit": "This is an SSE announcement about options FULL SIMULATION environment, NOT the original fund issuer cash dividend notice and NOT evidence of live option trading, payout amount, shareholder entitlement, broker cash receipt, or independent ETF price."
+  },
+  "event": {
+    "ex_dividend_date": "2019-01-16",
+    "ex_date_evidence": "SSE notice confirms date by reference to fund company announcement",
+    "candidate_registration_date": "2019-01-15",
+    "candidate_payment_date": "2019-01-21",
+    "candidate_dividend_per_share_cny": "0.0590",
+    "candidate_fields_source": "https://fund.stockstar.com/funds/f10/fundfh_510300.html",
+    "candidate_fields_status": "SECONDARY_ONLY_NOT_ISSUER_VERIFIED"
+  },
+  "existing_research_reference": {
+    "path": "etf_single_rotation/metadata/510300_dividend_factor_artifact_drive_audit_20261024.json",
+    "event_date": "2019-01-16",
+    "previous_same_source_factor_implied_dividend_per_share_cny": "0.0592544",
+    "previous_same_source_adjusted_minus_raw_plus_cash_bp": "0.81303",
+    "warning": "These are previously archived Tushare same-source diagnostics, NOT a new independent price audit."
+  },
+  "verification": {
+    "official_sse_html_ex_date_crosscheck": true,
+    "issuer_original_pdf_verified": false,
+    "issuer_amount_and_record_payment_dates_verified": false,
+    "original_pdf_sha256_verified": false,
+    "independent_market_price_verified": false,
+    "broker_spendable_cash_verified": false,
+    "new_div004_artifact_or_drive_readback": false,
+    "new_full_backtest": false
+  },
+  "next_action": "Obtain original 2019-01-10 issuer/exchange-hosted dividend notice and verify amount, record date, payout date, fund shares, actual cash availability, second-source market prices, and full portfolio cash/factor reconciliation; do not unlock ETF-PAPER-005."
+}

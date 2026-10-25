@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF fixed-8 single-rotation research",
+  "task_id": "ETF-DIV-004",
+  "run_id": 39941412805,
+  "run_attempt": 1,
+  "github_event": "pull_request",
+  "head_sha": "40be64ca266513022113df7a75ba1feac3859f5e",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": null,
+    "provenance": "Synthetic accounting fixtures only; issuer events and independent real price/fund_adj NOT certified"
+  },
+  "checks": {
+    "tests_passed": 44,
+    "tests_failed": 0,
+    "output_sha256": null
+  },
+  "artifact_urls": [],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Review record-date snapshots from actual strategy fills, reconcile issuer originals, independent raw market/fund_adj prices, ex/payment dates, and Drive readback before ETF-DIV-004 acceptance; PAPER-005 remains blocked.",
+  "created_at_utc": "2026-10-23T10:47:15.329Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "No independently reconciled market-price and fund_adj event windows; no actual strategy fill snapshots, broker cash availability or Drive readback for this change.",
+  "fingerprint": "synthetic-tests:40be64ca266513022113df7a75ba1feac3859f5e:39941412805:1",
+  "agent_review_id": "ETF-DIV-004-39941412805"
+}

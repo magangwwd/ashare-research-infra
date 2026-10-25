@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40111370133,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "772418ac388395c6eb91cd9f2f00befc5911ba58",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": "3e4fd094ef9c69939956de2bb075341cb032f0d9d607ba3e8bade914e814d6d2",
+    "provenance": "Official SSE-hosted 510300.SH 2022 audited annual report, https://www.sse.com.cn/disclosure/fund/announcement/c/new/2023-03-31/510300_20230331_TLSG.pdf; retrieved by scoped GitHub job, 1414293 bytes, plausible PDF header and EOF."
+  },
+  "checks": {
+    "tests_passed": 0,
+    "tests_failed": 0,
+    "output_sha256": "65b9100ded70d05ac805ce18ff8a9c87e344f4d3e3d869dc18a80b728d246025"
+  },
+  "artifact_urls": [
+    "https://github.com/magangwwd/ashare-research-infra/actions/runs/40111370133/artifacts/12566686655"
+  ],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Continue independent issuer event coverage and raw_close/fund_adj economic reconciliation for all eight ETFs; obtain investor-level record-date/cash spendability evidence; upload and independently read back a fresh DIV004 research artifact to Drive before acceptance. Do not unlock ETF-PAPER-005.",
+  "created_at_utc": "2026-10-24T16:24:45.004Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Source byte hash and artifact readback do not independently validate dividend accounting, independent market prices, account cash settlement, or Google Drive write/readback.",
+  "fingerprint": "ETF-DIV-004:40111370133:772418ac388395c6eb91cd9f2f00befc5911ba58:3e4fd094ef9c69939956de2bb075341cb032f0d9d607ba3e8bade914e814d6d2"
+}

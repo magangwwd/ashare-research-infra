@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40151166639,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "100107708e886a981c9d711e6c115fddd182b7c2",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": null,
+    "provenance": "PR #92 research-only exact-SHA synthetic unit tests; no new market data, original source verification, or portfolio simulation."
+  },
+  "checks": {
+    "tests_passed": 82,
+    "tests_failed": 0,
+    "output_sha256": null
+  },
+  "artifact_urls": [],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Review draft PR #92 and finish independent 8-ETF issuer dividend coverage, raw_close/fund_adj, registered shares, actual cash availability and Artifact/Drive write-readback; keep PAPER-005 BLOCKED.",
+  "created_at_utc": "2026-10-25T01:34:40Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Synthetic tests do not establish primary dividend completeness, independent prices, actual cash settlement, or Drive acceptance; main Receipt Schema PR-event support remains draft PR #98.",
+  "fingerprint": "etf-div004-boolean-numeric-guard-100107708e886a981c9d711e6c115fddd182b7c2"
+}

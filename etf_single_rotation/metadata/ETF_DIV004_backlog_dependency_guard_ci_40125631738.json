@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "kind": "SCOPED_GITHUB_CI_REVIEW_EVIDENCE_NOT_SOP_RECEIPT",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "run": {
+    "id": 40125631738,
+    "attempt": 1,
+    "event": "pull_request",
+    "conclusion": "success",
+    "head_sha": "49e06b7275cbd18bbe9f37a4d977a4064d5d3829",
+    "job_id": 120966310809,
+    "url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/40125631738",
+    "updated_at_utc": "2026-10-24T19:30:59Z",
+    "tests_passed": 80,
+    "tests_failed": 0,
+    "scope": "SYNTHETIC_ACCOUNTING_AND_BACKLOG_DEPENDENCY_GUARD_ONLY"
+  },
+  "first_attempt": {
+    "run_id": 40125595962,
+    "head_sha": "0d255ddba56e80752acc7ff8b8d6777bde4a7dbe",
+    "conclusion": "failure",
+    "cause": "Synthetic success case omitted transitive ETF-BENCH-002 VERIFIED_DONE dependency; test fixture corrected without relaxing gate"
+  },
+  "checks": {
+    "pr_backlog_paper_005": "BLOCKED",
+    "div_004": "REVIEW_REQUIRED",
+    "reject_stale_ready_with_unverified_dependency": true,
+    "require_strict_VERIFIED_DONE": true,
+    "frozen_etf_count": 8,
+    "max_positions": 1,
+    "may_hold_cash": true,
+    "historical_max_drawdown_target": 0.25,
+    "github_hourly_cron": false,
+    "real_trading": false
+  },
+  "artifact": {
+    "produced": false,
+    "reason": "Scoped synthetic CI has no upload-artifact step"
+  },
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "receipt_schema": {
+    "main_version": "1.0.0",
+    "status": "BLOCKED_FOR_TRUTHFUL_PULL_REQUEST_EVENT",
+    "reason": "Main handoff_receipt.schema.json github_event enum does not accept the actual pull_request event. PR #98 proposes v1.0.1 but remains draft/unmerged; do not mislabel this run as push or manual_external.",
+    "related_pr": "https://github.com/magangwwd/ashare-research-infra/pull/98"
+  },
+  "next_action": "Keep ETF-DIV-004 REVIEW_REQUIRED and ETF-PAPER-005 BLOCKED. Review PR #92 and PR #98; independently verify all ETF corporate actions, raw market prices, actual dividend cash, and new Artifact/Drive readback before any acceptance."
+}

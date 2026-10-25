@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40154642812,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "f7f72919da64d6f2123cb5a2116ee5bd624fdd56",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": null,
+    "provenance": "PR #92 isolated research branch, synthetic accounting regression only; reject compact/malformed/missing cash dividend registration and payment dates. No live market data or account settlement verified."
+  },
+  "checks": {
+    "tests_passed": 83,
+    "tests_failed": 0,
+    "output_sha256": null
+  },
+  "artifact_urls": [],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Independently verify issuer dividend registry across fixed 8 ETFs, reconcile raw prices/fund_adj and cash settlement, complete real Artifact/Drive write-readback before DIV-004 acceptance. Keep PAPER-005 BLOCKED.",
+  "created_at_utc": "2026-10-25T02:29:46Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Synthetic-only CI does not independently certify source completeness, economic returns, actual cash availability, or Drive. PR #92 remains draft; main Receipt Schema does not accept pull_request event (separate draft PR #98).",
+  "fingerprint": "etf-div004-canonical-cash-dates-f7f72919da64d6f2123cb5a2116ee5bd624fdd56"
+}

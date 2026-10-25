@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "research_only": true,
+  "trading_status": "NOT_FOR_TRADING",
+  "checked_on_utc": "2026-10-23",
+  "finding": "The existing feature-branch corporate_action_evidence.json lists only 4 exemplar corporate actions across all ETFs and no 510300 dividend event. Independent public dividend lists show 14 historical 510300 cash events (8 ex-dates from 2019 onward). This is a registry coverage gap, NOT proof of incorrect fund_adj or of strategy P&L error.",
+  "historical_events_total": 14,
+  "events_with_ex_date_on_or_after_2019_01_02": 8,
+  "events": [
+    {
+      "registration_date": "2012-12-17",
+      "ex_dividend_date": "2012-12-18",
+      "announced_payment_date": "2012-12-24",
+      "dividend_per_share_cny": "0.0330"
+    },
+    {
+      "registration_date": "2014-01-20",
+      "ex_dividend_date": "2014-01-21",
+      "announced_payment_date": "2014-01-27",
+      "dividend_per_share_cny": "0.0480"
+    },
+    {
+      "registration_date": "2015-01-19",
+      "ex_dividend_date": "2015-01-20",
+      "announced_payment_date": "2015-01-23",
+      "dividend_per_share_cny": "0.0350"
+    },
+    {
+      "registration_date": "2016-01-19",
+      "ex_dividend_date": "2016-01-20",
+      "announced_payment_date": "2016-01-25",
+      "dividend_per_share_cny": "0.0510"
+    },
+    {
+      "registration_date": "2017-01-20",
+      "ex_dividend_date": "2017-01-23",
+      "announced_payment_date": "2017-01-26",
+      "dividend_per_share_cny": "0.0550"
+    },
+    {
+      "registration_date": "2018-01-22",
+      "ex_dividend_date": "2018-01-23",
+      "announced_payment_date": "2018-01-26",
+      "dividend_per_share_cny": "0.0460"
+    },
+    {
+      "registration_date": "2019-01-15",
+      "ex_dividend_date": "2019-01-16",
+      "announced_payment_date": "2019-01-21",
+      "dividend_per_share_cny": "0.0590"
+    },
+    {
+      "registration_date": "2019-12-10",
+      "ex_dividend_date": "2019-12-11",
+      "announced_payment_date": "2019-12-16",
+      "dividend_per_share_cny": "0.0620"
+    },
+    {
+      "registration_date": "2021-01-15",
+      "ex_dividend_date": "2021-01-18",
+      "announced_payment_date": "2021-01-21",
+      "dividend_per_share_cny": "0.0720"
+    },
+    {
+      "registration_date": "2022-01-18",
+      "ex_dividend_date": "2022-01-19",
+      "announced_payment_date": "2022-01-24",
+      "dividend_per_share_cny": "0.0750"
+    },
+    {
+      "registration_date": "2023-01-13",
+      "ex_dividend_date": "2023-01-16",
+      "announced_payment_date": "2023-01-19",
+      "dividend_per_share_cny": "0.0640"
+    },
+    {
+      "registration_date": "2024-01-17",
+      "ex_dividend_date": "2024-01-18",
+      "announced_payment_date": "2024-01-23",
+      "dividend_per_share_cny": "0.0690"
+    },
+    {
+      "registration_date": "2025-06-17",
+      "ex_dividend_date": "2025-06-18",
+      "announced_payment_date": "2025-06-27",
+      "dividend_per_share_cny": "0.0880"
+    },
+    {
+      "registration_date": "2026-01-16",
+      "ex_dividend_date": "2026-01-19",
+      "announced_payment_date": "2026-01-27",
+      "dividend_per_share_cny": "0.1230"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "url": "https://fund.stockstar.com/funds/f10/fundfh_510300.html",
+      "coverage": "14 rows, record/ex/payment/per-share"
+    },
+    {
+      "url": "https://basic.10jqka.com.cn/510300/bonus.html",
+      "coverage": "14 rows, record/ex/payment/per-10-share"
+    }
+  ],
+  "primary_source_crosschecks": [
+    {
+      "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-01-12/510300_20260112_VTCZ.pdf",
+      "scope": "2026-01-19 ex-date; issuer announcement indexed on exchange; full PDF not downloaded or byte-verified this run",
+      "status": "PRIMARY_LINK_IDENTIFIED_NOT_FULLY_VERIFIED"
+    },
+    {
+      "url": "https://data.eastmoney.com/notices/detail/510300/AN202506101688338609.html",
+      "scope": "2025-06-18 ex-date and 0.088 per share; issuer notice reproduced, not primary-hosted original",
+      "status": "ISSUER_NOTICE_MIRROR"
+    }
+  ],
+  "limitations": [
+    "Two secondary lists may share upstream data; do not count as independent primary verification of all 14 events.",
+    "Event list is candidate evidence only, NOT inserted into executable registry, price panel, performance or cash ledger.",
+    "Broker/CSDC actual spendable cash dates and account-level shares remain unverified.",
+    "No independent raw close/fund_adj/total-return reconciliation or new Drive readback was performed.",
+    "No trading, no unapproved full backtest, no dependency unlock."
+  ],
+  "next_action": "For the 8 events within 2019-2026 research window, obtain primary issuer/exchange notices and reconcile exact event dates/amounts with independent raw market closes, fund_adj, share entitlement and actual cash settlement. Then perform real Artifact/Drive readback. Keep ETF-DIV-004 REVIEW_REQUIRED and ETF-PAPER-005 dependency blocked.",
+  "status": "REVIEW_REQUIRED_NOT_FOR_TRADING"
+}

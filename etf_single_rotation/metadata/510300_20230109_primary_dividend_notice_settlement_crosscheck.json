@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "review_date_utc": "2026-10-24",
+  "evidence_kind": "PRIMARY_SSE_HOSTED_ISSUER_DIVIDEND_NOTICE_TEXT_AND_PAGE_IMAGES_CHECKED",
+  "source": {
+    "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2023-01-09/510300_20230109_0ED5.pdf",
+    "issuer": "Huatai-PineBridge Fund Management Co., Ltd.",
+    "document": "510300 dividend announcement",
+    "announcement_date": "2023-01-09",
+    "pdf_pages": 3,
+    "inspected_pdf_pages_1_based": [
+      2,
+      3
+    ],
+    "pdf_text_and_page_images_inspected": true,
+    "original_pdf_bytes_downloaded": false,
+    "original_pdf_sha256": null
+  },
+  "issuer_announced_dividend": {
+    "fund": "510300.SH",
+    "distribution_basis_date": "2022-12-31",
+    "record_date": "2023-01-13",
+    "ex_dividend_date": "2023-01-16",
+    "cash_cny_per_10_units": "0.6400",
+    "cash_cny_per_unit": "0.0640",
+    "announced_payment_date": "2023-01-19",
+    "entitlement_rule": "Units registered with CSDC Shanghai after SSE close on record date"
+  },
+  "announced_settlement_path": {
+    "issuer_to_csdc_shanghai": "2023-01-17",
+    "csdc_shanghai_to_designated_broker": "2023-01-18",
+    "investor_announced_claim_date": "2023-01-19",
+    "undesignated_account_caveat": "Cash held by CSDC without interest until designated trading and subsequent processing; designated-trading second trading day can apply",
+    "actual_broker_credit_verified": false,
+    "actual_spendable_cash_verified": false
+  },
+  "independent_crosschecks": [
+    {
+      "path": "etf_single_rotation/metadata/510300_2023_audited_annual_report_dividend_crosscheck.json",
+      "scope": "Primary audited issuer 2023 annual report confirms 2023 record/ex dates, CNY 0.0640 per share and fund aggregate; annual report did not establish the announced payment date."
+    }
+  ],
+  "scope_limitations": [
+    "This announcement establishes the issuer's planned settlement route and dates, not actual account credit or strategy cash availability.",
+    "No original PDF byte SHA256 because the primary URL was inspected as rendered text/page images only.",
+    "No second-source raw close/fund_adj price data or portfolio-level entitlement reconciliation was performed.",
+    "No new ETF one-shot run, new output artifact or Google Drive upload/readback; no strategy performance edits.",
+    "PAPER-005 dependency remains blocked and the frozen eight-ETF one-position/cash-only research mandate remains unchanged."
+  ],
+  "next_action": "Compare actual registered strategy units at 2023-01-13 close and broker cash statement on/after 2023-01-19 against issuer entitlement; obtain original PDF bytes SHA256 and independent raw price/fund_adj for all eight ETFs; verify new audit artifact and Drive readback before any acceptance."
+}

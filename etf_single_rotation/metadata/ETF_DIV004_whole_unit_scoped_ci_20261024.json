@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "kind": "SCOPED_CI_EVIDENCE_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "task_status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "code_change": "Reject fractional, boolean and >2^53-1 share snapshots/fills in synthetic record-date entitlement accounting; no strategy/price/frozen universe changes.",
+  "exact_tested_head_sha": "28228e435bfffc6915c4bf79201d13bd9f8a942e",
+  "github_event": "pull_request",
+  "run_id": 40056676910,
+  "run_attempt": 1,
+  "job_id": 120761063694,
+  "run_url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/40056676910",
+  "run_conclusion": "success",
+  "checks": {
+    "tests_passed": 64,
+    "tests_failed": 0,
+    "new_tests": [
+      "test_fractional_or_boolean_record_date_units_fail_closed",
+      "test_unsafe_large_record_date_units_fail_closed",
+      "test_boolean_opening_and_fill_units_fail_closed"
+    ]
+  },
+  "artifact_urls": [],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "data_cutoff_utc": null,
+  "output_sha256": null,
+  "sop_schema_note": "Main SOP v1.0.0 receipt schema does not accept truthful pull_request event; PR #98 is unmerged. This note is not a schema-valid SOP receipt.",
+  "limits": [
+    "Synthetic tests only; no independent market-price/issuer/account-level cash settlement proof.",
+    "No new DIV004 Artifact or Drive write/readback; do not claim strategy return acceptance.",
+    "PAPER-005 dependency blocked; no real trading."
+  ],
+  "next_action": "Obtain independent event-window raw prices and issuer cash/units evidence, then new output/Drive verification; keep REVIEW_REQUIRED and NOT_FOR_TRADING."
+}

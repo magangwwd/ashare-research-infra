@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "research_only": true,
+  "trading_status": "NOT_FOR_TRADING",
+  "evidence_kind": "ISSUER_AUTHORED_NOTICE_TEXT_AT_THIRD_PARTY_PDF_MIRROR_NOT_EXCHANGE_OR_ISSUER_HOSTED",
+  "checked_on_utc": "2026-10-23",
+  "source": {
+    "issuer": "华泰柏瑞基金管理有限公司",
+    "notice_date": "2022-01-12",
+    "url": "https://pdf.dfcfw.com/pdf/H2_AN202201121539913641_1.pdf",
+    "pdf_pages": 1,
+    "extraction": "All 52 indexed PDF text lines inspected, including distribution and CSDC/broker remittance timetable",
+    "source_host": "pdf.dfcfw.com (third-party mirror, NOT issuer or SSE original host)",
+    "pdf_bytes_downloaded": false,
+    "pdf_sha256": null,
+    "byte_download_blocker": "Container DNS resolution failed; indexed PDF text is available through web, but bytes not obtained"
+  },
+  "event": {
+    "fund_code": "510300",
+    "distribution_period_label_in_notice": "2021年第一次分红",
+    "dividend_per_10_shares_cny": "0.7500",
+    "dividend_per_share_cny": "0.0750",
+    "registration_date": "2022-01-18",
+    "ex_dividend_date": "2022-01-19",
+    "announced_payment_date": "2022-01-24",
+    "issuer_to_csd_date": "2022-01-20",
+    "csd_to_broker_date": "2022-01-21",
+    "investor_cash_available_date": null,
+    "entitlement": "Registered holder after SSE market close on 2022-01-18",
+    "cash_only": true,
+    "settlement_caveat": "Notice says designated-trading investors may collect cash on 2022-01-24; actual account-level spendability is unverified. Non-designated trading investors may receive later."
+  },
+  "crosscheck": {
+    "candidate_registry": "etf_single_rotation/metadata/510300_dividend_coverage_gap_20261024.json",
+    "candidate_amount_and_dates_match": true,
+    "same_supplier_factor_audit": "etf_single_rotation/metadata/510300_dividend_factor_artifact_drive_audit_20261024.json",
+    "factor_event_return_difference_bp": "-0.73368",
+    "factor_implied_dividend_per_share_cny": "0.0750472",
+    "factor_difference_is_not_independent_price_verification": true
+  },
+  "limitations": [
+    "2022 issuer dividend notice is third-party mirrored; original SSE-hosted 2022 annual-report text and dividend table image were inspected directly, but original PDF bytes/SHA256 remain unverified.",
+    "Same-supplier Tushare raw_close and fund_adj cannot independently establish market accuracy or total return.",
+    "No registered portfolio share balances or CSDC/broker account statement were obtained.",
+    "Announced payment and CSDC-to-broker dates do not certify actual investor cash spendability.",
+    "No new historical backtest, no new DIV-004 Artifact/Drive write or readback; no performance edits or dependency unlock.",
+    "2022 issuer annual report fund-level aggregate arithmetic cannot substitute for record-date strategy fills, actual registered account holdings, or broker cash settlement; original SSE PDF bytes and SHA remain unverified."
+  ],
+  "status": "REVIEW_REQUIRED",
+  "next_action": "Obtain and hash original issuer/exchange PDF bytes; independently verify raw market prices and fund_adj, account-level record-date registered shares and actual broker cash availability; perform DIV004 Artifact/Drive readback; remain REVIEW_REQUIRED and keep PAPER-005 blocked.",
+  "issuer_2022_annual_report_crosscheck": {
+    "checked_on_utc": "2026-10-24",
+    "primary_exchange_pdf_url_identified": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2023-03-31/510300_20230331_TLSG.pdf",
+    "issuer_authored_mirror_pdf_url": "https://pdf.dfcfw.com/pdf/H2_AN202303311584735997_1.pdf",
+    "annual_report_section": "2022 annual report §4.8, printed page 16 (PDF page index 15); fund shares §7.4.7.10, printed page 36 (PDF index 35)",
+    "observed_issuer_report_text": "2022-01-19 distribution; CNY 0.75 per 10 units; total fund-level distribution CNY 863,564,082.15",
+    "issuer_report_dividend_per_share_cny": "0.075",
+    "fund_aggregate_dividend_cny": "863564082.15",
+    "fund_record_date_entitled_units_implied": "11514187762",
+    "fund_units_at_2021_12_31": "11340487690",
+    "record_date_vs_previous_year_end_unit_difference": "173700072",
+    "naive_use_of_2021_12_31_units_understates_fund_aggregate_cny": "13027505.40",
+    "math_check": "863564082.15 / 0.075 = 11514187762; (11514187762 - 11340487690) * 0.075 = 13027505.40",
+    "sse_independent_ex_date_notice_url": "https://big5.sse.com.cn/site/cht/www.sse.com.cn/assortment/options/disclo/update/c/c_20220112_5681396.shtml",
+    "sse_independent_ex_date_confirmed": "2022-01-19",
+    "primary_sse_annual_report_bytes_downloaded": false,
+    "primary_sse_annual_report_sha256": null,
+    "mirror_text_inspected": true,
+    "verification_scope": "SSE-hosted original 2022 annual-report PDF directly text-inspected, with §7.4.11 page image visually verified: 2022-01-18 registration, 2022-01-19 ex-date, 0.7500 CNY/10 shares, 863564082.15 CNY aggregate. Original PDF bytes and SHA256 NOT obtained; original 2022 issuer distribution notice remains third-party mirrored; fund-level amounts are not account-level entitlement or cash receipt.",
+    "status": "PRIMARY_SSE_PDF_TEXT_AND_PAGE_IMAGE_VERIFIED_BYTES_UNHASHED",
+    "primary_sse_annual_report_text_inspected": true,
+    "primary_sse_annual_report_page_verified": {
+      "pdf_page_index": 160,
+      "printed_page": 161,
+      "section": "7.4.11 利润分配情况",
+      "registration_date": "2022-01-18",
+      "ex_dividend_date": "2022-01-19",
+      "per_10_units_cny": "0.7500",
+      "fund_aggregate_dividend_cny": "863564082.15",
+      "verification": "SSE-hosted PDF text extraction AND page image visually checked on 2026-10-24; no source bytes downloaded or hashed"
+    },
+    "primary_sse_annual_report_other_sections_verified": [
+      {
+        "pdf_page_index": 15,
+        "printed_page": 16,
+        "section": "4.8",
+        "finding": "2022-01-19; 0.75 CNY per 10 units; fund aggregate 863564082.15 CNY"
+      },
+      {
+        "pdf_page_index": 35,
+        "printed_page": 36,
+        "section": "7.4.7.10",
+        "finding": "2021-12-31 fund units 11340487690; not record-date investor units"
+      }
+    ]
+  }
+}

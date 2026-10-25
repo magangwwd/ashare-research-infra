@@ -65,32 +65,75 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "Review draft PR #92; add record-date dividend entitlement tests and issuer-verified dividend registry in isolated PR; run scoped CI and independent price/Drive readback before VERIFIED_DONE. PAPER-005 remains dependency blocked.",
+      "next_action": "Continue ETF-DIV-004: official 2023 510300 annual report bytes SHA256 verified by Run 40120559991; now independently reconcile 8-ETF raw_close/fund_adj, issuer event completeness, actual registered shares and cash, and fresh Artifact/Drive write-readback. PR #92 remains draft; PAPER-005 locked.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
-        "review_head_sha": "dff9aca9ddab6d2a51dab4cf819abfa6405a079a",
-        "tested": "SIX_SYNTHETIC_TESTS_LOCALLY_PREVIOUSLY; NO_GITHUB_CI_RUN",
+        "review_head_sha": "699d3c3d8ae9d7abfeee8a7200aab9c123adb6cc",
+        "tested": "EXACT_SHA_SCOPED_GITHUB_CI_40056676910_64_OF_64_SYNTHETIC",
         "artifact_drive_readback": "NOT_PERFORMED_FOR_THIS_CHANGE",
         "blockers": [
-          "Independent issuer dividend coverage incomplete",
-          "Independent market price and fund_adj reconciliation incomplete",
-          "Record-date cash receivable/payment ledger unverified",
-          "Cloud CI and Drive audit for new code not run"
+          "Original issuer/SSE-hosted dividend PDF bytes and SHA256 not verified for 2019 events",
+          "Independent second-source raw market prices/fund_adj economic return and issuer completeness not accepted",
+          "Actual registered ETF units, cash receivable and broker spendability not verified",
+          "No new DIV004 Artifact and Google Drive write/readback",
+          "Main SOP v1.0.0 rejects truthful pull_request receipts; draft PR #98 pending"
         ],
-        "last_checked_utc": "2026-10-21T22:26:42Z"
+        "last_checked_utc": "2026-10-24",
+        "github_ci_run_id": 40015272119,
+        "github_ci_job_id": 120625628326,
+        "github_ci_event": "pull_request",
+        "github_ci_conclusion": "success",
+        "tests_verified": 60,
+        "test_scope": "SYNTHETIC_ACCOUNTING_ONLY",
+        "new_issuer_evidence": "etf_single_rotation/metadata/510300_20220112_dividend_issuer_mirror_crosscheck.json",
+        "latest_new_evidence_path": "etf_single_rotation/metadata/510300_20220112_dividend_issuer_mirror_crosscheck.json",
+        "latest_new_evidence_commit": "70580947033f9cb6645160a02b2805be1c1709f1",
+        "latest_new_evidence_readback_blob_sha": "6fa4bb4ff304bffaeea0ed4453557f5ef30521de",
+        "last_verified_scoped_ci_run": 40089792842,
+        "last_verified_scoped_ci_head": "582f3a9cde7f6b4b75894888d0eac38943223a51",
+        "last_verified_scoped_ci_tests": "68/68 SYNTHETIC, EXACT CHECKOUT SHA; NO ARTIFACT/DRIVE",
+        "latest_new_evidence_ci": "EXACT_SHA_SCOPED_CI_40066630564_JOB_120791154910_66_OF_66_SYNTHETIC_ONLY_NO_ARTIFACT",
+        "latest_2022_issuer_annual_report_sse_exdate_crosscheck": "etf_single_rotation/metadata/510300_20220112_dividend_issuer_mirror_crosscheck.json",
+        "latest_2022_issuer_annual_report_evidence_commit": "ea2a8a9f322841ed984b25cff6dc0a341a2b6c30",
+        "latest_2022_original_pdf_bytes_sha": "NOT_VERIFIED",
+        "latest_2022_fund_level_entitlement_units": "11514187762",
+        "latest_2022_scope": "SSE_HOSTED_ORIGINAL_ANNUAL_REPORT_TEXT_AND_PAGE_IMAGE_VERIFIED_NO_PDF_BYTES_SHA_NO_ACCOUNT_CASH",
+        "latest_2022_primary_page_verified": "2022 annual report §7.4.11 printed page 161, PDF page index 160",
+        "latest_2022_primary_report_evidence_commit": "70580947033f9cb6645160a02b2805be1c1709f1",
+        "last_verified_scoped_ci_job": 120859962433,
+        "latest_primary_issuer_evidence_path": "etf_single_rotation/metadata/510300_2023_audited_annual_report_dividend_crosscheck.json",
+        "latest_primary_issuer_evidence_commit": "e6ffa8b0831139505e33bd89b7c41ce812786ad3",
+        "latest_overflow_guard_receipt": "etf_single_rotation/metadata/receipts/ETF_DIV004_exact_share_overflow_scoped_ci_40089792842.json",
+        "latest_overflow_guard_scope": "Reject combined fills or post-split holdings above 2**53-1 before record-date snapshots; synthetic only",
+        "latest_512100_primary_ratio_review": {
+          "evidence_path": "etf_single_rotation/metadata/512100_20220902_registered_share_rounding_evidence.json",
+          "commit_sha": "233eb01ac23c87535f0c230d85b0512068d296fa",
+          "original_pdf_sha256": "NOT_VERIFIED",
+          "issuer_published_ratio": "0.36555",
+          "naive_aggregate_gap_units": "15165.4",
+          "interpretation": "Per-holder ceiling and published-ratio rounding; not an independent price or account settlement check"
+        },
+        "latest_2023_original_pdf_sha256": "cbe1900cb617a67a804dc463e6658f662917b04361266bef51b7bd139a6433be",
+        "latest_2023_original_pdf_bytes": 871278,
+        "latest_2023_pdf_hash_run": 40120559991,
+        "latest_2023_pdf_hash_artifact": 12570996758,
+        "latest_2023_pdf_hash_receipt": "etf_single_rotation/metadata/receipts/ETF_DIV004_510300_2023_annual_pdf_hash_40120559991.json",
+        "latest_2023_pdf_hash_scope": "Official SSE PDF bytes and downloaded manifest read back; no price/total-return, broker cash or Drive verification"
       }
     },
     {
       "id": "ETF-PAPER-005",
       "priority": 4,
       "title": "Freeze untouched forward paper-account model",
-      "status": "READY",
+      "status": "BLOCKED",
       "depends_on": [
         "ETF-DATA-003",
         "ETF-DIV-004"
       ],
-      "acceptance": "Frozen immutable code/rule SHA before new trading date; append-only daily simulation receipts and source freshness"
+      "acceptance": "Frozen immutable code/rule SHA before new trading date; append-only daily simulation receipts and source freshness",
+      "blocker": "Dependency ETF-DIV-004 is REVIEW_REQUIRED, not VERIFIED_DONE. No forward paper model may be frozen or started.",
+      "next_action": "Wait for independently accepted DIV-004 issuer event completeness, raw_close/fund_adj and cash/Drive evidence. No paper or trading run until explicit VERIFIED_DONE acceptance."
     },
     {
       "id": "ETF-ACCEPT-006",
@@ -106,5 +149,5 @@
   "latest_verified_run": 39599580852,
   "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 13 sequential stages; 38 tests OK; 48 Drive uploads; all 5 declared ETF halts source-matched",
   "last_known_research_status": "NOT_FOR_TRADING",
-  "updated_utc": "2026-10-21T22:26:42Z"
+  "updated_utc": "2026-10-24T18:27:00Z"
 }
