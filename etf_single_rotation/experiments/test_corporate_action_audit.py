@@ -1,7 +1,9 @@
 """Synthetic-only accounting diagnostics; never treat fixtures as ETF market quotes."""
 import unittest
+import json
+from pathlib import Path
 
-from etf_single_rotation.experiments.audit_corporate_actions import analyze, validate_events
+from etf_single_rotation.experiments.audit_corporate_actions import (analyze, validate_events, candidate_dividend_coverage)
 
 
 def action(kind="UNIT_SPLIT"):
@@ -118,6 +120,56 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
         rows = quotes(2, 1, 1, 2, "2021-05-13", "2021-05-17")
         with self.assertRaisesRegex(ValueError, "Duplicate real price"):
             analyze({"schema_version": 1, "events": [action()]}, rows + rows[:1])
+
+
+    def test_candidate_coverage_detects_eight_missing_510300_dividends(self):
+        # Public secondary candidate list is NOT issuer completeness proof.
+        root = Path(__file__).resolve().parents[1] / "metadata"
+        registry = json.loads((root / "corporate_action_evidence.json").read_text(encoding="utf-8"))
+        candidates = json.loads((root / "510300_dividend_coverage_gap_20261024.json").read_text(encoding="utf-8"))
+        report = candidate_dividend_coverage(registry, candidates)
+        self.assertEqual(report["candidate_events_in_window"], 8)
+        self.assertEqual(len(report["missing_from_executable_registry"]), 8)
+        self.assertEqual(report["conflicting_registry_events"], [])
+        self.assertEqual(report["status"], "REVIEW_REQUIRED_NOT_FOR_TRADING")
+        self.assertIn("SECONDARY_CANDIDATES", report["source_grade"])
+
+    def test_candidate_coverage_detects_registry_cash_conflicts(self):
+        actual = action("CASH_DIVIDEND")
+        candidate = {
+            "schema_version": 1,
+            "symbol": "512690.SH",
+            "events": [{
+                "registration_date": "2021-12-30",
+                "ex_dividend_date": "2021-12-31",
+                "announced_payment_date": "2022-01-06",
+                "dividend_per_share_cny": "0.36",
+            }],
+        }
+        report = candidate_dividend_coverage(
+            {"schema_version": 1, "events": [actual]}, candidate
+        )
+        self.assertEqual(report["missing_from_executable_registry"], [])
+        self.assertEqual(report["conflicting_registry_events"], ["2021-12-31"])
+        candidate["events"][0]["dividend_per_share_cny"] = "0.35"
+        self.assertEqual(candidate_dividend_coverage(
+            {"schema_version": 1, "events": [actual]}, candidate
+        )["conflicting_registry_events"], [])
+
+    def test_duplicate_or_noncanonical_candidates_fail_closed(self):
+        row = {
+            "registration_date": "2021-12-30",
+            "ex_dividend_date": "2021-12-31",
+            "announced_payment_date": "2022-01-06",
+            "dividend_per_share_cny": "0.35",
+        }
+        candidates = {"schema_version": 1, "symbol": "512690.SH", "events": [row, dict(row)]}
+        with self.assertRaisesRegex(ValueError, "Duplicate dividend candidate"):
+            candidate_dividend_coverage({"schema_version": 1, "events": [action("CASH_DIVIDEND")]}, candidates)
+        candidates["events"] = [{**row, "ex_dividend_date": "20211231"}]
+        with self.assertRaisesRegex(ValueError, "Noncanonical candidate date"):
+            candidate_dividend_coverage({"schema_version": 1, "events": [action("CASH_DIVIDEND")]}, candidates)
+
 
 
 if __name__ == "__main__":
