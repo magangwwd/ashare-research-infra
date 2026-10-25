@@ -24,6 +24,10 @@ TYPES = {"UNIT_SPLIT", "UNIT_CONSOLIDATION", "CASH_DIVIDEND"}
 
 
 def _positive(value, label):
+    # bool is an int subclass: True would otherwise fabricate a 1-CNY dividend
+    # or a genuine-looking price/factor observation in a research diagnostic.
+    if isinstance(value, bool):
+        raise ValueError(f"Invalid {label}")
     try:
         number = float(value)
     except (TypeError, ValueError) as exc:

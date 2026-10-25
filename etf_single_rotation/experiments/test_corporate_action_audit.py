@@ -68,6 +68,21 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "contradicts"):
             validate_events({"schema_version": 1, "events": [item]})
 
+
+    def test_boolean_dividend_or_price_fails_closed(self):
+        # float(True) == 1.0; never silently convert boolean input into
+        # a cash dividend, a market quote, or an adjustment factor.
+        dividend = action("CASH_DIVIDEND")
+        dividend["dividend_per_current_share_cny"] = True
+        with self.assertRaisesRegex(ValueError, "Invalid dividend"):
+            validate_events({"schema_version": 1, "events": [dividend]})
+        for field in ("raw_close", "adj_factor"):
+            rows = quotes(2, 1, 1, 2, "2021-05-13", "2021-05-17")
+            rows[0][field] = True
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, "Invalid"):
+                    analyze({"schema_version": 1, "events": [action()]}, rows)
+
     def test_missing_or_duplicate_price_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "No genuine quotes"):
             analyze({"schema_version": 1, "events": [action()]}, [])
