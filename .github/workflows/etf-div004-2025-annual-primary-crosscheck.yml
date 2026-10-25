@@ -1,0 +1,115 @@
+name: ETF DIV-004 510300 2025 issuer annual report provenance
+# One bounded read-only source audit. No market backtest, secrets, trading or cron.
+on:
+  push:
+    branches:
+      - research/etf-div004-2025-annual-crosscheck-20261026
+    paths:
+      - .github/workflows/etf-div004-2025-annual-primary-crosscheck.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-div004-510300-2025-annual-primary
+  cancel-in-progress: false
+
+jobs:
+  issuer-annual-report-crosscheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact SHA without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fail-closed metadata and synthetic negative tests
+        run: |
+          git rev-parse HEAD
+          python -m unittest -v etf_single_rotation.experiments.test_510300_2025_annual_crosscheck
+      - name: Fetch official SSE 2025 annual report PDF with bounds
+        env:
+          SOURCE_URL: https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-31/510300_20260331_W6CZ.pdf
+        run: |
+          curl --fail --location --silent --show-error \
+            --retry 1 --retry-delay 2 \
+            --connect-timeout 15 --max-time 90 --max-filesize 25000000 \
+            --proto '=https' --proto-redir '=https' \
+            --output "$RUNNER_TEMP/annual.pdf" \
+            --write-out '%{url_effective}' "$SOURCE_URL" > "$RUNNER_TEMP/effective_url.txt"
+      - name: Hash original PDF bytes and record limitations
+        env:
+          SOURCE_URL: https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-31/510300_20260331_W6CZ.pdf
+        run: |
+          python - <<'PY'
+          import datetime
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          from urllib.parse import urlparse
+          from etf_single_rotation.experiments.verify_510300_2025_annual import validate_annual_crosscheck
+
+          root = Path("etf_single_rotation/metadata")
+          source = json.loads((root / "510300_2025_annual_report_primary_crosscheck_20261026.json").read_text(encoding="utf-8"))
+          candidates = json.loads((root / "510300_dividend_coverage_gap_20261024.json").read_text(encoding="utf-8"))
+          checked = validate_annual_crosscheck(source, candidates)
+          if source["issuer_annual_report"]["url"] != os.environ["SOURCE_URL"]:
+              raise SystemExit("FAIL_CLOSED: source URL mismatch")
+          tmp = Path(os.environ["RUNNER_TEMP"])
+          effective = (tmp / "effective_url.txt").read_text(encoding="utf-8").strip()
+          url = urlparse(effective)
+          if url.scheme != "https" or url.hostname != "www.sse.com.cn":
+              raise SystemExit("FAIL_CLOSED: redirected outside SSE")
+          raw = (tmp / "annual.pdf").read_bytes()
+          if not (128 <= len(raw) <= 25_000_000 and raw.startswith(b"%PDF-")):
+              raise SystemExit("FAIL_CLOSED: invalid annual PDF")
+          if b"%%EOF" not in raw[-2048:]:
+              raise SystemExit("FAIL_CLOSED: missing PDF EOF")
+          manifest = {
+              "schema_version": 1,
+              "project": "ETF_SINGLE_ROTATION",
+              "task_id": "ETF-DIV-004",
+              "status": "REVIEW_REQUIRED",
+              "trading_status": "NOT_FOR_TRADING",
+              "evidence_role": "PRIMARY_ANNUAL_REPORT_CORROBORATION_ONLY",
+              "source_url": os.environ["SOURCE_URL"],
+              "effective_url": effective,
+              "retrieved_at_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "run_id": int(os.environ["GITHUB_RUN_ID"]),
+              "run_attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
+              "head_sha": os.environ["GITHUB_SHA"],
+              "pdf_bytes": len(raw),
+              "pdf_sha256": hashlib.sha256(raw).hexdigest(),
+              "issuer_event_crosscheck": checked,
+              "pdf_text_machine_verified_in_this_run": False,
+              "annual_report_text_reviewed_separately": True,
+              "original_2025_dividend_notice_pdf_verified": False,
+              "independent_prices_verified": False,
+              "broker_cash_verified": False,
+              "drive_readback_performed": False,
+              "limitations": [
+                  "Annual report confirms record date and dividend amount only; no original dividend notice PDF.",
+                  "SSE option announcement independently corroborates ex-date, not payment settlement.",
+                  "Source bytes hashed, but this job does not machine-parse annual PDF text.",
+                  "No independent market quotes, registered shares, broker cash, Drive or strategy acceptance.",
+                  "No universe, strategy, executable registry, historical backtest, schedule or trading changes."
+              ]
+          }
+          Path("etf_div004_510300_2025_annual_primary_manifest.json").write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print("ANNUAL_2025_PRIMARY_PDF_SHA256", manifest["pdf_sha256"])
+          print("ANNUAL_2025_PRIMARY_PDF_BYTES", manifest["pdf_bytes"])
+          print("REVIEW_REQUIRED / NOT_FOR_TRADING")
+          PY
+      - name: Archive hash manifest only, not issuer PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: etf-div004-510300-2025-annual-primary
+          path: etf_div004_510300_2025_annual_primary_manifest.json
+          if-no-files-found: error
+          retention-days: 30
