@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40221665364,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "3dee94bbd29138c1ec29fd4530acb08da5db92f6",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": "9790cc85c6ee6611d52e653f4154632eff35d588185d1269cadc77082f5fb4c4",
+    "provenance": "SSE-hosted issuer 510300.SH 2025 annual report (published 2026-03-31), section 4.8 page 15, URL https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-31/510300_20260331_W6CZ.pdf; original PDF 2653317 bytes hashed in bounded GitHub CI. Annual text independently inspected, not machine parsed by this job. Official SSE options notice separately corroborates 2025-06-18 ex-date."
+  },
+  "checks": {
+    "tests_passed": 4,
+    "tests_failed": 0,
+    "output_sha256": "c809e5dc18d7a909fbf31efaa29e6b5766b6da002632b9074d63e0ab35517b60"
+  },
+  "artifact_urls": [
+    "https://github.com/magangwwd/ashare-research-infra/actions/runs/40221665364/artifacts/12609568939"
+  ],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Review draft PR #106; obtain original 2025 dividend notice PDF hash and independent market raw/fund_adj prices, registered holdings, actual broker spendable cash and Google Drive write/readback. Keep ETF-DIV-004 REVIEW_REQUIRED, ETF-PAPER-005 BLOCKED, NOT_FOR_TRADING.",
+  "created_at_utc": "2026-10-25T18:32:27.807Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Primary 2025 issuer annual report amount/record corroborated and original annual PDF bytes hashed; original dividend notice, independent market quotes, actual broker cash and new Drive readback still unverified. Prior first-run 40221604228 failed only case-sensitive test regex and was corrected; do not erase that failure.",
+  "fingerprint": "ETF-DIV-004:40221665364:3dee94bbd29138c1ec29fd4530acb08da5db92f6:9790cc85c6ee6611d52e653f4154632eff35d588185d1269cadc77082f5fb4c4",
+  "agent_review_id": "ETF-DIV004-2025-ANNUAL-PRIMARY-20261026"
+}

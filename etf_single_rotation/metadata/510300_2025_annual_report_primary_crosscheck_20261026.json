@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "evidence_role": "PRIMARY_ANNUAL_REPORT_CORROBORATION_ONLY",
+  "issuer_annual_report": {
+    "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2026-03-31/510300_20260331_W6CZ.pdf",
+    "report_year": 2025,
+    "published_date": "2026-03-31",
+    "section": "4.8",
+    "pdf_page_1_based": 15,
+    "notice_date": "2025-06-11",
+    "record_date": "2025-06-17",
+    "dividend_per_10_shares_cny": "0.8800",
+    "distribution_count_for_2025": 1,
+    "scope": "Issuer annual report confirms 2025 distribution declaration, record date and amount; not original dividend notice or brokerage settlement."
+  },
+  "sse_option_ex_date": {
+    "url": "https://big5.sse.com.cn/site/cht/www.sse.com.cn/assortment/options/disclo/update/c/c_20250611_10781544.shtml",
+    "published_date": "2025-06-11",
+    "ex_dividend_date": "2025-06-18",
+    "scope": "Exchange option contract adjustment notice corroborates ex-dividend date only."
+  },
+  "candidate_reference": "etf_single_rotation/metadata/510300_dividend_coverage_gap_20261024.json",
+  "original_dividend_notice_reproduction": "https://data.eastmoney.com/notices/detail/510300/AN202506101688338609.html",
+  "source_pdf_bytes_sha256": null,
+  "pdf_text_machine_verified": false,
+  "independent_market_prices_verified": false,
+  "broker_spendable_cash_verified": false,
+  "drive_readback_performed": false,
+  "limitations": [
+    "Annual report is a primary issuer disclosure hosted by SSE, but not the original 2025 dividend notice; original notice PDF SHA256 remains unverified.",
+    "Issuer annual report confirms record date and CNY 0.88 per ten shares, not ex-date/payment date; exchange option notice separately corroborates ex-date.",
+    "Payment date 2025-06-27 comes from reproduced issuer notice/candidate list, not independently verified by annual report or broker account.",
+    "No fund_adj/raw market independent reconciliation, account-level settlement, Drive write/readback, executable registry update, or trading approval."
+  ],
+  "next_action": "Obtain original 2025 issuer dividend notice PDF and hash, independent raw/fund_adj market quotes, registered holdings, actual broker spendable cash and Drive readback before DIV-004 acceptance. PAPER-005 remains blocked."
+}
