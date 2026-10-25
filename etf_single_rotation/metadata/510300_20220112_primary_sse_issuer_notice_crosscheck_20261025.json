@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "symbol": "510300.SH",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "evidence_kind": "PRIMARY_SSE_HOSTED_ISSUER_DIVIDEND_NOTICE_TEXT_AND_PAGE_IMAGES_INSPECTED",
+  "reviewed_on_utc": "2026-10-25",
+  "primary_source": {
+    "url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2022-01-12/510300_20220112_1_pWPNE0aG.pdf",
+    "publisher": "Shanghai Stock Exchange (original issuer notice hosted by SSE)",
+    "issuer": "华泰柏瑞基金管理有限公司",
+    "notice_date": "2022-01-12",
+    "pdf_pages": 3,
+    "inspected_pages_1_based": [
+      2,
+      3
+    ],
+    "verified_by": "Rendered SSE PDF text and page images; independent of third-party issuer-notice mirror",
+    "pdf_bytes_downloaded": false,
+    "pdf_sha256": null,
+    "byte_verification_limit": "The browser returned rendered text and page images, not raw PDF bytes. Container DNS resolution to sse.com.cn failed; SHA256 is NOT verified."
+  },
+  "issuer_notice_event": {
+    "record_date": "2022-01-18",
+    "ex_dividend_date": "2022-01-19",
+    "dividend_per_10_shares_cny": "0.7500",
+    "dividend_per_share_cny": "0.0750",
+    "announced_payment_date": "2022-01-24",
+    "issuer_to_csdc_date": "2022-01-20",
+    "csdc_to_broker_date": "2022-01-21",
+    "actual_investor_spendable_cash_date": null,
+    "entitled_holders": "CSDC Shanghai-registered ETF unit holders after SSE close on record date; exact research portfolio entitlement unverified"
+  },
+  "secondary_candidate_crosscheck": {
+    "path": "etf_single_rotation/metadata/510300_dividend_coverage_gap_20261024.json",
+    "matches_record_ex_payment_and_amount": true,
+    "comparison_scope": "The candidate list matches this issuer notice; this does not certify completeness of all ETF distributions."
+  },
+  "limits": [
+    "This upgrades 2022-01-19 event notice evidence from third-party mirror to primary SSE-hosted issuer document inspected visually.",
+    "Original PDF raw bytes/SHA256 remain unverified; do not claim immutable byte evidence.",
+    "The issuer announced payment date is not independently verified broker/account cash availability.",
+    "No independent raw_close/fund_adj prices, exact portfolio record-date registered shares, real-market return reconciliation, new Artifact or Drive readback.",
+    "Do not insert this event into the executable registry or modify performance, ETF universe, trading rules, workflow scheduling, or dependent PAPER-005 state."
+  ],
+  "next_action": "Obtain original PDF bytes/hash and independent broker/price evidence; reconcile 2022 event and other 7 research-window 510300 candidates before DIV-004 acceptance. PAPER-005 remains blocked."
+}
