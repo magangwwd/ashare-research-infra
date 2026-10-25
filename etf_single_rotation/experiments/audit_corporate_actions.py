@@ -143,6 +143,10 @@ def analyze(registry, prices):
         economic_return = (ratio * p1 + dividend) / p0 - 1.0
         adjusted_return = (p1 * a1) / (p0 * a0) - 1.0
         difference_bp = 10000.0 * (adjusted_return - economic_return)
+        # An ex-date without a genuine same-day quote cannot be treated as
+        # an ordinary dividend-price comparison, even if the next quote is
+        # only one session later and the factor arithmetic happens to match.
+        ex_date_quote_missing = kind == "CASH_DIVIDEND" and d1 != when
         diagnostics.append({
             "symbol": symbol, "event_date": str(when), "type": kind,
             "quote_before": str(d0), "quote_after": str(d1),
@@ -155,7 +159,11 @@ def analyze(registry, prices):
             "economic_event_window_return": economic_return,
             "fund_adj_event_window_return": adjusted_return,
             "fund_adj_minus_event_return_bp": difference_bp,
-            "needs_manual_review": abs(difference_bp) > 10 or (d1 - d0).days > 14,
+            "ex_date_quote_missing": ex_date_quote_missing,
+            "needs_manual_review": (
+                abs(difference_bp) > 10 or (d1 - d0).days > 14
+                or ex_date_quote_missing
+            ),
             "source_url": event["source_url"],
             "status": "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION",
         })
