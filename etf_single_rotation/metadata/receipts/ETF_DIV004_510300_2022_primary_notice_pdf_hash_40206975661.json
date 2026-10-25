@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "run_id": 40206975661,
+  "run_attempt": 1,
+  "github_event": "push",
+  "head_sha": "df06e391ea397039dce9b32d3e57fde832a049e1",
+  "status": "REVIEW_REQUIRED",
+  "source": {
+    "data_cutoff_utc": null,
+    "input_sha256": "1f5411e65cb9043bec5ae100df3925e6bb0aa122ea18186c7ba9a7e0747a9b50",
+    "provenance": "Official SSE 2022-01-12 issuer notice, original PDF raw bytes; https://www.sse.com.cn/disclosure/fund/announcement/c/new/2022-01-12/510300_20220112_1_pWPNE0aG.pdf"
+  },
+  "checks": {
+    "tests_passed": 0,
+    "tests_failed": 0,
+    "output_sha256": "e767da41232e4e690921fe2b3e3aeb00c781feebb12e5a8c1fbe590ddf158845"
+  },
+  "artifact_urls": [
+    "https://github.com/magangwwd/ashare-research-infra/actions/runs/40206975661/artifacts/12604455054"
+  ],
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "next_action": "Review source-byte evidence; independently reconcile 510300 2022 dividend dates and fund_adj/raw quotes, actual cash settlement, remaining ETF events, then perform Drive upload/readback before acceptance. Keep PAPER-005 blocked.",
+  "created_at_utc": "2026-10-25T15:27:01.425718Z",
+  "risk_approval": "RESEARCH_ONLY",
+  "blocker": "Only PDF byte provenance verified. No independent market price/fund_adj, broker cash settlement, issuer coverage completeness or Drive readback. No strategy acceptance.",
+  "fingerprint": "ETF-DIV-004:40206975661:df06e391ea397039dce9b32d3e57fde832a049e1:1f5411e65cb9043bec5ae100df3925e6bb0aa122ea18186c7ba9a7e0747a9b50"
+}
