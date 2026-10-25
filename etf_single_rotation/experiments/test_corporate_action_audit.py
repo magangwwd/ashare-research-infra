@@ -156,6 +156,31 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
             {"schema_version": 1, "events": [actual]}, candidate
         )["conflicting_registry_events"], [])
 
+    def test_candidate_coverage_flags_registry_events_missing_from_candidates(self):
+        # A stale secondary list must not silently certify a registered event.
+        first = action("CASH_DIVIDEND")
+        second = {**first, "event_date": "2022-12-30",
+                  "registration_date": "2022-12-29",
+                  "cash_payment_date": "2023-01-05"}
+        candidate = {"schema_version": 1, "symbol": "512690.SH", "events": [{
+            "registration_date": "2021-12-30",
+            "ex_dividend_date": "2021-12-31",
+            "announced_payment_date": "2022-01-06",
+            "dividend_per_share_cny": "0.35",
+        }]}
+        result = candidate_dividend_coverage(
+            {"schema_version": 1, "events": [first, second]}, candidate
+        )
+        self.assertEqual(result["missing_from_executable_registry"], [])
+        self.assertEqual(result["registry_events_absent_from_candidate_list"], ["2022-12-30"])
+        self.assertTrue(result["coverage_discrepancy"])
+        later = candidate_dividend_coverage(
+            {"schema_version": 1, "events": [first, second]},
+            candidate, start_date="2023-01-01"
+        )
+        self.assertEqual(later["registry_events_absent_from_candidate_list"], [])
+        self.assertFalse(later["coverage_discrepancy"])
+
     def test_duplicate_or_noncanonical_candidates_fail_closed(self):
         row = {
             "registration_date": "2021-12-30",

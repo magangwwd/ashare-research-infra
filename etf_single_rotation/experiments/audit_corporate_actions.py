@@ -186,6 +186,7 @@ def candidate_dividend_coverage(registry, candidates, *, start_date="2019-01-02"
         for event in events if event["type"] == "CASH_DIVIDEND"
     }
     seen, missing, mismatched, checked = set(), [], [], 0
+    candidate_dates_in_window = set()
     for row in raw:
         if not isinstance(row, dict):
             raise ValueError("Invalid dividend candidate row")
@@ -216,6 +217,7 @@ def candidate_dividend_coverage(registry, candidates, *, start_date="2019-01-02"
         if ex_date < start_date:
             continue
         checked += 1
+        candidate_dates_in_window.add(ex_date)
         registered = known.get((symbol, ex_date))
         if registered is None:
             missing.append(ex_date)
@@ -223,12 +225,23 @@ def candidate_dividend_coverage(registry, candidates, *, start_date="2019-01-02"
               or registered["cash_payment_date"] != row["announced_payment_date"]
               or Decimal(str(registered["dividend_per_current_share_cny"])) != amount):
             mismatched.append(ex_date)
+    # Flag stale secondary lists too: registry-only events are not proof of
+    # issuer completeness and must not be silently excluded from coverage.
+    unlisted_registry = sorted(
+        event["event_date"] for event in events
+        if event["type"] == "CASH_DIVIDEND"
+        and event["symbol"] == symbol
+        and event["event_date"] >= start_date
+        and event["event_date"] not in candidate_dates_in_window
+    )
     return {
         "scope_symbol": symbol,
         "research_window_start": start_date,
         "candidate_events_in_window": checked,
         "missing_from_executable_registry": missing,
         "conflicting_registry_events": mismatched,
+        "registry_events_absent_from_candidate_list": unlisted_registry,
+        "coverage_discrepancy": bool(missing or mismatched or unlisted_registry),
         "source_grade": "SECONDARY_CANDIDATES_NOT_PRIMARY_ISSUER_VERIFICATION",
         "status": "REVIEW_REQUIRED_NOT_FOR_TRADING",
         "warning": "Coverage of this one symbol is not completeness for all eight ETFs; no prices, broker cash, or strategy results were certified.",
