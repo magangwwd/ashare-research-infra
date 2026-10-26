@@ -127,6 +127,9 @@ def analyze(registry, prices):
         rows.sort(key=lambda x: x[0])
 
     diagnostics = []
+    # Distinct event dates may still share one observed quote interval when
+    # quotes are missing. Never attribute the same price move to two actions.
+    used_quote_windows = set()
     for event in events:
         symbol = event["symbol"]
         when = date.fromisoformat(event["event_date"])
@@ -138,6 +141,12 @@ def analyze(registry, prices):
             raise ValueError(f"No genuine quotes bracketing {symbol} {when}")
         d0, p0, a0 = before
         d1, p1, a1 = after
+        quote_window = (symbol, d0, d1)
+        if quote_window in used_quote_windows:
+            raise ValueError(
+                f"Multiple corporate actions share one real quote window: {symbol} {d0}..{d1}; combined-event review required"
+            )
+        used_quote_windows.add(quote_window)
         ratio = (
             float(event["new_units_per_old_unit"])
             if kind != "CASH_DIVIDEND" else 1.0
