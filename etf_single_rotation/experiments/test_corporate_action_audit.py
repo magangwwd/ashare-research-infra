@@ -41,6 +41,7 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
         self.assertAlmostEqual(result["economic_event_window_return"], 0)
         self.assertAlmostEqual(result["fund_adj_event_window_return"], 0)
         self.assertFalse(result["needs_manual_review"])
+        self.assertEqual(result["status"], "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION")
 
     def test_dividend_entitlement_not_double_counted(self):
         result = analyze(
@@ -161,6 +162,18 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
         )[0]
         self.assertTrue(result["needs_manual_review"])
         self.assertAlmostEqual(result["fund_adj_minus_event_return_bp"], -5000)
+        self.assertEqual(result["status"], "FACTOR_OR_QUOTE_SPAN_REVIEW_REQUIRED")
+
+    def test_long_quote_span_status_requires_review_even_when_factors_match(self):
+        # Synthetic-only: a stale bracketing quote cannot be marked ordinary
+        # merely because the adjustment-factor arithmetic agrees.
+        result = analyze(
+            {"schema_version": 1, "events": [action("UNIT_SPLIT")]},
+            quotes(2, 1, 1, 2, "2021-04-29", "2021-05-17"),
+        )[0]
+        self.assertAlmostEqual(result["fund_adj_minus_event_return_bp"], 0)
+        self.assertTrue(result["needs_manual_review"])
+        self.assertEqual(result["status"], "FACTOR_OR_QUOTE_SPAN_REVIEW_REQUIRED")
 
     def test_duplicate_event_fails_closed(self):
         item = action()
