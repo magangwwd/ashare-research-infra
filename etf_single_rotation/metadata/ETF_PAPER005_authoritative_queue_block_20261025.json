@@ -44,7 +44,26 @@
     "matching_files": 0,
     "differences": 0
   },
-  "formal_receipt_status": "NOT_ISSUED: main Receipt Schema v1.0.0 excludes actual pull_request event; PR #98 still draft. This JSON is a scoped non-formal safety evidence note, not a VERIFIED_DONE Receipt.",
-  "next_action": "Scoped CI verified 4/4 at 0e1d1889; independent review/merge PR #103 into feature branch. Keep PAPER-005 BLOCKED until DIV-004 and DATA-003 receive independently accepted VERIFIED_DONE evidence. Do not infer Drive acceptance or permit trading.",
-  "ci_evidence_url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/40134629064"
+  "formal_receipt_status": "NOT_ISSUED: Main Receipt Schema v1.0.0 excludes truthful pull_request event (PR #98 remains draft); this file is a non-formal scoped review note. No verified Drive readback or DIV-004 acceptance.",
+  "next_action": "Review PR #103 queue-only safety fix and its actual merge-tested SHA, then controlled integration after checking overlapping PR #92. Only after merge may authoritative queue be read back as BLOCKED; never unlock PAPER-005 before independent VERIFIED_DONE for both dependencies.",
+  "ci_evidence_url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/40134629064",
+  "latest_scoped_ci": {
+    "github_run_id": 40138604173,
+    "github_job_id": 121005345941,
+    "run_attempt": 1,
+    "event": "pull_request",
+    "run_metadata_head_sha": "d41bab8c68bdfca2dafe82bbb8c993b4218c021c",
+    "actual_runner_checkout_sha": "d1f9036d613eed3dfc64b7eab00b4755e81e450a",
+    "checkout_type": "synthetic_pull_request_merge_commit_not_direct_head_checkout",
+    "run_conclusion": "success",
+    "job_conclusion": "success",
+    "offline_contract_tests_passed": 6,
+    "offline_contract_tests_failed": 0,
+    "job_log_readback_verified": true,
+    "github_artifacts_for_run": 0,
+    "drive_write_readback_performed": false,
+    "formal_sop_receipt_issued": false,
+    "limitations": "Six tests verify only the merged-tree offline dependency contract. They do not accept DIV-004, change the authoritative feature queue, verify prices or Drive, or authorize paper/live trading.",
+    "evidence_url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/40138604173"
+  }
 }
