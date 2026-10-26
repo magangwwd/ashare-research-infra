@@ -111,6 +111,13 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
             with self.subTest(first=ordered[0]["type"]):
                 with self.assertRaisesRegex(ValueError, "Multiple corporate-action types"):
                     validate_events({"schema_version": 1, "events": ordered})
+                # The public analysis entrypoint must fail before producing
+                # either partial split or dividend return diagnostics.
+                with self.assertRaisesRegex(ValueError, "Multiple corporate-action types"):
+                    analyze(
+                        {"schema_version": 1, "events": ordered},
+                        quotes(2, 1, 1, 2, "2021-05-13", "2021-05-17"),
+                    )
 
         # Separate event dates remain admissible; this does not erase events.
         self.assertEqual(len(validate_events({
