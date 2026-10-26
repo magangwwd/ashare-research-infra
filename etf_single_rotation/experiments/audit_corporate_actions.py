@@ -165,7 +165,8 @@ def analyze(registry, prices):
                 or ex_date_quote_missing
             ),
             "source_url": event["source_url"],
-            "status": "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION",
+            "status": ("MISSING_EX_DATE_QUOTE_REVIEW_REQUIRED" if ex_date_quote_missing
+                       else "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION"),
         })
     return diagnostics
 
