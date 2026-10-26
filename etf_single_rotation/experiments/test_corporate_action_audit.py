@@ -243,20 +243,22 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
             )
 
     def test_factor_gap_flags_review(self):
+        # Use an actual action-date quote to isolate factor mismatch status.
         result = analyze(
             {"schema_version": 1, "events": [action()]},
-            quotes(2, 1, 1, 1, "2021-05-13", "2021-05-17"),
+            quotes(2, 1, 1, 1, "2021-05-13", "2021-05-14"),
         )[0]
         self.assertTrue(result["needs_manual_review"])
         self.assertAlmostEqual(result["fund_adj_minus_event_return_bp"], -5000)
         self.assertEqual(result["status"], "FACTOR_OR_QUOTE_SPAN_REVIEW_REQUIRED")
 
     def test_long_quote_span_status_requires_review_even_when_factors_match(self):
+        # Preserve the action-date quote: 29 Apr to 14 May is a 15-day span.
         # Synthetic-only: a stale bracketing quote cannot be marked ordinary
         # merely because the adjustment-factor arithmetic agrees.
         result = analyze(
             {"schema_version": 1, "events": [action("UNIT_SPLIT")]},
-            quotes(2, 1, 1, 2, "2021-04-29", "2021-05-17"),
+            quotes(2, 1, 1, 2, "2021-04-29", "2021-05-14"),
         )[0]
         self.assertAlmostEqual(result["fund_adj_minus_event_return_bp"], 0)
         self.assertTrue(result["needs_manual_review"])
