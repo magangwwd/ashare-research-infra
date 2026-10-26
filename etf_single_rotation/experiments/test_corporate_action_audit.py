@@ -98,6 +98,22 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
         )[0]
         self.assertFalse(row["ex_date_quote_missing"])
 
+    def test_same_day_split_and_dividend_fail_closed(self):
+        # Synthetic case only: a split and a cash dividend on the same ETF
+        # ex-date cannot be evaluated as independent one-event price jumps.
+        split = action("UNIT_SPLIT")
+        dividend = action("CASH_DIVIDEND")
+        dividend["event_date"] = split["event_date"]
+        dividend["registration_date"] = "2021-05-13"
+        dividend["cash_payment_date"] = "2021-05-20"
+        with self.assertRaisesRegex(ValueError, "Multiple corporate-action types"):
+            validate_events({"schema_version": 1, "events": [split, dividend]})
+
+        # Separate event dates remain admissible; this does not erase events.
+        self.assertEqual(len(validate_events({
+            "schema_version": 1, "events": [split, action("CASH_DIVIDEND")]
+        })), 2)
+
     def test_factor_gap_flags_review(self):
         result = analyze(
             {"schema_version": 1, "events": [action()]},
