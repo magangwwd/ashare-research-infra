@@ -36,7 +36,7 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
     def test_split_changes_units_not_cash(self):
         result = analyze(
             {"schema_version": 1, "events": [action()]},
-            quotes(2, 1, 1, 2, "2021-05-13", "2021-05-17"),
+            quotes(2, 1, 1, 2, "2021-05-13", "2021-05-14"),
         )[0]
         self.assertAlmostEqual(result["economic_event_window_return"], 0)
         self.assertAlmostEqual(result["fund_adj_event_window_return"], 0)
@@ -98,6 +98,37 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
             quotes(2, 1, 1, 2, "2021-05-13", "2021-05-17"),
         )[0]
         self.assertFalse(row["ex_date_quote_missing"])
+        self.assertTrue(row["action_date_quote_missing"])
+        self.assertTrue(row["needs_manual_review"])
+        self.assertEqual(row["status"], "MISSING_ACTION_DATE_QUOTE_REVIEW_REQUIRED")
+
+    def test_missing_action_date_quote_for_split_and_consolidation(self):
+        # Synthetic-only: both unit changes must require review if no
+        # actual action-date price exists, even when factor math agrees.
+        for kind, after, factor in (("UNIT_SPLIT", 1, 2),
+                                    ("UNIT_CONSOLIDATION", 4, 0.5)):
+            with self.subTest(kind=kind):
+                registry = {"schema_version": 1, "events": [action(kind)]}
+                missing = analyze(
+                    registry,
+                    quotes(2, after, 1, factor, "2021-05-13", "2021-05-17"),
+                )[0]
+                self.assertAlmostEqual(missing["fund_adj_minus_event_return_bp"], 0)
+                self.assertFalse(missing["ex_date_quote_missing"])
+                self.assertTrue(missing["action_date_quote_missing"])
+                self.assertTrue(missing["needs_manual_review"])
+                self.assertEqual(
+                    missing["status"], "MISSING_ACTION_DATE_QUOTE_REVIEW_REQUIRED"
+                )
+                exact = analyze(
+                    registry,
+                    quotes(2, after, 1, factor, "2021-05-13", "2021-05-14"),
+                )[0]
+                self.assertFalse(exact["action_date_quote_missing"])
+                self.assertFalse(exact["needs_manual_review"])
+                self.assertEqual(
+                    exact["status"], "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION"
+                )
 
     def test_same_day_split_and_dividend_fail_closed(self):
         # Synthetic case only: a split and a cash dividend on the same ETF
