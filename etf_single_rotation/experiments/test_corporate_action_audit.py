@@ -51,6 +51,53 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
         self.assertAlmostEqual(result["fund_adj_event_window_return"], 0)
         self.assertEqual(result["cash_payment_date"], "2022-01-06")
 
+    def test_cash_dividend_missing_exact_ex_date_quote_flags_review(self):
+        # Synthetic only: next available quote is 2022-01-03, not the
+        # dividend ex-date 2021-12-31. Matching arithmetic is insufficient.
+        registry = {"schema_version": 1, "events": [action("CASH_DIVIDEND")]}
+        missing = analyze(
+            registry,
+            quotes(2, 1.65, 1, 2 / 1.65, "2021-12-30", "2022-01-03"),
+        )[0]
+        self.assertEqual(missing["quote_after"], "2022-01-03")
+        self.assertTrue(missing["ex_date_quote_missing"])
+        self.assertTrue(missing["needs_manual_review"])
+        self.assertEqual(missing["status"], "MISSING_EX_DATE_QUOTE_REVIEW_REQUIRED")
+        self.assertAlmostEqual(missing["fund_adj_minus_event_return_bp"], 0)
+
+        exact = analyze(
+            registry,
+            quotes(2, 1.65, 1, 2 / 1.65, "2021-12-30", "2021-12-31"),
+        )[0]
+        self.assertFalse(exact["ex_date_quote_missing"])
+        self.assertFalse(exact["needs_manual_review"])
+        self.assertEqual(exact["status"], "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION")
+
+    def test_cash_dividend_requires_genuine_quotes_on_both_sides(self):
+        # Missing the pre-event or all post-event real observations must fail
+        # closed, not emit a fabricated dividend/factor comparison.
+        registry = {"schema_version": 1, "events": [action("CASH_DIVIDEND")]}
+        before_only = quotes(
+            2, 1.9, 1, 1, "2021-12-29", "2021-12-30"
+        )
+        after_only = quotes(
+            1.65, 1.7, 1, 1, "2021-12-31", "2022-01-03"
+        )
+        for label, rows in (("no_post_event_quote", before_only),
+                            ("no_pre_event_quote", after_only)):
+            with self.subTest(case=label):
+                with self.assertRaisesRegex(ValueError, "No genuine quotes"):
+                    analyze(registry, rows)
+
+    def test_non_dividend_suspension_quote_gap_does_not_claim_cash_issue(self):
+        # Share-consolidation event dates can coincide with a halt; this
+        # new indicator is specifically for CASH_DIVIDEND diagnostics.
+        row = analyze(
+            {"schema_version": 1, "events": [action("UNIT_SPLIT")]},
+            quotes(2, 1, 1, 2, "2021-05-13", "2021-05-17"),
+        )[0]
+        self.assertFalse(row["ex_date_quote_missing"])
+
     def test_factor_gap_flags_review(self):
         result = analyze(
             {"schema_version": 1, "events": [action()]},
