@@ -40,7 +40,7 @@ def _positive(value, label):
 def validate_events(registry):
     if registry.get("schema_version") != 1 or not registry.get("events"):
         raise ValueError("Missing corporate-action evidence")
-    keys = set()
+    keys, same_day_events = set(), set()
     for event in registry["events"]:
         symbol, event_date, kind = (
             event.get("symbol"), event.get("event_date"), event.get("type")
@@ -56,6 +56,12 @@ def validate_events(registry):
         if key in keys:
             raise ValueError("Duplicate corporate-action event")
         keys.add(key)
+        # Separate split and cash-dividend diagnostics would double-count or
+        # misattribute a shared price jump. Require a combined-event model.
+        same_day_key = (symbol, event_date)
+        if same_day_key in same_day_events:
+            raise ValueError("Multiple corporate-action types on same ETF/date require combined-event review")
+        same_day_events.add(same_day_key)
         url = urlparse(str(event.get("source_url", "")))
         if url.scheme != "https" or not url.netloc:
             raise ValueError("Corporate action lacks HTTPS source")

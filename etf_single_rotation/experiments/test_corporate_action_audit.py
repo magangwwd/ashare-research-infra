@@ -98,6 +98,62 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
         )[0]
         self.assertFalse(row["ex_date_quote_missing"])
 
+    def test_same_day_split_and_dividend_fail_closed(self):
+        # Synthetic case only: a split and a cash dividend on the same ETF
+        # ex-date cannot be evaluated as independent one-event price jumps.
+        split = action("UNIT_SPLIT")
+        dividend = action("CASH_DIVIDEND")
+        dividend["event_date"] = split["event_date"]
+        dividend["registration_date"] = "2021-05-13"
+        dividend["cash_payment_date"] = "2021-05-20"
+        # The guard must work regardless of input ordering.
+        for ordered in ([split, dividend], [dividend, split]):
+            with self.subTest(first=ordered[0]["type"]):
+                with self.assertRaisesRegex(ValueError, "Multiple corporate-action types"):
+                    validate_events({"schema_version": 1, "events": ordered})
+                # The public analysis entrypoint must fail before producing
+                # either partial split or dividend return diagnostics.
+                with self.assertRaisesRegex(ValueError, "Multiple corporate-action types"):
+                    analyze(
+                        {"schema_version": 1, "events": ordered},
+                        quotes(2, 1, 1, 2, "2021-05-13", "2021-05-17"),
+                    )
+
+        # Separate event dates remain admissible; this does not erase events.
+        self.assertEqual(len(validate_events({
+            "schema_version": 1, "events": [split, action("CASH_DIVIDEND")]
+        })), 2)
+
+        # A different ETF with the same event date must NOT be blocked:
+        # the collision key is (symbol, event_date), never date alone.
+        other_etf_split = {**split, "symbol": "510300.SH"}
+        self.assertEqual(len(validate_events({
+            "schema_version": 1, "events": [split, other_etf_split]
+        })), 2)
+
+    def test_all_same_day_action_pairs_fail_closed(self):
+        # Synthetic-only regression: all mixed action pairs for one ETF/date
+        # need combined-event accounting, not two independent diagnostics.
+        dividend = action("CASH_DIVIDEND")
+        when = dividend["event_date"]
+        split = action("UNIT_SPLIT")
+        consolidation = action("UNIT_CONSOLIDATION")
+        split["event_date"] = when
+        consolidation["event_date"] = when
+        price_rows = quotes(2, 4, 1, 0.5, "2021-12-30", when)
+        for pair in ((split, dividend), (consolidation, dividend),
+                     (split, consolidation)):
+            for ordered in (pair, pair[::-1]):
+                with self.subTest(first=ordered[0]["type"],
+                                  second=ordered[1]["type"]):
+                    registry = {"schema_version": 1, "events": list(ordered)}
+                    with self.assertRaisesRegex(
+                            ValueError, "Multiple corporate-action types"):
+                        validate_events(registry)
+                    with self.assertRaisesRegex(
+                            ValueError, "Multiple corporate-action types"):
+                        analyze(registry, price_rows)
+
     def test_factor_gap_flags_review(self):
         result = analyze(
             {"schema_version": 1, "events": [action()]},
