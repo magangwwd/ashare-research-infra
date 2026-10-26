@@ -6,16 +6,16 @@
   "trading_status": "NOT_FOR_TRADING",
   "branch": "research/etf-div004-review-status-20261026",
   "base_pr": 110,
-  "source_code_commit": "820e7da5d1f53c06f8ccd747029f7563b1787fc9",
-  "test_source_commit": "c5dd20cfff2a7c8c2dd4f702959568902a476f9e",
+  "source_code_commit": "fca03d2cc79e456537573e4f04de63af817bf921",
+  "test_source_commit": "e446ef2ceb087798efa04c07071b39b00d08b6b7",
   "source_blobs": {
-    "etf_single_rotation/experiments/audit_corporate_actions.py": "0dd4802ef535774f2d3b0ef852989b1dba3a84e2",
-    "etf_single_rotation/experiments/test_corporate_action_audit.py": "a4b453c322926fc5efcd1ff51674a99b5657708a"
+    "etf_single_rotation/experiments/audit_corporate_actions.py": "0be4baf63b2f1ad3bb75580c17f1171b76e5486b",
+    "etf_single_rotation/experiments/test_corporate_action_audit.py": "f06c3957e2b47471abbf4d4c441b0daa1c0368f9"
   },
-  "scope": "When a fund_adj factor discrepancy exceeds 10bp or the real quote window exceeds 14 calendar days, diagnostic status now explicitly requires review; missing cash ex-date quote remains the higher-priority dedicated status. Synthetic tests cover factor mismatch, long quote span and normal control. Additional fail-closed check rejects distinct same-symbol corporate-action dates that reuse the same genuine bracketing quote interval, avoiding duplicate attribution when an intermediate quote is absent. Synthetic tests cover both event orders and a distinct-window control.",
+  "scope": "When a fund_adj factor discrepancy exceeds 10bp or the real quote window exceeds 14 calendar days, diagnostic status now explicitly requires review; missing cash ex-date quote remains the higher-priority dedicated status. Synthetic tests cover factor mismatch, long quote span and normal control. Additional fail-closed check rejects distinct same-symbol corporate-action dates that reuse the same genuine bracketing quote interval, avoiding duplicate attribution when an intermediate quote is absent. Synthetic tests cover both event orders and a distinct-window control. Follow-up: if the actual corporate-action date lacks a real quote, unit splits and consolidations now also fail closed with a dedicated review status, preserving the cash-dividend-specific flag; synthetic missing/exact-date controls were added.",
   "checks": {
     "github_source_readback_verified": true,
-    "static_source_checks_passed": 5,
+    "static_source_checks_passed": 7,
     "python_unit_tests_executed": false,
     "github_ci_executed_for_exact_sha": false,
     "tests_passed": null,
@@ -30,7 +30,9 @@
     "differences": 0
   },
   "formal_receipt_issued": false,
-  "formal_receipt_blocker": "Source readback and 5 JS string/presence checks only; no Python unit test or GitHub CI on latest SHA. SOP receipt requires a genuine Run/Job and actual test counts.",
+  "formal_receipt_blocker": "Seven static source/readback assertions passed, but Python tests and exact-SHA GitHub CI have NOT run; no genuine Run/Job/Artifact or Drive readback. Cannot issue SOP receipt.",
   "dependency_guard": "ETF-DIV-004 remains REVIEW_REQUIRED; ETF-PAPER-005 remains blocked in decision logic despite stale READY in authoritative queue. Draft PR #103 is unmerged.",
-  "next_action": "Independent review and one explicitly authorized synthetic-only CI on exact latest PR SHA; inspect logs/Artifact and then create formal SOP Receipt if all required evidence exists. Do not dispatch one-shot backtest or write Drive."
+  "next_action": "Run one explicitly authorized synthetic-only exact-SHA CI (no one-shot historical backtest); inspect real Job/logs/Artifact and record formal SOP Receipt only with evidence. Keep PAPER-005 blocked.",
+  "previous_source_code_commit": "820e7da5d1f53c06f8ccd747029f7563b1787fc9",
+  "previous_test_source_commit": "c5dd20cfff2a7c8c2dd4f702959568902a476f9e"
 }
