@@ -5,12 +5,12 @@
   "status": "REVIEW_REQUIRED",
   "trading_status": "NOT_FOR_TRADING",
   "branch": "research/etf-div004-same-day-collision-guard-20261026",
-  "source_code_sha": "1530ba0f8b229f23a406007645e4505aac86cbcd",
+  "source_code_sha": "ce2addb40718701522f2b32c4f03581b92219b5f",
   "source_files": [
     "etf_single_rotation/experiments/audit_corporate_actions.py",
     "etf_single_rotation/experiments/test_corporate_action_audit.py"
   ],
-  "change": "Fail closed when a split/consolidation and cash dividend share the same ETF event date; an independent one-event price-jump diagnostic would otherwise risk attributing the same jump twice. Added synthetic negative and separate-date control tests. Follow-up test coverage now checks both event orderings and allows same-date actions on different ETF symbols.",
+  "change": "Fail closed when a split/consolidation and cash dividend share the same ETF event date; an independent one-event price-jump diagnostic would otherwise risk attributing the same jump twice. Added synthetic negative and separate-date control tests. Follow-up test coverage now checks both event orderings and allows same-date actions on different ETF symbols. The analysis entrypoint now also has a regression assertion that rejects the combined event before emitting partial diagnostics.",
   "checks": {
     "source_readback_verified": true,
     "tests_added": true,
@@ -18,7 +18,7 @@
     "github_ci_executed_for_sha": false,
     "tests_passed": null,
     "tests_failed": null,
-    "test_source_blob_sha": "f7129d475d99a633b2f942afce2f8163f991710c"
+    "test_source_blob_sha": "e57449a560491f30f50b686fbad606dfcf332b82"
   },
   "github_run_id": null,
   "artifact_id": null,
