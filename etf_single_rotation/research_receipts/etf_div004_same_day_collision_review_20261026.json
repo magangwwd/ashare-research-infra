@@ -5,19 +5,20 @@
   "status": "REVIEW_REQUIRED",
   "trading_status": "NOT_FOR_TRADING",
   "branch": "research/etf-div004-same-day-collision-guard-20261026",
-  "source_code_sha": "2682403de3ea4022e5581d7d337dba6271ed34f6",
+  "source_code_sha": "1530ba0f8b229f23a406007645e4505aac86cbcd",
   "source_files": [
     "etf_single_rotation/experiments/audit_corporate_actions.py",
     "etf_single_rotation/experiments/test_corporate_action_audit.py"
   ],
-  "change": "Fail closed when a split/consolidation and cash dividend share the same ETF event date; an independent one-event price-jump diagnostic would otherwise risk attributing the same jump twice. Added synthetic negative and separate-date control tests.",
+  "change": "Fail closed when a split/consolidation and cash dividend share the same ETF event date; an independent one-event price-jump diagnostic would otherwise risk attributing the same jump twice. Added synthetic negative and separate-date control tests. Follow-up test coverage now checks both event orderings and allows same-date actions on different ETF symbols.",
   "checks": {
-    "source_readback_verified": false,
+    "source_readback_verified": true,
     "tests_added": true,
     "python_tests_executed": false,
     "github_ci_executed_for_sha": false,
     "tests_passed": null,
-    "tests_failed": null
+    "tests_failed": null,
+    "test_source_blob_sha": "f7129d475d99a633b2f942afce2f8163f991710c"
   },
   "github_run_id": null,
   "artifact_id": null,
@@ -27,7 +28,7 @@
     "differences": 0
   },
   "formal_receipt_issued": false,
-  "formal_receipt_blocker": "No authorized scoped CI for exact SHA; source and tests have not been executed. AUTO-RD-SOP-001 Receipt cannot truthfully certify this change.",
+  "formal_receipt_blocker": "Test source was read back, but no Python execution or GitHub CI on exact SHA; no Run/Job/Artifact/Drive readback. This is not an AUTO-RD-SOP-001 acceptance receipt.",
   "authoritative_queue_warning": "ETF-PAPER-005 remains READY on authoritative feature branch despite DIV-004 REVIEW_REQUIRED. Draft PR #103 proposes BLOCKED but is unmerged. Keep PAPER-005 dependency-blocked.",
   "next_action": "Review source diff; execute one explicitly authorized scoped synthetic-only CI on exact SHA, verify Run/Job/Artifact; issue formal Receipt only if schema evidence complete. Do not rerun historical backtests or unlock PAPER-005."
 }
