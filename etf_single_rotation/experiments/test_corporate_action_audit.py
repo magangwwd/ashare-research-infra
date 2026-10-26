@@ -106,12 +106,22 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
         dividend["event_date"] = split["event_date"]
         dividend["registration_date"] = "2021-05-13"
         dividend["cash_payment_date"] = "2021-05-20"
-        with self.assertRaisesRegex(ValueError, "Multiple corporate-action types"):
-            validate_events({"schema_version": 1, "events": [split, dividend]})
+        # The guard must work regardless of input ordering.
+        for ordered in ([split, dividend], [dividend, split]):
+            with self.subTest(first=ordered[0]["type"]):
+                with self.assertRaisesRegex(ValueError, "Multiple corporate-action types"):
+                    validate_events({"schema_version": 1, "events": ordered})
 
         # Separate event dates remain admissible; this does not erase events.
         self.assertEqual(len(validate_events({
             "schema_version": 1, "events": [split, action("CASH_DIVIDEND")]
+        })), 2)
+
+        # A different ETF with the same event date must NOT be blocked:
+        # the collision key is (symbol, event_date), never date alone.
+        other_etf_split = {**split, "symbol": "510300.SH"}
+        self.assertEqual(len(validate_events({
+            "schema_version": 1, "events": [split, other_etf_split]
         })), 2)
 
     def test_factor_gap_flags_review(self):
