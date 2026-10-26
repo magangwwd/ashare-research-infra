@@ -5,12 +5,12 @@
   "status": "REVIEW_REQUIRED",
   "trading_status": "NOT_FOR_TRADING",
   "branch": "research/etf-div004-same-day-collision-guard-20261026",
-  "source_code_sha": "ce2addb40718701522f2b32c4f03581b92219b5f",
+  "source_code_sha": "f72d02a10e527e90cd62258831cec24c5832c4c8",
   "source_files": [
     "etf_single_rotation/experiments/audit_corporate_actions.py",
     "etf_single_rotation/experiments/test_corporate_action_audit.py"
   ],
-  "change": "Fail closed when a split/consolidation and cash dividend share the same ETF event date; an independent one-event price-jump diagnostic would otherwise risk attributing the same jump twice. Added synthetic negative and separate-date control tests. Follow-up test coverage now checks both event orderings and allows same-date actions on different ETF symbols. The analysis entrypoint now also has a regression assertion that rejects the combined event before emitting partial diagnostics.",
+  "change": "Fail closed when a split/consolidation and cash dividend share the same ETF event date; an independent one-event price-jump diagnostic would otherwise risk attributing the same jump twice. Added synthetic negative and separate-date control tests. Follow-up test coverage now checks both event orderings and allows same-date actions on different ETF symbols. The analysis entrypoint now also has a regression assertion that rejects the combined event before emitting partial diagnostics. Added synthetic-only regression for all three mixed same-day event pairs (split+dividend, consolidation+dividend, split+consolidation), in both input orders, at validation and analysis entrypoints; tests have not been executed.",
   "checks": {
     "source_readback_verified": true,
     "tests_added": true,
@@ -18,7 +18,7 @@
     "github_ci_executed_for_sha": false,
     "tests_passed": null,
     "tests_failed": null,
-    "test_source_blob_sha": "e57449a560491f30f50b686fbad606dfcf332b82"
+    "test_source_blob_sha": "fdf4714a3964a643018069bb23fbc223352a29ab"
   },
   "github_run_id": null,
   "artifact_id": null,
@@ -30,5 +30,5 @@
   "formal_receipt_issued": false,
   "formal_receipt_blocker": "Test source was read back, but no Python execution or GitHub CI on exact SHA; no Run/Job/Artifact/Drive readback. This is not an AUTO-RD-SOP-001 acceptance receipt.",
   "authoritative_queue_warning": "ETF-PAPER-005 remains READY on authoritative feature branch despite DIV-004 REVIEW_REQUIRED. Draft PR #103 proposes BLOCKED but is unmerged. Keep PAPER-005 dependency-blocked.",
-  "next_action": "Review source diff; execute one explicitly authorized scoped synthetic-only CI on exact SHA, verify Run/Job/Artifact; issue formal Receipt only if schema evidence complete. Do not rerun historical backtests or unlock PAPER-005."
+  "next_action": "Run exactly one explicitly authorized scoped synthetic-only CI on the latest PR SHA after checking no ETF workflow is active; inspect Job/Artifact and then issue formal Receipt only if schema evidence is complete. No historical backtest, Drive write, or PAPER-005 unlock."
 }
