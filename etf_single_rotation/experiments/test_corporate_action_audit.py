@@ -224,6 +224,24 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
             (results[1]["quote_before"], results[1]["quote_after"]),
         )
 
+    def test_extreme_finite_quotes_must_not_silently_pass_as_nan(self):
+        # Synthetic only: finite input values can overflow the intermediate
+        # return calculations; inf - inf yields NaN and defeats >10bp checks.
+        with self.assertRaisesRegex(ValueError, "Non-finite corporate-action return"):
+            analyze(
+                {"schema_version": 1, "events": [action("UNIT_SPLIT")]},
+                quotes(1e-300, 1e308, 1, 1, "2021-05-13", "2021-05-14"),
+            )
+
+    def test_finite_returns_with_overflowing_basis_points_fail_closed(self):
+        # Synthetic only: both returns can be finite while multiplying the
+        # discrepancy by 10,000 produces infinity.
+        with self.assertRaisesRegex(ValueError, "Non-finite corporate-action difference"):
+            analyze(
+                {"schema_version": 1, "events": [action("UNIT_SPLIT")]},
+                quotes(1, 1e306, 1, 1, "2021-05-13", "2021-05-14"),
+            )
+
     def test_factor_gap_flags_review(self):
         result = analyze(
             {"schema_version": 1, "events": [action()]},
