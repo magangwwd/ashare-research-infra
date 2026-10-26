@@ -1,0 +1,33 @@
+{
+  "schema_version": "ETF_SCOPED_REVIEW_NOTE_V1_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "branch": "research/etf-div004-missing-exdate-quote-20261026",
+  "source_code_sha": "cfc0f68b17816eb6219ce10467431535e28bfd28",
+  "source_files": [
+    "etf_single_rotation/experiments/audit_corporate_actions.py",
+    "etf_single_rotation/experiments/test_corporate_action_audit.py"
+  ],
+  "change": "Missing genuine ex-date quote now produces explicit MISSING_EX_DATE_QUOTE_REVIEW_REQUIRED status; other diagnostic results retain DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION. No price, cash, strategy or position changed.",
+  "checks": {
+    "source_readback_verified": true,
+    "tests_added": true,
+    "python_tests_executed": false,
+    "github_ci_executed_for_sha": false,
+    "tests_passed": null,
+    "tests_failed": null
+  },
+  "github_run_id": null,
+  "artifact_id": null,
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "formal_receipt_issued": false,
+  "formal_receipt_blocker": "No actual GitHub Run/Job for exact tested SHA, so AUTO-RD-SOP-001 Receipt Schema cannot truthfully be satisfied.",
+  "authoritative_queue_warning": "ETF-PAPER-005 remains READY on feature/etf-single-rotation-v1 although ETF-DIV-004 is REVIEW_REQUIRED. Draft PR #103 proposes BLOCKED but is not merged. Never start PAPER-005.",
+  "next_action": "Run one authorized scoped synthetic-only CI against exact PR #109 head SHA, review test logs and artifact, then issue a formal receipt only if schema evidence is complete. Keep PAPER-005 blocked and NOT_FOR_TRADING."
+}
