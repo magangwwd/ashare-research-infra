@@ -62,6 +62,7 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
         self.assertEqual(missing["quote_after"], "2022-01-03")
         self.assertTrue(missing["ex_date_quote_missing"])
         self.assertTrue(missing["needs_manual_review"])
+        self.assertEqual(missing["status"], "MISSING_EX_DATE_QUOTE_REVIEW_REQUIRED")
         self.assertAlmostEqual(missing["fund_adj_minus_event_return_bp"], 0)
 
         exact = analyze(
@@ -70,6 +71,7 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
         )[0]
         self.assertFalse(exact["ex_date_quote_missing"])
         self.assertFalse(exact["needs_manual_review"])
+        self.assertEqual(exact["status"], "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION")
 
     def test_cash_dividend_requires_genuine_quotes_on_both_sides(self):
         # Missing the pre-event or all post-event real observations must fail
