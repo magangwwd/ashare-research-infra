@@ -1,0 +1,33 @@
+{
+  "schema_version": "ETF_SCOPED_REVIEW_NOTE_V1_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "branch": "research/etf-div004-same-day-collision-guard-20261026",
+  "source_code_sha": "2682403de3ea4022e5581d7d337dba6271ed34f6",
+  "source_files": [
+    "etf_single_rotation/experiments/audit_corporate_actions.py",
+    "etf_single_rotation/experiments/test_corporate_action_audit.py"
+  ],
+  "change": "Fail closed when a split/consolidation and cash dividend share the same ETF event date; an independent one-event price-jump diagnostic would otherwise risk attributing the same jump twice. Added synthetic negative and separate-date control tests.",
+  "checks": {
+    "source_readback_verified": false,
+    "tests_added": true,
+    "python_tests_executed": false,
+    "github_ci_executed_for_sha": false,
+    "tests_passed": null,
+    "tests_failed": null
+  },
+  "github_run_id": null,
+  "artifact_id": null,
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "formal_receipt_issued": false,
+  "formal_receipt_blocker": "No authorized scoped CI for exact SHA; source and tests have not been executed. AUTO-RD-SOP-001 Receipt cannot truthfully certify this change.",
+  "authoritative_queue_warning": "ETF-PAPER-005 remains READY on authoritative feature branch despite DIV-004 REVIEW_REQUIRED. Draft PR #103 proposes BLOCKED but is unmerged. Keep PAPER-005 dependency-blocked.",
+  "next_action": "Review source diff; execute one explicitly authorized scoped synthetic-only CI on exact SHA, verify Run/Job/Artifact; issue formal Receipt only if schema evidence complete. Do not rerun historical backtests or unlock PAPER-005."
+}
