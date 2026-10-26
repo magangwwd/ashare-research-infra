@@ -8,6 +8,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import math
 from datetime import date
 from pathlib import Path
 from urllib.parse import urlparse
@@ -127,6 +128,9 @@ def analyze(registry, prices):
         rows.sort(key=lambda x: x[0])
 
     diagnostics = []
+    # Distinct event dates may still share one observed quote interval when
+    # quotes are missing. Never attribute the same price move to two actions.
+    used_quote_windows = set()
     for event in events:
         symbol = event["symbol"]
         when = date.fromisoformat(event["event_date"])
@@ -138,6 +142,12 @@ def analyze(registry, prices):
             raise ValueError(f"No genuine quotes bracketing {symbol} {when}")
         d0, p0, a0 = before
         d1, p1, a1 = after
+        quote_window = (symbol, d0, d1)
+        if quote_window in used_quote_windows:
+            raise ValueError(
+                f"Multiple corporate actions share one real quote window: {symbol} {d0}..{d1}; combined-event review required"
+            )
+        used_quote_windows.add(quote_window)
         ratio = (
             float(event["new_units_per_old_unit"])
             if kind != "CASH_DIVIDEND" else 1.0
@@ -148,11 +158,26 @@ def analyze(registry, prices):
         )
         economic_return = (ratio * p1 + dividend) / p0 - 1.0
         adjusted_return = (p1 * a1) / (p0 * a0) - 1.0
+        # Extreme but individually finite source numbers can overflow the
+        # ratio arithmetic (inf - inf => nan). A NaN must never slip past
+        # the >10bp review threshold as an ordinary diagnostic.
+        if not (math.isfinite(economic_return) and math.isfinite(adjusted_return)):
+            raise ValueError(f"Non-finite corporate-action return: {symbol} {when}")
         difference_bp = 10000.0 * (adjusted_return - economic_return)
+        if not math.isfinite(difference_bp):
+            raise ValueError(f"Non-finite corporate-action difference: {symbol} {when}")
         # An ex-date without a genuine same-day quote cannot be treated as
         # an ordinary dividend-price comparison, even if the next quote is
         # only one session later and the factor arithmetic happens to match.
-        ex_date_quote_missing = kind == "CASH_DIVIDEND" and d1 != when
+        # A missing action-date quote also makes split/consolidation
+        # comparisons ambiguous: the next quote may contain market moves.
+        # Keep the cash-dividend-specific flag for existing consumers.
+        action_date_quote_missing = d1 != when
+        ex_date_quote_missing = kind == "CASH_DIVIDEND" and action_date_quote_missing
+        needs_manual_review = (
+            abs(difference_bp) > 10 or (d1 - d0).days > 14
+            or action_date_quote_missing
+        )
         diagnostics.append({
             "symbol": symbol, "event_date": str(when), "type": kind,
             "quote_before": str(d0), "quote_after": str(d1),
@@ -166,13 +191,15 @@ def analyze(registry, prices):
             "fund_adj_event_window_return": adjusted_return,
             "fund_adj_minus_event_return_bp": difference_bp,
             "ex_date_quote_missing": ex_date_quote_missing,
-            "needs_manual_review": (
-                abs(difference_bp) > 10 or (d1 - d0).days > 14
-                or ex_date_quote_missing
-            ),
+            "action_date_quote_missing": action_date_quote_missing,
+            "needs_manual_review": needs_manual_review,
             "source_url": event["source_url"],
-            "status": ("MISSING_EX_DATE_QUOTE_REVIEW_REQUIRED" if ex_date_quote_missing
-                       else "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION"),
+            "status": (
+                "MISSING_EX_DATE_QUOTE_REVIEW_REQUIRED" if ex_date_quote_missing
+                else "MISSING_ACTION_DATE_QUOTE_REVIEW_REQUIRED" if action_date_quote_missing
+                else "FACTOR_OR_QUOTE_SPAN_REVIEW_REQUIRED" if needs_manual_review
+                else "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION"
+            ),
         })
     return diagnostics
 

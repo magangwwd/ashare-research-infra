@@ -1,0 +1,54 @@
+{
+  "schema_version": "ETF_SCOPED_REVIEW_NOTE_V1_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "branch": "research/etf-div004-review-status-20261026",
+  "base_pr": 110,
+  "source_code_commit": "dda4c79063c3d7cd361ccfe12da876fc0b3f3ee1",
+  "test_source_commit": "d868305ac3da463a585b32c2d8c3e4830ce0ee70",
+  "source_blobs": {
+    "etf_single_rotation/experiments/audit_corporate_actions.py": "9aa7df5de7201e6f845d058fd35043853100f486",
+    "etf_single_rotation/experiments/test_corporate_action_audit.py": "671375583de6c1e6f3f710f20180f65102866930"
+  },
+  "scope": "When a fund_adj factor discrepancy exceeds 10bp or the real quote window exceeds 14 calendar days, diagnostic status now explicitly requires review; missing cash ex-date quote remains the higher-priority dedicated status. Synthetic tests cover factor mismatch, long quote span and normal control. Additional fail-closed check rejects distinct same-symbol corporate-action dates that reuse the same genuine bracketing quote interval, avoiding duplicate attribution when an intermediate quote is absent. Synthetic tests cover both event orders and a distinct-window control. Follow-up: if the actual corporate-action date lacks a real quote, unit splits and consolidations now also fail closed with a dedicated review status, preserving the cash-dividend-specific flag; synthetic missing/exact-date controls were added.",
+  "checks": {
+    "github_source_readback_verified": true,
+    "static_source_checks_passed": 7,
+    "python_unit_tests_executed": false,
+    "github_ci_executed_for_exact_sha": false,
+    "tests_passed": null,
+    "tests_failed": null
+  },
+  "run_id": null,
+  "job_id": null,
+  "artifact_id": null,
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "formal_receipt_issued": false,
+  "formal_receipt_blocker": "Source/test GitHub readback verified for overflow guard, but Python tests and exact-SHA CI have NOT run; no new Run/Job/Artifact or Drive readback. Formal SOP receipt is not issued.",
+  "dependency_guard": "ETF-DIV-004 remains REVIEW_REQUIRED; ETF-PAPER-005 remains blocked in decision logic despite stale READY in authoritative queue. Draft PR #103 is unmerged.",
+  "next_action": "Do not dispatch one-shot history backtest. Obtain explicit authorization for one synthetic-only exact-SHA CI on PR #111, inspect real Job/logs, then write a formal receipt only if evidence exists. Keep PAPER-005 blocked.",
+  "previous_source_code_commit": "fca03d2cc79e456537573e4f04de63af817bf921",
+  "previous_test_source_commit": "e446ef2ceb087798efa04c07071b39b00d08b6b7",
+  "follow_up_nonfinite_guard": {
+    "reason": "Individually finite synthetic prices can overflow intermediate returns to infinity; infinity-minus-infinity becomes NaN, and NaN > 10bp is false. This could produce an ordinary diagnostic rather than requiring review.",
+    "change": "Reject non-finite economic/adjusted returns and non-finite basis-point discrepancy with ValueError; no price repair, no market input or strategy change.",
+    "code_commit": "dda4c79063c3d7cd361ccfe12da876fc0b3f3ee1",
+    "test_commit": "d868305ac3da463a585b32c2d8c3e4830ce0ee70",
+    "source_and_test_blobs_read_back": true,
+    "synthetic_test_cases_added": 2,
+    "python_tests_executed": false,
+    "github_ci_for_exact_sha": false,
+    "run_id": null,
+    "job_id": null,
+    "artifact_id": null,
+    "drive_readback_performed": false,
+    "formal_receipt_issued": false,
+    "next_action": "Exact-SHA synthetic-only CI after explicit authorization, then inspect real Run/Job/logs before any formal receipt; retain DIV-004 REVIEW_REQUIRED and PAPER-005 blocked."
+  }
+}

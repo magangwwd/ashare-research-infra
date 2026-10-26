@@ -36,11 +36,12 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
     def test_split_changes_units_not_cash(self):
         result = analyze(
             {"schema_version": 1, "events": [action()]},
-            quotes(2, 1, 1, 2, "2021-05-13", "2021-05-17"),
+            quotes(2, 1, 1, 2, "2021-05-13", "2021-05-14"),
         )[0]
         self.assertAlmostEqual(result["economic_event_window_return"], 0)
         self.assertAlmostEqual(result["fund_adj_event_window_return"], 0)
         self.assertFalse(result["needs_manual_review"])
+        self.assertEqual(result["status"], "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION")
 
     def test_dividend_entitlement_not_double_counted(self):
         result = analyze(
@@ -97,6 +98,37 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
             quotes(2, 1, 1, 2, "2021-05-13", "2021-05-17"),
         )[0]
         self.assertFalse(row["ex_date_quote_missing"])
+        self.assertTrue(row["action_date_quote_missing"])
+        self.assertTrue(row["needs_manual_review"])
+        self.assertEqual(row["status"], "MISSING_ACTION_DATE_QUOTE_REVIEW_REQUIRED")
+
+    def test_missing_action_date_quote_for_split_and_consolidation(self):
+        # Synthetic-only: both unit changes must require review if no
+        # actual action-date price exists, even when factor math agrees.
+        for kind, after, factor in (("UNIT_SPLIT", 1, 2),
+                                    ("UNIT_CONSOLIDATION", 4, 0.5)):
+            with self.subTest(kind=kind):
+                registry = {"schema_version": 1, "events": [action(kind)]}
+                missing = analyze(
+                    registry,
+                    quotes(2, after, 1, factor, "2021-05-13", "2021-05-17"),
+                )[0]
+                self.assertAlmostEqual(missing["fund_adj_minus_event_return_bp"], 0)
+                self.assertFalse(missing["ex_date_quote_missing"])
+                self.assertTrue(missing["action_date_quote_missing"])
+                self.assertTrue(missing["needs_manual_review"])
+                self.assertEqual(
+                    missing["status"], "MISSING_ACTION_DATE_QUOTE_REVIEW_REQUIRED"
+                )
+                exact = analyze(
+                    registry,
+                    quotes(2, after, 1, factor, "2021-05-13", "2021-05-14"),
+                )[0]
+                self.assertFalse(exact["action_date_quote_missing"])
+                self.assertFalse(exact["needs_manual_review"])
+                self.assertEqual(
+                    exact["status"], "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION"
+                )
 
     def test_same_day_split_and_dividend_fail_closed(self):
         # Synthetic case only: a split and a cash dividend on the same ETF
@@ -154,13 +186,83 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
                             ValueError, "Multiple corporate-action types"):
                         analyze(registry, price_rows)
 
+    def test_distinct_action_dates_sharing_one_quote_window_fail_closed(self):
+        # Synthetic only: two different ex-dates must not each claim the same
+        # observed 13-May -> 17-May price move when 14-May quote is absent.
+        first = action("CASH_DIVIDEND")
+        first.update({
+            "event_date": "2021-05-14",
+            "registration_date": "2021-05-13",
+            "cash_payment_date": "2021-05-20",
+        })
+        second = {**first, "event_date": "2021-05-17",
+                  "registration_date": "2021-05-14"}
+        sparse = quotes(2, 1.65, 1, 2 / 1.65,
+                        "2021-05-13", "2021-05-17")
+        for ordered in ([first, second], [second, first]):
+            with self.subTest(first=ordered[0]["event_date"]):
+                registry = {"schema_version": 1, "events": ordered}
+                self.assertEqual(len(validate_events(registry)), 2)
+                with self.assertRaisesRegex(ValueError, "share one real quote window"):
+                    analyze(registry, sparse)
+
+        # A real intermediate quote gives each action a distinct bracket.
+        # This is a diagnostic-only control, NOT fabricated market data.
+        distinct = [
+            {"symbol": "512690.SH", "date": "2021-05-13",
+             "raw_close": 2, "adj_factor": 1},
+            {"symbol": "512690.SH", "date": "2021-05-14",
+             "raw_close": 1.8, "adj_factor": 1.1},
+            {"symbol": "512690.SH", "date": "2021-05-17",
+             "raw_close": 1.65, "adj_factor": 2 / 1.65},
+        ]
+        results = analyze({"schema_version": 1, "events": [first, second]},
+                          distinct)
+        self.assertEqual(len(results), 2)
+        self.assertNotEqual(
+            (results[0]["quote_before"], results[0]["quote_after"]),
+            (results[1]["quote_before"], results[1]["quote_after"]),
+        )
+
+    def test_extreme_finite_quotes_must_not_silently_pass_as_nan(self):
+        # Synthetic only: finite input values can overflow the intermediate
+        # return calculations; inf - inf yields NaN and defeats >10bp checks.
+        with self.assertRaisesRegex(ValueError, "Non-finite corporate-action return"):
+            analyze(
+                {"schema_version": 1, "events": [action("UNIT_SPLIT")]},
+                quotes(1e-300, 1e308, 1, 1, "2021-05-13", "2021-05-14"),
+            )
+
+    def test_finite_returns_with_overflowing_basis_points_fail_closed(self):
+        # Synthetic only: both returns can be finite while multiplying the
+        # discrepancy by 10,000 produces infinity.
+        with self.assertRaisesRegex(ValueError, "Non-finite corporate-action difference"):
+            analyze(
+                {"schema_version": 1, "events": [action("UNIT_SPLIT")]},
+                quotes(1, 1e306, 1, 1, "2021-05-13", "2021-05-14"),
+            )
+
     def test_factor_gap_flags_review(self):
+        # Use an actual action-date quote to isolate factor mismatch status.
         result = analyze(
             {"schema_version": 1, "events": [action()]},
-            quotes(2, 1, 1, 1, "2021-05-13", "2021-05-17"),
+            quotes(2, 1, 1, 1, "2021-05-13", "2021-05-14"),
         )[0]
         self.assertTrue(result["needs_manual_review"])
         self.assertAlmostEqual(result["fund_adj_minus_event_return_bp"], -5000)
+        self.assertEqual(result["status"], "FACTOR_OR_QUOTE_SPAN_REVIEW_REQUIRED")
+
+    def test_long_quote_span_status_requires_review_even_when_factors_match(self):
+        # Preserve the action-date quote: 29 Apr to 14 May is a 15-day span.
+        # Synthetic-only: a stale bracketing quote cannot be marked ordinary
+        # merely because the adjustment-factor arithmetic agrees.
+        result = analyze(
+            {"schema_version": 1, "events": [action("UNIT_SPLIT")]},
+            quotes(2, 1, 1, 2, "2021-04-29", "2021-05-14"),
+        )[0]
+        self.assertAlmostEqual(result["fund_adj_minus_event_return_bp"], 0)
+        self.assertTrue(result["needs_manual_review"])
+        self.assertEqual(result["status"], "FACTOR_OR_QUOTE_SPAN_REVIEW_REQUIRED")
 
     def test_duplicate_event_fails_closed(self):
         item = action()
