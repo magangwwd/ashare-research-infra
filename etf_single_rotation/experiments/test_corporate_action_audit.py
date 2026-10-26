@@ -131,6 +131,29 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
             "schema_version": 1, "events": [split, other_etf_split]
         })), 2)
 
+    def test_all_same_day_action_pairs_fail_closed(self):
+        # Synthetic-only regression: all mixed action pairs for one ETF/date
+        # need combined-event accounting, not two independent diagnostics.
+        dividend = action("CASH_DIVIDEND")
+        when = dividend["event_date"]
+        split = action("UNIT_SPLIT")
+        consolidation = action("UNIT_CONSOLIDATION")
+        split["event_date"] = when
+        consolidation["event_date"] = when
+        price_rows = quotes(2, 4, 1, 0.5, "2021-12-30", when)
+        for pair in ((split, dividend), (consolidation, dividend),
+                     (split, consolidation)):
+            for ordered in (pair, pair[::-1]):
+                with self.subTest(first=ordered[0]["type"],
+                                  second=ordered[1]["type"]):
+                    registry = {"schema_version": 1, "events": list(ordered)}
+                    with self.assertRaisesRegex(
+                            ValueError, "Multiple corporate-action types"):
+                        validate_events(registry)
+                    with self.assertRaisesRegex(
+                            ValueError, "Multiple corporate-action types"):
+                        analyze(registry, price_rows)
+
     def test_factor_gap_flags_review(self):
         result = analyze(
             {"schema_version": 1, "events": [action()]},
