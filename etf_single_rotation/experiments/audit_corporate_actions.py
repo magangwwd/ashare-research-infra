@@ -153,6 +153,10 @@ def analyze(registry, prices):
         # an ordinary dividend-price comparison, even if the next quote is
         # only one session later and the factor arithmetic happens to match.
         ex_date_quote_missing = kind == "CASH_DIVIDEND" and d1 != when
+        needs_manual_review = (
+            abs(difference_bp) > 10 or (d1 - d0).days > 14
+            or ex_date_quote_missing
+        )
         diagnostics.append({
             "symbol": symbol, "event_date": str(when), "type": kind,
             "quote_before": str(d0), "quote_after": str(d1),
@@ -166,13 +170,13 @@ def analyze(registry, prices):
             "fund_adj_event_window_return": adjusted_return,
             "fund_adj_minus_event_return_bp": difference_bp,
             "ex_date_quote_missing": ex_date_quote_missing,
-            "needs_manual_review": (
-                abs(difference_bp) > 10 or (d1 - d0).days > 14
-                or ex_date_quote_missing
-            ),
+            "needs_manual_review": needs_manual_review,
             "source_url": event["source_url"],
-            "status": ("MISSING_EX_DATE_QUOTE_REVIEW_REQUIRED" if ex_date_quote_missing
-                       else "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION"),
+            "status": (
+                "MISSING_EX_DATE_QUOTE_REVIEW_REQUIRED" if ex_date_quote_missing
+                else "FACTOR_OR_QUOTE_SPAN_REVIEW_REQUIRED" if needs_manual_review
+                else "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION"
+            ),
         })
     return diagnostics
 
