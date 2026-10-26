@@ -71,6 +71,22 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
         self.assertFalse(exact["ex_date_quote_missing"])
         self.assertFalse(exact["needs_manual_review"])
 
+    def test_cash_dividend_requires_genuine_quotes_on_both_sides(self):
+        # Missing the pre-event or all post-event real observations must fail
+        # closed, not emit a fabricated dividend/factor comparison.
+        registry = {"schema_version": 1, "events": [action("CASH_DIVIDEND")]}
+        before_only = quotes(
+            2, 1.9, 1, 1, "2021-12-29", "2021-12-30"
+        )
+        after_only = quotes(
+            1.65, 1.7, 1, 1, "2021-12-31", "2022-01-03"
+        )
+        for label, rows in (("no_post_event_quote", before_only),
+                            ("no_pre_event_quote", after_only)):
+            with self.subTest(case=label):
+                with self.assertRaisesRegex(ValueError, "No genuine quotes"):
+                    analyze(registry, rows)
+
     def test_non_dividend_suspension_quote_gap_does_not_claim_cash_issue(self):
         # Share-consolidation event dates can coincide with a halt; this
         # new indicator is specifically for CASH_DIVIDEND diagnostics.
