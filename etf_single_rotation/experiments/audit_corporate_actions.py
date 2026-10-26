@@ -161,10 +161,14 @@ def analyze(registry, prices):
         # An ex-date without a genuine same-day quote cannot be treated as
         # an ordinary dividend-price comparison, even if the next quote is
         # only one session later and the factor arithmetic happens to match.
-        ex_date_quote_missing = kind == "CASH_DIVIDEND" and d1 != when
+        # A missing action-date quote also makes split/consolidation
+        # comparisons ambiguous: the next quote may contain market moves.
+        # Keep the cash-dividend-specific flag for existing consumers.
+        action_date_quote_missing = d1 != when
+        ex_date_quote_missing = kind == "CASH_DIVIDEND" and action_date_quote_missing
         needs_manual_review = (
             abs(difference_bp) > 10 or (d1 - d0).days > 14
-            or ex_date_quote_missing
+            or action_date_quote_missing
         )
         diagnostics.append({
             "symbol": symbol, "event_date": str(when), "type": kind,
@@ -179,10 +183,12 @@ def analyze(registry, prices):
             "fund_adj_event_window_return": adjusted_return,
             "fund_adj_minus_event_return_bp": difference_bp,
             "ex_date_quote_missing": ex_date_quote_missing,
+            "action_date_quote_missing": action_date_quote_missing,
             "needs_manual_review": needs_manual_review,
             "source_url": event["source_url"],
             "status": (
                 "MISSING_EX_DATE_QUOTE_REVIEW_REQUIRED" if ex_date_quote_missing
+                else "MISSING_ACTION_DATE_QUOTE_REVIEW_REQUIRED" if action_date_quote_missing
                 else "FACTOR_OR_QUOTE_SPAN_REVIEW_REQUIRED" if needs_manual_review
                 else "DIAGNOSTIC_ONLY_NOT_TOTAL_RETURN_CERTIFICATION"
             ),
