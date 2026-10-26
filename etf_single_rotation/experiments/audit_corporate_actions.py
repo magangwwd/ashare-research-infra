@@ -8,6 +8,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import math
 from datetime import date
 from pathlib import Path
 from urllib.parse import urlparse
@@ -157,7 +158,14 @@ def analyze(registry, prices):
         )
         economic_return = (ratio * p1 + dividend) / p0 - 1.0
         adjusted_return = (p1 * a1) / (p0 * a0) - 1.0
+        # Extreme but individually finite source numbers can overflow the
+        # ratio arithmetic (inf - inf => nan). A NaN must never slip past
+        # the >10bp review threshold as an ordinary diagnostic.
+        if not (math.isfinite(economic_return) and math.isfinite(adjusted_return)):
+            raise ValueError(f"Non-finite corporate-action return: {symbol} {when}")
         difference_bp = 10000.0 * (adjusted_return - economic_return)
+        if not math.isfinite(difference_bp):
+            raise ValueError(f"Non-finite corporate-action difference: {symbol} {when}")
         # An ex-date without a genuine same-day quote cannot be treated as
         # an ordinary dividend-price comparison, even if the next quote is
         # only one session later and the factor arithmetic happens to match.
