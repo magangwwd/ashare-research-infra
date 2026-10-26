@@ -1,0 +1,36 @@
+{
+  "schema_version": "ETF_SCOPED_REVIEW_NOTE_V1_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "branch": "research/etf-div004-review-status-20261026",
+  "base_pr": 110,
+  "source_code_commit": "47e95516296332def9cfff2f862d37dfe69e45fb",
+  "test_source_commit": "ebcb54df3db421a2f9a3109f6ea1e01267257479",
+  "source_blobs": {
+    "etf_single_rotation/experiments/audit_corporate_actions.py": "86d69935b94830e7ee92e7dca36e64fda618a396",
+    "etf_single_rotation/experiments/test_corporate_action_audit.py": "188e0d59565f56d444e521ced65bfe129b0d6f52"
+  },
+  "scope": "When a fund_adj factor discrepancy exceeds 10bp or the real quote window exceeds 14 calendar days, diagnostic status now explicitly requires review; missing cash ex-date quote remains the higher-priority dedicated status. Synthetic tests cover factor mismatch, long quote span and normal control.",
+  "checks": {
+    "github_source_readback_verified": true,
+    "static_source_checks_passed": 6,
+    "python_unit_tests_executed": false,
+    "github_ci_executed_for_exact_sha": false,
+    "tests_passed": null,
+    "tests_failed": null
+  },
+  "run_id": null,
+  "job_id": null,
+  "artifact_id": null,
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "formal_receipt_issued": false,
+  "formal_receipt_blocker": "No actual Python test execution or GitHub CI run on this exact SHA; SOP Receipt Schema requires real run_id and checks. This is CODE_WRITTEN and source-readback evidence only.",
+  "dependency_guard": "ETF-DIV-004 remains REVIEW_REQUIRED; ETF-PAPER-005 remains blocked in decision logic despite stale READY in authoritative queue. Draft PR #103 is unmerged.",
+  "next_action": "Review stacked draft PR and run one explicitly authorized scoped synthetic-only test on exact head SHA, then inspect Run/Job/Artifact; do not run historical backtest, write Drive, unlock PAPER-005, or touch trading."
+}
