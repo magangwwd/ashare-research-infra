@@ -155,6 +155,44 @@ class CorporateActionDiagnosticTests(unittest.TestCase):
                             ValueError, "Multiple corporate-action types"):
                         analyze(registry, price_rows)
 
+    def test_distinct_action_dates_sharing_one_quote_window_fail_closed(self):
+        # Synthetic only: two different ex-dates must not each claim the same
+        # observed 13-May -> 17-May price move when 14-May quote is absent.
+        first = action("CASH_DIVIDEND")
+        first.update({
+            "event_date": "2021-05-14",
+            "registration_date": "2021-05-13",
+            "cash_payment_date": "2021-05-20",
+        })
+        second = {**first, "event_date": "2021-05-17",
+                  "registration_date": "2021-05-14"}
+        sparse = quotes(2, 1.65, 1, 2 / 1.65,
+                        "2021-05-13", "2021-05-17")
+        for ordered in ([first, second], [second, first]):
+            with self.subTest(first=ordered[0]["event_date"]):
+                registry = {"schema_version": 1, "events": ordered}
+                self.assertEqual(len(validate_events(registry)), 2)
+                with self.assertRaisesRegex(ValueError, "share one real quote window"):
+                    analyze(registry, sparse)
+
+        # A real intermediate quote gives each action a distinct bracket.
+        # This is a diagnostic-only control, NOT fabricated market data.
+        distinct = [
+            {"symbol": "512690.SH", "date": "2021-05-13",
+             "raw_close": 2, "adj_factor": 1},
+            {"symbol": "512690.SH", "date": "2021-05-14",
+             "raw_close": 1.8, "adj_factor": 1.1},
+            {"symbol": "512690.SH", "date": "2021-05-17",
+             "raw_close": 1.65, "adj_factor": 2 / 1.65},
+        ]
+        results = analyze({"schema_version": 1, "events": [first, second]},
+                          distinct)
+        self.assertEqual(len(results), 2)
+        self.assertNotEqual(
+            (results[0]["quote_before"], results[0]["quote_after"]),
+            (results[1]["quote_before"], results[1]["quote_after"]),
+        )
+
     def test_factor_gap_flags_review(self):
         result = analyze(
             {"schema_version": 1, "events": [action()]},
