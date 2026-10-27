@@ -81,10 +81,18 @@ def cash_entitlement_ledger(registry, record_date_shares, observation_dates):
     if not days or days != sorted(set(days)):
         raise ValueError("Observation dates must be nonempty, unique and ordered")
     details = []
+    # Availability evidence and registered-share snapshots are keyed by
+    # (symbol, registration_date). Two distinct ex-dates using that same key
+    # would silently reuse one entitlement/evidence entry and double count.
+    # Require a separate issuer-verified combined-event model instead.
+    seen_record_keys = set()
     for event in events:
         if event["type"] != "CASH_DIVIDEND":
             continue
         key = (event["symbol"], event["registration_date"])
+        if key in seen_record_keys:
+            raise ValueError(f"Duplicate cash dividend registration key: {key}")
+        seen_record_keys.add(key)
         if key not in record_date_shares:
             raise ValueError(f"Missing record-date share snapshot: {key}")
         shares = _whole_units(record_date_shares[key], "record-date shares")
