@@ -5,7 +5,11 @@ name: BTC research scheduler self-heal (independent watchdog)
 # only if no native schedule or fallback run has appeared within two hours.
 on:
   workflow_run:
-    workflows: ["BTC V3 progress watchdog"]
+    # Independent BTC completions can wake recovery even when cron is delayed.
+    workflows:
+      - "BTC V3 progress watchdog"
+      - "BTC Regime Router - daily shadow research"
+      - "BTC V3 frozen daily forward shadow paper (NO REAL ORDERS)"
     types: [completed]
     branches: [main]
   schedule:
