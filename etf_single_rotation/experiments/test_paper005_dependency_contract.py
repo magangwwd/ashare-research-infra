@@ -70,6 +70,21 @@ class Paper005DependencyContractTests(unittest.TestCase):
         with self.assertRaises(AssertionError):
             validate_paper005_dependency_gate(bad)
 
+    def test_dividend_acceptance_alone_cannot_unlock_unaccepted_data(self):
+        """Both prerequisites need VERIFIED_DONE, not only DIV-004."""
+        import copy
+        scenario = copy.deepcopy(self.backlog)
+        tasks = {task["id"]: task for task in scenario["tasks"]}
+        tasks["ETF-DIV-004"]["status"] = "VERIFIED_DONE"
+        self.assertEqual(tasks["ETF-DATA-003"]["status"], "VERIFIED_RESEARCH_COMPLETE")
+        unmet = validate_paper005_dependency_gate(scenario)
+        self.assertEqual(unmet, ["ETF-DATA-003"])
+        tasks["ETF-PAPER-005"]["status"] = "READY"
+        with self.assertRaises(AssertionError):
+            validate_paper005_dependency_gate(scenario)
+        with self.assertRaises(AssertionError):
+            validate_all_active_dependencies(scenario)
+
     def test_no_active_task_has_unverified_dependencies(self):
         validate_all_active_dependencies(self.backlog)
 
