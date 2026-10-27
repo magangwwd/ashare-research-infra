@@ -1,0 +1,39 @@
+{
+  "schema_version": "ETF_SCOPED_REVIEW_NOTE_V1_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "branch": "research/etf-div004-record-date-key-collision-20261028",
+  "base_pr": 92,
+  "base_head_sha": "e9c4cf492709ebb23f22a3b025985b9640025b1b",
+  "scope": "Fail closed when two distinct cash-dividend ex-dates share the same (symbol, registration_date) entitlement/evidence key. Keep different ETFs with the same registration date valid. This prevents accidental reuse of a single registered-share snapshot or cash-availability metadata for multiple dividends. Synthetic fixtures only. Additional synthetic positive control: same ETF, two distinct registration dates, two legitimate entitlements must remain valid.",
+  "source_commits": [
+    "ae6ae6cef4c5860867a3332f522b236bb2b4c3af",
+    "2c074512fdfdab470f811ecf51a5733be700a1b5",
+    "7922d75b44e34b427715b05bf8d659a137367038"
+  ],
+  "source_blobs": {
+    "etf_single_rotation/experiments/dividend_receivable_ledger.py": "fc138d905a9c56cc206cb6e744ac8227b7d35bde",
+    "etf_single_rotation/experiments/test_dividend_receivable_ledger.py": "c19401bfebf6129f1f0d8e71fdc32ad123d75f51"
+  },
+  "checks": {
+    "github_source_readback_verified": true,
+    "synthetic_regression_cases_added": 3,
+    "python_unit_tests_executed": false,
+    "github_ci_executed_for_exact_sha": false,
+    "tests_passed": null,
+    "tests_failed": null
+  },
+  "run_id": null,
+  "job_id": null,
+  "artifact_id": null,
+  "drive_readback": {
+    "performed": false,
+    "matching_files": 0,
+    "differences": 0
+  },
+  "formal_receipt_issued": false,
+  "blocker": "No Python/GitHub CI run or Artifact/Drive readback for this isolated change. The parent DIV-004 issuer/price/fund_adj/actual cash-settlement audit remains unaccepted; PAPER-005 blocked.",
+  "next_action": "Run the three scoped synthetic regression cases and the full offline dividend ledger unit-test module on exact PR #114 head only when specifically authorized; inspect Job/log and SHA before formal SOP receipt. No historical backtest or trading."
+}
