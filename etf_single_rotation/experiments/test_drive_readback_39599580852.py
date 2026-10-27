@@ -71,5 +71,29 @@ class HistoricalDriveReadbackEvidenceTests(unittest.TestCase):
         ))
 
 
+    def test_sop_receipt_is_review_required_and_consistent(self):
+        receipt_path = (
+            Path(__file__).resolve().parents[1]
+            / "research_receipts"
+            / "ETF-DIV-004_drive_48of48_readback_20261028.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        self.assertEqual(receipt["schema_version"], "1.0.0")
+        self.assertEqual(receipt["github_event"], "manual_external")
+        self.assertEqual(receipt["status"], "REVIEW_REQUIRED")
+        self.assertEqual(receipt["risk_approval"], "RESEARCH_ONLY")
+        self.assertEqual(receipt["run_id"], self.evidence["historical_run_id"])
+        self.assertEqual(
+            receipt["head_sha"], self.evidence["historical_research_checkout_sha"]
+        )
+        self.assertTrue(receipt["drive_readback"]["performed"])
+        self.assertEqual(
+            receipt["drive_readback"]["matching_files"],
+            self.evidence["verified_unique_archived_filenames_total"],
+        )
+        self.assertEqual(receipt["drive_readback"]["differences"], 0)
+        self.assertEqual(receipt["checks"]["tests_passed"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()
