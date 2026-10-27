@@ -51,7 +51,7 @@ class HistoricalDriveReadbackEvidenceTests(unittest.TestCase):
         self.assertEqual(len({r["drive_file_id"] for r in rows}), len(rows))
         for row in rows:
             with self.subTest(file=row["filename"]):
-                match = re.search(r"_([0-9a-f]{12})\\.(?:csv|json)$", row["filename"])
+                match = re.search(r"_([0-9a-f]{12})\.(?:csv|json)$", row["filename"])
                 self.assertIsNotNone(match)
                 self.assertRegex(row["sha256"], r"^[0-9a-f]{64}$")
                 self.assertTrue(row["sha256"].startswith(match.group(1)))
