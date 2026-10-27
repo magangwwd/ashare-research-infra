@@ -11,8 +11,19 @@ BACKLOG = Path(__file__).resolve().parents[1] / "research_backlog.json"
 ACTIVE = {"READY", "CLAIMED", "RUNNING", "VERIFYING", "VERIFIED_DONE"}
 
 
+def _unique_tasks(payload):
+    """Reject ambiguous task IDs before looking up dependency status."""
+    tasks = {}
+    for task in payload["tasks"]:
+        task_id = task["id"]
+        if task_id in tasks:
+            raise AssertionError(f"Duplicate task ID: {task_id}")
+        tasks[task_id] = task
+    return tasks
+
+
 def validate_paper005_dependency_gate(payload):
-    tasks = {task["id"]: task for task in payload["tasks"]}
+    tasks = _unique_tasks(payload)
     paper = tasks["ETF-PAPER-005"]
     dependencies = paper["depends_on"]
     if not dependencies:
@@ -29,7 +40,7 @@ def validate_paper005_dependency_gate(payload):
 
 def validate_all_active_dependencies(payload):
     """No active task may rely on an unaccepted or missing prerequisite."""
-    tasks = {task["id"]: task for task in payload["tasks"]}
+    tasks = _unique_tasks(payload)
     for task in payload["tasks"]:
         if task["status"] not in ACTIVE:
             continue
@@ -96,6 +107,23 @@ class Paper005DependencyContractTests(unittest.TestCase):
                 next(t for t in bad["tasks"] if t["id"] == "ETF-PAPER-005")["status"] = "READY"
                 next(t for t in bad["tasks"] if t["id"] == "ETF-PAPER-005")["depends_on"] = [dependency]
                 with self.assertRaises(AssertionError):
+                    validate_all_active_dependencies(bad)
+
+    def test_duplicate_ids_cannot_fake_dependency_acceptance(self):
+        """A later VERIFIED_DONE duplicate must not shadow REVIEW_REQUIRED."""
+        import copy
+        for duplicate_id in ("ETF-DIV-004", "ETF-PAPER-005"):
+            with self.subTest(duplicate_id=duplicate_id):
+                bad = copy.deepcopy(self.backlog)
+                forged = copy.deepcopy(next(
+                    t for t in bad["tasks"] if t["id"] == duplicate_id
+                ))
+                forged["status"] = "VERIFIED_DONE"
+                bad["tasks"].append(forged)
+                next(t for t in bad["tasks"] if t["id"] == "ETF-PAPER-005")["status"] = "READY"
+                with self.assertRaisesRegex(AssertionError, "Duplicate task ID"):
+                    validate_paper005_dependency_gate(bad)
+                with self.assertRaisesRegex(AssertionError, "Duplicate task ID"):
                     validate_all_active_dependencies(bad)
 
     def test_mandate_remains_frozen_and_nontrading(self):
