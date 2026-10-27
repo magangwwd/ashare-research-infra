@@ -115,6 +115,42 @@ class CashEntitlementTests(unittest.TestCase):
                 self.days,
             )
 
+    def test_distinct_ex_dates_sharing_one_record_date_fail_closed(self):
+        # The event validator accepts different ex-dates, but the entitlement
+        # snapshot and availability map have only ONE registration-date key.
+        # Never silently reuse it for two distinct payments.
+        later = {
+            **dividend(),
+            "event_date": "2022-01-03",
+            "cash_payment_date": "2022-01-07",
+            "dividend_per_current_share_cny": 0.10,
+        }
+        with self.assertRaisesRegex(ValueError, "Duplicate cash dividend registration key"):
+            cash_entitlement_ledger(
+                {"schema_version": 1, "events": [dividend(), later]},
+                self.snapshots,
+                self.days,
+            )
+
+    def test_same_record_date_for_different_etfs_is_not_collision(self):
+        other = {
+            **dividend(),
+            "symbol": "510300.SH",
+            "dividend_per_current_share_cny": 0.20,
+        }
+        snapshots = {
+            ("512690.SH", "2021-12-30"): 10,
+            ("510300.SH", "2021-12-30"): 0,
+        }
+        result = cash_entitlement_ledger(
+            {"schema_version": 1, "events": [dividend(), other]},
+            snapshots,
+            self.days,
+        )
+        self.assertEqual(len(result["events"]), 2)
+        self.assertAlmostEqual(result["daily"][-1]["cumulative_cash_paid_cny"], 3.5)
+        self.assertEqual(result["status"], "REVIEW_REQUIRED_NOT_FOR_TRADING")
+
     def test_split_and_consolidation_preserve_units_without_cash(self):
         self.assertEqual(apply_unit_change(10, unit_event("UNIT_SPLIT", 2)), 20)
         self.assertAlmostEqual(
