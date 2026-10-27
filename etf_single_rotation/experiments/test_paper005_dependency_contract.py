@@ -9,6 +9,7 @@ from pathlib import Path
 
 BACKLOG = Path(__file__).resolve().parents[1] / "research_backlog.json"
 ACTIVE = {"READY", "CLAIMED", "RUNNING", "VERIFYING", "VERIFIED_DONE"}
+REQUIRED_PAPER_DEPENDENCIES = {"ETF-DATA-003", "ETF-DIV-004"}
 
 
 def _unique_tasks(payload):
@@ -25,9 +26,11 @@ def _unique_tasks(payload):
 def validate_paper005_dependency_gate(payload):
     tasks = _unique_tasks(payload)
     paper = tasks["ETF-PAPER-005"]
-    dependencies = paper["depends_on"]
-    if not dependencies:
-        raise AssertionError("PAPER-005 must retain explicit dependencies")
+    dependencies = paper.get("depends_on")
+    if (not isinstance(dependencies, list)
+            or len(dependencies) != len(REQUIRED_PAPER_DEPENDENCIES)
+            or set(dependencies) != REQUIRED_PAPER_DEPENDENCIES):
+        raise AssertionError("PAPER-005 must retain both DATA-003 and DIV-004 dependencies")
     unmet = [task_id for task_id in dependencies
              if tasks.get(task_id, {}).get("status") != "VERIFIED_DONE"]
     if unmet and paper["status"] != "BLOCKED":
@@ -40,6 +43,8 @@ def validate_paper005_dependency_gate(payload):
 
 def validate_all_active_dependencies(payload):
     """No active task may rely on an unaccepted or missing prerequisite."""
+    # The general gate must also reject removal of a required PAPER-005 edge.
+    validate_paper005_dependency_gate(payload)
     tasks = _unique_tasks(payload)
     for task in payload["tasks"]:
         if task["status"] not in ACTIVE:
@@ -124,6 +129,27 @@ class Paper005DependencyContractTests(unittest.TestCase):
                 with self.assertRaisesRegex(AssertionError, "Duplicate task ID"):
                     validate_paper005_dependency_gate(bad)
                 with self.assertRaisesRegex(AssertionError, "Duplicate task ID"):
+                    validate_all_active_dependencies(bad)
+
+    def test_required_dependencies_cannot_be_removed_or_duplicated(self):
+        """A forged VERIFIED_DONE on a remaining edge cannot erase another edge."""
+        import copy
+        for dependencies in (
+            ["ETF-DATA-003"],
+            ["ETF-DIV-004"],
+            ["ETF-DATA-003", "ETF-DATA-003"],
+            [],
+        ):
+            with self.subTest(dependencies=dependencies):
+                bad = copy.deepcopy(self.backlog)
+                tasks = {task["id"]: task for task in bad["tasks"]}
+                tasks["ETF-DATA-003"]["status"] = "VERIFIED_DONE"
+                tasks["ETF-DIV-004"]["status"] = "VERIFIED_DONE"
+                tasks["ETF-PAPER-005"]["depends_on"] = dependencies
+                tasks["ETF-PAPER-005"]["status"] = "READY"
+                with self.assertRaisesRegex(AssertionError, "must retain both"):
+                    validate_paper005_dependency_gate(bad)
+                with self.assertRaisesRegex(AssertionError, "must retain both"):
                     validate_all_active_dependencies(bad)
 
     def test_mandate_remains_frozen_and_nontrading(self):
