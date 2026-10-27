@@ -151,6 +151,33 @@ class CashEntitlementTests(unittest.TestCase):
         self.assertAlmostEqual(result["daily"][-1]["cumulative_cash_paid_cny"], 3.5)
         self.assertEqual(result["status"], "REVIEW_REQUIRED_NOT_FOR_TRADING")
 
+    def test_distinct_record_dates_for_same_etf_remain_valid(self):
+        # A repeated dividend for the SAME ETF is legitimate when its
+        # record-date entitlement key is different. Do not over-block.
+        later = {
+            **dividend(),
+            "registration_date": "2022-01-07",
+            "event_date": "2022-01-10",
+            "cash_payment_date": "2022-01-12",
+            "dividend_per_current_share_cny": 0.10,
+        }
+        snapshots = {
+            ("512690.SH", "2021-12-30"): 10,
+            ("512690.SH", "2022-01-07"): 5,
+        }
+        days = [
+            "2021-12-30", "2021-12-31", "2022-01-06",
+            "2022-01-07", "2022-01-10", "2022-01-12",
+        ]
+        result = cash_entitlement_ledger(
+            {"schema_version": 1, "events": [dividend(), later]},
+            snapshots,
+            days,
+        )
+        self.assertEqual(len(result["events"]), 2)
+        self.assertAlmostEqual(result["daily"][-1]["cumulative_cash_paid_cny"], 4.0)
+        self.assertEqual(result["status"], "REVIEW_REQUIRED_NOT_FOR_TRADING")
+
     def test_split_and_consolidation_preserve_units_without_cash(self):
         self.assertEqual(apply_unit_change(10, unit_event("UNIT_SPLIT", 2)), 20)
         self.assertAlmostEqual(
