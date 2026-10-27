@@ -1,0 +1,30 @@
+name: ETF PAPER-005 dependency contract (no backtest)
+on:
+  pull_request:
+    branches:
+      - feature/etf-single-rotation-v1
+    paths:
+      - 'etf_single_rotation/research_backlog.json'
+      - 'etf_single_rotation/experiments/test_paper005_dependency_contract.py'
+      - '.github/workflows/etf-paper005-dependency-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-paper005-contract-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  offline-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate PAPER-005 dependencies and research mandate
+        run: python -m unittest discover -s etf_single_rotation/experiments -p 'test_paper005_dependency_contract.py' -v
