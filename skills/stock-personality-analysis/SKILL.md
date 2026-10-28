@@ -24,5 +24,5 @@ Source snapshot `2026-10-24T211915.119571_0000-7c30e07d`; 2025-01-02 to 2026-10-
 
 ## Acceptance status
 - Real data read and 4/4 local unit tests: **completed**.
-- Fully executable GitHub skill, CI, longer-history coverage, 15-minute features, walk-forward validation, execution-cost backtest: **pending**.
+- GitHub CLI script and offline Pipeline CI (Run 40686330439): **completed**, still in draft PR #118, not merged into main.\n- Longer-history coverage, 15-minute features, walk-forward validation, execution-cost backtest and final strategy acceptance: **pending**.
 - Current version is a reproducible *method and initial evidence*, not a validated trade recommendation.
