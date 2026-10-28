@@ -59,5 +59,22 @@ class SameDayUnitEventGuardTests(unittest.TestCase):
         self.assertEqual(snapshots[("512690.SH", "2021-12-30")], 200)
 
 
+    def test_same_symbol_unit_changes_on_separate_days_remain_valid(self):
+        # Separate issuer dates have a deterministic chronological order.
+        first = unit_change("512690.SH", "UNIT_SPLIT", 2)
+        second = {
+            **unit_change("512690.SH", "UNIT_SPLIT", 3),
+            "event_date": "2021-06-01",
+        }
+        snapshots = self.snapshots([first, second, dividend()])
+        self.assertEqual(snapshots[("512690.SH", "2021-12-30")], 600)
+
+    def test_duplicate_same_kind_same_day_also_fails_closed(self):
+        # Duplicate rows are just as ambiguous as two different event types.
+        duplicate = unit_change("512690.SH", "UNIT_SPLIT", 2)
+        with self.assertRaisesRegex(ValueError, "Ambiguous multiple unit events"):
+            self.snapshots([duplicate, dict(duplicate), dividend()])
+
+
 if __name__ == "__main__":
     unittest.main()
