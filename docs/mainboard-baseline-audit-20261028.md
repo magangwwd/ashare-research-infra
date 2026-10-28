@@ -46,3 +46,25 @@
 - 新增 `tests/test_mainboard_manifest_contract.py` 的10项离线测试，覆盖SHA损坏、错误目录、指针未验收、版本不一致、Gold 验收失败等。提交：`534a911070d53a4e3916e85e48a7c1164f7956de`、`7c37b91c53802d04ef2185075db5ca2d14b08748`。
 - 新 CI `40722398618` 创建后检查时为 `in_progress`；**尚未验收通过，不得声称成功**。
 - 生产凭据端的只读诊断仍未运行，Drive 两侧正式 marker 仍缺少实测确认；不得停止原下载、删除数据或切换选股。下一轮优先复核新 CI、审查 PR 后使只读工作流在 main 可执行，并取得真实生产端 artifact。
+
+
+## 2026-10-29 04:01 北京时间第四轮：正式 marker 已找到，纠正此前缺失判断
+
+**重要纠正：** 本轮 Google Drive 连接器重新列举与精确读取，Task01 `Ashare_Quant/current.json` 和 Gold `down_data/data/gold/main_board/manifest.json`、`instruments.parquet`、`daily_snapshot.parquet` **均实际存在**。此前“未找到”是当时查询结果，不能再作为当前缺失结论。不能据此推断生产端曾丢失文件。
+
+### 实际读取与核验（只读，不使用生产 Secrets）
+
+- Task01 `current.json`：`validated=true`，`snapshot_as_of=2026-10-24`，`source_run_id=40119936249`，正式版本 `2026-10-24T211915.119571_0000-7c30e07d`，指向 **5406** 个文件、**2,331,724,247** 字节；`critical_history_complete=false`、`full_requested_core_range_complete=false`，不能宣称历史齐全。
+- Task01 版本目录实际存在、其父目录是 `versions/`；`production_manifest.json` 也实际存在且直接位于所指版本目录。下载后计算 SHA256 **`118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`**，与指针一致；manifest `validated=true`、版本和 `snapshot_as_of` 与指针一致，文件数=5406，文件字节和=2,331,724,247，路径及文件 ID 在清单中均唯一。**尚未逐一下载5406个分区核验内容**。
+- Gold `manifest.json`：`as_of_date=2026-10-27`，`primary_keys_unique=true`、`ohlc_valid=true`；`instruments.parquet` **3486行**、`daily_snapshot.parquet` **3189行**（行数来自 manifest）；实际下载这两个 Parquet，SHA256 均与 Gold manifest 声明完全一致。未解析 Parquet 内部行内容，未完成策略回放。
+- **日期不一致：Task01 2026-10-24，Gold 2026-10-27，落后3个自然日**；这不等于3个交易日，必须阻止适配器以旧 Task01 替换新 Gold。即使两端 manifest 验收标志为真，也不能代表今天已更新。
+- GitHub Actions `Task01` run [40119936249](https://github.com/magangwwd/ashare-research-infra/actions/runs/40119936249) 已确认 `completed/success`，与上述指针来源一致。
+- 最新检查到的 Task01 失败 run [40562368344](https://github.com/magangwwd/ashare-research-infra/actions/runs/40562368344) 与 [40598869222](https://github.com/magangwwd/ashare-research-infra/actions/runs/40598869222)：**均在 `Publish accepted snapshot to Drive` 步骤失败，日志均显示 `Drive request failed (410)`**，分别已暂存约1600/6994、2900/7037个文件，旧正式指针未见切换。**410来自哪个请求阶段尚未查明，不可直接断言配额或会话过期**。
+- Task01 run [40748947088](https://github.com/magangwwd/ashare-research-infra/actions/runs/40748947088) 在本轮检查时 `in_progress`，执行到 `Daily update or maintenance`；尚未取得最终结果。Gold run [40576385273](https://github.com/magangwwd/ashare-research-infra/actions/runs/40576385273) `completed/success`，与 Gold 2026-10-27 manifest 及文件修改时间相符。
+- PR #116 新增日期对齐检查：即使两边分别 `PASS`，只要 `as_of` 不相同便返回 `TASK01_BEHIND_GOLD` / `GOLD_BEHIND_TASK01`，禁止误判可影子替换；新离线测试覆盖本次实际日期差异。日期相同也**不等于**可以切换生产。
+
+### 下一轮明确任务
+
+1. 先复核 Task01 run 40748947088 的终态、是否再次报410；若失败，增加不泄露请求 URL/凭据的安全错误阶段分类，定位失败是上传会话、文件读回还是目录操作。
+2. 复核新增日期门禁的 CI 结果，补充主板股票、OHLCV/单位、停复牌、复权及冻结策略差异对比；未完成之前保留双链路。
+3. 不重触发全量下载、不删除 staging 或旧 Gold、不合并生产切换。生产端手动只读 probe 仍待在 main 上可执行后实测。
