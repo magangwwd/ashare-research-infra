@@ -29,3 +29,14 @@ GitHub Actions 真实执行 + 两端 Drive 文件实际校验 + 5日影子对比
 ## 指针与 Manifest 第二层只读验收（2026-10-29）
 
 PR #116 诊断脚本新增 Task01 指针与 manifest SHA256、版本父子关系、版本/日期/文件数一致性检查；Gold 增加 manifest 日期和两项质量标志检查。此检查**不读取 Parquet、不下载历史、不验证全分区、不保证时效性**。返回 `INVALID_POINTER`、`BROKEN_VERSION_LINK`、`MANIFEST_SHA_MISMATCH`、`MANIFEST_POINTER_MISMATCH`、`GOLD_NOT_VALIDATED` 等时一律阻止生产切换。新增10项测试在 `tests/test_mainboard_manifest_contract.py`；必须复核 CI run `40722398618` 终态。只有通过生产凭据的 GitHub Actions 手动只读诊断并检查 artifact，才能继续影子数据适配。
+
+
+## 第四轮实证与日期一致性门禁（2026-10-29）
+
+此前连接器查询曾报正式 marker 缺失；**重新实查已确认两侧 marker 均存在**，不要沿用旧结论。证据与SHA详见 `docs/mainboard-baseline-audit-20261028.md`。
+
+- Task01 正式 pointer `snapshot_as_of=2026-10-24`，manifest SHA 与实际下载一致；5406项，历史完整性标志仍为 false。
+- Gold manifest `as_of_date=2026-10-27`，两份核心 Parquet 的实际 SHA 与 manifest 一致；因此 **Task01 落后 Gold，禁止替换**。
+- 两个 Task01 发布失败 run 40562368344、40598869222 的日志都显示 `Drive request failed (410)`，阶段为 Drive 发布；具体 HTTP 请求类型待定位，不能未经证据判为 OAuth 失效、配额不足或会话过期。run 40748947088 检查时仍在运行。
+- `tools/mainboard_remote_probe.py` 新增 `compare_as_of`：两个源均验收且日期相同只返回 `ALIGNED_DATE_ONLY`；不同则返回 `TASK01_BEHIND_GOLD` 或 `GOLD_BEHIND_TASK01`，并以退出码2阻止继续。即使 `ALIGNED_DATE_ONLY` 也不允许生产切换/删除。测试 `tests/test_mainboard_cross_source_date.py`，本轮提交后 CI 必须再次核实。
+- 下一步先排查 410 的具体请求阶段，待 Task01 新正式指针恢复更新后再做 Gold 影子对比。禁止在 Task01 落后时直接去重下载。
