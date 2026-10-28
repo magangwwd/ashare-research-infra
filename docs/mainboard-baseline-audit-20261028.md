@@ -38,3 +38,11 @@
 
 ### 下一轮闸门
 先复核 `40684693795` 终态并修复任何失败；通过代码审查后合并仅只读诊断工作流，再在 main 用正式 Secrets 手动执行一次，读取 artifact 确认真实根目录和 marker。未取得两端生产端证据前，不切换策略、不清理数据。
+
+## 2026-10-29 00:02 北京时间第三轮推进
+
+- 复核上轮 CI：Pipeline CI `40684693795` 和 `40684776855` 的 job 均为 `completed/success`，**仅代表离线 CI 成功**。
+- 在 PR #116 的只读诊断 `tools/mainboard_remote_probe.py` 上新增第二层验收：Task01 读取 `current.json`，校验 `validated=true`、版本目录/manifest 的 Drive ID 与父子关系、`production_manifest.json` 的 SHA256、版本/日期/文件数量一致；Gold 只读读取 `manifest.json`，检查 `as_of_date` 与 `primary_keys_unique`、`ohlc_valid`。不会读取或传出行情分区。
+- 新增 `tests/test_mainboard_manifest_contract.py` 的10项离线测试，覆盖SHA损坏、错误目录、指针未验收、版本不一致、Gold 验收失败等。提交：`534a911070d53a4e3916e85e48a7c1164f7956de`、`7c37b91c53802d04ef2185075db5ca2d14b08748`。
+- 新 CI `40722398618` 创建后检查时为 `in_progress`；**尚未验收通过，不得声称成功**。
+- 生产凭据端的只读诊断仍未运行，Drive 两侧正式 marker 仍缺少实测确认；不得停止原下载、删除数据或切换选股。下一轮优先复核新 CI、审查 PR 后使只读工作流在 main 可执行，并取得真实生产端 artifact。
