@@ -15,7 +15,7 @@ on:
   schedule:
     - cron: "07 */2 * * *"
   push:
-    branches: [main, fix/btc-hourly-schedule-dedup-recovery-20261021]
+    branches: [main, fix/btc-hourly-schedule-dedup-recovery-20261021, fix/btc-guard-independent-completion-20261027]
     paths:
       - ".github/workflows/btc-research-scheduler-guard.yml"
       - "btc-quant/ops/research_scheduler_watchdog.py"
@@ -24,15 +24,34 @@ on:
 
 permissions:
   contents: read
-  actions: write
-  issues: write
 
 concurrency:
   group: btc-research-scheduler-independent-guard
   cancel-in-progress: false
 
 jobs:
+  # Branch CI uses a read-only token; no secrets or recovery dispatch.
+  validate-branch:
+    if: github.ref != 'refs/heads/main'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Test watchdog deduplication and fail-closed logic
+        run: python -m unittest discover -s btc-quant/tests -p test_research_scheduler_watchdog.py -v
   detect-and-recover:
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      actions: write
+      issues: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
