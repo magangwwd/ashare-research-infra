@@ -1,0 +1,48 @@
+name: ETF DIV-004 PR114 approval-gated synthetic tests
+
+# REVIEW-ONLY: deliberately no push, schedule, or workflow_dispatch event.
+# A draft PR must NOT start this workflow. A human explicitly moving the
+# dedicated stacked PR to ready-for-review is the only trigger.
+on:
+  pull_request:
+    types: [ready_for_review]
+    branches:
+      - research/etf-div004-record-date-key-collision-20261028
+    paths:
+      - '.github/workflows/etf-div004-pr114-approval-gated-ci.yml'
+      - 'etf_single_rotation/experiments/dividend_receivable_ledger.py'
+      - 'etf_single_rotation/experiments/test_dividend_receivable_ledger.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-div004-pr114-approved-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  synthetic-dividend-regressions:
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.ref == 'research/etf-div004-pr114-approval-gated-ci-20261028' &&
+      github.event.pull_request.base.ref == 'research/etf-div004-record-date-key-collision-20261028'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact PR head without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Log tested SHA
+        run: git rev-parse HEAD
+      - name: Run synthetic dividend ledger tests only
+        run: python -m unittest -v etf_single_rotation.experiments.test_dividend_receivable_ledger
+      - name: Preserve research-only gate
+        run: |
+          echo 'REVIEW_REQUIRED / NOT_FOR_TRADING'
+          echo 'No issuer, price, fund_adj, cash-settlement, Drive, or strategy acceptance.'
