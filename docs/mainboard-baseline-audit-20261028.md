@@ -68,3 +68,8 @@
 1. 先复核 Task01 run 40748947088 的终态、是否再次报410；若失败，增加不泄露请求 URL/凭据的安全错误阶段分类，定位失败是上传会话、文件读回还是目录操作。
 2. 复核新增日期门禁的 CI 结果，补充主板股票、OHLCV/单位、停复牌、复权及冻结策略差异对比；未完成之前保留双链路。
 3. 不重触发全量下载、不删除 staging 或旧 Gold、不合并生产切换。生产端手动只读 probe 仍待在 main 上可执行后实测。
+
+
+### 410 诊断补丁已独立提交
+
+新建独立草稿 [PR #120](https://github.com/magangwwd/ashare-research-infra/pull/120)：`data_pipeline/drive_publish.py` 的失败日志增加固定操作类别（例如 `resumable_upload`、`read_file_media`、`list_files`），不包含 URL、session ID 或凭据；5项离线测试复现410并检查去敏。**不改变重试、上传、指针或调度行为，也不宣称已修复410。** 新 CI run [40760207733](https://github.com/magangwwd/ashare-research-infra/actions/runs/40760207733) 创建时为 queued；必须检查终态后再考虑合并。PR #116 的日期门禁 CI run [40759865151](https://github.com/magangwwd/ashare-research-infra/actions/runs/40759865151) 已 `completed/success`。
