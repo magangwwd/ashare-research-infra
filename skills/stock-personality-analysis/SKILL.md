@@ -24,5 +24,12 @@ Source snapshot `2026-10-24T211915.119571_0000-7c30e07d`; 2025-01-02 to 2026-10-
 
 ## Acceptance status
 - Real data read and 4/4 local unit tests: **completed**.
-- GitHub CLI script and offline Pipeline CI (Run 40686330439): **completed**, still in draft PR #118, not merged into main.\n- Longer-history coverage, 15-minute features, walk-forward validation, execution-cost backtest and final strategy acceptance: **pending**.
+- GitHub CLI script and offline Pipeline CI (Run 40686330439): **completed**, still in draft PR #118, not merged into main.
+- Longer-history coverage, 15-minute features, walk-forward validation, execution-cost backtest and final strategy acceptance: **pending**.
 - Current version is a reproducible *method and initial evidence*, not a validated trade recommendation.
+
+## v0.2: next-open execution sensitivity (2026-10-28)
+Run: `python skills/stock-personality-analysis/execution_backtest.py --input peer_daily.csv --target 600031.SH --cash 40000 --out execution.json`.
+Signals at close t; enter at next-session open and exit at open 3 or 5 sessions later, one open position per pattern, 100-share lots. Assumed each-side commission 0.03%, sell stamp 0.05%, each-side slippage 0.05% (approx 0.21% round trip). No fill verification for suspensions/price limits, no independent dividend cash ledger; `pre_close` adjustment is sensitivity only. Do not call these figures executable trade profits without independent execution verification.
+The 2025/2026 results are retrospective, not untouched holdout. 2025 breakout 5-day: 8 non-overlapping trades, mean net +1.657%; 2026: 6 trades, mean net -0.205%. 2026 upper-wick 3-day: 10 trades, mean net -2.057%. Compare target with four peers on the *same trade dates* to distinguish market-wide effects. Data and v0.2 report are in the fixed Drive research folder.
+CI validation of new code must be checked on the new commit; earlier successful CI only covered v0.1.
