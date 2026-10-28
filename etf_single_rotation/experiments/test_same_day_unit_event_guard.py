@@ -72,7 +72,9 @@ class SameDayUnitEventGuardTests(unittest.TestCase):
     def test_duplicate_same_kind_same_day_also_fails_closed(self):
         # Duplicate rows are just as ambiguous as two different event types.
         duplicate = unit_change("512690.SH", "UNIT_SPLIT", 2)
-        with self.assertRaisesRegex(ValueError, "Ambiguous multiple unit events"):
+        # Identical (symbol, date, type) rows are rejected earlier by
+        # validate_events, before the cross-type same-day ambiguity guard.
+        with self.assertRaisesRegex(ValueError, "Duplicate corporate-action event"):
             self.snapshots([duplicate, dict(duplicate), dividend()])
 
 
