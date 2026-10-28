@@ -20,3 +20,8 @@ description: 审核并逐步整合 GitHub Task01 A股主板基础数据与 Gold 
 
 ## 完成定义
 GitHub Actions 真实执行 + 两端 Drive 文件实际校验 + 5日影子对比 + 策略输出一致 + 回滚演练 + 正式切换与观察；未满足时只能标为进行中。
+
+
+## 生产端只读排障（2026-10-28 增补）
+
+当连接器显示正式 marker 缺失时，先核对 `docs/mainboard-baseline-audit-20261028.md`，不要直接判定数据丢失。PR #116 新增 `tools/mainboard_remote_probe.py` 和 `.github/workflows/mainboard-dual-drive-probe.yml`。该 workflow 必须先审查并合并到 main，才可在 Actions 中手动触发；它不设 schedule、不下载行情、不修改云盘，输出 `mainboard-remote-probe` artifact。分别检查 Task01 OAuth 与 Gold rclone 的正式根目录、项目根 marker 和核心文件；`PASS` 仅代表文件名/类型存在，仍须校验文件内容、日期、SHA、5日影子策略和回滚。若显示 `MISSING_SECRET`、`WRONG_REMOTE_ROOT`、`PROBE_ERROR` 或 `MARKER_MISMATCH`，保持旧系统不动并针对性修复。
