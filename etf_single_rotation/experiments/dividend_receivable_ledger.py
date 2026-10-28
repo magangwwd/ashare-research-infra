@@ -198,6 +198,16 @@ def record_date_snapshots_from_fills(registry, opening_date, opening_positions, 
         if event["type"] in ("UNIT_SPLIT", "UNIT_CONSOLIDATION")
         and start < _day(event["event_date"]) <= last_check_day
     ]
+    # An issuer may publish multiple unit-changing events for the same ETF
+    # on one day. Their application order is not represented in this registry;
+    # applying both in list order would invent a registered-unit history.
+    # Reject the ambiguous pair until an issuer-verified sequence is supplied.
+    seen_unit_event_days = set()
+    for event in unit_events:
+        key = (event["symbol"], event["event_date"])
+        if key in seen_unit_event_days:
+            raise ValueError(f"Ambiguous multiple unit events on same day: {key}")
+        seen_unit_event_days.add(key)
     fill_keys = {(day, symbol) for day, symbol, _, _ in normalized}
     for event in unit_events:
         if (_day(event["event_date"]), event["symbol"]) in fill_keys:
