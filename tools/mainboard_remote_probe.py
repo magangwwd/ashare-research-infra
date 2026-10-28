@@ -6,6 +6,8 @@ Only reports allowlisted marker presence and safe status codes.
 from __future__ import annotations
 
 import argparse
+from datetime import date
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -36,6 +38,68 @@ def inspect_markers(entries, required):
     }
 
 
+
+def inspect_task01_snapshot(drive, entries):
+    """Validate pointer-to-manifest integrity without downloading market partitions."""
+    try:
+        pointer_id = next(e["id"] for e in entries if e.get("name") == "current.json")
+        pointer = json.loads(drive.read(pointer_id))
+        if pointer.get("validated") is not True:
+            return {"status": "INVALID_POINTER"}
+        version_id = pointer.get("version_folder_id")
+        manifest_id = pointer.get("manifest_file_id")
+        expected_sha = pointer.get("manifest_sha256")
+        if not all(isinstance(v, str) and v for v in (version_id, manifest_id, expected_sha)):
+            return {"status": "INVALID_POINTER"}
+        if len(expected_sha) != 64 or any(c not in "0123456789abcdef" for c in expected_sha):
+            return {"status": "INVALID_POINTER"}
+        version = drive.metadata(version_id)
+        manifest_meta = drive.metadata(manifest_id)
+        if (version.get("mimeType") != FOLDER_MIME or version.get("trashed")
+                or manifest_meta.get("name") != "production_manifest.json"
+                or version_id not in manifest_meta.get("parents", [])
+                or manifest_meta.get("trashed")):
+            return {"status": "BROKEN_VERSION_LINK"}
+        raw = drive.read(manifest_id)
+        if hashlib.sha256(raw).hexdigest() != expected_sha:
+            return {"status": "MANIFEST_SHA_MISMATCH"}
+        manifest = json.loads(raw)
+        as_of = pointer.get("snapshot_as_of")
+        date.fromisoformat(as_of)
+        if (manifest.get("validated") is not True
+                or manifest.get("version") != pointer.get("version")
+                or manifest.get("snapshot_as_of") != as_of
+                or manifest.get("file_count") != pointer.get("file_count")):
+            return {"status": "MANIFEST_POINTER_MISMATCH"}
+        return {"status": "PASS", "as_of": as_of}
+    except Exception:
+        return {"status": "SNAPSHOT_READ_ERROR"}
+
+
+def inspect_gold_manifest(raw):
+    """Check Gold's existing acceptance gates, without exposing raw content."""
+    try:
+        payload = json.loads(raw)
+        as_of = str(payload["as_of_date"])[:10]
+        date.fromisoformat(as_of)
+        if (payload.get("validation", {}).get("primary_keys_unique") is not True
+                or payload.get("validation", {}).get("ohlc_valid") is not True):
+            return {"status": "GOLD_NOT_VALIDATED"}
+        return {"status": "PASS", "as_of": as_of}
+    except Exception:
+        return {"status": "GOLD_MANIFEST_ERROR"}
+
+
+def rclone_read(remote):
+    completed = subprocess.run(
+        ["rclone", "cat", remote], text=True, capture_output=True,
+        check=False, timeout=90,
+    )
+    if completed.returncode:
+        raise RuntimeError("RCLONE_READ_FAILED")
+    return completed.stdout
+
+
 def task01_probe():
     from google.auth.transport.requests import AuthorizedSession, Request
     from data_pipeline.drive_auth import folder_id, parse_credentials
@@ -51,11 +115,13 @@ def task01_probe():
             root = folder_id(Path("config/config.yaml"))
             entries = Drive(session).children(root)
             result = inspect_markers(entries, TASK01_REQUIRED)
+            snapshot = (inspect_task01_snapshot(Drive(session), entries)
+                        if not any(result.values()) else None)
     except Exception:
         # Never expose exception bodies: HTTP errors may include credential material.
         return {"status": "PROBE_ERROR"}
-    return {"status": "PASS" if not any(result.values()) else "MARKER_MISMATCH",
-            "markers": result}
+    return ({"status": "MARKER_MISMATCH", "markers": result} if any(result.values())
+            else snapshot)
 
 
 def rclone_list(remote):
@@ -84,10 +150,12 @@ def gold_probe():
             return {"status": "WRONG_REMOTE_ROOT"}
         entries = rclone_list("gdrive:down_data/data/gold/main_board/")
         result = inspect_markers(entries, GOLD_REQUIRED)
+        snapshot = (inspect_gold_manifest(rclone_read("gdrive:down_data/data/gold/main_board/manifest.json"))
+                    if not any(result.values()) else None)
     except Exception:
         return {"status": "PROBE_ERROR"}
-    return {"status": "PASS" if not any(result.values()) else "MARKER_MISMATCH",
-            "markers": result}
+    return ({"status": "MARKER_MISMATCH", "markers": result} if any(result.values())
+            else snapshot)
 
 
 def main(argv=None):
@@ -100,7 +168,7 @@ def main(argv=None):
         "gold": gold_probe(),
         "production_switch_allowed": False,
         "deletion_allowed": False,
-        "note": "Marker presence alone never validates SHA256, freshness or strategy equivalence.",
+        "note": "Pointer/manifest integrity alone does not validate every partition, freshness or strategy equivalence.",
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
