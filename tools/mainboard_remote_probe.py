@@ -158,6 +158,35 @@ def gold_probe():
             else snapshot)
 
 
+
+def compare_as_of(task01, gold):
+    """Fail closed if two independently validated snapshots refer to different dates.
+
+    Equality is only a prerequisite for shadow comparison, never approval to
+    switch production or delete data. A newer Gold is not evidence that Task01
+    is safe to consume for that trading day.
+    """
+    if task01.get("status") != "PASS" or gold.get("status") != "PASS":
+        return {"status": "BLOCKED_SOURCE_NOT_VALIDATED"}
+    try:
+        task_day = date.fromisoformat(task01["as_of"])
+        gold_day = date.fromisoformat(gold["as_of"])
+    except (KeyError, TypeError, ValueError):
+        return {"status": "INVALID_AS_OF"}
+    if task_day < gold_day:
+        status = "TASK01_BEHIND_GOLD"
+    elif task_day > gold_day:
+        status = "GOLD_BEHIND_TASK01"
+    else:
+        status = "ALIGNED_DATE_ONLY"
+    return {
+        "status": status,
+        "task01_as_of": task_day.isoformat(),
+        "gold_as_of": gold_day.isoformat(),
+        "calendar_days_gap": abs((task_day - gold_day).days),
+    }
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--output", type=Path, required=True)
@@ -170,10 +199,12 @@ def main(argv=None):
         "deletion_allowed": False,
         "note": "Pointer/manifest integrity alone does not validate every partition, freshness or strategy equivalence.",
     }
+    report["cross_source"] = compare_as_of(report["task01"], report["gold"])
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print("SAFE_PROBE", report["task01"]["status"], report["gold"]["status"])
-    return 0 if all(report[key]["status"] == "PASS" for key in ("task01", "gold")) else 2
+    print("SAFE_PROBE", report["task01"]["status"], report["gold"]["status"],
+          report["cross_source"]["status"])
+    return 0 if report["cross_source"]["status"] == "ALIGNED_DATE_ONLY" else 2
 
 
 if __name__ == "__main__":
