@@ -25,3 +25,7 @@ GitHub Actions 真实执行 + 两端 Drive 文件实际校验 + 5日影子对比
 ## 生产端只读排障（2026-10-28 增补）
 
 当连接器显示正式 marker 缺失时，先核对 `docs/mainboard-baseline-audit-20261028.md`，不要直接判定数据丢失。PR #116 新增 `tools/mainboard_remote_probe.py` 和 `.github/workflows/mainboard-dual-drive-probe.yml`。该 workflow 必须先审查并合并到 main，才可在 Actions 中手动触发；它不设 schedule、不下载行情、不修改云盘，输出 `mainboard-remote-probe` artifact。分别检查 Task01 OAuth 与 Gold rclone 的正式根目录、项目根 marker 和核心文件；`PASS` 仅代表文件名/类型存在，仍须校验文件内容、日期、SHA、5日影子策略和回滚。若显示 `MISSING_SECRET`、`WRONG_REMOTE_ROOT`、`PROBE_ERROR` 或 `MARKER_MISMATCH`，保持旧系统不动并针对性修复。
+
+## 指针与 Manifest 第二层只读验收（2026-10-29）
+
+PR #116 诊断脚本新增 Task01 指针与 manifest SHA256、版本父子关系、版本/日期/文件数一致性检查；Gold 增加 manifest 日期和两项质量标志检查。此检查**不读取 Parquet、不下载历史、不验证全分区、不保证时效性**。返回 `INVALID_POINTER`、`BROKEN_VERSION_LINK`、`MANIFEST_SHA_MISMATCH`、`MANIFEST_POINTER_MISMATCH`、`GOLD_NOT_VALIDATED` 等时一律阻止生产切换。新增10项测试在 `tests/test_mainboard_manifest_contract.py`；必须复核 CI run `40722398618` 终态。只有通过生产凭据的 GitHub Actions 手动只读诊断并检查 artifact，才能继续影子数据适配。
