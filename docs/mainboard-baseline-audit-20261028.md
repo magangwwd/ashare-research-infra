@@ -73,3 +73,8 @@
 ### 410 诊断补丁已独立提交
 
 新建独立草稿 [PR #120](https://github.com/magangwwd/ashare-research-infra/pull/120)：`data_pipeline/drive_publish.py` 的失败日志增加固定操作类别（例如 `resumable_upload`、`read_file_media`、`list_files`），不包含 URL、session ID 或凭据；5项离线测试复现410并检查去敏。**不改变重试、上传、指针或调度行为，也不宣称已修复410。** 新 CI run [40760207733](https://github.com/magangwwd/ashare-research-infra/actions/runs/40760207733) 创建时为 queued；必须检查终态后再考虑合并。PR #116 的日期门禁 CI run [40759865151](https://github.com/magangwwd/ashare-research-infra/actions/runs/40759865151) 已 `completed/success`。
+
+
+### 410 安全诊断补丁已合并主分支
+
+[PR #120](https://github.com/magangwwd/ashare-research-infra/pull/120) 在 CI run [40760207733](https://github.com/magangwwd/ashare-research-infra/actions/runs/40760207733) **completed/success**（日志 `123 passed, 2 skipped`）后已 squash merge 到 main，合并 SHA `e121a48231cc8d35ebcd3d64e88e6f217bd869b6`。**只增强410故障阶段的安全分类日志，不改变上传行为；当前在运行的旧 SHA Task01 不会自动获得该改动，须观察后续基于新 main 的正常计划运行。** 410 的真正根因尚未定位或修复，禁止把本次合并视为生产恢复。
