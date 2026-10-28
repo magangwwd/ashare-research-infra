@@ -43,6 +43,26 @@ def json_bytes(value: dict) -> bytes:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2).encode("utf-8")
 
 
+def safe_request_operation(method, url, kwargs=None):
+    """A fixed diagnostic label; never expose resumable session URLs or tokens."""
+    path = urlparse(url).path
+    params = (kwargs or {}).get("params") or {}
+    if method == "PUT" and path.startswith("/upload/drive/"):
+        return "resumable_upload"
+    if method == "POST" and url == UPLOAD:
+        return "start_resumable_upload"
+    if method == "GET" and path.startswith("/drive/v3/files/") and params.get("alt") == "media":
+        return "read_file_media"
+    if method == "GET" and path == "/drive/v3/files":
+        return "list_files"
+    if method == "GET" and path.startswith("/drive/v3/files/"):
+        return "file_metadata"
+    if method == "PATCH":
+        return "update_file_or_parent"
+    return "other_drive_request"
+
+
+
 class Drive:
     def __init__(self, session):
         self.session = session
@@ -59,7 +79,7 @@ class Drive:
             retryable = response is None or response.status_code in (429, 500, 502, 503, 504)
             if method not in ("GET", "PUT", "PATCH") or not retryable or attempt == 2:
                 status = response.status_code if response is not None else "network"
-                raise PublishError(f"Drive request failed ({status}); inspect the current pointer before retrying.") from None
+                raise PublishError(f"Drive request failed ({status}); operation={safe_request_operation(method, url, kwargs)}; inspect the current pointer before retrying.") from None
             time.sleep(2 ** attempt)
         raise PublishError("Drive request failed.")
 
