@@ -339,6 +339,17 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None):
             raise PublishError("Existing current pointer is not an accepted snapshot pointer.") from None
         # A second or later publication must start from a genuinely recoverable old production.
         old_manifest_bytes = verify_previous_snapshot(drive, old_pointer)
+        # A delayed checkpoint recovery must never roll back a newer production date.
+        # Legacy pointers without snapshot_as_of are still verified by the existing
+        # manifest contract; all current production pointers carry this field.
+        previous_date = old_pointer.get("snapshot_as_of")
+        if previous_date is not None:
+            try:
+                stale = date.fromisoformat(acceptance["as_of"]) < date.fromisoformat(previous_date)
+            except (KeyError, TypeError, ValueError):
+                raise PublishError("Production snapshot date cannot be compared; pointer unchanged.") from None
+            if stale:
+                raise PublishError("Accepted snapshot is older than current production; pointer unchanged.")
     staging = drive.folder(target, "staging")
     versions = drive.folder(target, "versions")
     version = utcnow().replace(":", "").replace("+", "_") + "-" + uuid.uuid4().hex[:8]
