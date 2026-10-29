@@ -57,7 +57,7 @@ class PA2StateTests(unittest.TestCase):
         self.assertEqual(result["events"][0]["reason"], "invalidation")
 
     def test_a_timeout_includes_fifth_session(self):
-        rows = [breakout(0)] + [bar(i) for i in range(1, 6)]
+        rows = [breakout(0)] + [bar(i, open=11., high=12., low=10., close=11.) for i in range(1, 6)]
         self.assertEqual(m.scan(rows)["events"][0]["status"], "timeout")
         self.assertEqual(m.scan(rows[:-1])["events"][0]["status"], "pending")
 
