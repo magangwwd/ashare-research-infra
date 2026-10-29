@@ -147,3 +147,13 @@
 - 下一步先看 CI 和代码安全审查，明确源run的验收工件及暂存目录与本地 accepted inventory 一致；在可控独立发布任务中显式传入已核验 staging ID，避免重传4400项，但必须先测算远端 SHA 扫描耗时及剩余工件期限。旧数据、原下载与冻结V1不动。
 
 - 第九轮补充核验：PR #123 最新 CI [40907575903](https://github.com/magangwwd/ashare-research-infra/actions/runs/40907575903) 已 completed/success，离线测试 **162 passed、2 skipped**；只证明代码离线验收，尚未用生产 OAuth 执行 staging 续传或正式指针切换。
+
+
+## 第十轮：2026-10-30 04:00 CST，断点续传剩余配额门禁
+
+- main 最新已读取 SHA `370630f3b7681f60bbcc126982e7ddcaec265fc1`；整合 PR #116、修复 PR #123 仍为 draft，未生产切换。
+- 本轮 Google Drive 只读回查：Task01 `Ashare_Quant/current.json`（ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`）仍指向 `2026-10-24`、5406 文件；正式 manifest ID `1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1`，本轮实际下载 SHA256=`118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，与 pointer 一致。Gold `main_board/manifest.json`（ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`）仍为 `2026-10-28`，`primary_keys_unique` / `ohlc_valid` 均为 true。日期不一致，禁止切换。
+- 取消 run `40786202732` 的未完成 staging ID `1lLB28lNbC3OWZeGx2xctOjQlBlwjSIKM` 本轮仍存在，且是 `staging/` 的直接子目录；仅证明目录存在，**未逐文件验证**其声称的4400个文件。checkpoint artifact `12878879550` 仍未过期，计划 `2026-11-01T06:59:59Z` 到期。
+- 在 PR #123 中修正一个真实续传阻塞：此前配额检查要求剩余空间足以**再上传完整快照**，即使已核验的 staging 文件可复用也会被错误阻止；现在先只读核验显式指定 stage 的父目录、路径、大小和远端 SHA256，再仅按**缺失文件字节数 + 1MiB manifest 余量**检查剩余配额，失败时不上传、不改指针。原始非续传模式仍按全量快照检查。代码 commit `3af09c78d95a7b4ba6c8089f3b1e3b453a57623d`，新增两项低配额离线测试 commit `88c43cdeed256ca8126c4090ddba7967d9d1ee57`，保持既有“非 staging 子目录拒绝”错误契约 commit `e656c49e2907d1af9752e5deb6e4c6c332a2f36a`。
+- 最新 PR #123 CI run `40944992102` 查询时为 `in_progress`；**不能声称通过**，更不能声称生产发布恢复。未执行昂贵的全量上传，也未修改 main / Gold / 冻结 V1。
+- 下轮先检查 run `40944992102` 的终态；再评估 4400 个 staged 文件的真实 SHA 验证成本与 checkpoint 有效期，优先推进安全可控的生产端只读检查和受控续传，而不是重复全量上传。
