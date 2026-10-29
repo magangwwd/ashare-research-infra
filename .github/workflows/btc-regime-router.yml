@@ -51,7 +51,7 @@ jobs:
         run: python -m unittest discover -s btc-quant/tests -v
 
   daily-shadow:
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: unit-tests
     runs-on: ubuntu-latest
     timeout-minutes: 70
