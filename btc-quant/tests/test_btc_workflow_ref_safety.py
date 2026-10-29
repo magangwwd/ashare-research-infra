@@ -32,7 +32,9 @@ class BtcWorkflowRefSafety(unittest.TestCase):
                 text = (ROOT / name).read_text(encoding="utf-8")
                 trigger = text.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
                 if "\n  push:\n" in trigger:
-                    push = trigger.split("\n  push:\n", 1)[1].split("\n  ", 1)[0]
+                    match = re.search(r"(?ms)^  push:\\n(.*?)(?=^  [a-z_]+:|\\Z)", trigger)
+                    self.assertIsNotNone(match)
+                    push = match.group(1)
                     self.assertIn("branches: [main]", push)
                     self.assertNotIn("feature/", push)
                 self.assertNotIn("pull_request_target:", trigger)
