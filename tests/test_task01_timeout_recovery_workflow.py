@@ -22,7 +22,8 @@ def test_timeout_like_job_and_same_run_checkpoint_are_required():
     assert 'checkpoint = one("task01-checkpoint")' in text
     assert "SOURCE_RUN_ID" in text
     assert "CHECKPOINT_ID" in text
-    assert 'tf.extractall(".", filter="data")' in text\n    assert "member.issym() or member.islnk()" not in text
+    assert 'tf.extractall(".", filter="data")' in text
+    assert "member.issym() or member.islnk()" not in text
 
 
 def test_isolated_recovery_does_not_download_data_or_change_strategy():
