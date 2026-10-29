@@ -18,6 +18,10 @@ def test_only_completed_task01_workflow_run_can_trigger():
 def test_timeout_like_job_and_same_run_checkpoint_are_required():
     text = WORKFLOW.read_text(encoding="utf-8")
     assert "235 <= minutes <= 265" in text
+    assert 'step_status("Daily update or maintenance") != "success"' in text
+    assert 'step_status("Production acceptance") != "success"' in text
+    assert 'step_status("Publish accepted snapshot to Drive") != "cancelled"' in text
+    assert 'cancellation was not in an accepted Drive publication' in text
     assert 'one("task01-validation-report")' in text
     assert 'checkpoint = one("task01-checkpoint")' in text
     assert "SOURCE_RUN_ID" in text
@@ -81,3 +85,11 @@ def test_checkpoint_integrity_and_disk_budget_gates():
     assert 'rm -f "$RUNNER_TEMP/checkpoint.zip"' in text
     assert text.index('sha256sum -c -') < text.index('unzip -p "$RUNNER_TEMP/checkpoint.zip"')
     assert text.index('rm -f "$RUNNER_TEMP/checkpoint.zip"') < text.index('tf.extractall(".", filter="data")')
+
+
+def test_checkpoint_archive_restricted_to_data_and_metadata():
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert 'p.parts[0] not in ("data", "metadata")' in text
+    assert 'member.isfile() or member.isdir() or member.issym() or member.islnk()' in text
+    assert 'checkpoint member outside data/metadata' in text
+    assert 'unexpected checkpoint member type' in text
