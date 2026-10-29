@@ -145,6 +145,16 @@ def record_date_snapshots_from_fills(registry, opening_date, opening_positions, 
     or market-data certification is implied. Enforces a single ETF after each ordered execution and unit event.
     """
     events = validate_events(registry)
+    # Snapshot output is keyed by (symbol, registration_date). Reject
+    # ambiguous dividend keys here too, even if the caller does not run
+    # cash_entitlement_ledger afterwards. Never silently collapse two events.
+    seen_dividend_keys = set()
+    for event in events:
+        if event["type"] == "CASH_DIVIDEND":
+            key = (event["symbol"], event["registration_date"])
+            if key in seen_dividend_keys:
+                raise ValueError(f"Duplicate cash dividend registration key: {key}")
+            seen_dividend_keys.add(key)
     record_dates = sorted({
         (event["symbol"], _day(event["registration_date"]))
         for event in events if event["type"] == "CASH_DIVIDEND"
