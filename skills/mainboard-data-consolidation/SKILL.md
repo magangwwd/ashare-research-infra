@@ -65,3 +65,13 @@ PR #116 诊断脚本新增 Task01 指针与 manifest SHA256、版本父子关系
 - Drive 正式指针仍是 Task01 `2026-10-24`，Gold manifest `2026-10-28`；禁止切换和删除。
 - 草稿 PR #123 新增工件digest/体积校验和提前释放ZIP磁盘空间，提交 `4bb7c285af3f91beb2f90788974a2b741a8d93ad`；新CI `40838902886` 尚未通过最终验收。该恢复工作流尚未合并、未运行生产，不得称为修复成功。
 - 下轮先检查CI与取消日志，再独立审核workflow_run信任边界、tar解包安全、350分钟成本和实际恢复可行性；只有通过闸门才能考虑合并。详细证据见 `docs/mainboard-baseline-audit-20261028.md`。
+
+
+## 第八轮：2026-10-29 20:00，超时恢复安全闸门与真实状态
+
+- 实读 main SHA `19d92f10476bb2c40a2da84a64ffd74194b77685`；PR #116、#121、#123 仍为草稿，生产未切换。
+- Task01 run `40786202732` 的 `task01` job 最终 `cancelled`，取消的是 `Publish accepted snapshot to Drive`；日志显示最后上传到 **4400/7069** 文件（2026-10-29 06:55 UTC），并非仅3600。质量验收和同run checkpoint已完成；checkpoint artifact `12878879550`，3,424,299,634 bytes，SHA256 `f2526309edea55fe5bcffb9e77ac032f870b63ae6cff5f9addc1d3b2a5ff99bd`，到期 `2026-11-01T06:59:59Z`。验收报告 artifact `12871950683`。不可把工件上传成功当成Drive发布成功。
+- 本轮真实Drive读回：Task01 `Ashare_Quant/current.json` 的 `snapshot_as_of=2026-10-24`、`validated=true`、`critical_history_complete=false`；Gold `main_board/manifest.json` 的 `as_of_date=2026-10-28`、两个质量标志为true。两端日期不一致，禁止切换。
+- PR #123 上轮 CI `40838902886` 已 `success`。本轮新增严格门禁：仅当源run已完成验收且 **Drive发布步骤本身被取消** 时，才允许恢复；解压工件仅允许 `data/`、`metadata/` 路径和常规文件/目录/链接类型。提交 `fcaf77966f99f3025809c4ebda8ca5e10b19c2ea`、`f56b2484f4a470da16a8c1b16057c733bc9652f5`，新CI `40870320426`、`40870312757` 仍待最终验收。
+- **重要运行限制**：`workflow_run` 仅响应工作流部署后新完成的源run，不会追溯已取消的 `40786202732`；3天工件会过期，且恢复方案重新上传全部约7069文件，350分钟是否足够尚未验证。不可把该草稿描述为已恢复，也不要为试验重复触发昂贵的全量上传。
+- 下轮先核查新CI和最新正式指针；独立复核GitHub Actions工作流信任边界、工件期限、运行时间与成本，确认恢复方式确实可执行后才考虑合并。并行设计可验证的增量/续传式staging，避免每轮重传全量。原有Task01与Gold下载均保留，冻结V1不变。
