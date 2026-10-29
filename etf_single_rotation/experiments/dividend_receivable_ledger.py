@@ -208,6 +208,15 @@ def record_date_snapshots_from_fills(registry, opening_date, opening_positions, 
         if key in seen_unit_event_days:
             raise ValueError(f"Ambiguous multiple unit events on same day: {key}")
         seen_unit_event_days.add(key)
+    # A unit conversion on a cash dividend's registration date has no
+    # issuer-verified intraday ordering in this registry. Applying it before
+    # the end-of-day snapshot could fabricate the eligible share count.
+    # Reject only the same ETF/date pair; other ETFs are independent.
+    record_keys = set(record_dates)
+    for event in unit_events:
+        key = (event["symbol"], _day(event["event_date"]))
+        if key in record_keys:
+            raise ValueError(f"Ambiguous unit event on dividend registration date: {key}")
     fill_keys = {(day, symbol) for day, symbol, _, _ in normalized}
     for event in unit_events:
         if (_day(event["event_date"]), event["symbol"]) in fill_keys:
