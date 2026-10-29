@@ -97,3 +97,10 @@
 - 直接列举 Gold 根文件夹 `1vCz7H5aeePjFapg7xLPu44x-PUSQOX_8`：`manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`，修改时间 `2026-10-28T20:45:24Z`；**实际读取 JSON**：`as_of_date=2026-10-28`、`primary_keys_unique=true`、`ohlc_valid=true`。核心 `instruments.parquet` 与 `daily_snapshot.parquet` 均在正式目录中。
 - **Gold 已推进至10月28日，Task01 仍停留10月24日，落后4个自然日**。本次只重新读取两端正式 JSON，不宣称重新逐文件核验5406个文件或 Gold 全量分区；前轮 Gold 10月27日的日期差异记录已被新事实替代。
 - 因为正式日期不一致，继续禁止统一读取切换及清理旧 Gold。
+
+
+### Task01 正式 Manifest 本轮独立复验
+
+- 通过当前 `current.json.manifest_file_id=1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1` 实际下载 `production_manifest.json`（1,371,895字节），本地重算 SHA256=`118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，与 pointer 中声明完全相同。
+- Manifest `validated=true`、`snapshot_as_of=2026-10-24`、`version=2026-10-24T211915.119571_0000-7c30e07d`、`file_count=5406`、`total_bytes=2331724247`，与 pointer 一致；文件条目声明字节数合计也为 2,331,724,247。
+- 此次仅验证 Manifest 本身和元数据一致性，**没有下载核验5406个底层分区**，也不证明最新数据已发布。
