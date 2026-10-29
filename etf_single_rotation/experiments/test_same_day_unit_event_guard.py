@@ -85,6 +85,22 @@ class SameDayUnitEventGuardTests(unittest.TestCase):
         self.assertEqual(snapshots[("512690.SH", "2021-12-30")], 200)
 
 
+    def test_unit_change_on_same_etf_dividend_record_date_fails_closed(self):
+        # A registry date alone cannot prove whether conversion occurred
+        # before or after the end-of-day dividend entitlement snapshot.
+        split = {**unit_change("512690.SH", "UNIT_SPLIT", 2),
+                 "event_date": "2021-12-30"}
+        with self.assertRaisesRegex(ValueError,
+                                    "Ambiguous unit event on dividend registration date"):
+            self.snapshots([split, dividend()])
+
+    def test_other_etf_unit_change_on_record_date_is_not_blocked(self):
+        # Unrelated ETF corporate actions must not change this entitlement.
+        other = {**unit_change("510300.SH", "UNIT_SPLIT", 2),
+                 "event_date": "2021-12-30"}
+        snapshots = self.snapshots([other, dividend()])
+        self.assertEqual(snapshots[("512690.SH", "2021-12-30")], 100)
+
     def test_same_symbol_unit_changes_on_separate_days_remain_valid(self):
         # Separate issuer dates have a deterministic chronological order.
         first = unit_change("512690.SH", "UNIT_SPLIT", 2)
