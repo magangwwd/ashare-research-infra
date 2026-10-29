@@ -35,3 +35,37 @@ def test_isolated_recovery_does_not_download_data_or_change_strategy():
     assert "run_task01" not in text
     assert "stock_state_strategy" not in text
     assert "delete" not in text.lower()
+
+
+def test_tar_data_filter_restores_internal_task01_current_symlink(tmp_path):
+    import tarfile
+    root = tmp_path / "source"
+    target = root / "data/.versions/accepted"
+    target.mkdir(parents=True)
+    (target / "acceptance.json").write_text('{"passed":true}', encoding="utf-8")
+    (root / "data/current").symlink_to(".versions/accepted", target_is_directory=True)
+    archive = tmp_path / "checkpoint.tar.gz"
+    with tarfile.open(archive, "w:gz") as tf:
+        tf.add(root / "data", arcname="data")
+    dest = tmp_path / "restored"
+    dest.mkdir()
+    with tarfile.open(archive, "r:gz") as tf:
+        tf.extractall(dest, filter="data")
+    assert (dest / "data/current/acceptance.json").read_text() == '{"passed":true}'
+
+
+def test_tar_data_filter_rejects_symlink_escape(tmp_path):
+    import io
+    import tarfile
+    import pytest
+    archive = tmp_path / "malicious.tar.gz"
+    with tarfile.open(archive, "w:gz") as tf:
+        info = tarfile.TarInfo("data/current")
+        info.type = tarfile.SYMTYPE
+        info.linkname = "/etc/passwd"
+        tf.addfile(info)
+    dest = tmp_path / "restored"
+    dest.mkdir()
+    with tarfile.open(archive, "r:gz") as tf:
+        with pytest.raises(tarfile.FilterError):
+            tf.extractall(dest, filter="data")
