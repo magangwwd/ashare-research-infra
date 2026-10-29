@@ -387,7 +387,7 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None, re
         # while deciding whether a low-quota recovery can safely continue.
         candidates = [f for f in drive.children(target) if f["name"] == "staging"]
         if len(candidates) != 1 or candidates[0]["mimeType"] != FOLDER:
-            raise PublishError("Resume staging root is missing or ambiguous; pointer unchanged.")
+            raise PublishError("Resume stage is not a direct child of an unambiguous staging root; pointer unchanged.")
         staging = candidates[0]["id"]
         version, reused = verified_stage_reuse(drive, staging, resume_stage_id, items)
         # Already verified staged bytes consume Drive quota. Only missing bytes
