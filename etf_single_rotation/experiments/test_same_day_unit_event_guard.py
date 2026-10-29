@@ -120,5 +120,25 @@ class SameDayUnitEventGuardTests(unittest.TestCase):
             self.snapshots([duplicate, dict(duplicate), dividend()])
 
 
+    def test_snapshot_rejects_distinct_ex_dates_with_same_record_key(self):
+        # The snapshot API must fail closed even without calling the cash
+        # entitlement ledger; otherwise a set comprehension hides a collision.
+        later = {
+            **dividend(),
+            "event_date": "2022-01-03",
+            "cash_payment_date": "2022-01-07",
+            "dividend_per_current_share_cny": 0.10,
+        }
+        with self.assertRaisesRegex(ValueError, "Duplicate cash dividend registration key"):
+            self.snapshots([dividend(), later])
+
+    def test_snapshot_allows_same_record_date_for_different_etfs(self):
+        # The key includes the symbol: independent ETFs do not collide.
+        other = {**dividend(), "symbol": "510300.SH"}
+        snapshots = self.snapshots([dividend(), other])
+        self.assertEqual(snapshots[("512690.SH", "2021-12-30")], 100)
+        self.assertEqual(snapshots[("510300.SH", "2021-12-30")], 0)
+
+
 if __name__ == "__main__":
     unittest.main()
