@@ -49,7 +49,7 @@
 
 
 ## PA-v2三类价格行为协议已冻结（2026-10-29，E0）
-- 本批只完成**事前规则登记**，没有运行PA-v2历史候选/确认，也没有生成新收益结果。冻结文件：[docs/600031-pa-v2-preregistration.md](600031-pa-v2-preregistration.md)，Git blob规则哈希（SHA-1）`9f4dba53d97000c23691ec014230c5a2dce47456`，冻结提交`1b88dc6f7db2a9341f2415667f494c351d8be33a`；回执`research/receipts/600031_pa_v2_preregistration_20261029.json`。
+- 本批只完成**事前规则登记**，没有运行PA-v2历史候选/确认，也没有生成新收益结果。冻结文件：[docs/600031-pa-v2-preregistration.md](600031-pa-v2-preregistration.md)；[云盘已核实归档副本](https://docs.google.com/document/d/1n7zSKNAUKjegWtrmKfiwgPGc3aNMT7N3mH58xCX_pvY/edit)，Git blob规则哈希（SHA-1）`9f4dba53d97000c23691ec014230c5a2dce47456`，冻结提交`1b88dc6f7db2a9341f2415667f494c351d8be33a`；回执`research/receipts/600031_pa_v2_preregistration_20261029.json`。
 - 新三类仅为**突破后回踩／上升结构回调／跌破后收回**，候选、确认、失败、超时、阻断、冷却、5日主观察及1/3/10/20日辅助观察均已明确。所有2023-09-06—2026-10-23已见数据只允许E1回溯；新PA-v2前瞻须从**本协议冻结之后**未见结果的正式validated快照开始，标签成熟再评价。
 - 最新本轮只读生产`current.json`仍指向2026-10-24 validated快照，`critical_history_complete=false`，正式manifest文件实读SHA256仍为`118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`；Issue #119仍open。未重新核验全部5406个生产文件，未修改生产指针。
 - 最近**规则冻结前**GitHub Pipeline CI run `40815230007`已核实success（209 passed/2 skipped），仅软件测试；本批纯文档提交不触发该CI，独立真实数据runner仍未验收。趋势/修复E1统计不重复运行，v1.5 ZIP在指定云盘文件夹尚未找到，归档待补。
