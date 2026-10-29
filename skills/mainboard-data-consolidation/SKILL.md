@@ -40,3 +40,11 @@ PR #116 诊断脚本新增 Task01 指针与 manifest SHA256、版本父子关系
 - 两个 Task01 发布失败 run 40562368344、40598869222 的日志都显示 `Drive request failed (410)`，阶段为 Drive 发布；具体 HTTP 请求类型待定位，不能未经证据判为 OAuth 失效、配额不足或会话过期。run 40748947088 检查时仍在运行。
 - `tools/mainboard_remote_probe.py` 新增 `compare_as_of`：两个源均验收且日期相同只返回 `ALIGNED_DATE_ONLY`；不同则返回 `TASK01_BEHIND_GOLD` 或 `GOLD_BEHIND_TASK01`，并以退出码2阻止继续。即使 `ALIGNED_DATE_ONLY` 也不允许生产切换/删除。测试 `tests/test_mainboard_cross_source_date.py`，本轮提交后 CI 必须再次核实。
 - 下一步先排查 410 的具体请求阶段，待 Task01 新正式指针恢复更新后再做 Gold 影子对比。禁止在 Task01 落后时直接去重下载。
+
+
+## 第五轮：2026-10-29 08:00，410与240分钟超时分开处理
+
+- Task01 run 40748947088 已确认 `cancelled`，其发布在 7046 文件仅报告100项 staged 时被取消；这是独立于 HTTP410 的**执行时间瓶颈**。新 run 40786202732 检查时 pending。
+- 历史两次 HTTP410 的请求类型仍未知。新增独立草稿 PR #121：仅对 `resumable_upload` 的410进行有界重试，并对远端文件存在性、元数据、SHA严格核实；未通过真实生产验证，不得当作修复完成。
+- 下一轮先读 PR #121 CI 40791360486 和 Task01 新 run 的终态；若410类型不是 resumable PUT，拒绝合并 PR #121 作为该问题的修复。另行设计独立发布 job / 可恢复 staging，避免240分钟时限导致完整数据永远不能提交。
+- 仍不改冻结 V1，不停止 Gold，不删除旧数据。
