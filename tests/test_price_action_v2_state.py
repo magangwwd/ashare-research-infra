@@ -104,7 +104,7 @@ class PA2StateTests(unittest.TestCase):
         result = m.scan(rows)
         self.assertEqual(result["events"][0]["status"], "confirmed")
         self.assertEqual(result["events"][1]["event_time"], rows[7]["bar_end"])
-        self.assertEqual(result["counts"]["excluded_cooldown"], 6)
+        self.assertEqual(result["counts"]["excluded_cooldown"], 7)  # 1..6 plus day 8 after second confirmation
         self.assertEqual(result["counts"]["candidates"], 2)
 
     def test_future_extension_does_not_rewrite_past_terminal(self):
