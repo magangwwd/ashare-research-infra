@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import argparse
 import calendar
+import csv
 import hashlib
 from html.parser import HTMLParser
 import json
+import io
 import math
 import os
 from pathlib import Path
@@ -20,7 +22,9 @@ from zoneinfo import ZoneInfo
 
 UA = "AshareResearchInfra/1.0 (+https://github.com/magangwwd/ashare-research-infra/issues/124)"
 MAX_BYTES = 25_000_000
-HOSTS = {"home.treasury.gov", "investor.tsmc.com", "investor.cld.tsmc.com", "ir.eia.gov", "data.sec.gov"}
+HOSTS = {"home.treasury.gov", "investor.tsmc.com", "investor.cld.tsmc.com", "ir.eia.gov", "data.sec.gov",
+         "mopsfin.twse.com.tw", "www.ecb.europa.eu", "www.sse.net.cn"}
+TWSE_COMPANIES = {"2330", "2317", "2382", "3231", "2356", "3037", "8046"}
 COMPANIES = {"NVDA": "0001045810", "MU": "0000723125", "MSFT": "0000789019",
              "GOOGL": "0001652044", "META": "0001326801", "AMZN": "0001018724", "AAPL": "0000320193"}
 
@@ -142,6 +146,103 @@ def parse_treasury(raw, now):
     return sorted(records, key=lambda r: r["period"])[-15:]
 
 
+def parse_twse_revenue(raw, now):
+    """Official open dataset; native amounts are NT$ thousands, ROC calendar."""
+    reader = csv.DictReader(io.StringIO(raw.decode('utf-8-sig')))
+    required = {'出表日期', '資料年月', '公司代號', '公司名稱', '營業收入-當月營收',
+                '營業收入-上月營收', '營業收入-去年當月營收', '營業收入-去年同月增減(%)'}
+    if not required.issubset(reader.fieldnames or []):
+        raise ValueError('twse_missing_required_columns')
+    records, seen = [], set()
+    for row in reader:
+        code = row['公司代號'].strip()
+        if code not in TWSE_COMPANIES:
+            continue
+        month = row['資料年月'].strip()
+        if not re.fullmatch(r'\d{5}', month):
+            raise ValueError('twse_invalid_roc_period')
+        year, mon = int(month[:3]) + 1911, int(month[3:])
+        end = date(year, mon, calendar.monthrange(year, mon)[1])
+        if end >= now.astimezone(ZoneInfo('Asia/Taipei')).date():
+            raise ValueError('twse_future_or_incomplete_month')
+        identity = (code, end)
+        if identity in seen:
+            raise ValueError('twse_duplicate_company_period')
+        seen.add(identity)
+        actual, prior, year_ago = (finite(row[k].replace(',', '')) for k in
+                                  ('營業收入-當月營收', '營業收入-上月營收', '營業收入-去年當月營收'))
+        if min(actual, prior, year_ago) <= 0:
+            raise ValueError('twse_invalid_revenue')
+        yoy = finite(row['營業收入-去年同月增減(%)'])
+        if abs((actual / year_ago - 1) * 100 - yoy) > .02:
+            raise ValueError('twse_yoy_arithmetic_mismatch')
+        table_date = row['出表日期'].strip()
+        if not re.fullmatch(r'\d{7}', table_date):
+            raise ValueError('twse_invalid_table_date')
+        made = date(int(table_date[:3]) + 1911, int(table_date[3:5]), int(table_date[5:]))
+        if made > now.astimezone(ZoneInfo('Asia/Taipei')).date():
+            raise ValueError('twse_future_table_date')
+        records.append(observation('twse_monthly_revenue_' + code, end.isoformat(), actual, 'TWD_thousand',
+            company=code, company_name=row['公司名稱'], exchange='TWSE', prior=prior, year_ago=year_ago,
+            yoy_pct=yoy, mom_pct=(actual / prior - 1) * 100,
+            dataset_table_date=made.isoformat(),
+            publication_note='Dataset table date is not the original company release timestamp.'))
+    if not records:
+        raise ValueError('twse_target_companies_missing')
+    return records
+
+
+def parse_ecb_fx(raw, now):
+    """Reference rates against EUR; explicitly labelled calculated cross rate."""
+    root = ET.fromstring(raw)
+    blocks = [node for node in root.iter() if node.attrib.get('time')]
+    if len(blocks) != 1:
+        raise ValueError('ecb_expected_one_reference_date')
+    day = date.fromisoformat(blocks[0].attrib['time'])
+    if day > now.astimezone(ZoneInfo('Europe/Berlin')).date():
+        raise ValueError('ecb_future_reference_date')
+    rates = {}
+    for node in blocks[0].iter():
+        code = node.attrib.get('currency')
+        if code:
+            if code in rates:
+                raise ValueError('ecb_duplicate_currency')
+            rates[code] = finite(node.attrib['rate'])
+            if rates[code] <= 0:
+                raise ValueError('ecb_nonpositive_reference_rate')
+    if not {'USD', 'CNY', 'JPY'}.issubset(rates):
+        raise ValueError('ecb_required_currency_missing')
+    records = [observation('ecb_EUR_' + code + '_reference', day.isoformat(), rates[code], code + '_per_EUR',
+                 quote_kind='central_bank_reference_not_executable_quote')
+               for code in ('USD', 'CNY', 'JPY', 'AUD', 'HKD') if code in rates]
+    records.append(observation('ecb_USD_CNY_reference_cross', day.isoformat(), rates['CNY'] / rates['USD'],
+        'CNY_per_USD', derived=True, formula='CNY_per_EUR / USD_per_EUR',
+        quote_kind='calculated_reference_cross_not_DXY_or_live_USDCNY'))
+    return records
+
+
+def parse_scfi(raw, now):
+    parser = TableRows()
+    parser.feed(raw.decode('utf-8-sig'))
+    headers = [r for r in parser.rows if len(r) >= 6 and '本期' in r[4] and '上期' in r[3]]
+    values = [r for r in parser.rows if len(r) >= 6 and 'Comprehensive Index' in r[0]]
+    if len(headers) != 1 or len(values) != 1:
+        raise ValueError('scfi_dated_composite_table_missing')
+    match = [re.search(r'\d{4}-\d{2}-\d{2}', headers[0][i]) for i in (3, 4)]
+    if not all(match):
+        raise ValueError('scfi_reference_dates_missing')
+    old, day = [date.fromisoformat(m.group()) for m in match]
+    if old >= day or day > now.astimezone(ZoneInfo('Asia/Shanghai')).date():
+        raise ValueError('scfi_invalid_date_sequence')
+    prior, actual, change = [finite(values[0][i].replace(',', '')) for i in (3, 4, 5)]
+    if min(prior, actual) <= 0 or abs(actual - prior - change) > .03:
+        raise ValueError('scfi_composite_arithmetic_mismatch')
+    return [observation('shanghai_export_container_spot_freight_composite_scfi', day.isoformat(), actual,
+                        'index_points', prior=prior, prior_period=old.isoformat(), change=change,
+                        index_type='SCFI_not_BDI_not_SCFIS',
+                        coverage='composite_only_route_prices_not_collected')]
+
+
 def parse_eia(raw, now):
     doc = json.loads(raw)
     meta = doc["metadata"]
@@ -231,7 +332,7 @@ def parse_sec(submissions_raw, facts_raw, now, ticker, cik):
 
 def freshness(source_id, records, now):
     latest = max(date.fromisoformat(r["period"]) for r in records)
-    if source_id == "tsmc":
+    if source_id in ("tsmc", "twse_monthly"):
         local = now.astimezone(ZoneInfo("Asia/Taipei")).date()
         first = local.replace(day=1)
         expected = first - timedelta(days=1)
@@ -240,10 +341,10 @@ def freshness(source_id, records, now):
             expected = expected.replace(day=1) - timedelta(days=1)
         stale = latest < expected
         policy = "previous_month_after_day_10_conservative_not_exact_release_calendar"
-    elif source_id == "treasury":
+    elif source_id in ("treasury", "ecb_fx"):
         stale = (now.date() - latest).days > 7
         policy = "7_calendar_day_ceiling_exact_us_holiday_calendar_not_integrated"
-    elif source_id == "eia":
+    elif source_id in ("eia", "scfi"):
         stale = (now.date() - latest).days > 14
         policy = "14_calendar_day_ceiling_exact_exception_calendar_not_integrated"
     else:
@@ -280,7 +381,7 @@ def capture(records, source_id, now, previous):
         record["eligible_as_new_event"] = kind == "new_publication"
 
 
-def collect(output, now, fetch=download, previous=None, companies=None):
+def collect(output, now, fetch=download, previous=None, companies=None, extra_sources=False):
     if now.tzinfo is None:
         raise ValueError("timezone_required")
     output = Path(output)
@@ -309,6 +410,8 @@ def collect(output, now, fetch=download, previous=None, companies=None):
             state = freshness(source_id, records, now)
             state.update(source_id=source_id, source_urls=urls, raw_files=provenance,
                          observation_count=len(records), fetched_at=stamp(now))
+            if source_id == 'twse_monthly':
+                state['missing_companies'] = sorted(TWSE_COMPANIES - {r['company'] for r in records})
             if state["status"] == "accepted":
                 capture(records, source_id, now, previous)
                 for record in records:
@@ -327,6 +430,13 @@ def collect(output, now, fetch=download, previous=None, companies=None):
     treasury = f"https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml?data=daily_treasury_real_yield_curve&field_tdr_date_value={now.year}"
     source("treasury", [treasury], lambda raw: parse_treasury(raw, now))
     source("eia", ["https://ir.eia.gov/wpsr/psw00.json"], lambda raw: parse_eia(raw, now))
+    if extra_sources:
+        source('twse_monthly', ['https://mopsfin.twse.com.tw/opendata/t187ap05_L.csv'],
+               lambda raw: parse_twse_revenue(raw, now))
+        source('ecb_fx', ['https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml'],
+               lambda raw: parse_ecb_fx(raw, now))
+        source('scfi', ['https://www.sse.net.cn/index/singleIndex?indexType=scfi'],
+               lambda raw: parse_scfi(raw, now))
     for ticker, cik in (COMPANIES if companies is None else companies).items():
         source("sec_" + ticker.lower(), [f"https://data.sec.gov/submissions/CIK{cik}.json",
             f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"],
@@ -334,9 +444,10 @@ def collect(output, now, fetch=download, previous=None, companies=None):
         if fetch is download:
             time.sleep(1)  # Sequential, far below SEC's maximum request rate.
     count = sum(s["status"] == "accepted" for s in sources)
+    complete = count == len(sources) and not any(s.get('missing_companies') for s in sources)
     snapshot = {"schema": "overseas_observations_v1", "generated_at_utc": stamp(now),
         "mode": "OFFICIAL_DATA_ONLY_NO_LLM_NO_TRADING", "bootstrap": not bool(previous),
-        "quality": "passed" if count == len(sources) else "passed_with_gaps" if count else "blocked",
+        "quality": "passed" if complete else "passed_with_gaps" if count else "blocked",
         "sources": sources, "observations": observations, "raw_files": raw_files,
         "limitations": ["Exact release calendars not yet integrated; see per-source conservative freshness policy.",
                          "No market consensus or capital-expenditure guidance is synthesized.",
@@ -354,7 +465,7 @@ def main():
     parser.add_argument("--previous", type=Path)
     args = parser.parse_args()
     previous = json.loads(args.previous.read_text()) if args.previous and args.previous.exists() else None
-    snapshot = collect(args.output, datetime.now(timezone.utc), previous=previous)
+    snapshot = collect(args.output, datetime.now(timezone.utc), previous=previous, extra_sources=True)
     print(json.dumps({"quality": snapshot["quality"], "sources": [{k: s.get(k) for k in
           ("source_id", "status", "latest_period", "error_type")} for s in snapshot["sources"]]}))
     return 1 if snapshot["quality"] == "blocked" else 0

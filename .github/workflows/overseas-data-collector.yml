@@ -3,7 +3,7 @@ run-name: Overseas data ${{ github.event_name }} - no LLM
 
 on:
   push:
-    branches: [main, feature/overseas-data-pilot-20261029]
+    branches: [main, feature/overseas-data-pilot-20261029, feature/overseas-data-expansion-20261029]
     paths:
       - 'overseas_research/**'
       - 'tests/test_overseas_research.py'
@@ -46,7 +46,9 @@ jobs:
     if: >-
       github.event_name != 'pull_request' &&
       (github.ref == 'refs/heads/main' ||
-       (github.event_name == 'push' && github.ref == 'refs/heads/feature/overseas-data-pilot-20261029'))
+       (github.event_name == 'push' &&
+        (github.ref == 'refs/heads/feature/overseas-data-pilot-20261029' ||
+         github.ref == 'refs/heads/feature/overseas-data-expansion-20261029')))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

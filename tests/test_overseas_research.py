@@ -47,6 +47,42 @@ class Sources(unittest.TestCase):
         with self.assertRaises(ValueError):
             c.parse_tsmc(TSMC.replace(b'New Taiwan Dollars', b'US Dollars'), NOW)
 
+    def test_twse_native_unit_roc_calendar_and_arithmetic(self):
+        raw = ('出表日期,資料年月,公司代號,公司名稱,營業收入-當月營收,營業收入-上月營收,營業收入-去年當月營收,營業收入-去年同月增減(%)\n'
+               '1151017,11509,2330,台積電,150000,125000,100000,50\n').encode()
+        row = c.parse_twse_revenue(raw, NOW)[0]
+        self.assertEqual((row['period'], row['unit'], row['actual']), ('2026-09-30', 'TWD_thousand', 150000))
+        self.assertAlmostEqual(row['mom_pct'], 20)
+        self.assertIsNone(row['published_at'])
+        with self.assertRaisesRegex(ValueError, 'arithmetic'):
+            c.parse_twse_revenue(raw.replace(b',50\n', b',500\n'), NOW)
+
+    def test_twse_duplicate_company_is_rejected(self):
+        raw = ('出表日期,資料年月,公司代號,公司名稱,營業收入-當月營收,營業收入-上月營收,營業收入-去年當月營收,營業收入-去年同月增減(%)\n'
+               '1151017,11509,2330,台積電,150000,125000,100000,50\n'
+               '1151017,11509,2330,台積電,150000,125000,100000,50\n').encode()
+        with self.assertRaisesRegex(ValueError, 'duplicate'):
+            c.parse_twse_revenue(raw, NOW)
+
+    def test_ecb_cross_rate_direction_and_reference_label(self):
+        raw = b'<Envelope><Cube><Cube time="2026-10-28"><Cube currency="USD" rate="1.1"/><Cube currency="CNY" rate="7.7"/><Cube currency="JPY" rate="170"/></Cube></Cube></Envelope>'
+        rows = c.parse_ecb_fx(raw, NOW)
+        self.assertAlmostEqual(rows[-1]['actual'], 7)
+        self.assertEqual(rows[-1]['unit'], 'CNY_per_USD')
+        self.assertTrue(rows[-1]['derived'])
+        self.assertIn('not_DXY', rows[-1]['quote_kind'])
+        with self.assertRaisesRegex(ValueError, 'future'):
+            c.parse_ecb_fx(raw.replace(b'2026-10-28', b'2026-11-01'), NOW)
+
+    def test_scfi_composite_dates_and_arithmetic(self):
+        raw = ('<table><tr><th>航线</th><th>单位</th><th>权重</th><th>上期2026-10-16</th><th>本期2026-10-23</th><th>变动</th></tr>'
+               '<tr><td>综合指数 Comprehensive Index</td><td></td><td></td><td>3679.58</td><td>3681.34</td><td>1.76</td></tr></table>').encode()
+        row = c.parse_scfi(raw, NOW)[0]
+        self.assertEqual((row['period'], row['actual']), ('2026-10-23', 3681.34))
+        self.assertEqual(row['unit'], 'index_points')
+        with self.assertRaisesRegex(ValueError, 'arithmetic'):
+            c.parse_scfi(raw.replace(b'1.76', b'100.00'), NOW)
+
     def test_treasury_real_not_nominal_tag(self):
         self.assertEqual(c.parse_treasury(TREASURY, NOW)[0]["actual"], 2.67)
         with self.assertRaises(ValueError):
