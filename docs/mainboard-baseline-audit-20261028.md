@@ -114,3 +114,13 @@
 - Google Drive 通过正式文件ID重新下载：Task01 `current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`，as_of=2026-10-24，manifest SHA256仍为 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`；Gold `manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`，as_of=2026-10-28，质量标志均true。**两侧正式日期仍差4个自然日**，且 Task01 历史完整性仍false。
 - 为解决“下载/验收+全量上传共用240分钟job”的独立瓶颈，已新建 **draft [PR #123](https://github.com/magangwwd/ashare-research-infra/pull/123)**：仅当 main 分支 Task01 运行被取消、`task01` job 耗时235–265分钟且同一run同时具有验收和checkpoint artifact时，才允许独立350分钟发布；与原Task01共用并发锁，不重新下载Tushare；拒绝旧于当前正式日期的checkpoint以避免倒退。该草稿未合并/未生产执行，350分钟是否足够仍需实测。PR #123 CI runs [40815247495](https://github.com/magangwwd/ashare-research-infra/actions/runs/40815247495)、[40815261324](https://github.com/magangwwd/ashare-research-infra/actions/runs/40815261324) 启动后尚待最终核验。
 - 下一轮先看 Task01 #40786202732 终态与410操作标签，再审核 #123 的安全边界及CI；若合并前仍无可靠证据，不启用自动发布恢复。保持双下载、旧指针、冻结V1与旧数据不动。
+
+
+## 2026-10-29 16:00 北京时间第七轮：第二次240分钟取消与恢复工件安全加固
+
+- main SHA `e121a48231cc8d35ebcd3d64e88e6f217bd869b6`；整合 PR #116 未合并，Task01 正式发布仍是优先阻塞。
+- Task01 [run 40786202732](https://github.com/magangwwd/ashare-research-infra/actions/runs/40786202732) 已从 in_progress 变为 **completed/cancelled**，`task01` 的更新、验收、恢复演练全部 success，`Publish accepted snapshot to Drive` 为 cancelled。**不是成功发布**。
+- 同一 run 的 `task01-validation-report` artifact ID `12871950683`（459789字节）与 `task01-checkpoint` artifact ID `12878879550`（3424299634字节）均存在，checkpoint ZIP SHA256=`f2526309edea55fe5bcffb9e77ac032f870b63ae6cff5f9addc1d3b2a5ff99bd`，到期时间 `2026-11-01T06:59:59Z`；仅有工件不代表数据已经发布。
+- 重新读取 Drive 正式 JSON：Task01 `current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`，`snapshot_as_of=2026-10-24`；Gold `manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`，`as_of_date=2026-10-28`，质量标志仍 true。Task01 仍落后，不得切换。
+- PR #123 前两轮离线 CI `40815247495`、`40815261324` 和后续 `40815389698` 均 completed/success；本轮进一步更新 PR #123：恢复工件要求 GitHub 提供合法 SHA256 digest 且不超过5GB，下载后对 ZIP 做 SHA256 校验，并在解包 tar 前删除大 ZIP 释放磁盘空间。提交 `de0522719c92f9af7c0bb858735a49e8b54a6fe5`、`4bb7c285af3f91beb2f90788974a2b741a8d93ad`。**新增补丁的 CI 尚待重新确认**，PR 仍为草稿，未在生产启用。
+- 下一轮优先复核新 CI、检查取消 job 的240分钟耗时及完整日志；评估 workflow_run 自动重试的权限、磁盘和计费风险，确认安全后才允许合并。不要为了诊断重复启动大规模全量下载。
