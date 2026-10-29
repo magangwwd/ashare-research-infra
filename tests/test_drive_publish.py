@@ -296,3 +296,37 @@ def test_unconfirmed_final_chunk_stays_failed(tmp_path, monkeypatch):
     monkeypatch.setattr(dp.time, "sleep", lambda _: None)
     with pytest.raises(dp.PublishError, match="not completed"):
         dp.Drive(Session()).upload("parent", path.name, path)
+
+
+def test_timeout_recovery_rejects_stale_checkpoint_without_staging(tmp_path):
+    drive = MemoryDrive()
+    pointer = json.loads(drive.read("pointer"))
+    pointer["snapshot_as_of"] = "2026-10-28"
+    drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+    before = copy.deepcopy(drive.files)
+    with pytest.raises(dp.PublishError, match="older than current production"):
+        dp.publish(drive, "root", snapshot(tmp_path),
+                   {"passed": True, "as_of": "2026-10-27"}, {}, tmp_path)
+    assert drive.files == before
+
+
+def test_timeout_recovery_accepts_equal_date_for_history_repair(tmp_path):
+    drive = MemoryDrive()
+    pointer = json.loads(drive.read("pointer"))
+    pointer["snapshot_as_of"] = "2026-10-03"
+    drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+    report = dp.publish(drive, "root", snapshot(tmp_path),
+                        {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path)
+    assert report["passed"]
+
+
+def test_timeout_recovery_rejects_malformed_previous_date_without_staging(tmp_path):
+    drive = MemoryDrive()
+    pointer = json.loads(drive.read("pointer"))
+    pointer["snapshot_as_of"] = "not-a-date"
+    drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+    before = copy.deepcopy(drive.files)
+    with pytest.raises(dp.PublishError, match="date cannot be compared"):
+        dp.publish(drive, "root", snapshot(tmp_path),
+                   {"passed": True, "as_of": "2026-10-29"}, {}, tmp_path)
+    assert drive.files == before
