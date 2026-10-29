@@ -1,0 +1,48 @@
+{
+  "schema_version": "ETF_SCOPED_REVIEW_NOTE_V1_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "branch": "research/etf-div004-same-day-unit-event-guard-20261028",
+  "stacked_pr": 117,
+  "source_reviewed_head_sha": "87d26d2e1e0f25b1a88a06b8d0280bc8d4b1b994",
+  "scope": "Reject same-ETF unit conversion on a cash dividend registration date because the registry lacks verified event ordering; preserve unrelated ETF events. Synthetic accounting only.",
+  "source_blobs": {
+    "etf_single_rotation/experiments/dividend_receivable_ledger.py": "6e71a181d8279dd06b815c7d6b2a80897a4b6776",
+    "etf_single_rotation/experiments/test_same_day_unit_event_guard.py": "e013f5b409ca84ce394256651eed7b4a7631f974"
+  },
+  "checks": {
+    "github_source_readback_verified": true,
+    "new_synthetic_test_cases": 2,
+    "synthetic_test_cases_total_in_module": 8,
+    "python_tests_executed": false,
+    "github_ci_for_exact_sha": false,
+    "tests_passed": null,
+    "tests_failed": null
+  },
+  "latest_related_successful_ci": {
+    "run_id": 40537089283,
+    "job_id": 122305147060,
+    "head_sha": "7fad36bfd6b0bb1b71f82e6e4986f85a7dd7ed8e",
+    "scope": "historical Drive evidence structure; not these changes"
+  },
+  "historical_research": {
+    "run_id": 39599580852,
+    "job_id": 119220366735,
+    "artifact_id": 12345747366,
+    "artifact_expired": false,
+    "prior_drive_integrity_verification": "48/48 historically reported, not repeated in this change"
+  },
+  "drive_readback": {
+    "performed_for_this_change": false,
+    "matching_files": 0,
+    "differences": 0,
+    "metadata_only_spot_checks": 2,
+    "sha256_recalculated": false
+  },
+  "formal_sop_receipt_issued": false,
+  "blocker": "No actual Python/GitHub CI run for PR #117 current code; no independent issuer record-date ordering, prices/fund_adj or cash-settlement verification. ETF-DIV-004 not VERIFIED_DONE, PAPER-005 dependency blocked.",
+  "next_action": "On explicit authorization, run one exact-head offline synthetic CI, inspect Run/Job/log and verify source SHA; then independently reconcile issuer actions, raw quotes, adjustment factors, and settled cash. Do not repeat historical backtest, unlock PAPER-005, or trade.",
+  "created_at_utc": "2026-10-29T12:06:04.638Z"
+}

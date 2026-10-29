@@ -1,0 +1,44 @@
+{
+  "schema_version": "ETF_SCOPED_REVIEW_NOTE_V1_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "scope": "Synthetic-only fail-closed guard: reject distinct cash dividends sharing (symbol,registration_date) in the snapshot API before set deduplication. Preserve valid same-date dividends for different ETF symbols.",
+  "source_branch": "research/etf-div004-same-day-unit-event-guard-20261028",
+  "source_head_before_note": "14905fd33f37c9177a5e6257a124f1d3f2b135e5",
+  "source_blobs": {
+    "etf_single_rotation/experiments/dividend_receivable_ledger.py": "2351462dec5a82113a569ab3d507997d76396645",
+    "etf_single_rotation/experiments/test_same_day_unit_event_guard.py": "bedb5759bad3995c7ace8d9e164953a68f762cbb"
+  },
+  "checks": {
+    "github_code_readback_verified": true,
+    "synthetic_tests_added_this_review": 2,
+    "synthetic_tests_total_in_module": 10,
+    "python_tests_executed": false,
+    "exact_sha_ci_run": false,
+    "tests_passed": null,
+    "tests_failed": null,
+    "formal_sop_receipt_issued": false
+  },
+  "latest_relevant_ci": {
+    "run_id": 40537089283,
+    "job_id": 122305147060,
+    "head_sha": "7fad36bfd6b0bb1b71f82e6e4986f85a7dd7ed8e",
+    "scope": "historical Drive evidence structure only; does not test this source"
+  },
+  "historical_research": {
+    "run_id": 39599580852,
+    "artifact_id": 12345747366,
+    "artifact_expired": false,
+    "drive_files_historically_byte_verified": "48/48 prior archived evidence",
+    "drive_files_currently_byte_rehashed": 0,
+    "drive_metadata_checked": 2
+  },
+  "blocked_by": [
+    "No exact-head Python/GitHub CI validation",
+    "Independent issuer dividend/record-date/cash settlement evidence incomplete",
+    "Independent raw prices/fund_adj reconciliation incomplete"
+  ],
+  "next_action": "When explicitly authorized, execute a single bounded exact-head offline synthetic test run for PR #114 and #117, inspect logs and hashes, then continue issuer/price/factor/cash reconciliation. Do not backtest full history, unlock PAPER-005, or trade."
+}
