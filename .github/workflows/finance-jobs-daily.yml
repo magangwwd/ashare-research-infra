@@ -1,18 +1,7 @@
 name: Finance Jobs Daily to Drive
+# Paused by user on 2026-10-30: manual execution only; historical data retained.
 on:
-  schedule:
-    - cron: '35 23 * * *' # 07:35 Asia/Shanghai (next day); best effort
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/finance-jobs-daily.yml'
-      - 'finance_jobs_site/data/opportunities.json'
-      - 'finance_jobs_site/scripts/qq_sheet_sync.py'
-      - 'finance_jobs_site/scripts/create_snapshot.py'
-      - 'finance_jobs_site/scripts/read_drive.py'
-      - 'finance_jobs_site/scripts/publish_drive.py'
-      - 'finance_jobs_site/scripts/extract_public.py'
 permissions:
   contents: read
 concurrency:
