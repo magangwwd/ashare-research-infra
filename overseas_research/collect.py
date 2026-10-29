@@ -318,7 +318,8 @@ def collect(output, now, fetch=download, previous=None, companies=None):
             sources.append(state)
         except Exception as exc:
             sources.append({"source_id": source_id, "source_urls": urls, "status": "missing_or_invalid",
-                            "error_type": type(exc).__name__, "raw_files": provenance,
+                            "error_type": type(exc).__name__, "http_status": getattr(exc, "code", None),
+                            "raw_files": provenance,
                             "observation_count": 0, "fetched_at": stamp(now)})
 
     year = now.astimezone(ZoneInfo("Asia/Taipei")).year
