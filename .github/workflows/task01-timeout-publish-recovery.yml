@@ -1,0 +1,127 @@
+name: Task 01 timeout-only Drive publication recovery
+
+on:
+  workflow_run:
+    workflows: ["Task 01 data infrastructure"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+# Serialize with the existing Task01 writer; never overlap a daily update.
+concurrency:
+  group: task01-data
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    # Never recover manual/early cancellations or failed (e.g. HTTP 410) runs.
+    if: >-
+      github.event.workflow_run.conclusion == 'cancelled' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Require timeout-like Task01 job and same-run validated checkpoint
+        id: gate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$RUNNER_TEMP/source-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/jobs?per_page=100" > "$RUNNER_TEMP/source-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/source-artifacts.json"
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          source = json.loads((root / "source-run.json").read_text())
+          jobs = json.loads((root / "source-jobs.json").read_text()).get("jobs", [])
+          artifacts = json.loads((root / "source-artifacts.json").read_text()).get("artifacts", [])
+          repo = os.environ["GITHUB_REPOSITORY"]
+          if (source.get("conclusion") != "cancelled"
+                  or source.get("head_branch") != "main"
+                  or (source.get("head_repository") or {}).get("full_name") != repo
+                  or source.get("event") not in ("schedule", "workflow_dispatch")):
+              raise SystemExit("BLOCKED: source is not an authorized cancelled main-branch Task01 run")
+          task_jobs = [j for j in jobs if j.get("name") == "task01" and j.get("conclusion") == "cancelled"]
+          if len(task_jobs) != 1:
+              raise SystemExit("BLOCKED: cancelled Task01 job is not unique")
+          job = task_jobs[0]
+          try:
+              start = datetime.fromisoformat(job["started_at"].replace("Z", "+00:00"))
+              end = datetime.fromisoformat(job["completed_at"].replace("Z", "+00:00"))
+              minutes = (end - start).total_seconds() / 60
+          except (KeyError, TypeError, ValueError):
+              raise SystemExit("BLOCKED: missing job timing")
+          if not 235 <= minutes <= 265:
+              raise SystemExit("BLOCKED: cancellation does not match 240-minute timeout window")
+          def one(name):
+              hits = [a for a in artifacts if a.get("name") == name and not a.get("expired")]
+              if len(hits) != 1:
+                  raise SystemExit("BLOCKED: required same-run artifact missing or ambiguous: " + name)
+              return hits[0]
+          one("task01-validation-report")
+          checkpoint = one("task01-checkpoint")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write("checkpoint_id=" + str(int(checkpoint["id"])) + "\n")
+          print("PASS: timeout-like cancelled Task01 and validated same-run checkpoint")
+          PY
+      - name: Restore only the source-run checkpoint
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHECKPOINT_ID: ${{ steps.gate.outputs.checkpoint_id }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$CHECKPOINT_ID/zip" > "$RUNNER_TEMP/checkpoint.zip"
+          unzip -p "$RUNNER_TEMP/checkpoint.zip" task01-state.tar.gz > "$RUNNER_TEMP/task01-state.tar.gz"
+          python - <<'PY'
+          import tarfile
+          import os
+          from pathlib import Path
+          archive = Path(os.environ["RUNNER_TEMP"]) / "task01-state.tar.gz"
+          with tarfile.open(archive, "r:gz") as tf:
+              for member in tf.getmembers():
+                  p = Path(member.name)
+                  if p.is_absolute() or ".." in p.parts or member.issym() or member.islnk():
+                      raise SystemExit("BLOCKED: unsafe checkpoint archive member")
+              tf.extractall(".", filter="data")
+          PY
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("data/current/acceptance.json")
+          if not p.is_file() or not json.loads(p.read_text()).get("passed"):
+              raise SystemExit("BLOCKED: restored checkpoint lacks accepted current snapshot")
+          print("PASS: accepted snapshot restored; no new Tushare downloads")
+          PY
+      - name: Install publication dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Revalidate and publish immutable snapshot (pointer last)
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+          PYTHONUNBUFFERED: '1'
+        run: python -m data_pipeline.drive_publish
+      - name: Save successful publication receipt
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: task01-drive-publication-report
+          path: metadata/drive_publish.json
+          retention-days: 30
+          if-no-files-found: error
