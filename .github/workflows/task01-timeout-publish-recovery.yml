@@ -77,8 +77,15 @@ jobs:
               return hits[0]
           one("task01-validation-report")
           checkpoint = one("task01-checkpoint")
+          # Fail closed on missing digest or an implausibly large artifact.
+          digest = checkpoint.get("digest") or ""
+          if (not digest.startswith("sha256:") or len(digest) != 71
+                  or any(c not in "0123456789abcdef" for c in digest[7:])
+                  or not 0 < int(checkpoint.get("size_in_bytes") or 0) <= 5_000_000_000):
+              raise SystemExit("BLOCKED: checkpoint digest or size invalid")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write("checkpoint_id=" + str(int(checkpoint["id"])) + "\n")
+              f.write("checkpoint_digest=" + digest[7:] + "\n")
           print("PASS: timeout-like cancelled Task01 and validated same-run checkpoint")
           PY
       - name: Restore only the source-run checkpoint
@@ -86,10 +93,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           CHECKPOINT_ID: ${{ steps.gate.outputs.checkpoint_id }}
+          CHECKPOINT_DIGEST: ${{ steps.gate.outputs.checkpoint_digest }}
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$CHECKPOINT_ID/zip" > "$RUNNER_TEMP/checkpoint.zip"
+          printf '%s  %s\n' "$CHECKPOINT_DIGEST" "$RUNNER_TEMP/checkpoint.zip" | sha256sum -c -
           unzip -p "$RUNNER_TEMP/checkpoint.zip" task01-state.tar.gz > "$RUNNER_TEMP/task01-state.tar.gz"
+          # GitHub hosted runners have limited disk; free the large zip before untarring.
+          rm -f "$RUNNER_TEMP/checkpoint.zip"
           python - <<'PY'
           import tarfile
           import os
