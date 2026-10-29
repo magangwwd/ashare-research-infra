@@ -412,3 +412,35 @@ def test_resume_stage_rejects_wrong_remote_size_without_pointer_change(tmp_path)
         dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
                    {}, tmp_path, resume_stage_id=stage)
     assert drive.read("pointer") == before
+
+
+def test_resume_quota_counts_only_missing_verified_bytes(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, original_id = _seed_cancelled_stage(drive, items[0])
+    missing_bytes = items[1]["bytes"]
+    # Enough for missing files and a manifest, but not another full snapshot.
+    quota = {"remaining_bytes": missing_bytes + 1024 * 1024}
+    assert quota["remaining_bytes"] < sum(i["bytes"] for i in items) + 1024 * 1024
+    report = dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                        {}, tmp_path, quota=quota, resume_stage_id=stage)
+    assert report["passed"]
+    pointer = json.loads(drive.read("pointer"))
+    manifest = json.loads(drive.read(pointer["manifest_file_id"]))
+    assert manifest["files"][0]["file_id"] == original_id
+    assert drive.upload_count == 3  # staged, missing, manifest
+
+
+def test_resume_quota_insufficient_for_missing_bytes_fails_without_writes(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, _ = _seed_cancelled_stage(drive, items[0])
+    before_pointer = drive.read("pointer")
+    before_files = copy.deepcopy(drive.files)
+    quota = {"remaining_bytes": items[1]["bytes"] + 1024 * 1024 - 1}
+    with pytest.raises(dp.PublishError, match="insufficient"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                   {}, tmp_path, quota=quota, resume_stage_id=stage)
+    assert drive.read("pointer") == before_pointer
+    assert drive.files == before_files
+    assert drive.upload_count == 1
