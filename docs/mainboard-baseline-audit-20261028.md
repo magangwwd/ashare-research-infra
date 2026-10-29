@@ -104,3 +104,13 @@
 - 通过当前 `current.json.manifest_file_id=1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1` 实际下载 `production_manifest.json`（1,371,895字节），本地重算 SHA256=`118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，与 pointer 中声明完全相同。
 - Manifest `validated=true`、`snapshot_as_of=2026-10-24`、`version=2026-10-24T211915.119571_0000-7c30e07d`、`file_count=5406`、`total_bytes=2331724247`，与 pointer 一致；文件条目声明字节数合计也为 2,331,724,247。
 - 此次仅验证 Manifest 本身和元数据一致性，**没有下载核验5406个底层分区**，也不证明最新数据已发布。
+
+
+## 2026-10-29 12:00 北京时间第六轮：分离240分钟超时与410故障
+
+- main SHA 仍为 `e121a48231cc8d35ebcd3d64e88e6f217bd869b6`；整合 PR #116 为 draft/open。PR #121（410有界恢复）仍为 draft/open，CI `40791360486` 与 `40791381245` 均 completed/success，**不代表真实410已修复**。
+- Task01 run [40748947088](https://github.com/magangwwd/ashare-research-infra/actions/runs/40748947088) 终态 cancelled，重新从完整日志确认：发布于 2026-10-28 21:07 UTC 启动，21:10 创建 staging，22:51 已到 **3600/7046** 文件，22:51:54 被取消；**更正前一轮“仅100文件”的过时进度**。约101分钟完成3500文件上传；结合前置数据处理及全量远端SHA核验，现有240分钟合并job预算明显不足。
+- Task01 新 run [40786202732](https://github.com/magangwwd/ashare-research-infra/actions/runs/40786202732) 截至本轮仍 in_progress；其 `task01` job 已通过更新、验收、恢复演练并产出 `task01-validation-report` artifact，正在 `Publish accepted snapshot to Drive`。未见成功发布凭证；进行中的 job 日志读取返回404，不能臆断上传进度或410操作类型。
+- Google Drive 通过正式文件ID重新下载：Task01 `current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`，as_of=2026-10-24，manifest SHA256仍为 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`；Gold `manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`，as_of=2026-10-28，质量标志均true。**两侧正式日期仍差4个自然日**，且 Task01 历史完整性仍false。
+- 为解决“下载/验收+全量上传共用240分钟job”的独立瓶颈，已新建 **draft [PR #123](https://github.com/magangwwd/ashare-research-infra/pull/123)**：仅当 main 分支 Task01 运行被取消、`task01` job 耗时235–265分钟且同一run同时具有验收和checkpoint artifact时，才允许独立350分钟发布；与原Task01共用并发锁，不重新下载Tushare；拒绝旧于当前正式日期的checkpoint以避免倒退。该草稿未合并/未生产执行，350分钟是否足够仍需实测。PR #123 CI runs [40815247495](https://github.com/magangwwd/ashare-research-infra/actions/runs/40815247495)、[40815261324](https://github.com/magangwwd/ashare-research-infra/actions/runs/40815261324) 启动后尚待最终核验。
+- 下一轮先看 Task01 #40786202732 终态与410操作标签，再审核 #123 的安全边界及CI；若合并前仍无可靠证据，不启用自动发布恢复。保持双下载、旧指针、冻结V1与旧数据不动。
