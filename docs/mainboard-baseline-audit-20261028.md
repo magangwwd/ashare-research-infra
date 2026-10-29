@@ -124,3 +124,14 @@
 - 重新读取 Drive 正式 JSON：Task01 `current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`，`snapshot_as_of=2026-10-24`；Gold `manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`，`as_of_date=2026-10-28`，质量标志仍 true。Task01 仍落后，不得切换。
 - PR #123 前两轮离线 CI `40815247495`、`40815261324` 和后续 `40815389698` 均 completed/success；本轮进一步更新 PR #123：恢复工件要求 GitHub 提供合法 SHA256 digest 且不超过5GB，下载后对 ZIP 做 SHA256 校验，并在解包 tar 前删除大 ZIP 释放磁盘空间。提交 `de0522719c92f9af7c0bb858735a49e8b54a6fe5`、`4bb7c285af3f91beb2f90788974a2b741a8d93ad`。**新增补丁的 CI 尚待重新确认**，PR 仍为草稿，未在生产启用。
 - 下一轮优先复核新 CI、检查取消 job 的240分钟耗时及完整日志；评估 workflow_run 自动重试的权限、磁盘和计费风险，确认安全后才允许合并。不要为了诊断重复启动大规模全量下载。
+
+
+### 2026-10-29 20:00 CST：第八轮独立核验（只读）
+
+- main 最新 SHA：`19d92f10476bb2c40a2da84a64ffd74194b77685`。
+- Task01 源运行 `40786202732` 的 `task01` job `cancelled`；完整日志最后可确认 **4400/7069** staged files（2026-10-29T06:55:44Z）。本次仍未进入逐文件远端 SHA256 读回与 current pointer 切换。
+- 同源 run 工件：`task01-validation-report` #`12871950683`；`task01-checkpoint` #`12878879550`，3,424,299,634 bytes，SHA256 `f2526309edea55fe5bcffb9e77ac032f870b63ae6cff5f9addc1d3b2a5ff99bd`，过期 `2026-11-01T06:59:59Z`。此SHA是 GitHub 工件ZIP摘要，**不是云盘已发布快照摘要**。
+- Google Drive 实读 `Ashare_Quant/current.json`（file ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`）：`snapshot_as_of=2026-10-24`、`validated=true`、`critical_history_complete=false`；其正式 `production_manifest.json`（file ID `1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1`）实际 SHA256=`118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，与 pointer 相符，5406文件、2,331,724,247字节。
+- Gold 正式 `main_board/manifest.json`（file ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`）：`as_of_date=2026-10-28`，主键与OHLC质量标志true；记录 instruments 3486行、daily_snapshot 3190行。Task01 仍落后，禁止替换。
+- PR #123 上轮 CI #`40838902886` success；本轮补丁 `fcaf77966f99f3025809c4ebda8ca5e10b19c2ea`、`f56b2484f4a470da16a8c1b16057c733bc9652f5` 增加仅在 **已验收且发布步骤取消** 时恢复及tar解压路径/类型白名单；后续测试修正提交 `a3e2eec8a378ee1ff6e33a115812c02a4ffc9aa2`，新CI待验收。尚未合并。
+- 结构性风险：恢复流程 `workflow_run` 不追溯旧run，且当前实现每次重新上传全部文件并再次逐文件下载计算SHA256，350分钟可能仍不足。禁止把独立发布预算当作真正断点续传。下一步优先审查可恢复 staging 或分批上传/验证方案，降低重复开销。保留Gold、Task01及冻结V1原状。
