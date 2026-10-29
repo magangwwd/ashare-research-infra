@@ -355,8 +355,6 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None, re
         raise PublishError("Acceptance is required before publication.")
     total = sum(i["bytes"] for i in items)
     remaining = (quota or {}).get("remaining_bytes")
-    if remaining is not None and remaining < total + 1024 * 1024:
-        raise PublishError("Drive remaining capacity is insufficient for a new immutable snapshot.")
     pointers = [f for f in drive.children(target) if f["name"] == "current.json"]
     if len(pointers) > 1 or pointers and pointers[0]["mimeType"] == FOLDER:
         raise PublishError("Ambiguous current pointer; publication blocked.")
@@ -384,17 +382,31 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None, re
                 raise PublishError("Production snapshot date cannot be compared; pointer unchanged.") from None
             if stale:
                 raise PublishError("Accepted snapshot is older than current production; pointer unchanged.")
-    staging = drive.folder(target, "staging")
-    versions = drive.folder(target, "versions")
     if resume_stage_id is not None:
+        # A resumed stage must already exist: do not create a new staging folder
+        # while deciding whether a low-quota recovery can safely continue.
+        candidates = [f for f in drive.children(target) if f["name"] == "staging"]
+        if len(candidates) != 1 or candidates[0]["mimeType"] != FOLDER:
+            raise PublishError("Resume staging root is missing or ambiguous; pointer unchanged.")
+        staging = candidates[0]["id"]
         version, reused = verified_stage_reuse(drive, staging, resume_stage_id, items)
+        # Already verified staged bytes consume Drive quota. Only missing bytes
+        # and the new manifest require additional capacity.
+        required_bytes = sum(item["bytes"] for item in items if item["path"] not in reused)
+    else:
+        reused = {}
+        required_bytes = total
+    if remaining is not None and remaining < required_bytes + 1024 * 1024:
+        raise PublishError("Drive remaining capacity is insufficient for missing snapshot files and manifest.")
+    if resume_stage_id is not None:
         stage = resume_stage_id
         print(f"SUCCESS resume stage validated files={len(reused)}/{len(items)}; current pointer unchanged")
     else:
+        staging = drive.folder(target, "staging")
         version = utcnow().replace(":", "").replace("+", "_") + "-" + uuid.uuid4().hex[:8]
         stage = drive.create_folder(staging, version)
-        reused = {}
         print(f"SUCCESS staging created folder_id={stage} files={len(items)} bytes={total}; current pointer unchanged")
+    versions = drive.folder(target, "versions")
     directories = {"": stage}
     files = []
     for item in items:
