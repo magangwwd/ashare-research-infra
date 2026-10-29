@@ -98,9 +98,9 @@ jobs:
           with tarfile.open(archive, "r:gz") as tf:
               for member in tf.getmembers():
                   p = Path(member.name)
-                  if p.is_absolute() or ".." in p.parts or member.issym() or member.islnk():
+                  if p.is_absolute() or ".." in p.parts:
                       raise SystemExit("BLOCKED: unsafe checkpoint archive member")
-              tf.extractall(".", filter="data")
+              # Python tarfile data filter rejects links escaping the extraction root.\n              # Internal data/current symlinks are expected in Task01 checkpoints.\n              tf.extractall(".", filter="data")
           PY
           python - <<'PY'
           import json
