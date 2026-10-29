@@ -78,3 +78,14 @@
 ### 410 安全诊断补丁已合并主分支
 
 [PR #120](https://github.com/magangwwd/ashare-research-infra/pull/120) 在 CI run [40760207733](https://github.com/magangwwd/ashare-research-infra/actions/runs/40760207733) **completed/success**（日志 `123 passed, 2 skipped`）后已 squash merge 到 main，合并 SHA `e121a48231cc8d35ebcd3d64e88e6f217bd869b6`。**只增强410故障阶段的安全分类日志，不改变上传行为；当前在运行的旧 SHA Task01 不会自动获得该改动，须观察后续基于新 main 的正常计划运行。** 410 的真正根因尚未定位或修复，禁止把本次合并视为生产恢复。
+
+
+## 2026-10-29 08:00 北京时间第五轮：发布耗时与410双重阻塞（已实读 Actions）
+
+- main SHA `e121a48231cc8d35ebcd3d64e88e6f217bd869b6`，PR #116 仍 draft/open。此前 PR #120 的操作类型诊断已在 main；这不等于修复。
+- Task01 run [40748947088](https://github.com/magangwwd/ashare-research-infra/actions/runs/40748947088) **completed/cancelled**，其 task01 job 在 `Publish accepted snapshot to Drive` 步骤被取消；该次 job 总时长约240分钟（workflow `timeout-minutes: 240`）。日志：已通过下载、验收和恢复演练，随后 `staging created files=7046 bytes=2723914251`，报告 `staged files=100/7046`；正式指针成功切换没有证据。**不要把被取消的上传当作成功**。
+- 新 run [40786202732](https://github.com/magangwwd/ashare-research-infra/actions/runs/40786202732) 于 2026-10-28 23:16:38 UTC 创建，检查时仍 `pending`，不能称作正在下载或已经完成。
+- 两次更早失败的 [40562368344](https://github.com/magangwwd/ashare-research-infra/actions/runs/40562368344) 与 [40598869222](https://github.com/magangwwd/ashare-research-infra/actions/runs/40598869222) 分别在 1600/6994、2900/7037 文件处报 HTTP 410。因当时版本没有新操作标签，**尚未确认410是否来自 resumable PUT**。
+- 本轮建立独立**草稿** [PR #121](https://github.com/magangwwd/ashare-research-infra/pull/121)，对 `resumable_upload` 的 410 仅在已确认文件404后使用新ID限重试一次，或在元数据+SHA吻合时复用；其他410、状态不明或再次失效直接阻断。新增5项离线测试。**未合并，未生产验证**；CI run [40791360486](https://github.com/magangwwd/ashare-research-infra/actions/runs/40791360486) 检查时 `in_progress`。
+- **独立阻塞**：现有 Task01 将约2小时数据处理与约7000文件逐项上传/远程校验串在一个240分钟 job 内；仅提高超时不保证解决410或全量发布。后续应优先研究独立发布 job / 可恢复 staging 的设计及容量/配额/时限预算，先在草稿 PR 离线验证，避免重复全量下载。
+- 仍保持 Task01 和 Gold 两条生产链路、旧指针及旧数据不动；没有5交易日影子比对、冻结策略一致性和回滚验收，不得切换/删除。
