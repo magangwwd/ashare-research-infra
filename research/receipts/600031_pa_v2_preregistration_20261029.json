@@ -33,7 +33,11 @@
     {
       "path": "docs/600031-pa-v2-preregistration.md",
       "git_blob_sha1": "9f4dba53d97000c23691ec014230c5a2dce47456",
-      "drive_archived": false
+      "drive_archived": true,
+      "drive_url": "https://docs.google.com/document/d/1n7zSKNAUKjegWtrmKfiwgPGc3aNMT7N3mH58xCX_pvY/edit",
+      "drive_parent_id": "1gJP_wVUsvBuFiK4LvnoT8z2132yBAQ_Y",
+      "drive_readback_verified": true,
+      "drive_content_check": "whitespace-normalized Google Docs extracted text contains complete frozen GitHub protocol"
     }
   ],
   "error": null,
