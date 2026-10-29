@@ -54,3 +54,11 @@
 - 最新本轮只读生产`current.json`仍指向2026-10-24 validated快照，`critical_history_complete=false`，正式manifest文件实读SHA256仍为`118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`；Issue #119仍open。未重新核验全部5406个生产文件，未修改生产指针。
 - 最近**规则冻结前**GitHub Pipeline CI run `40815230007`已核实success（209 passed/2 skipped），仅软件测试；本批纯文档提交不触发该CI，独立真实数据runner仍未验收。趋势/修复E1统计不重复运行，v1.5 ZIP在指定云盘文件夹尚未找到，归档待补。
 - 下一批：按冻结协议实现只读状态机和合成因果测试，再以正式快照核验复权/停牌/涨跌停和全量候选；不以CI通过冒充可执行性或E2/E3。主画像六维继续集中更新，不扩展形态或本金情景。
+
+## PA-v2状态机软件批次：已通过测试（2026-10-30，仍E0）
+- **本批仅实现软件，不新增600031真实价格行为结论。** 新增 `research/price_action_v2_state.py` 和 `tests/test_price_action_v2_state.py`；严格使用已冻结的[PA-v2协议](600031-pa-v2-preregistration.md)三类条件、5个后续交易日等待、失败优先、同根冲突保守失败、5个完整交易日冷却，保留候选、失败、超时、阻断及排除记录。确认只在后续收盘发生，`earliest_execution_at` 未经交易日历/成交核验保持空值。
+- 15项新合成测试覆盖突破后回踩、上升回调、跌破收回、复权比例换算、未来数据不回写、同根冲突、缺失阻断、等待与冷却。首次CI因冷却排除计数测试断言错误失败，已按真实语义修正；最终实现代码提交`59b76a31337896b11d512e3429cc67fe846af2ee`，GitHub Pipeline CI [40908344282](https://github.com/magangwwd/ashare-research-infra/actions/runs/40908344282) 实读success：248 passed/2 skipped。**仅软件测试；真实历史候选/确认数仍未知。**
+- 本轮实读正式云盘 `Ashare_Quant/current.json` 与生产manifest，SHA256分别为`5d712e4c30c5ccc9c70ebd6672ebc401df97ba14f5d46d07e877baf915482926`、`118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，仍为2026-10-24 validated、`critical_history_complete=false`；未声称逐一重核5406个生产文件。Issue #119仍open，不补造9月30日pre_close。
+- 状态机**要求外部传入已审核、只用当时数据计算的日线特征及复权因子**，本批尚未实现全历史特征计算/交易日历完整性/公司行为核验、真实数据runner、成交可执行性及前瞻。E1原画像和冻结四形态60笔保持不变，E2/E3未达到。
+- v1.5历史复算ZIP本地压缩包完整性通过、SHA256 `2e3fa3e257fae154a9ccd5f147fbbeffdc8c5092111e2008a2b407597d3da72c`，本轮云盘目标目录未检索到同名ZIP，**云盘归档待完成**；不影响继续研究。详细软件回执：[docs/600031-pa-v2-state-receipt-20261030.json](600031-pa-v2-state-receipt-20261030.json)。
+- **下一批只做一项：** 构建可审计的as-of日线特征准备层（含连续交易日历、复权/停牌/涨跌停/公司行为标志），真实数据审计通过后才执行PA-v2全量候选及冻结后前瞻登记；不重算旧账户、不改生产数据、不合并草稿PR。
