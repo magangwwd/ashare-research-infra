@@ -26,3 +26,11 @@
 ## 本次实施范围
 - 已修改招聘自动化为仅手动；其他业务 cron 暂时保留，避免误停采集。
 - 本文是治理基线，不代表 GPT 新审核任务已建立或 GitHub 运行验收通过。
+
+## 2026-10-30 逐文件核查记录
+- 在 main 逐一读取13个重点 workflow 文件：task01、astock-quant-drive-first、overseas-data-collector、btc-v3-watchdog、btc-research-scheduler-guard、btc-okx-freshness-watchdog、btc-okx-market-archive、btc-v3-forward、btc-regime-router、btc-hourly-research-cycle、finance-jobs-daily、finance-jobs-pages、gdrive-auth-healthcheck。
+- 其中11个保留 schedule；finance-jobs-daily 和 finance-jobs-pages 均已无 schedule。前者仅 workflow_dispatch，后者保留 pull_request 与 workflow_dispatch。招聘 public-smoke 仍是由网页发布成功后 workflow_run 触发，手动发布仍会触发验收。
+- 现有08:00 GPT任务已包含海外数据质量检查、Issue #124、Drive回读、海外研究决策及前瞻跟踪，**无需新增 GPT 任务**；自动化账户启用任务数为5/5。
+- 历史 run 40868708466（海外）两项 jobs success；39599580852（ETF）单项 job success。它们仅证明历史运行，**不代表2026-10-30最新定时运行正常**。
+- 当前连接器不支持列举所有 workflows / 最新全部 runs，不能声称完成全仓运行验收；在获取实时运行列表与完整日志之前，不关闭其他11个 cron，也不删除旧数据。
+- 后续重点：获取每个 cron 最近3次运行的状态、耗时、失败步骤和产物；BTC按采集/研究/前瞻/健康/调度分组判断重复，A股按 Task01/Gold 输出与Drive版本判断重复。
