@@ -85,3 +85,11 @@ PR #116 诊断脚本新增 Task01 指针与 manifest SHA256、版本父子关系
 - 两端正式manifest重新下载确认：Task01 10月24日、Gold 10月28日，仍禁止切换、去重、删除。后续必须审核 CI、工件有效期、运行成本及完整远端复验，再设计受控生产验证；不从历史日志自动选择未验证的stage。
 
 - 第九轮补充核验：PR #123 最新 CI [40907575903](https://github.com/magangwwd/ashare-research-infra/actions/runs/40907575903) 已 completed/success，离线测试 **162 passed、2 skipped**；只证明代码离线验收，尚未用生产 OAuth 执行 staging 续传或正式指针切换。
+
+
+## 第十轮：2026-10-30，续传配额与只读证据门禁
+
+- 真实 Drive pointer 与 manifest 核验：Task01 `2026-10-24`，正式 manifest SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 与 pointer 相符；Gold manifest `2026-10-28`，两项质量标志为 true。日期落后，仍禁止切换。
+- 取消 run `40786202732` 的 stage `1lLB28lNbC3OWZeGx2xctOjQlBlwjSIKM` 仍存在，**不是正式数据，也尚未完成逐文件 SHA 验证**。checkpoint `12878879550` 将于 2026-11-01 06:59:59 UTC 到期，不能依赖过期后恢复。
+- PR #123 的显式续传现在按**经远端 SHA 验证后的缺失字节 + 1MiB**判断 Drive 剩余容量，不再要求重复预留整份快照；普通全量发布保留原全量容量门禁。缺少 staging 根、父目录不符、路径/大小/SHA不符、配额不足均拒绝，不改生产 pointer。提交 `3af09c78`、`88c43cde`、`e656c49e`，CI `40944992102` 待最终确认。
+- 不要为了赶 checkpoint 过期而跳过安全审查、直接合并草稿或重复大规模上传；下一轮先验收 CI 与生产凭据只读差异，再决定是否进行受控续传。完整证据见 `docs/mainboard-baseline-audit-20261028.md`。
