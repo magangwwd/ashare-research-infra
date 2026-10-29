@@ -49,6 +49,32 @@ class SameDayUnitEventGuardTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Ambiguous multiple unit events"):
             self.snapshots(events)
 
+    def test_reversed_registry_order_still_fails_closed(self):
+        # The safety decision must not depend on issuer registry row order.
+        events = [
+            unit_change("512690.SH", "UNIT_CONSOLIDATION", 0.5),
+            unit_change("512690.SH", "UNIT_SPLIT", 2),
+            dividend(),
+        ]
+        with self.assertRaisesRegex(ValueError, "Ambiguous multiple unit events"):
+            self.snapshots(events)
+
+    def test_post_record_date_collision_before_later_fill_fails_closed(self):
+        # Last record date is 2021-12-30; later supplied fills extend the
+        # accounting validation horizon without changing prior entitlements.
+        split = {**unit_change("512690.SH", "UNIT_SPLIT", 2),
+                 "event_date": "2022-01-03"}
+        consolidation = {**unit_change("512690.SH", "UNIT_CONSOLIDATION", 0.5),
+                         "event_date": "2022-01-03"}
+        with self.assertRaisesRegex(ValueError, "Ambiguous multiple unit events"):
+            record_date_snapshots_from_fills(
+                {"schema_version": 1, "events": [dividend(), split, consolidation]},
+                "2021-05-12",
+                {"512690.SH": 100},
+                [{"date": "2022-01-04", "symbol": "512690.SH",
+                  "side": "SELL", "shares": 1}],
+            )
+
     def test_same_day_unit_events_for_different_symbols_remain_valid(self):
         events = [
             unit_change("512690.SH", "UNIT_SPLIT", 2),
