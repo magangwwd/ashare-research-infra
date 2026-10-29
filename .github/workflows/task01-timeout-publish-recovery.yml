@@ -100,7 +100,9 @@ jobs:
                   p = Path(member.name)
                   if p.is_absolute() or ".." in p.parts:
                       raise SystemExit("BLOCKED: unsafe checkpoint archive member")
-              # Python tarfile data filter rejects links escaping the extraction root.\n              # Internal data/current symlinks are expected in Task01 checkpoints.\n              tf.extractall(".", filter="data")
+              # Python tarfile data filter rejects links escaping the extraction root.
+              # Internal data/current symlinks are expected in Task01 checkpoints.
+              tf.extractall(".", filter="data")
           PY
           python - <<'PY'
           import json
