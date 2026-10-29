@@ -3,6 +3,8 @@ name: BTC V3 freeze cutoff historical backfill (research only)
 on:
   workflow_dispatch:
   push:
+    # Production data and Drive credentials are restricted to reviewed main.
+    branches: [main]
     paths:
       - '.github/workflows/btc-v3-cutoff-backfill.yml'
 
@@ -15,6 +17,8 @@ concurrency:
 
 jobs:
   verify-cutoff:
+    # Prevent manual dispatch on an unreviewed ref from reaching Drive secrets.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
