@@ -1,16 +1,6 @@
 name: Finance Jobs Website Pages
+# Paused by user on 2026-10-30: manual execution and PR validation only.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'finance_jobs_site/index.html'
-      - 'finance_jobs_site/app.js'
-      - 'finance_jobs_site/data/qq_uploaded_shortlist.json'
-      - 'finance_jobs_site/scripts/extract_public.py'
-      - 'finance_jobs_site/styles.css'
-      - 'finance_jobs_site/tests/**'
-      - '.github/workflows/finance-jobs-pages.yml'
-      - '.github/workflows/finance-jobs-public-smoke.yml'
   pull_request:
     paths:
       - 'finance_jobs_site/**'
@@ -18,11 +8,6 @@ on:
       - '.github/workflows/finance-jobs-pages.yml'
       - '.github/workflows/finance-jobs-public-smoke.yml'
   workflow_dispatch:
-  workflow_run:
-    workflows: ['Finance Jobs Daily to Drive']
-    types: [completed]
-  schedule:
-    - cron: '20 0 * * *' # 08:20 Asia/Shanghai; fallback if previous collector finishes late
 permissions:
   contents: read
 concurrency:
