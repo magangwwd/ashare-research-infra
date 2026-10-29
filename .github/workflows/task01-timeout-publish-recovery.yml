@@ -62,6 +62,18 @@ jobs:
           if len(task_jobs) != 1:
               raise SystemExit("BLOCKED: cancelled Task01 job is not unique")
           job = task_jobs[0]
+          # A 240-minute cancellation in a different phase must not start
+          # another multi-hour Drive upload.
+          steps = job.get("steps") or []
+          def step_status(name):
+              matches = [s for s in steps if s.get("name") == name]
+              if len(matches) != 1:
+                  raise SystemExit("BLOCKED: missing or ambiguous Task01 phase: " + name)
+              return matches[0].get("conclusion")
+          if (step_status("Daily update or maintenance") != "success"
+                  or step_status("Production acceptance") != "success"
+                  or step_status("Publish accepted snapshot to Drive") != "cancelled"):
+              raise SystemExit("BLOCKED: cancellation was not in an accepted Drive publication")
           try:
               start = datetime.fromisoformat(job["started_at"].replace("Z", "+00:00"))
               end = datetime.fromisoformat(job["completed_at"].replace("Z", "+00:00"))
@@ -109,8 +121,11 @@ jobs:
           with tarfile.open(archive, "r:gz") as tf:
               for member in tf.getmembers():
                   p = Path(member.name)
-                  if p.is_absolute() or ".." in p.parts:
-                      raise SystemExit("BLOCKED: unsafe checkpoint archive member")
+                  if (p.is_absolute() or ".." in p.parts or not p.parts
+                          or p.parts[0] not in ("data", "metadata")):
+                      raise SystemExit("BLOCKED: checkpoint member outside data/metadata")
+                  if not (member.isfile() or member.isdir() or member.issym() or member.islnk()):
+                      raise SystemExit("BLOCKED: unexpected checkpoint member type")
               # Python tarfile data filter rejects links escaping the extraction root.
               # Internal data/current symlinks are expected in Task01 checkpoints.
               tf.extractall(".", filter="data")
