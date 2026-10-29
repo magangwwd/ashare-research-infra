@@ -89,3 +89,11 @@
 - 本轮建立独立**草稿** [PR #121](https://github.com/magangwwd/ashare-research-infra/pull/121)，对 `resumable_upload` 的 410 仅在已确认文件404后使用新ID限重试一次，或在元数据+SHA吻合时复用；其他410、状态不明或再次失效直接阻断。新增5项离线测试。**未合并，未生产验证**；CI run [40791360486](https://github.com/magangwwd/ashare-research-infra/actions/runs/40791360486) 检查时 `in_progress`。
 - **独立阻塞**：现有 Task01 将约2小时数据处理与约7000文件逐项上传/远程校验串在一个240分钟 job 内；仅提高超时不保证解决410或全量发布。后续应优先研究独立发布 job / 可恢复 staging 的设计及容量/配额/时限预算，先在草稿 PR 离线验证，避免重复全量下载。
 - 仍保持 Task01 和 Gold 两条生产链路、旧指针及旧数据不动；没有5交易日影子比对、冻结策略一致性和回滚验收，不得切换/删除。
+
+
+### 同轮 Google Drive 正式入口复核（2026-10-29 08:03 北京时间）
+
+- 直接列举 Task01 根文件夹 `1rkC99Ymgp8mjvAcJNRPJMlOGLdI9_bue`：`current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`，修改时间 `2026-10-25T00:16:56Z`。**实际读取 JSON**：`validated=true`、`snapshot_as_of=2026-10-24`、`source_run_id=40119936249`、`file_count=5406`，历史完整性仍 false。
+- 直接列举 Gold 根文件夹 `1vCz7H5aeePjFapg7xLPu44x-PUSQOX_8`：`manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`，修改时间 `2026-10-28T20:45:24Z`；**实际读取 JSON**：`as_of_date=2026-10-28`、`primary_keys_unique=true`、`ohlc_valid=true`。核心 `instruments.parquet` 与 `daily_snapshot.parquet` 均在正式目录中。
+- **Gold 已推进至10月28日，Task01 仍停留10月24日，落后4个自然日**。本次只重新读取两端正式 JSON，不宣称重新逐文件核验5406个文件或 Gold 全量分区；前轮 Gold 10月27日的日期差异记录已被新事实替代。
+- 因为正式日期不一致，继续禁止统一读取切换及清理旧 Gold。
