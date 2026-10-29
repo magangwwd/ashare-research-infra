@@ -70,3 +70,14 @@ def test_tar_data_filter_rejects_symlink_escape(tmp_path):
     with tarfile.open(archive, "r:gz") as tf:
         with pytest.raises(tarfile.FilterError):
             tf.extractall(dest, filter="data")
+
+
+def test_checkpoint_integrity_and_disk_budget_gates():
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert 'checkpoint.get("digest")' in text
+    assert 'checkpoint.get("size_in_bytes")' in text
+    assert 'checkpoint_digest=' in text
+    assert 'sha256sum -c -' in text
+    assert 'rm -f "$RUNNER_TEMP/checkpoint.zip"' in text
+    assert text.index('sha256sum -c -') < text.index('unzip -p "$RUNNER_TEMP/checkpoint.zip"')
+    assert text.index('rm -f "$RUNNER_TEMP/checkpoint.zip"') < text.index('tf.extractall(".", filter="data")')
