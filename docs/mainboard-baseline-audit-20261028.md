@@ -135,3 +135,13 @@
 - Gold 正式 `main_board/manifest.json`（file ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`）：`as_of_date=2026-10-28`，主键与OHLC质量标志true；记录 instruments 3486行、daily_snapshot 3190行。Task01 仍落后，禁止替换。
 - PR #123 上轮 CI #`40838902886` success；本轮补丁 `fcaf77966f99f3025809c4ebda8ca5e10b19c2ea`、`f56b2484f4a470da16a8c1b16057c733bc9652f5` 增加仅在 **已验收且发布步骤取消** 时恢复及tar解压路径/类型白名单；后续测试修正提交 `a3e2eec8a378ee1ff6e33a115812c02a4ffc9aa2`，最新 CI `40870564343`、`40870554595` 均 success；前者157 passed、2 skipped。**仅离线测试通过，尚未合并、未执行真实发布。**
 - 结构性风险：恢复流程 `workflow_run` 不追溯旧run，且当前实现每次重新上传全部文件并再次逐文件下载计算SHA256，350分钟可能仍不足。禁止把独立发布预算当作真正断点续传。下一步优先审查可恢复 staging 或分批上传/验证方案，降低重复开销。保留Gold、Task01及冻结V1原状。
+
+
+## 2026-10-29 23:59 CST 第九轮：真实未完成暂存目录可复用性验证（仍禁止切换）
+
+- 实读 main SHA `19d92f10476bb2c40a2da84a64ffd74194b77685`；PR #116/#121/#123 均未合并，旧生产流程不变。
+- Task01 run `40786202732` 任务已 cancelled；原始 job 日志显示 2026-10-29 03:51:52 UTC 创建 staging ID `1lLB28lNbC3OWZeGx2xctOjQlBlwjSIKM`，计划 7069 文件/2,805,499,976 字节；最后进度 06:55:44 UTC **4400/7069**，06:57:52 UTC 取消；未进入逐文件远端 SHA 验收及正式指针切换。
+- **本轮 Google Drive 实查**：该 staging ID 仍存在，位于 Task01 `staging/`（parent `1oXqyvWAJytdi3EMJRGucUX8U7Lsx4_c1`），其下存在 `data/` 文件夹；这是未完成暂存，不是已验收版本。尚未递归核验全部4400项的远端 SHA。
+- **本轮重新下载两端正式 JSON**：Task01 `current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`，SHA256 `5d712e4c30c5ccc9c70ebd6672ebc401df97ba14f5d46d07e877baf915482926`，as_of `2026-10-24`；其 `production_manifest.json` ID `1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1`，SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，5406项；Gold `manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`，SHA256 `3975dc23a2137c7879aef8c0aec4263c887f260d708f31ca8bd66974903fd480`，as_of `2026-10-28`，两项质量标志 true。**正式日期差4天，禁止切换**。
+- **实际代码工作**：草稿 PR #123 新增可显式指定 `--resume-stage-id` 的只读复核后续传逻辑：必须是当前 staging 的直接子目录，已存在文件按相对路径、字节数和远端 SHA256 与本地已验收清单逐一比对；未知/重复/篡改文件拒绝；仅上传缺失文件，最终仍全量远端 SHA 验收并最后切换指针。默认无该参数时原发布路径不变。代码 commit `ae6b4e4d1c6d6f84c45f53f9e323e5813b57c06e`，5项离线测试 commit `4539bc333910abbb7a06dfaa9821389a856cad81`，CI run `40907575903` 启动后尚待终态。**未在生产启用/运行，不得宣称已恢复发布**。
+- 下一步先看 CI 和代码安全审查，明确源run的验收工件及暂存目录与本地 accepted inventory 一致；在可控独立发布任务中显式传入已核验 staging ID，避免重传4400项，但必须先测算远端 SHA 扫描耗时及剩余工件期限。旧数据、原下载与冻结V1不动。
