@@ -27,7 +27,10 @@ def test_timeout_like_job_and_same_run_checkpoint_are_required():
     assert "SOURCE_RUN_ID" in text
     assert "CHECKPOINT_ID" in text
     assert 'tf.extractall(".", filter="data")' in text
-    assert "member.issym() or member.islnk()" not in text
+    # Valid internal data/current symlinks are required; the tarfile data filter
+    # must reject escaping links rather than rejecting every symlink.
+    assert 'tf.extractall(".", filter="data")' in text
+    assert 'member.isfile() or member.isdir() or member.issym() or member.islnk()' in text
 
 
 def test_isolated_recovery_does_not_download_data_or_change_strategy():
