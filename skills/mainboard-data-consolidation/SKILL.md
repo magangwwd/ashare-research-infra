@@ -83,3 +83,5 @@ PR #116 诊断脚本新增 Task01 指针与 manifest SHA256、版本父子关系
 - PR #123 新增可选 `python -m data_pipeline.drive_publish --resume-stage-id <经核验的暂存文件夹ID>`，**仅供后续受控发布演练**。默认原发布逻辑不变；程序校验 stage 直接父目录、已存在路径集合、大小、远端 SHA256，发现不匹配则拒绝，缺失文件才上传，完成后仍须全量远端 SHA 和指针读回。该功能在 draft 中，未合并、未生产执行。
 - commits `ae6b4e4d1c6d6f84c45f53f9e323e5813b57c06e`、`4539bc333910abbb7a06dfaa9821389a856cad81`；CI `40907575903` 需检查终态。禁止将单测绿灯视为正式发布。
 - 两端正式manifest重新下载确认：Task01 10月24日、Gold 10月28日，仍禁止切换、去重、删除。后续必须审核 CI、工件有效期、运行成本及完整远端复验，再设计受控生产验证；不从历史日志自动选择未验证的stage。
+
+- 第九轮补充核验：PR #123 最新 CI [40907575903](https://github.com/magangwwd/ashare-research-infra/actions/runs/40907575903) 已 completed/success，离线测试 **162 passed、2 skipped**；只证明代码离线验收，尚未用生产 OAuth 执行 staging 续传或正式指针切换。
