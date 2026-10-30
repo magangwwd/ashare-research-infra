@@ -245,5 +245,17 @@ class Publication(unittest.TestCase):
         self.assertEqual(session.pointer_writes, [])
 
 
+
+class WorkflowPublicationGate(unittest.TestCase):
+    def test_credentialed_drive_publish_requires_main(self):
+        workflow = (Path(__file__).resolve().parents[1] /
+                    '.github/workflows/overseas-data-collector.yml').read_text()
+        job = workflow.split('  collect-and-publish:\n', 1)[1].split('    runs-on:', 1)[0]
+        self.assertIn("github.event_name != 'pull_request'", job)
+        self.assertIn("github.ref == 'refs/heads/main'", job)
+        self.assertEqual(job.count('github.ref =='), 1)
+        self.assertNotIn("refs/heads/feature/", job)
+
+
 if __name__ == '__main__':
     unittest.main()
