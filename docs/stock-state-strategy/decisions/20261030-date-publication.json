@@ -1,0 +1,13 @@
+{
+  "project": "stock_state_strategy",
+  "task_id": "SS-CACHE-003A",
+  "parent_head": "23e90265a582d4133d218300003f2b2ce4a5181b",
+  "created_at_utc": "2026-10-30T01:31:22.422Z",
+  "decision": "REPAIR_DISPATCHED",
+  "reason": "SS-DATA-002与SS-CACHE-003均READY；优先阻止旧分区冒充新日期及回执覆盖，避免后续数据补采被错误验收。",
+  "local_tests_passed": 16,
+  "github_run_id": null,
+  "production_deployed": false,
+  "research_effectiveness": "UNPROVEN",
+  "next_action": "取得实际GitHub完整CI后记录结果；不启动重复市场下载，不更改策略规则"
+}

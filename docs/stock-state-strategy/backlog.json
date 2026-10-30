@@ -58,14 +58,31 @@
       "depends_on": [
         "SS-PIT-001"
       ],
-      "status": "READY",
+      "status": "VERIFYING",
       "acceptance": [
         "拒用修复前无版本的状态缓存",
         "manifest新但行情旧时拒绝发布",
         "gold-refresh/current-state凭据不相互覆盖",
         "手动工作流输入通过环境变量安全传递"
       ],
-      "next_action": "先做失败输入回归，再在隔离快照验证"
+      "next_action": "读取本次真实CI后验收子任务；SS-CACHE-003整体未完成，继续缓存版本及输入加固",
+      "progress": {
+        "subtask": "SS-CACHE-003A",
+        "decision": "先防止错误日期发布及阶段回执覆盖，再执行当期股东数据补采",
+        "implemented": [
+          "行情最新日期不等于请求日时失败，禁止静默回退",
+          "缓存特征日期再次核验",
+          "上传前核验summary实际日期",
+          "按任务阶段分别保存回执，保留旧latest地址兼容"
+        ],
+        "local_tests_passed": 16,
+        "github_run_id": null,
+        "remaining": [
+          "完整历史状态缓存代码/输入指纹",
+          "手动工作流输入环境变量处理",
+          "真实源集成验证"
+        ]
+      }
     },
     {
       "id": "SS-REPLAY-004",

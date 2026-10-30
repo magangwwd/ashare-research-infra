@@ -15,6 +15,7 @@ import sys
 import tempfile
 from datetime import date, datetime, timezone
 from pathlib import Path
+from state_run_contracts import phase_status_path, validate_state_output
 
 REPO = Path(__file__).resolve().parents[1]
 CODE = Path(__file__).resolve().parent
@@ -201,6 +202,9 @@ def main() -> int:
             local = work / "stock_state_strategy/output" / ("state_definition_" + chosen.replace("-", ""))
             if not local.is_dir() or not any(local.rglob("*")):
                 raise RuntimeError("No state output files created")
+            # Validate generated evidence before any output publication.
+            status["requested_as_of"] = chosen
+            status["actual_as_of"] = validate_state_output(local, chosen)
             copy(local, REMOTE + "stock_state_strategy/output/" + local.name)
             check(local, REMOTE + "stock_state_strategy/output/" + local.name)
         elif args.task == "forward-baseline":
@@ -230,6 +234,9 @@ def main() -> int:
         # Status is diagnostic only; failures must remain failures even if this
         # supplemental upload cannot complete.
         try:
+            run("rclone", "copyto", str(report),
+                REMOTE + phase_status_path(run_id, args.task))
+            # Preserve the legacy latest-status address for existing readers.
             run("rclone", "copyto", str(report),
                 REMOTE + "stock_state_strategy/runs/" + run_id + "/run_status.json")
         except Exception as exc:

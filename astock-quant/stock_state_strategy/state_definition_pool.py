@@ -21,6 +21,7 @@ import pyarrow.dataset as ds
 
 from ownership_pipeline import ROOT, load_config, resolve
 from pit_name_states import historical_name_states
+from state_run_contracts import require_exact_date
 
 
 HISTORY_START = pd.Timestamp("2020-01-01")
@@ -900,8 +901,9 @@ def main() -> int:
             market_root, history_start, current_date
         )
         available_end = panel["trade_date"].max()
-        if available_end < current_date:
-            current_date = pd.Timestamp(available_end)
+        if pd.isna(available_end):
+            raise RuntimeError("No valid market rows for requested state date")
+        require_exact_date(str(current_date.date()), str(available_end.date()))
         open_dates = calendar.loc[calendar["calendar_date"] <= current_date, "calendar_date"]
         recent_dates = set(open_dates.tail(5))
         recent = build_recent_features(panel, recent_dates)
@@ -912,6 +914,10 @@ def main() -> int:
         )
         del panel
 
+    recent_end = recent["trade_date"].max()
+    if pd.isna(recent_end):
+        raise RuntimeError("No current state features for requested date")
+    require_exact_date(str(current_date.date()), str(recent_end.date()))
     events = pd.read_parquet(resolve(config["processed_data_dir"]) / "ownership_events.parquet")
     events["ann_date"] = pd.to_datetime(events["ann_date"])
     events = events[events["ann_date"] <= current_date].copy()
