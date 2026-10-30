@@ -18,6 +18,16 @@ def fingerprint(context: dict, files: dict[str, Path]) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
 
 
+def market_input_files(root: Path) -> dict[str, Path]:
+    """Bind caches to actual partitions, including same-date vendor corrections."""
+    files = {name: root / name for name in
+             ("manifest.json", "instruments.parquet", "trading_calendar.parquet", "name_history.parquet")}
+    for dataset in ("daily_prices", "daily_metrics", "adjustment_factors", "daily_limits"):
+        for path in sorted((root / dataset).rglob("*.parquet")):
+            files[str(path.relative_to(root))] = path
+    return {"gold/" + name: path for name, path in files.items()}
+
+
 def verify_cache(path: Path, expected: str) -> None:
     metadata = path.with_suffix(".meta.json")
     try:

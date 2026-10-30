@@ -23,6 +23,7 @@ from ownership_pipeline import ROOT, load_config, resolve
 from pit_name_states import historical_name_states
 from state_run_contracts import require_exact_date
 from ownership_quality_diagnostics import ownership_quality_diagnostics
+from state_cache_contract import fingerprint, market_input_files, verify_cache, record_cache
 
 
 HISTORY_START = pd.Timestamp("2020-01-01")
@@ -878,13 +879,14 @@ def main() -> int:
 
     cache_path = output_dir / "recent_feature_cache.parquet"
     cache_key = f"{history_start.date()}_{current_date.date()}"
-    cache_meta_path = output_dir / "recent_feature_cache.json"
+    signature = fingerprint({"kind": "recent_features", "cache_key": cache_key},
+        {**market_input_files(market_root), "code": Path(__file__)})
     cache_valid = False
-    if cache_path.exists() and cache_meta_path.exists():
+    if cache_path.exists():
         try:
-            cache_meta = json.loads(cache_meta_path.read_text(encoding="utf-8"))
-            cache_valid = cache_meta.get("cache_key") == cache_key
-        except (OSError, json.JSONDecodeError):
+            verify_cache(cache_path, signature)
+            cache_valid = True
+        except RuntimeError:
             cache_valid = False
     if cache_valid:
         recent = pd.read_parquet(cache_path)
@@ -909,10 +911,7 @@ def main() -> int:
         recent_dates = set(open_dates.tail(5))
         recent = build_recent_features(panel, recent_dates)
         recent.to_parquet(cache_path, index=False)
-        cache_meta_path.write_text(
-            json.dumps({"cache_key": cache_key}, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        record_cache(cache_path, signature)
         del panel
 
     recent_end = recent["trade_date"].max()

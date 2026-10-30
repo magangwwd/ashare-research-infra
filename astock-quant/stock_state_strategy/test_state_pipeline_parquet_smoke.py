@@ -78,5 +78,30 @@ class StatePipelineParquetSmokeTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,'rebuild'):
             build_or_load_state_history(path,self.market,changed,end,False)
 
+    def test_same_day_price_correction_is_used_instead_of_cached_close(self):
+        self.run_state()
+        original=pd.read_parquet(self.root/'output/current_snapshot.parquet')['close'].iloc[0]
+        corrected=self.prices.copy()
+        corrected.loc[corrected.index[-1],['open','high','low','close']]-=1
+        self.write_dataset('daily_prices',corrected)
+        self.run_state()
+        updated=pd.read_parquet(self.root/'output/current_snapshot.parquet')['close'].iloc[0]
+        self.assertAlmostEqual(updated,original-1)
+
+    def test_unchanged_recent_cache_reuses_but_corrupted_bytes_rebuild(self):
+        self.run_state()
+        with patch.object(states,'load_market_history',side_effect=AssertionError('unexpected rebuild')):
+            self.run_state()
+        (self.root/'output/recent_feature_cache.parquet').write_bytes(b'partial write')
+        self.assertEqual(self.run_state(),0)
+
+    def test_same_manifest_with_changed_market_partition_refuses_historical_cache(self):
+        path=self.root/'cache.parquet';end=pd.Timestamp('2026-10-29')
+        build_or_load_state_history(path,self.market,self.events,end,True)
+        corrected=self.prices.copy();corrected.loc[corrected.index[-1],'close']-=.01
+        self.write_dataset('daily_prices',corrected)
+        with self.assertRaisesRegex(RuntimeError,'rebuild'):
+            build_or_load_state_history(path,self.market,self.events,end,False)
+
 
 if __name__ == '__main__':unittest.main()

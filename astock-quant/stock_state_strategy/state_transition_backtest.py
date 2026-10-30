@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 
 from ownership_pipeline import ROOT, load_config, resolve
-from state_cache_contract import fingerprint, record_cache, verify_cache
+from state_cache_contract import fingerprint, record_cache, verify_cache, market_input_files
 from pit_name_states import historical_name_states
 from state_definition_pool import (
     MAX_DISCLOSURE_AGE_DAYS,
@@ -248,8 +248,7 @@ def build_or_load_state_history(
     signature = fingerprint(
         {"end": str(end.date()), "event_columns": list(events.columns),
          "events_sha256": hashlib.sha256(event_bytes).hexdigest()},
-        {"gold_manifest": market_root / "manifest.json",
-         "name_history": market_root / "name_history.parquet",
+        {**market_input_files(market_root),
          **{name: ROOT / name for name in ("state_definition_pool.py", "state_transition_backtest.py",
             "ownership_pipeline.py", "pit_name_states.py", "state_cache_contract.py")}},
     )
