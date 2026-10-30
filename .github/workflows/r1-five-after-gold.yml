@@ -1,12 +1,8 @@
 name: R1 five-stock paper candidates after verified Gold (no orders)
 
 on:
-  # Runs only after the entire nightly gold-refresh + current-state workflow
-  # has completed SUCCESSFULLY on main, never during an incomplete upload.
-  workflow_run:
-    workflows: ["astock-quant - Drive-first strategy"]
-    types: [completed]
-    branches: [main]
+  # Fixed five-stock automation retired 2026-10-30 at user request.
+  # Manual recovery only; do not re-enable automatic upstream triggers.
   workflow_dispatch:
     inputs:
       as_of:
