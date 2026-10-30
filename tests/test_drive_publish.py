@@ -444,3 +444,58 @@ def test_resume_quota_insufficient_for_missing_bytes_fails_without_writes(tmp_pa
     assert drive.read("pointer") == before_pointer
     assert drive.files == before_files
     assert drive.upload_count == 1
+
+
+def _seed_audit_pointer(drive, as_of="2026-10-24"):
+    pointer = json.loads(drive.read("pointer"))
+    pointer["snapshot_as_of"] = as_of
+    pointer["manifest_sha256"] = hashlib.sha256(drive.read("old-manifest")).hexdigest()
+    drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+
+
+def test_read_only_stage_audit_sha_checks_and_never_writes(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, file_id = _seed_cancelled_stage(drive, items[0])
+    _seed_audit_pointer(drive)
+    before = copy.deepcopy(drive.files)
+    uploads = drive.upload_count
+    result = dp.audit_resume_stage(
+        drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+        {"remaining_bytes": items[1]["bytes"] + 1024 * 1024}, stage)
+    assert result["audit_only"] and result["passed"]
+    assert result["production_switch_allowed"] is False
+    assert result["pointer_unchanged"] is True
+    assert result["sha256_verified_staged_files"] == 1
+    assert result["missing_files"] == 1
+    assert result["missing_bytes"] == items[1]["bytes"]
+    assert drive.files == before
+    assert drive.upload_count == uploads
+    assert file_id in drive.files
+
+
+@pytest.mark.parametrize("fault", ["stale", "tampered", "manifest", "quota", "foreign"])
+def test_read_only_stage_audit_fail_closed_no_mutations(tmp_path, fault):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, file_id = _seed_cancelled_stage(drive, items[0])
+    _seed_audit_pointer(drive)
+    accepted_as_of = "2026-10-29"
+    quota = {"remaining_bytes": 10_000_000}
+    if fault == "stale":
+        accepted_as_of = "2026-10-23"
+    elif fault == "tampered":
+        drive.files[file_id]["body"] = b"X" + drive.files[file_id]["body"][1:]
+    elif fault == "manifest":
+        drive.files["old-manifest"]["body"] = b'{"version":"old","validated":false}'
+    elif fault == "quota":
+        quota = {"remaining_bytes": 1}
+    elif fault == "foreign":
+        stage = drive.create_folder(drive.folder("root", "versions"), "foreign")
+    before = copy.deepcopy(drive.files)
+    uploads = drive.upload_count
+    with pytest.raises(dp.PublishError):
+        dp.audit_resume_stage(drive, "root", items,
+                              {"passed": True, "as_of": accepted_as_of}, quota, stage)
+    assert drive.files == before
+    assert drive.upload_count == uploads
