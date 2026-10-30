@@ -11,6 +11,9 @@ def test_only_completed_task01_workflow_run_can_trigger():
     assert "github.event.workflow_run.conclusion == 'cancelled'" in text
     assert "github.event.workflow_run.head_branch == 'main'" in text
     assert "github.event.workflow_run.head_repository.full_name == github.repository" in text
+    # Expensive credentialed retries must be explicitly opted in; default is disabled.
+    assert "vars.TASK01_TIMEOUT_RECOVERY_ENABLED == 'true'" in text
+    assert 'source.get("path") != ".github/workflows/task01.yml"' in text
     assert "schedule:" not in text
     assert "workflow_dispatch:" not in text
 
