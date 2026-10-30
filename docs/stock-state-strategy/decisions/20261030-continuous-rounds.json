@@ -1,0 +1,32 @@
+{
+  "project": "stock_state_strategy",
+  "created_at_utc": "2026-10-30T01:41:00.668Z",
+  "rounds": [
+    {
+      "round": 1,
+      "head": "0b7f9d52d586c42932cc53125b40d747294b1cce",
+      "task": "SS-CACHE-003",
+      "decision": "拒用旧缓存并加固workflow输入",
+      "run_id": 40986805989,
+      "tests_passed": 127,
+      "scope": "offline_software_verification"
+    },
+    {
+      "round": 2,
+      "head": "3ad6c5890ec4f959bff620e5c0faabde60d31dc2",
+      "task": "SS-DATA-002",
+      "decision": "当期股东数据版本化接入，不覆盖正式源",
+      "run_id": 40987099771,
+      "scope": "offline_software_verification"
+    },
+    {
+      "round": 3,
+      "task": "SS-DATA-002",
+      "decision": "编排集成回归：证明三个阶段消费同一新版本，错日不发布",
+      "local_tests_passed": 2,
+      "github_run_id": null
+    }
+  ],
+  "production_deployed": false,
+  "effectiveness": "UNPROVEN"
+}

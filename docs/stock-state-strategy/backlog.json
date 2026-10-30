@@ -41,7 +41,7 @@
       "depends_on": [
         "SS-PIT-001"
       ],
-      "status": "READY",
+      "status": "VERIFYING",
       "acceptance": [
         "历史legacy只读",
         "当期research_end与数据实际截止日正确",
@@ -49,7 +49,21 @@
         "3124只失败分项与A池变化可解释",
         "真实Drive输出回读哈希匹配"
       ],
-      "next_action": "独立运行配置与新研究输出命名空间；不重复共享Task01/Gold采集"
+      "next_action": "先完成合成I/O编排回归，再显式启动隔离数据核验",
+      "progress": {
+        "implemented": [
+          "当期截止日运行配置",
+          "新数据下载/处理/状态共用独立版本目录",
+          "修复旧批次因日期或股票池变化仍被跳过",
+          "不覆盖legacy或正式状态输出"
+        ],
+        "github_run_id": 40987099771,
+        "remaining": [
+          "真实Tushare采集",
+          "Drive结果回读",
+          "3124只披露失败分项及变化归因"
+        ]
+      }
     },
     {
       "id": "SS-CACHE-003",
@@ -65,22 +79,17 @@
         "gold-refresh/current-state凭据不相互覆盖",
         "手动工作流输入通过环境变量安全传递"
       ],
-      "next_action": "读取本次真实CI后验收子任务；SS-CACHE-003整体未完成，继续缓存版本及输入加固",
+      "next_action": "软件门禁通过；真实快照取得后验收缓存与重算，整体暂不结项",
       "progress": {
-        "subtask": "SS-CACHE-003A",
-        "decision": "先防止错误日期发布及阶段回执覆盖，再执行当期股东数据补采",
         "implemented": [
-          "行情最新日期不等于请求日时失败，禁止静默回退",
-          "缓存特征日期再次核验",
-          "上传前核验summary实际日期",
-          "按任务阶段分别保存回执，保留旧latest地址兼容"
+          "历史缓存代码/公告/Gold指纹及输出字节校验",
+          "日期一致性及分阶段回执",
+          "手动工作流输入环境变量处理"
         ],
-        "local_tests_passed": 16,
-        "github_run_id": null,
+        "github_run_id": 40986805989,
+        "tests_passed": 127,
         "remaining": [
-          "完整历史状态缓存代码/输入指纹",
-          "手动工作流输入环境变量处理",
-          "真实源集成验证"
+          "真实源上的缓存重建/复用集成验收"
         ]
       }
     },
