@@ -520,3 +520,36 @@ def test_read_only_stage_audit_fail_closed_no_mutations(tmp_path, fault):
                               {"passed": True, "as_of": accepted_as_of}, quota, stage)
     assert drive.files == before
     assert drive.upload_count == uploads
+
+
+@pytest.mark.parametrize("mutation", ["pointer_bytes", "pointer_id", "manifest_bytes"])
+def test_read_only_stage_audit_detects_concurrent_production_change(tmp_path, monkeypatch, mutation):
+    """A multi-hour SHA audit must not report a stale pointer_unchanged=true."""
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, _ = _seed_cancelled_stage(drive, items[0])
+    _seed_audit_pointer(drive)
+    original_remote_digest = drive.remote_digest
+    upload_count = drive.upload_count
+
+    def remote_digest_with_concurrent_change(ident):
+        result = original_remote_digest(ident)
+        if mutation == "pointer_bytes":
+            pointer = json.loads(drive.read("pointer"))
+            pointer["snapshot_as_of"] = "2026-10-30"
+            drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+        elif mutation == "pointer_id":
+            drive.files["pointer"]["parents"] = ["unrelated"]
+            drive.files["new-pointer"] = {
+                **drive.files["pointer"], "id": "new-pointer", "parents": ["root"]
+            }
+        else:
+            drive.files["old-manifest"]["body"] = b'{"version":"old","validated":false}'
+        return result
+
+    monkeypatch.setattr(drive, "remote_digest", remote_digest_with_concurrent_change)
+    with pytest.raises(dp.PublishError, match="pointer changed|manifest"):
+        dp.audit_resume_stage(
+            drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+            {"remaining_bytes": 10_000_000}, stage)
+    assert drive.upload_count == upload_count
