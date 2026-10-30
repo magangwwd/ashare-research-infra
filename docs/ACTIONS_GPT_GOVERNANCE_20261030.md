@@ -53,3 +53,9 @@
 - 轮2：复核Task01 runs 40948715414、40972437556，均 task01 cancelled、drive-publish skipped；`cancel-in-progress=false`，不可武断归因于并发自动取消。海外工作流发现两个feature分支也可触发带凭证发布作业。
 - 轮3：已在隔离分支 `fix/overseas-main-only-publish-20261030` 提交最小权限门禁修复 `dbf2cd4034999f9e1f928f238b78b74e53914072`，新建草稿PR #138，仅main可执行海外`collect-and-publish`，PR测试仍保留；待CI与正式Drive回读验收，不能宣称已上线。
 - 本轮未改生产cron、未删除数据、未合并PR。下轮优先查PR #138 CI与Task01取消原因，随后推进PR #134的生产验收。
+
+## 2026-10-30 19:00 后续实装与根因验收
+- **已合并海外发布权限门禁**：PR #138，merge `ab88d9a09f41bfd70b1461f7d4c3016b9c21932e`；主分支 `overseas-data-collector.yml` 的 `collect-and-publish` 只允许非PR且 `refs/heads/main`，两个开发分支只运行安全测试。新回归测试已进main。CI 41045431736、41045431722 success。正式Drive读回待后续运行证据。
+- **Task01 取消直接原因明确**：run 40948715414 job 23:01:08Z→03:01:26Z、run 40972437556 job 03:04:16Z→07:04:42Z，均运行约240分钟，与 `task01.timeout-minutes: 240` 一致；两次都在Drive发布步骤取消，前置验收success，checkpoint成功上传，生产current未获新发布回执。不是已证实的HTTP410或concurrency取消。
+- **已有PR #123** 提出超时后独立发布/只读staging审计，最新head 05af987e... 的Pipeline CI 41023592444 success，但尚无真实Drive成功回读及额外运行成本证明；继续保留草稿，不重复提交同类生产补丁。
+- **下一轮**：确认合并后海外主分支首次实际发布与Drive指针，核对Task01恢复方案及成本，推进PR #134正式发布；所有数据和长期守卫保留。
