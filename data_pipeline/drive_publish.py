@@ -479,13 +479,61 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None, re
     return report
 
 
+
+def audit_resume_stage(drive, target, items, acceptance, quota, stage_id):
+    """Read-only production/stage preflight; never creates folders or commits a pointer.
+
+    Run this before enabling an expensive staged recovery. Every reused file is
+    downloaded for SHA256 verification; the returned counts are not a publish receipt.
+    """
+    if not acceptance.get("passed") or not acceptance.get("as_of"):
+        raise PublishError("Accepted snapshot required for read-only stage audit.")
+    pointers = [f for f in drive.children(target) if f["name"] == "current.json"]
+    if len(pointers) != 1 or pointers[0]["mimeType"] == FOLDER:
+        raise PublishError("Unique existing production pointer required for stage audit.")
+    try:
+        pointer = json.loads(drive.read(pointers[0]["id"]))
+        if not pointer.get("validated") or not pointer.get("snapshot_as_of"):
+            raise ValueError
+        current_date = date.fromisoformat(pointer["snapshot_as_of"])
+        accepted_date = date.fromisoformat(acceptance["as_of"])
+    except (ValueError, TypeError, KeyError, AttributeError):
+        raise PublishError("Invalid production or accepted date; stage audit blocked.") from None
+    if accepted_date < current_date:
+        raise PublishError("Accepted snapshot is older than current production; audit blocked.")
+    previous_manifest = verify_previous_snapshot(drive, pointer)
+    if (not pointer.get("manifest_sha256") or
+            hashlib.sha256(previous_manifest).hexdigest() != pointer["manifest_sha256"]):
+        raise PublishError("Existing production manifest SHA256 mismatch; audit blocked.")
+    staging = [f for f in drive.children(target) if f["name"] == "staging"]
+    if len(staging) != 1 or staging[0]["mimeType"] != FOLDER:
+        raise PublishError("Unique existing staging root required; audit blocked.")
+    _version, reused = verified_stage_reuse(drive, staging[0]["id"], stage_id, items)
+    missing = [item for item in items if item["path"] not in reused]
+    missing_bytes = sum(item["bytes"] for item in missing)
+    remaining = (quota or {}).get("remaining_bytes")
+    if remaining is not None and remaining < missing_bytes + 1024 * 1024:
+        raise PublishError("Drive capacity insufficient for verified missing files; audit blocked.")
+    return {
+        "audit_only": True, "passed": True, "production_switch_allowed": False,
+        "pointer_unchanged": True, "accepted_as_of": acceptance["as_of"],
+        "current_as_of": pointer["snapshot_as_of"], "expected_files": len(items),
+        "sha256_verified_staged_files": len(reused), "missing_files": len(missing),
+        "missing_bytes": missing_bytes,
+        "warning": "Read-only stage preflight; no publication, no pointer switch."
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path("config/config.yaml"))
     parser.add_argument("--root", type=Path, default=Path("."))
     parser.add_argument("--report", type=Path, default=Path("metadata/drive_publish.json"))
     # Explicit opt-in only; production schedules never infer or auto-select a stage.
-    parser.add_argument("--resume-stage-id", default=None)
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--resume-stage-id", default=None)
+    mode.add_argument("--audit-resume-stage-id", default=None,
+                      help="Read-only SHA256 preflight; never uploads or switches current.json")
     args = parser.parse_args(argv)
     try:
         config = load_config(args.config)
@@ -501,12 +549,18 @@ def main(argv=None):
             with AuthorizedSession(credentials) as session:
                 verify_folder(session, target)
                 quota = storage_quota(session)
-                report = publish(Drive(session), target, items, acceptance, progress, prepared,
-                                 quota, resume_stage_id=args.resume_stage_id)
+                if args.audit_resume_stage_id:
+                    report = audit_resume_stage(Drive(session), target, items, acceptance,
+                                                quota, args.audit_resume_stage_id)
+                else:
+                    report = publish(Drive(session), target, items, acceptance, progress, prepared,
+                                     quota, resume_stage_id=args.resume_stage_id)
         atomic_json(args.report, report)
         if os.environ.get("GITHUB_ACTIONS") == "true":
-            print("::notice title=Drive publication::" + json.dumps(report))
-        print("SUCCESS Drive snapshot published and verified.")
+            print("::notice title=Drive stage audit::" + json.dumps(report) if report.get("audit_only")
+                  else "::notice title=Drive publication::" + json.dumps(report))
+        print("SUCCESS read-only stage audit completed; pointer unchanged." if report.get("audit_only")
+              else "SUCCESS Drive snapshot published and verified.")
         return 0
     except (PublishError, SetupError) as error:
         print("FAILED " + str(error))
