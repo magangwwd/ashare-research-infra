@@ -94,6 +94,27 @@ def test_failed_publish_preserves_entire_old_production(tmp_path, fault):
         assert drive.files[ident] == old[ident]
 
 
+
+@pytest.mark.parametrize("damage", ["manifest_sha", "wrong_parent", "wrong_name"])
+def test_corrupt_previous_manifest_blocks_staging_and_pointer_update(tmp_path, damage):
+    drive = MemoryDrive()
+    pointer = json.loads(drive.read("pointer"))
+    pointer["manifest_sha256"] = hashlib.sha256(drive.read("old-manifest")).hexdigest()
+    if damage == "manifest_sha":
+        pointer["manifest_sha256"] = "0" * 64
+    elif damage == "wrong_parent":
+        drive.files["old-manifest"]["parents"] = ["root"]
+    else:
+        drive.files["old-manifest"]["name"] = "not-production.json"
+    drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+    before = copy.deepcopy(drive.files)
+    with pytest.raises(dp.PublishError, match="manifest"):
+        dp.publish(drive, "root", snapshot(tmp_path),
+                   {"passed": True, "as_of": "2026-10-29"}, {}, tmp_path)
+    assert drive.files == before
+    assert drive.upload_count == 0
+
+
 def test_success_pointer_references_only_verified_immutable_files(tmp_path):
     drive = MemoryDrive()
     old = copy.deepcopy(drive.files)
