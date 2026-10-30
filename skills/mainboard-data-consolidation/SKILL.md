@@ -110,3 +110,10 @@ PR #116 诊断脚本新增 Task01 指针与 manifest SHA256、版本父子关系
 - 本轮真实下载 Drive 两侧正式 JSON：Task01 pointer `2026-10-24`、5406文件、2,331,724,247字节，正式 manifest SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 与 pointer 相符；Gold `2026-10-29`，两项质量标志为 true。两侧相差5个自然日，**仍不准切换**。
 - 在恢复草稿 PR #123 发现一项真实风险：原发布前只检查旧生产 manifest 的 `validated` 和版本名，未核对指针记录的 SHA256 和 manifest 的版本目录父子关系。已补充发布前拒绝损坏/错目录的旧 manifest，避免在旧版本不可确认恢复时启动新 staging。提交 `a0888bf238b7681c30353c7cdd596e6f5b4acf1d`；新增3组无写入回归测试提交 `591d582cb02a2c26e8720e53b625d0aed786fc07`。最新 CI `41000945440` 创建时为 queued，**须复核终态，不可称测试通过或已生产修复**。
 - 本次只修复草稿的安全门禁，没有触发全量下载、没有改生产指针、没有停止 Gold，也没有修改冻结 V1。下一步先核验 CI，再评估旧 checkpoint 和 staging 的只读校验及恢复可执行性。
+
+## 第十二轮：2026-10-30 16:00，受控只读暂存核验工作流
+
+- 最新 Task01 run `40972437556` 发布取消，日志到 `7000/7094`，仍未完成远端 SHA 和正式指针提交。stage ID `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN` 已确认在 staging 根下，**尚未逐文件验证**。同run checkpoint `12960014331`（3.76GB）至 `2026-11-02T07:06:43Z` 到期；验收 artifact `12953020958`。
+- 在 PR #123 草稿新增 `.github/workflows/task01-stage-audit.yml`：仅手动 `workflow_dispatch`，仅 main，显式传 `source_run_id=40972437556`、`stage_id=1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN`；先验证来源 run 的接受状态、工件摘要和解包安全，再只读调用 `python -m data_pipeline.drive_publish --audit-resume-stage-id "$STAGE_ID" --report metadata/stage_audit.json`。**代码未合并、工作流未在生产执行；须先审核 CI 和权限**。
+- 仅当审计 artifact 中 `audit_only=true`、`passed=true`、`pointer_unchanged=true`、`production_switch_allowed=false` 且远端 SHA 逐文件无异常时，才可评估受控续传。即使只读核验成功，也不代表发布成功。切勿自动选 staging、直接合并含自动恢复的草稿 PR、修改冻结策略或停止旧下载。
+- 最新正式 Drive：Task01 `2026-10-24`，Gold `2026-10-29`，仍阻止统一切换。证据详见 `docs/mainboard-baseline-audit-20261028.md`。
