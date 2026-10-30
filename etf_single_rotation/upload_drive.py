@@ -196,12 +196,16 @@ def main():
             prior_name = prior.get("drive_name")
             if not prior_name:
                 raise SystemExit(f"Checkpoint lacks Drive name for {rel}; manual review required.")
-            existing = _find_existing(session, path, prior_name)
-            if not existing or existing["id"] != prior["drive_id"]:
-                raise SystemExit(f"Checkpoint/Drive mismatch for {rel}; no reupload.")
-            _verify_metadata(_remote_metadata(session, existing["id"]), path, prior_name)
-            print(f"DRIVE_SKIP_VERIFIED {rel} -> {existing['id']}", flush=True)
-            continue
+            # A restored checkpoint can belong to an earlier GitHub run.
+            # Never credit an old run's Drive object to the current run.
+            if prior_name == target_name:
+                existing = _find_existing(session, path, target_name)
+                if not existing or existing["id"] != prior["drive_id"]:
+                    raise SystemExit(f"Checkpoint/Drive mismatch for {rel}; no reupload.")
+                _verify_metadata(_remote_metadata(session, existing["id"]), path, target_name)
+                print(f"DRIVE_SKIP_VERIFIED {rel} -> {existing['id']}", flush=True)
+                continue
+            print(f"DRIVE_STALE_CHECKPOINT {rel}: checking current run target", flush=True)
 
         existing = _find_existing(session, path, target_name)
         if existing:
