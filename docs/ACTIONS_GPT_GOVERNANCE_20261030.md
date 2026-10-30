@@ -64,3 +64,7 @@
 - PR #138 合并后 main run [41045590115](https://github.com/magangwwd/ashare-research-infra/actions/runs/41045590115) 两个jobs均success，artifact 12972626053。
 - Google Drive `Ashare_Quant/overseas_research/current.json` (ID `1V9QaRl4Sn6DJE9e0XzkgjfP2APnElgqG`) 实际读取后指向 `snapshot.json` (ID `1kgEKokgdDQYScdU_64r3wKdFjILZ1oPn`)；文件SHA256实际下载计算 `6913aea6f8f98b0b24e1f5058ba919d2e21cb3b0fd7d07d51ec541fe0ab9f1f9` 与指针相符，快照时间 `2026-10-30T11:06:21Z`。
 - 数据质量 `passed_with_gaps`：Treasury/EIA/TWSE/ECB/SCFI已接受，TSMC与7个SEC来源仍缺失或无效。**只认定发布权限门禁与快照读回通过，不认定海外数据全覆盖或回滚演练通过**。
+
+### 2026-10-30 19:xx 自动投研短名单修复上线
+- PR #134 已squash合并main：`3d085f2647900e6d846854f57512a9765941428b`。保留纸面研究限制，修复候选股票数小于上限导致Drive发布错误中断，新增5个断言回归测试。PR CI 40992107948 离线127项success。
+- **尚缺**合并后main实际`verified-drive`作业及Drive发布回读；不可将离线测试通过等同完整生产修复。下轮核验新main `ai-research-data-only.yml` 运行证据。
