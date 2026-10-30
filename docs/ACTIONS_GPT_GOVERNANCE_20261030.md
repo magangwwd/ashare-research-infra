@@ -59,3 +59,8 @@
 - **Task01 取消直接原因明确**：run 40948715414 job 23:01:08Z→03:01:26Z、run 40972437556 job 03:04:16Z→07:04:42Z，均运行约240分钟，与 `task01.timeout-minutes: 240` 一致；两次都在Drive发布步骤取消，前置验收success，checkpoint成功上传，生产current未获新发布回执。不是已证实的HTTP410或concurrency取消。
 - **已有PR #123** 提出超时后独立发布/只读staging审计，最新head 05af987e... 的Pipeline CI 41023592444 success，但尚无真实Drive成功回读及额外运行成本证明；继续保留草稿，不重复提交同类生产补丁。
 - **下一轮**：确认合并后海外主分支首次实际发布与Drive指针，核对Task01恢复方案及成本，推进PR #134正式发布；所有数据和长期守卫保留。
+
+### 2026-10-30 19:xx 海外发布权限变更：生产验收完成
+- PR #138 合并后 main run [41045590115](https://github.com/magangwwd/ashare-research-infra/actions/runs/41045590115) 两个jobs均success，artifact 12972626053。
+- Google Drive `Ashare_Quant/overseas_research/current.json` (ID `1V9QaRl4Sn6DJE9e0XzkgjfP2APnElgqG`) 实际读取后指向 `snapshot.json` (ID `1kgEKokgdDQYScdU_64r3wKdFjILZ1oPn`)；文件SHA256实际下载计算 `6913aea6f8f98b0b24e1f5058ba919d2e21cb3b0fd7d07d51ec541fe0ab9f1f9` 与指针相符，快照时间 `2026-10-30T11:06:21Z`。
+- 数据质量 `passed_with_gaps`：Treasury/EIA/TWSE/ECB/SCFI已接受，TSMC与7个SEC来源仍缺失或无效。**只认定发布权限门禁与快照读回通过，不认定海外数据全覆盖或回滚演练通过**。
