@@ -50,9 +50,17 @@ class Policy:
     slippage_rate: float = 0.001
 
     def validate(self) -> None:
-        if not (30000 <= self.min_order_cny <= self.order_budget_cny <=
-                self.max_order_cny <= 50000):
-            raise ValueError("Each planned order must be between CNY 30,000 and 50,000")
+        # Keep the historical 50k-capital policy unchanged. The separately
+        # versioned 100k forward-paper study may target 99.5k of 100k cash,
+        # reserving funds for fees and rounding down to whole 100-share lots.
+        historical = (30000 <= self.min_order_cny <= self.order_budget_cny <=
+                      self.max_order_cny <= 50000)
+        capital_100k = (self.initial_cash_cny == 100000.0 and
+                        self.min_order_cny == 30000.0 and
+                        self.order_budget_cny == 99500.0 and
+                        self.max_order_cny == 99500.0)
+        if not (historical or capital_100k):
+            raise ValueError("Order limits must match the historical or 100k paper policy")
         if self.initial_cash_cny < self.order_budget_cny * (1 + self.commission_rate + self.transfer_rate):
             raise ValueError("Initial cash cannot cover the requested order and fees")
         if self.buy_lot != 100 or self.min_hold_sessions != 3 or self.max_hold_sessions != 5:
@@ -280,7 +288,7 @@ def simulate(panel: pd.DataFrame, risk: GoldPITRisk, policy: Policy,
                 notional = max_shares * raw_buy
                 if not (policy.min_order_cny <= notional <= policy.max_order_cny):
                     exceptions.append({"date": str(day.date()), "symbol": symbol,
-                                       "reason": "UNFILLABLE_30K_50K_CASH_OR_LOTS"})
+                                       "reason": "UNFILLABLE_ORDER_CASH_OR_LOTS"})
                     continue
                 fees = buy_fee(notional, policy)
                 cash -= notional + fees
