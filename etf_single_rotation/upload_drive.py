@@ -127,6 +127,7 @@ def _find_existing(session, path, target_name):
     escaped = target_name.replace("\\", "\\\\").replace("'", "\\'")
     query = f"'{FOLDER_ID}' in parents and name = '{escaped}' and trashed = false"
     matches, page_token = [], None
+    seen_page_tokens = set()
     while True:
         params = {
             "q": query,
@@ -151,7 +152,15 @@ def _find_existing(session, path, target_name):
                 f"Duplicate Drive name {target_name}: {len(matches)} objects; "
                 "no automatic reconciliation or deletion."
             )
-        page_token = payload.get("nextPageToken")
+        next_page_token = payload.get("nextPageToken")
+        if next_page_token:
+            # Fail closed on broken/cyclic pagination rather than looping forever.
+            if (not isinstance(next_page_token, str)
+                    or next_page_token in seen_page_tokens
+                    or len(seen_page_tokens) >= 50):
+                raise SystemExit("Drive preflight pagination loop/limit; no upload attempted.")
+            seen_page_tokens.add(next_page_token)
+        page_token = next_page_token
         if not page_token:
             break
     if not matches:
