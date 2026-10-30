@@ -129,3 +129,11 @@ PR #116 诊断脚本新增 Task01 指针与 manifest SHA256、版本父子关系
 ## 长耗时只读 SHA 审计的并发指针复核（2026-10-30）
 
 PR #123 的暂存审计可能耗时数小时。审计开始时记录正式 `current.json` 文件 ID 和完整原始字节；逐文件核验后**再次读取正式指针 ID/字节和旧版本 manifest**，任一变化必须判为失败，不得输出 `pointer_unchanged=true`。本防护在草稿 PR #123 提交 `fb4c59a5` 和回归测试 `7ee479a6`，**尚待 CI/生产验证**。若 Task01 在审计期间更新了正式库，应重新读取最新 pointer 并重新决策，不能使用过时审计报告续传。保持两套生产下载及冻结 V1 不变。
+
+
+## 暂存只读审计的证据绑定（2026-10-30）
+
+- PR #123 草稿只读审计输出必须含 `audit_only=true`、`passed=true`、`production_switch_allowed=false`、`pointer_unchanged=true`，且 `stage_id` 必须与人工指定目录一致、`pointer_sha256` 必须为64位小写十六进制。
+- 审计工作流验收后在 artifact 中补记 `source_run_id`、`checkpoint_sha256`、`audit_run_id`、`audit_commit_sha`，供后续受控恢复核对来源。只读报告不是发布凭证；仅在CI、生产审计和后续正式指针读回均通过后才讨论续传。
+- 2026-10-30 实读 Task01 `2026-10-24`、Gold `2026-10-29`，Task01 manifest SHA 与指针一致，Gold manifest SHA `79699efb7c09423450e02b4e1a2a1ca7fb28b1fffca7dd847847a45b13b38291`；详见 `docs/mainboard-baseline-audit-20261028.md`。未核验暂存7000文件、未切换生产。
+- GitHub `task01-stage-audit.yml` 的早期 push failure run `41023552472` 为零jobs，**不等于实际审计失败或成功**。工作流尚未部署main；需先解决可执行入口，不得重复全量上传试错。
