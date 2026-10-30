@@ -258,7 +258,7 @@ def build_or_load_state_history(
         states = pd.read_parquet(cache_path)
         for column in ("instrument_id", "vendor_symbol", "industry_vendor", "raw_state",
                        "defined_state", "pool_status", "previous_defined_state", "transition"):
-            states[column] = states[column].astype(object)
+            states[column] = states[column].astype(object).where(states[column].notna(), None)
         return states, {"loaded_cache": True, "rows": int(len(states))}
     panel, instruments, calendar = load_market_history(
         market_root, pd.Timestamp("2020-01-01"), end
@@ -301,7 +301,7 @@ def build_or_load_state_history(
     # explicit text schema on both fresh calculation and cached reuse.
     for column in ("instrument_id", "vendor_symbol", "industry_vendor", "raw_state",
                    "defined_state", "pool_status", "previous_defined_state", "transition"):
-        states[column] = states[column].astype(object)
+        states[column] = states[column].astype(object).where(states[column].notna(), None)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     states.to_parquet(cache_path, index=False)
     record_cache(cache_path, signature)
