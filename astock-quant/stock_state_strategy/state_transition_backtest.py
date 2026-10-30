@@ -92,7 +92,7 @@ def add_stability(frame: pd.DataFrame) -> pd.DataFrame:
     stability = np.zeros(len(result), dtype="int8")
     for positions in result.groupby("instrument_id", sort=False).indices.values():
         pos = np.asarray(positions, dtype=np.int64)
-        states = result.loc[pos, "raw_state"].to_numpy(dtype=object)
+        states = result.iloc[pos]["raw_state"].to_numpy(dtype=object)
         local = np.zeros(len(pos), dtype="int8")
         for state in ("accumulation", "lock", "markup", "distribution"):
             counts = (
@@ -210,8 +210,8 @@ def add_transitions(frame: pd.DataFrame) -> pd.DataFrame:
     previous_date = np.full(len(result), np.datetime64("NaT"), dtype="datetime64[ns]")
     for positions in result.groupby("instrument_id", sort=False).indices.values():
         pos = np.asarray(positions, dtype=np.int64)
-        states = result.loc[pos, "defined_state"].replace("uncertain", np.nan)
-        dates = result.loc[pos, "trade_date"]
+        states = result.iloc[pos]["defined_state"].replace("uncertain", np.nan)
+        dates = result.iloc[pos]["trade_date"]
         previous_state[pos] = states.ffill().shift(1).to_numpy(dtype=object)
         previous_date[pos] = dates.where(states.notna()).ffill().shift(1).to_numpy(
             dtype="datetime64[ns]"

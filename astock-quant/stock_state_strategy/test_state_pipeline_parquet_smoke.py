@@ -78,15 +78,17 @@ class StatePipelineParquetSmokeTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,'rebuild'):
             build_or_load_state_history(path,self.market,changed,end,False)
 
-    def test_same_day_price_correction_is_used_instead_of_cached_close(self):
+    def test_same_day_price_correction_is_used_instead_of_cached_return(self):
         self.run_state()
-        original=pd.read_parquet(self.root/'output/current_snapshot.parquet')['close'].iloc[0]
+        original=pd.read_parquet(self.root/'output/current_snapshot.parquet')['ret_20_behavior'].iloc[0]
         corrected=self.prices.copy()
         corrected.loc[corrected.index[-1],['open','high','low','close']]-=1
         self.write_dataset('daily_prices',corrected)
         self.run_state()
-        updated=pd.read_parquet(self.root/'output/current_snapshot.parquet')['close'].iloc[0]
-        self.assertAlmostEqual(updated,original-1)
+        updated=pd.read_parquet(self.root/'output/current_snapshot.parquet')['ret_20_behavior'].iloc[0]
+        self.assertLess(updated,original)
+        expected=corrected['close'].iloc[-1]/corrected['close'].iloc[-21]-1
+        self.assertAlmostEqual(updated,expected,places=6)
 
     def test_unchanged_recent_cache_reuses_but_corrupted_bytes_rebuild(self):
         self.run_state()
