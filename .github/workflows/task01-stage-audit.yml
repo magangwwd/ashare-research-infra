@@ -37,9 +37,9 @@ jobs:
         id: gate
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }
-          SOURCE_RUN_ID: ${{ inputs.source_run_id }
-          STAGE_ID: ${{ inputs.stage_id }
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          STAGE_ID: ${{ inputs.stage_id }}
         run: |
           set -euo pipefail
           [[ "$SOURCE_RUN_ID" =~ ^[0-9]{8,15}$ ]] || { echo "BLOCKED invalid source run ID"; exit 1; }
@@ -94,9 +94,9 @@ jobs:
       - name: Restore verified checkpoint without network writes
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }
-          CHECKPOINT_ID: ${{ steps.gate.outputs.checkpoint_id }
-          CHECKPOINT_SHA: ${{ steps.gate.outputs.checkpoint_sha }
+          GH_TOKEN: ${{ github.token }}
+          CHECKPOINT_ID: ${{ steps.gate.outputs.checkpoint_id }}
+          CHECKPOINT_SHA: ${{ steps.gate.outputs.checkpoint_sha }}
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$CHECKPOINT_ID/zip" > "$RUNNER_TEMP/checkpoint.zip"
@@ -124,8 +124,8 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Read-only SHA256 reconciliation of explicit Drive stage
         env:
-          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }
-          STAGE_ID: ${{ inputs.stage_id }
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+          STAGE_ID: ${{ inputs.stage_id }}
           PYTHONUNBUFFERED: '1'
         run: |
           set -euo pipefail
