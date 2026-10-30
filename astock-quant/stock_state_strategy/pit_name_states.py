@@ -31,7 +31,7 @@ def historical_name_states(panel: pd.DataFrame, history: pd.DataFrame) -> pd.Dat
             continue
         pos = np.asarray(positions, dtype=np.int64)
         dates = pd.to_datetime(panel.iloc[pos]["trade_date"], errors="coerce").to_numpy(dtype="datetime64[ns]")
-        latest = np.full(len(pos), np.datetime64("NaT"), dtype="datetime64[ns]")
+        latest = np.full(len(pos), np.datetime64("NaT", "ns"), dtype="datetime64[ns]")
         local_known = np.zeros(len(pos), dtype=bool)
         local_st = np.zeros(len(pos), dtype=bool)
         for row in group.itertuples(index=False):

@@ -13,7 +13,7 @@
       "priority": 1,
       "title": "修复未来披露计数与旧V1的ST未知/公告可见性门禁",
       "depends_on": [],
-      "status": "VERIFYING",
+      "status": "VERIFIED_DONE",
       "acceptance": [
         "未来公告不改变过去披露次数与状态资格",
         "ST缺失/未来公告/冲突均未知",
@@ -21,11 +21,18 @@
         "本子项目完整真实CI通过"
       ],
       "evidence": {
-        "local_unit_tests_passed": 11,
+        "local_unit_tests_passed": 70,
         "local_ast_disclosure_regressions_passed": 3,
-        "github_run_id": null
+        "github_run_id": 40985089125,
+        "github_head_sha": "926fff48e94e2de038c161dc0f8f0c48006449c2",
+        "github_full_tests_passed": 113,
+        "github_full_tests_failed": 0,
+        "github_offline_preflight_tests_passed": 11,
+        "github_run_url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/40985089125",
+        "production_deployed": false
       },
-      "next_action": "提交隔离草稿PR并取得完整策略CI日志；尚未部署main"
+      "next_action": "保留草稿待独立审阅；解锁SS-DATA-002及SS-CACHE-003，未部署main",
+      "completion_scope": "隔离分支实现与完整离线CI验收；未合并、未验收真实源数据或策略收益"
     },
     {
       "id": "SS-DATA-002",
@@ -34,7 +41,7 @@
       "depends_on": [
         "SS-PIT-001"
       ],
-      "status": "BLOCKED",
+      "status": "READY",
       "acceptance": [
         "历史legacy只读",
         "当期research_end与数据实际截止日正确",
@@ -51,7 +58,7 @@
       "depends_on": [
         "SS-PIT-001"
       ],
-      "status": "BLOCKED",
+      "status": "READY",
       "acceptance": [
         "拒用修复前无版本的状态缓存",
         "manifest新但行情旧时拒绝发布",
@@ -142,6 +149,15 @@
       ],
       "next_action": "结论为具备独立研究复核条件/未通过/证据不足；不授权实盘"
     }
-  ]
+  ],
+  "schedule": {
+    "gpt_task_id": "6acb3d1d96448191a52d99d6823a2ce4",
+    "title": "A股08:00数据晨检与决策",
+    "timezone": "Asia/Shanghai",
+    "cadence": "DAILY_08_00",
+    "configured": true
+  },
+  "tracking_issue": 132,
+  "tracking_pr": 133
 }
 
