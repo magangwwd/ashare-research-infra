@@ -487,6 +487,8 @@ def test_read_only_stage_audit_sha_checks_and_never_writes(tmp_path):
     assert result["audit_only"] and result["passed"]
     assert result["production_switch_allowed"] is False
     assert result["pointer_unchanged"] is True
+    assert result["stage_id"] == stage
+    assert result["pointer_sha256"] == hashlib.sha256(before["pointer"]["body"]).hexdigest()
     assert result["sha256_verified_staged_files"] == 1
     assert result["missing_files"] == 1
     assert result["missing_bytes"] == items[1]["bytes"]
