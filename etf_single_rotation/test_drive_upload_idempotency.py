@@ -87,6 +87,25 @@ class DriveIdempotencyTests(unittest.TestCase):
             u.main()
         self.session.post.assert_not_called()
 
+    def test_preflight_repeated_page_token_fails_closed(self):
+        self.session.get.return_value = Reply(
+            200, {"files": [], "nextPageToken": "repeated"}
+        )
+        with self.assertRaisesRegex(SystemExit, "pagination loop/limit"):
+            u.main()
+        self.assertEqual(self.session.get.call_count, 2)
+        self.session.post.assert_not_called()
+
+    def test_preflight_empty_page_can_find_match_on_next_page(self):
+        self.session.get.side_effect = [
+            Reply(200, {"files": [], "nextPageToken": "next"}),
+            Reply(200, {"files": [self.item]}),
+            Reply(200, self.item),
+        ]
+        u.main()
+        self.assertEqual(self.session.get.call_count, 3)
+        self.session.post.assert_not_called()
+
     def test_existing_name_different_bytes_fails_closed(self):
         wrong = {**self.item, "md5Checksum": "0" * 32}
         self.session.get.return_value = Reply(200, {"files": [wrong]})
