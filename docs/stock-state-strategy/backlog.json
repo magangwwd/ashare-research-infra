@@ -1,0 +1,147 @@
+{
+  "schema_version": "1.0.0",
+  "project": "stock_state_strategy",
+  "mode": "RESEARCH_ONLY",
+  "created_at": "2026-10-30",
+  "authority_branch": "research/stock-state-integrity-20261030",
+  "baseline_main_sha": "10b9a7a4c38e04f68ca92993bcb9db3255350353",
+  "mandate": "docs/stock-state-strategy/PROJECT_MANDATE.md",
+  "validation_plan": "docs/stock-state-strategy/VALIDATION_PLAN.md",
+  "tasks": [
+    {
+      "id": "SS-PIT-001",
+      "priority": 1,
+      "title": "修复未来披露计数与旧V1的ST未知/公告可见性门禁",
+      "depends_on": [],
+      "status": "VERIFYING",
+      "acceptance": [
+        "未来公告不改变过去披露次数与状态资格",
+        "ST缺失/未来公告/冲突均未知",
+        "正式V1文档和机器配置SHA不变",
+        "本子项目完整真实CI通过"
+      ],
+      "evidence": {
+        "local_unit_tests_passed": 11,
+        "local_ast_disclosure_regressions_passed": 3,
+        "github_run_id": null
+      },
+      "next_action": "提交隔离草稿PR并取得完整策略CI日志；尚未部署main"
+    },
+    {
+      "id": "SS-DATA-002",
+      "priority": 1,
+      "title": "当期股东披露版本化更新并接入当天状态，分解披露失败",
+      "depends_on": [
+        "SS-PIT-001"
+      ],
+      "status": "BLOCKED",
+      "acceptance": [
+        "历史legacy只读",
+        "当期research_end与数据实际截止日正确",
+        "新公告被当天状态显式消费",
+        "3124只失败分项与A池变化可解释",
+        "真实Drive输出回读哈希匹配"
+      ],
+      "next_action": "独立运行配置与新研究输出命名空间；不重复共享Task01/Gold采集"
+    },
+    {
+      "id": "SS-CACHE-003",
+      "priority": 1,
+      "title": "缓存输入指纹、实际日期一致性及分阶段凭据",
+      "depends_on": [
+        "SS-PIT-001"
+      ],
+      "status": "BLOCKED",
+      "acceptance": [
+        "拒用修复前无版本的状态缓存",
+        "manifest新但行情旧时拒绝发布",
+        "gold-refresh/current-state凭据不相互覆盖",
+        "手动工作流输入通过环境变量安全传递"
+      ],
+      "next_action": "先做失败输入回归，再在隔离快照验证"
+    },
+    {
+      "id": "SS-REPLAY-004",
+      "priority": 2,
+      "title": "冻结V1修复前后全量历史重算和差异归因",
+      "depends_on": [
+        "SS-DATA-002",
+        "SS-CACHE-003"
+      ],
+      "status": "BLOCKED",
+      "acceptance": [
+        "数据代码配置指纹完整",
+        "输出新前缀且旧资产不变",
+        "状态/候选/成交/净值差异可解释",
+        "真实Run及必要产物回读通过"
+      ],
+      "next_action": "只有数据及PIT门禁过关才消耗完整回测计算"
+    },
+    {
+      "id": "SS-EXEC-005",
+      "priority": 2,
+      "title": "实现正式V1模拟账户、不可变五类账本并修复R0迟补门禁",
+      "depends_on": [
+        "SS-DATA-002",
+        "SS-CACHE-003"
+      ],
+      "status": "BLOCKED",
+      "acceptance": [
+        "T+1整手单仓规则和冻结费用仓位不变",
+        "幂等、取消、停牌和净值对账测试",
+        "激活时间后首次记录，无历史补记",
+        "真实闭环演练及Drive回读"
+      ],
+      "next_action": "不交易；先合成账户测试，再真实新日信号记录"
+    },
+    {
+      "id": "SS-VALID-006",
+      "priority": 2,
+      "title": "同入场基准、分阶段稳定性、费用与盈利集中度检验",
+      "depends_on": [
+        "SS-REPLAY-004"
+      ],
+      "status": "BLOCKED",
+      "acceptance": [
+        "所有实验配置预登记",
+        "已看历史只称诊断",
+        "影子费用压力与原V1分开",
+        "负结果保留且有明确继续/停止决定"
+      ],
+      "next_action": "避免无假设网格搜索和把回测最优当有效"
+    },
+    {
+      "id": "SS-FWD-007",
+      "priority": 3,
+      "title": "激活修复实现后的真实逐日前向模拟",
+      "depends_on": [
+        "SS-EXEC-005",
+        "SS-VALID-006"
+      ],
+      "status": "BLOCKED",
+      "acceptance": [
+        "首次观察窗口及源版本可核验",
+        "无回填无违规无选择性漏记",
+        "持续数据完整和每日现金净值对账"
+      ],
+      "next_action": "已有08:00晨检每天审核接续；等待真实数据而非重复回测"
+    },
+    {
+      "id": "SS-VERDICT-008",
+      "priority": 3,
+      "title": "按冻结V1门槛出具有效性结论",
+      "depends_on": [
+        "SS-FWD-007"
+      ],
+      "status": "BLOCKED",
+      "acceptance": [
+        "至少30笔平仓及12个月",
+        "均值净R>0、PF>=1.2、扣费组合收益>0",
+        "已平仓回撤<=10%、基准增量为正且HAC p<0.05",
+        "剔除最大盈利交易、成本压力和阶段表现独立报告"
+      ],
+      "next_action": "结论为具备独立研究复核条件/未通过/证据不足；不授权实盘"
+    }
+  ]
+}
+
