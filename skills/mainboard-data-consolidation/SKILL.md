@@ -93,3 +93,12 @@ PR #116 诊断脚本新增 Task01 指针与 manifest SHA256、版本父子关系
 - 取消 run `40786202732` 的 stage `1lLB28lNbC3OWZeGx2xctOjQlBlwjSIKM` 仍存在，**不是正式数据，也尚未完成逐文件 SHA 验证**。checkpoint `12878879550` 将于 2026-11-01 06:59:59 UTC 到期，不能依赖过期后恢复。
 - PR #123 的显式续传现在按**经远端 SHA 验证后的缺失字节 + 1MiB**判断 Drive 剩余容量，不再要求重复预留整份快照；普通全量发布保留原全量容量门禁。缺少 staging 根、父目录不符、路径/大小/SHA不符、配额不足均拒绝，不改生产 pointer。提交 `3af09c78`、`88c43cde`、`e656c49e`，CI `40944992102` 待最终确认。
 - 不要为了赶 checkpoint 过期而跳过安全审查、直接合并草稿或重复大规模上传；下一轮先验收 CI 与生产凭据只读差异，再决定是否进行受控续传。完整证据见 `docs/mainboard-baseline-audit-20261028.md`。
+
+
+## 第十一轮：2026-10-30 08:00，暂存续传只读预检（仍未发布）
+
+- 实读 main SHA `370630f3b7681f60bbcc126982e7ddcaec265fc1`；PR #116/#121/#123 仍 draft/open。Task01 run `40948715414` 仍在发布步骤，备份 run `40972437556` pending，均不能算正式发布成功。
+- 本轮从 Drive 直接读取正式 JSON：Task01 `current.json` 的 `snapshot_as_of=2026-10-24`；Gold `manifest.json` 已更新到 `as_of_date=2026-10-29`，质量标志为 true。历史完整性标志仍不满足统一切换条件；禁止以旧 Task01 覆盖 Gold。
+- PR #123 新增 `--audit-resume-stage-id <人工指定的stage ID>`：对恢复 checkpoint 的已验收本地清单与远端暂存逐文件核对 SHA256/大小/路径，核验正式 pointer/manifest、日期与剩余配额，输出已验证复用数、缺失数和缺失字节；**仅 GET/read，不创建文件夹、不上传、不移动版本、不更新指针**。调用示例：`python -m data_pipeline.drive_publish --audit-resume-stage-id <STAGE_ID> --report metadata/stage_audit.json`。需在受控、具备已验收 checkpoint 的运行环境中执行；不可从旧日志自动挑选 stage。
+- 代码提交 `07595d89`，无写入回归测试 `dfdf78cc`；新 CI `40977006624` / `40977014204` 仍待终态。**尚未用生产凭据执行只读预检**，不能声称4400个暂存文件已核验。原 `40944992102` 离线 CI 已通过。
+- 必须先审查并通过最新 CI，确认 stage 与本地 checkpoint 内容完全一致，再决定是否受控续传；恢复工件 `12878879550` 到期时间为 2026-11-01 06:59:59 UTC，不得因此跳过安全审查。
