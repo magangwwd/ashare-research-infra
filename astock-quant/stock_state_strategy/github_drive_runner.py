@@ -17,6 +17,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from state_run_contracts import phase_status_path, validate_state_output
 from current_ownership_contract import current_config, verified_ownership_prefix, verified_reuse_source, validate_ownership_run_id
+from state_cache_contract import file_sha256
 
 REPO = Path(__file__).resolve().parents[1]
 CODE = Path(__file__).resolve().parent
@@ -59,6 +60,20 @@ def require_drive() -> None:
 
 def load(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def write_snapshot_manifest(snapshot: Path, gold_manifest: Path, status: dict) -> str:
+    """Persist byte identities with the version before remote copy/check."""
+    record = {"schema_version": 1, "as_of_date": status["as_of"],
+              "github_sha": status["github_sha"],
+              "gold_manifest_sha256": file_sha256(gold_manifest),
+              "reused_ownership_source": status.get("reused_ownership_source"),
+              "files_sha256": {str(p.relative_to(snapshot)): file_sha256(p)
+                               for p in sorted(snapshot.rglob("*"))
+                               if p.is_file() and p.name != "snapshot_manifest.json"}}
+    target = snapshot / "snapshot_manifest.json"
+    target.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
+    return file_sha256(target)
 
 
 def link_persistent(name: str, work: Path) -> None:
@@ -258,6 +273,8 @@ def main() -> int:
             state = work / "stock_state_strategy/output" / ("state_definition_" + as_of.replace("-", ""))
             validate_state_output(state, as_of)
             shutil.copytree(state, snapshot / "state")
+            status["snapshot_manifest_sha256"] = write_snapshot_manifest(
+                snapshot, gold_path / "manifest.json", status)
             target = REMOTE + "stock_state_strategy/research/ownership/" + as_of + "/" + run_id
             copy(snapshot, target)
             check(snapshot, target)
@@ -269,6 +286,7 @@ def main() -> int:
                 check(state, formal)
                 pointer = {"as_of_date": as_of, "snapshot_prefix": target.removeprefix(REMOTE),
                            "verification": "RCLONE_CHECK_PASSED", "run_id": run_id,
+                           "snapshot_manifest_sha256": status["snapshot_manifest_sha256"],
                            "github_sha": os.getenv("GITHUB_SHA")}
                 verified_ownership_prefix(pointer, as_of)
                 pointer_file = scratch / "current_ownership.json"

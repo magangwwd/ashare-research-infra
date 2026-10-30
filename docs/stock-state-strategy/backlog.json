@@ -31,7 +31,7 @@
         "github_run_url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/40985089125",
         "production_deployed": false
       },
-      "next_action": "保留草稿待独立审阅；解锁SS-DATA-002及SS-CACHE-003，未部署main",
+      "next_action": "合并后用main生产运行和Drive回读补齐部署证据；冻结规则保持不变",
       "completion_scope": "隔离分支实现与完整离线CI验收；未合并、未验收真实源数据或策略收益"
     },
     {
@@ -49,20 +49,25 @@
         "3124只失败分项与A池变化可解释",
         "真实Drive输出回读哈希匹配"
       ],
-      "next_action": "先完成合成I/O编排回归，再显式启动隔离数据核验",
+      "next_action": "验收运行40987495007；成功后复用已验证processed，在main重算、诊断并发布current_ownership指针",
       "progress": {
         "implemented": [
           "当期截止日运行配置",
           "新数据下载/处理/状态共用独立版本目录",
           "修复旧批次因日期或股票池变化仍被跳过",
-          "不覆盖legacy或正式状态输出"
+          "不覆盖legacy或正式状态输出",
+          "缺失/过期/更新次数/质量失败独立诊断",
+          "生产指针最后发布，夜间显式消费当期版本",
+          "成功源复用免重复API采集",
+          "版本清单保存配置、源文件与状态产物SHA256"
         ],
         "github_run_id": 40987099771,
         "remaining": [
           "真实Tushare采集",
           "Drive结果回读",
           "3124只披露失败分项及变化归因"
-        ]
+        ],
+        "source_run_id": 40987495007
       }
     },
     {
@@ -79,15 +84,17 @@
         "gold-refresh/current-state凭据不相互覆盖",
         "手动工作流输入通过环境变量安全传递"
       ],
-      "next_action": "软件门禁通过；真实快照取得后验收缓存与重算，整体暂不结项",
+      "next_action": "实际Parquet回归已通过；待当期真实源及部署验收，真实全量历史缓存另行重建",
       "progress": {
         "implemented": [
           "历史缓存代码/公告/Gold指纹及输出字节校验",
           "日期一致性及分阶段回执",
-          "手动工作流输入环境变量处理"
+          "手动工作流输入环境变量处理",
+          "实际Parquet缓存重建/复用严格一致性回归",
+          "字符串类型及空值表示规范化"
         ],
-        "github_run_id": 40986805989,
-        "tests_passed": 127,
+        "github_run_id": 40990491597,
+        "tests_passed": 161,
         "remaining": [
           "真实源上的缓存重建/复用集成验收"
         ]
@@ -186,4 +193,3 @@
   "tracking_issue": 132,
   "tracking_pr": 133
 }
-

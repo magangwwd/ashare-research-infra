@@ -81,3 +81,17 @@ class CurrentOwnershipRunnerTests(unittest.TestCase):
     def test_failed_prior_run_cannot_be_promoted(self):
         root,configs,published,commands=self.execute(promote=True,reuse=True,prior_success=False)
         self.assertEqual(published,[])
+
+    def test_published_manifest_fingerprints_actual_inputs_outputs_and_lineage(self):
+        root,configs,published,commands=self.execute(promote=True,reuse=True)
+        snapshot=Path(configs[0]['processed_data_dir']).parent
+        manifest=json.loads((snapshot/'snapshot_manifest.json').read_text())
+        self.assertEqual(manifest['as_of_date'],'2026-10-29')
+        self.assertEqual(manifest['reused_ownership_source'],
+            'stock_state_strategy/research/ownership/2026-10-29/999-1')
+        self.assertEqual(manifest['files_sha256']['processed/ownership_events.parquet'],
+            runner.file_sha256(snapshot/'processed/ownership_events.parquet'))
+        self.assertIn('current_config.json',manifest['files_sha256'])
+        self.assertIn('state/summary.json',manifest['files_sha256'])
+        pointer=json.loads((root/'scratch/current_ownership.json').read_text())
+        self.assertEqual(pointer['snapshot_manifest_sha256'],runner.file_sha256(snapshot/'snapshot_manifest.json'))
