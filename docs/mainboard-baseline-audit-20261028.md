@@ -157,3 +157,11 @@
 - 在 PR #123 中修正一个真实续传阻塞：此前配额检查要求剩余空间足以**再上传完整快照**，即使已核验的 staging 文件可复用也会被错误阻止；现在先只读核验显式指定 stage 的父目录、路径、大小和远端 SHA256，再仅按**缺失文件字节数 + 1MiB manifest 余量**检查剩余配额，失败时不上传、不改指针。原始非续传模式仍按全量快照检查。代码 commit `3af09c78d95a7b4ba6c8089f3b1e3b453a57623d`，新增两项低配额离线测试 commit `88c43cdeed256ca8126c4090ddba7967d9d1ee57`，保持既有“非 staging 子目录拒绝”错误契约 commit `e656c49e2907d1af9752e5deb6e4c6c332a2f36a`。
 - 最新 PR #123 CI run `40944992102` 查询时为 `in_progress`；**不能声称通过**，更不能声称生产发布恢复。未执行昂贵的全量上传，也未修改 main / Gold / 冻结 V1。
 - 下轮先检查 run `40944992102` 的终态；再评估 4400 个 staged 文件的真实 SHA 验证成本与 checkpoint 有效期，优先推进安全可控的生产端只读检查和受控续传，而不是重复全量上传。
+
+## 2026-10-30 16:00 CST：最近备份几乎上传完毕，新增受控只读核验入口
+
+- 本轮实读 main SHA `68831d6cd4d2b2f7292a3539b7bb662ef51babe4`，PR #116/#123 仍 draft；Task01 运行 [#40972437556](https://github.com/magangwwd/ashare-research-infra/actions/runs/40972437556) 已 `completed/cancelled`，验收成功、Drive发布步骤取消。完整 job 日志显示新 staging `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN`，计划 **7094项/2,912,130,179字节**，至 2026-10-30T06:41:07Z 已达 **7000/7094**，07:04:42Z 取消；此时仍标注 `remote verification pending`，不能视为发布完成。该 staging 已通过 Drive 元数据核实位于 `staging/` 直接子目录，**未逐文件验 SHA**。
+- 新 checkpoint artifact `12960014331`，3,764,218,991字节，ZIP SHA256 `b264d0851ec2d3c174c9b08016d9b2f1aa20322cfbfd01a23dfb899e278ed3f4`，有效至 `2026-11-02T07:06:43Z`；同 run 验收 artifact `12953020958`。之前 checkpoint 可能已被下一轮清理，不得沿用旧 ID。该工件校验值不等于 Drive 快照校验值。
+- 实际重新读取正式 Drive JSON：Task01 `current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB` 仍为 `2026-10-24`；其 manifest ID `1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1` 的实际 SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 与指针相同；Gold `manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn` 为 `2026-10-29`，质量标志均为 true。**Task01 落后，禁止切换**。
+- 在恢复草稿 PR #123 中增加 **独立手动、仅主分支、只读** `.github/workflows/task01-stage-audit.yml`：明确输入 `source_run_id` 和 `stage_id`，验证来源 run、已验收且发布取消的 job、同 run 未过期工件、ZIP SHA256 和 tar 安全解包，再调用 `--audit-resume-stage-id` 核对远端路径/大小/SHA、输出 `metadata/stage_audit.json`。不设 schedule、不下载 Tushare、不上传 Drive、不切换指针；不能自动选择 staging。代码 commits `628de54c`、`9b17e85e`、`05af987e`，最新 CI [#41023592444](https://github.com/magangwwd/ashare-research-infra/actions/runs/41023592444) 创建时未确认最终结果。**尚未合并 main、尚未真实执行只读审计**；不得因 workflow 文件存在就声称已验证 7000 项。
+- 下一步：检查 CI，审查只读 workflow 安全和磁盘/时间成本；如通过审核，先手动只读验收 stage 和 checkpoint，再决定是否启用受控续传。原下载、旧数据、冻结V1均不动。
