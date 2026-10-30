@@ -1,0 +1,39 @@
+{
+  "schema_version": "ETF_SCOPED_REVIEW_NOTE_V1_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DRIVE-137",
+  "issue": 137,
+  "pr": 139,
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "created_at_utc": "2026-10-30T12:06:00Z",
+  "source_branch": "feature/etf-single-rotation-v1",
+  "source_sha": "a47f46f671ceb15ba4aa737e91b24461fb33841e",
+  "implementation_commits": [
+    "0d76573d590a5e6cd3670d8e91add3b1adb41351",
+    "685ec12addb22a26ac4082dc624a31831d06e09a"
+  ],
+  "scope": "Drive upload idempotency preflight and fail-closed response handling only; no historical data changes",
+  "checks": {
+    "code_written": true,
+    "code_readback_verified": true,
+    "tests_written": 11,
+    "tests_executed": false,
+    "tests_passed": null,
+    "tests_failed": null,
+    "run_id": null,
+    "job_id": null,
+    "artifact_id": null,
+    "drive_byte_readback_performed": false,
+    "formal_sop_receipt_issued": false
+  },
+  "risk_controls": [
+    "No remote deletion",
+    "No Drive credential use in tests",
+    "No repeat POST on ambiguous response",
+    "No historical backtest",
+    "Fixed 8 ETFs, at most 1 ETF or cash, 25% historical MDD research target",
+    "ETF-DIV-004 REVIEW_REQUIRED; ETF-PAPER-005 BLOCKED"
+  ],
+  "next_action": "Run isolated exact-head offline mocked tests after explicit workflow authorization or approved CI path; inspect logs and only then issue formal SOP receipt. Independently validate Drive preflight against a non-production fixture before merge. Preserve both historical duplicate objects."
+}
