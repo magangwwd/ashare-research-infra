@@ -273,6 +273,14 @@ def main() -> int:
             state = work / "stock_state_strategy/output" / ("state_definition_" + as_of.replace("-", ""))
             validate_state_output(state, as_of)
             shutil.copytree(state, snapshot / "state")
+            # Execution is over: archive portable paths, never ephemeral runner
+            # locations. Restoring this record resolves paths from the version.
+            archived_config = dict(config)
+            archived_config.update({"path_base": "snapshot_directory",
+                "market_data_root": "down_data/data/gold/main_board",
+                "market_data_path_base": "project_root",
+                "raw_data_dir": "raw", "processed_data_dir": "processed", "output_dir": "audit"})
+            config_path.write_text(json.dumps(archived_config, indent=2), encoding="utf-8")
             status["snapshot_manifest_sha256"] = write_snapshot_manifest(
                 snapshot, gold_path / "manifest.json", status)
             target = REMOTE + "stock_state_strategy/research/ownership/" + as_of + "/" + run_id

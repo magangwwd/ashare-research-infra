@@ -95,3 +95,13 @@ class CurrentOwnershipRunnerTests(unittest.TestCase):
         self.assertIn('state/summary.json',manifest['files_sha256'])
         pointer=json.loads((root/'scratch/current_ownership.json').read_text())
         self.assertEqual(pointer['snapshot_manifest_sha256'],runner.file_sha256(snapshot/'snapshot_manifest.json'))
+
+    def test_archived_configuration_never_contains_ephemeral_absolute_paths(self):
+        root,configs,published,commands=self.execute(promote=True,reuse=True)
+        snapshot=Path(configs[0]['processed_data_dir']).parent
+        record=json.loads((snapshot/'current_config.json').read_text())
+        self.assertEqual(record['path_base'],'snapshot_directory')
+        self.assertEqual(record['market_data_path_base'],'project_root')
+        for key in ('market_data_root','raw_data_dir','processed_data_dir','output_dir'):
+            self.assertFalse(Path(record[key]).is_absolute())
+        self.assertNotIn(str(root),json.dumps(record))
