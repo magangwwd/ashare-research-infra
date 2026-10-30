@@ -70,6 +70,48 @@ class DriveIdempotencyTests(unittest.TestCase):
         u.main()
         self.session.post.assert_not_called()
 
+    def test_previous_run_checkpoint_reuses_only_current_run_object(self):
+        old_name = self.name.replace("test137", "test136")
+        self.progress.write_text(json.dumps({
+            "schema_version": 1, "folder_id": u.FOLDER_ID,
+            "files": {self.path.as_posix(): {
+                "sha256": u._file_hash(self.path),
+                "drive_id": "old-run-drive-id", "drive_name": old_name,
+            }},
+        }))
+        self.session.get.side_effect = [
+            Reply(200, {"files": [self.item]}),
+            Reply(200, self.item),
+        ]
+        u.main()
+        self.session.post.assert_not_called()
+        saved = json.loads(self.progress.read_text())["files"][self.path.as_posix()]
+        self.assertEqual(saved["drive_id"], "drive137")
+        self.assertEqual(saved["drive_name"], self.name)
+
+    def test_previous_run_checkpoint_does_not_suppress_new_run_upload(self):
+        old_name = self.name.replace("test137", "test136")
+        self.progress.write_text(json.dumps({
+            "schema_version": 1, "folder_id": u.FOLDER_ID,
+            "files": {self.path.as_posix(): {
+                "sha256": u._file_hash(self.path),
+                "drive_id": "old-run-drive-id", "drive_name": old_name,
+            }},
+        }))
+        self.session.get.side_effect = [
+            Reply(200, {"files": []}),
+            Reply(200, self.item),
+            Reply(200, {"files": [self.item]}),
+        ]
+        self.session.post.return_value = Reply(201, {
+            "id": "drive137", "name": self.name,
+        })
+        u.main()
+        self.assertEqual(self.session.post.call_count, 1)
+        saved = json.loads(self.progress.read_text())["files"][self.path.as_posix()]
+        self.assertEqual(saved["drive_id"], "drive137")
+        self.assertEqual(saved["drive_name"], self.name)
+
     def test_duplicate_name_even_with_equal_bytes_fails_closed(self):
         other = {**self.item, "id": "another137"}
         self.session.get.return_value = Reply(200, {"files": [self.item, other]})
