@@ -42,7 +42,7 @@ jobs:
 
   collect-and-publish:
     needs: safety-and-parser-tests
-    # No secrets are provided to PR jobs. The pilot is a trusted same-repository push.
+    # PR/feature branches run parser tests only; credentialed publication requires main.
     if: >-
       github.event_name != 'pull_request' &&
       github.ref == 'refs/heads/main'
