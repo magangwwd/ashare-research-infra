@@ -504,7 +504,9 @@ def audit_resume_stage(drive, target, items, acceptance, quota, stage_id):
     if len(pointers) != 1 or pointers[0]["mimeType"] == FOLDER:
         raise PublishError("Unique existing production pointer required for stage audit.")
     try:
-        pointer = json.loads(drive.read(pointers[0]["id"]))
+        pointer_id = pointers[0]["id"]
+        pointer_bytes = drive.read(pointer_id)
+        pointer = json.loads(pointer_bytes)
         if not pointer.get("validated") or not pointer.get("snapshot_as_of"):
             raise ValueError
         current_date = date.fromisoformat(pointer["snapshot_as_of"])
@@ -526,6 +528,13 @@ def audit_resume_stage(drive, target, items, acceptance, quota, stage_id):
     remaining = (quota or {}).get("remaining_bytes")
     if remaining is not None and remaining < missing_bytes + 1024 * 1024:
         raise PublishError("Drive capacity insufficient for verified missing files; audit blocked.")
+    # A full remote SHA audit can take hours. Do not claim pointer_unchanged
+    # based solely on the pointer observed before the long-running audit.
+    current_pointers = [f for f in drive.children(target) if f["name"] == "current.json"]
+    if (len(current_pointers) != 1 or current_pointers[0].get("id") != pointer_id
+            or drive.read(pointer_id) != pointer_bytes):
+        raise PublishError("Production pointer changed during stage audit; audit blocked.")
+    verify_previous_snapshot(drive, pointer, previous_manifest)
     return {
         "audit_only": True, "passed": True, "production_switch_allowed": False,
         "pointer_unchanged": True, "accepted_as_of": acceptance["as_of"],
