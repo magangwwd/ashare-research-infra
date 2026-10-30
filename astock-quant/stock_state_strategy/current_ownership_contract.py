@@ -2,6 +2,7 @@
 from copy import deepcopy
 from datetime import date
 from pathlib import Path
+import re
 
 
 def current_config(template: dict, market_root: Path, snapshot_root: Path, as_of: str) -> dict:
@@ -31,4 +32,16 @@ def verified_ownership_prefix(pointer: dict, as_of: str) -> str:
             or not all(c.isdigit() or c == "-" for c in parts[4])
             or pointer.get("verification") != "RCLONE_CHECK_PASSED"):
         raise RuntimeError("Invalid or unverified current ownership pointer")
+    return prefix
+
+
+def verified_reuse_source(status: dict, run_id: str, as_of: str) -> str:
+    if not re.fullmatch(r"[0-9]+-[0-9]+", run_id):
+        raise RuntimeError("Invalid ownership run identifier")
+    if status.get("status") != "PASSED_AND_SAVED_TO_DRIVE" or status.get("task") != "ownership-refresh":
+        raise RuntimeError("Only a successful verified ownership refresh can be reused")
+    prefix = str(status.get("ownership_snapshot", "")).removeprefix("gdrive:")
+    expected = f"stock_state_strategy/research/ownership/{as_of}/{run_id}"
+    if prefix != expected or status.get("as_of") != as_of:
+        raise RuntimeError("Ownership reuse source/date mismatch")
     return prefix

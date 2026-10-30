@@ -16,7 +16,7 @@ import tempfile
 from datetime import date, datetime, timezone
 from pathlib import Path
 from state_run_contracts import phase_status_path, validate_state_output
-from current_ownership_contract import current_config, verified_ownership_prefix
+from current_ownership_contract import current_config, verified_ownership_prefix, verified_reuse_source
 
 REPO = Path(__file__).resolve().parents[1]
 CODE = Path(__file__).resolve().parent
@@ -120,9 +120,12 @@ def main() -> int:
     p.add_argument("--min-as-of", default="", help="Require Gold data no older than YYYY-MM-DD")
     p.add_argument("--promote-ownership", action="store_true",
                    help="Publish validated ownership/state pointer after isolated byte verification")
+    p.add_argument("--reuse-ownership-run", default="", help="Reuse a byte-verified successful run ID-attempt")
     args = p.parse_args()
     if args.promote_ownership and args.task != "ownership-refresh":
         p.error("--promote-ownership requires ownership-refresh")
+    if args.reuse_ownership_run and args.task != "ownership-refresh":
+        p.error("--reuse-ownership-run requires ownership-refresh")
     if args.min_as_of:
         date.fromisoformat(args.min_as_of)
     if args.as_of != "auto":
@@ -227,7 +230,7 @@ def main() -> int:
             copy(local, REMOTE + "stock_state_strategy/output/forward_20260818")
             check(local, REMOTE + "stock_state_strategy/output/forward_20260818")
         elif args.task == "ownership-refresh":
-            if not os.getenv("TUSHARE_TOKEN"):
+            if not os.getenv("TUSHARE_TOKEN") and not args.reuse_ownership_run:
                 raise RuntimeError("TUSHARE_TOKEN secret missing")
             # Refresh and consume the same isolated version, never legacy/default outputs.
             snapshot = work / "ownership_snapshots" / as_of / run_id
@@ -236,10 +239,18 @@ def main() -> int:
                                     gold_path, snapshot, as_of)
             config_path = snapshot / "current_config.json"
             config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
-            run(sys.executable, "download_ownership.py",
-                "--config", str(config_path), cwd=CODE)
-            run(sys.executable, "ownership_pipeline.py",
-                "--config", str(config_path), "--skip-labels", cwd=CODE)
+            if args.reuse_ownership_run:
+                prior = scratch / "previous_ownership_status.json"
+                run("rclone", "copyto", REMOTE + phase_status_path(args.reuse_ownership_run, "ownership-refresh"), str(prior))
+                prefix = verified_reuse_source(load(prior), args.reuse_ownership_run, as_of)
+                copy(REMOTE + prefix + "/processed", snapshot / "processed")
+                check(snapshot / "processed", REMOTE + prefix + "/processed")
+                status["reused_ownership_source"] = prefix
+            else:
+                run(sys.executable, "download_ownership.py",
+                    "--config", str(config_path), cwd=CODE)
+                run(sys.executable, "ownership_pipeline.py",
+                    "--config", str(config_path), "--skip-labels", cwd=CODE)
             run(sys.executable, "run_pipeline.py", "current-state", "--as-of", as_of,
                 "--config", str(config_path), cwd=CODE)
             state = work / "stock_state_strategy/output" / ("state_definition_" + as_of.replace("-", ""))

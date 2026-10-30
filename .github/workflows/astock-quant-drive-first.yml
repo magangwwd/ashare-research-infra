@@ -23,6 +23,11 @@ on:
         required: false
         default: false
         type: boolean
+      reuse_ownership_run:
+        description: "Optional successful ownership run ID-attempt; reuse verified inputs without API redownload"
+        required: false
+        default: ""
+        type: string
       as_of:
         description: "State date YYYY-MM-DD, or auto from Gold manifest"
         required: false
@@ -83,9 +88,11 @@ jobs:
           STRATEGY_AS_OF: ${{ inputs.as_of }}
           STRATEGY_MIN_AS_OF: ${{ inputs.min_as_of }}
           STRATEGY_PROMOTE: ${{ inputs.promote_ownership }}
+          STRATEGY_REUSE: ${{ inputs.reuse_ownership_run }}
         run: |
           extra=()
           if [[ "$STRATEGY_PROMOTE" == "true" ]]; then extra+=(--promote-ownership); fi
+          if [[ -n "$STRATEGY_REUSE" ]]; then extra+=(--reuse-ownership-run "$STRATEGY_REUSE"); fi
           python github_drive_runner.py "$STRATEGY_TASK" \
             --as-of "$STRATEGY_AS_OF" \
             --min-as-of "$STRATEGY_MIN_AS_OF" "${extra[@]}"

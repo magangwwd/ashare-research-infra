@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from current_ownership_contract import current_config, batch_can_resume, verified_ownership_prefix
+from current_ownership_contract import current_config, batch_can_resume, verified_ownership_prefix, verified_reuse_source
 
 
 class CurrentOwnershipContractTests(unittest.TestCase):
@@ -58,6 +58,20 @@ class CurrentOwnershipContractTests(unittest.TestCase):
         for value in ('stock_state_strategy/artifacts/legacy','../private','other:folder'):
             p=self.pointer();p['snapshot_prefix']=value
             with self.subTest(value=value),self.assertRaises(RuntimeError):verified_ownership_prefix(p,'2026-10-29')
+
+    def reuse(self):return {'status':'PASSED_AND_SAVED_TO_DRIVE','task':'ownership-refresh',
+        'as_of':'2026-10-29','ownership_snapshot':'gdrive:stock_state_strategy/research/ownership/2026-10-29/123-1'}
+
+    def test_reuse_successful_exact_version(self):
+        self.assertTrue(verified_reuse_source(self.reuse(),'123-1','2026-10-29').endswith('/123-1'))
+
+    def test_reuse_failed_or_wrong_day_is_rejected(self):
+        for field,value in [('status','FAILED'),('as_of','2026-10-28'),('task','gold-refresh'),('ownership_snapshot','gdrive:private')]:
+            record=self.reuse();record[field]=value
+            with self.subTest(field=field),self.assertRaises(RuntimeError):verified_reuse_source(record,'123-1','2026-10-29')
+
+    def test_reuse_run_identifier_cannot_escape_prefix(self):
+        with self.assertRaises(RuntimeError):verified_reuse_source(self.reuse(),'../private','2026-10-29')
 
 
 if __name__ == '__main__':unittest.main()
