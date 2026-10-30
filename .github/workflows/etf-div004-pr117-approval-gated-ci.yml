@@ -1,0 +1,57 @@
+name: ETF DIV-004 PR117 approval-gated synthetic tests
+
+# REVIEW ONLY: no schedule, push, or workflow_dispatch trigger.
+# A draft stacked PR cannot launch tests. A human must explicitly move
+# this PR to ready-for-review; no trading, Drive, or market-data secrets.
+on:
+  pull_request:
+    types: [ready_for_review]
+    branches:
+      - research/etf-div004-same-day-unit-event-guard-20261028
+    paths:
+      - '.github/workflows/etf-div004-pr117-approval-gated-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-div004-pr117-approved-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  offline-synthetic-only:
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.ref == 'research/etf-div004-pr117-approval-gated-ci-20261030' &&
+      github.event.pull_request.base.ref == 'research/etf-div004-same-day-unit-event-guard-20261028'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Checkout exact reviewed PR head without credentials
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Confirm exact commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$PR_HEAD_SHA"
+          echo "ETF_DIV004_EXACT_SHA=$PR_HEAD_SHA"
+      - name: Run only local synthetic dividend and unit-event tests
+        run: |
+          python -m unittest -v \
+            etf_single_rotation.experiments.test_same_day_unit_event_guard \
+            etf_single_rotation.experiments.test_dividend_receivable_ledger
+      - name: Preserve research-only verdict
+        if: always()
+        run: |
+          echo 'REVIEW_REQUIRED / NOT_FOR_TRADING'
+          echo 'Synthetic tests do not certify issuer dividends, fund_adj, raw prices, cash settlement, Drive, or strategy viability.'
