@@ -22,6 +22,7 @@ import pyarrow.dataset as ds
 from ownership_pipeline import ROOT, load_config, resolve
 from pit_name_states import historical_name_states
 from state_run_contracts import require_exact_date
+from ownership_quality_diagnostics import ownership_quality_diagnostics
 
 
 HISTORY_START = pd.Timestamp("2020-01-01")
@@ -970,6 +971,10 @@ def main() -> int:
         top_a = top_a.rename(columns={"average_turnover_cny_20": "日均成交额_亿元"})
 
     snapshot.to_parquet(output_dir / "current_snapshot.parquet", index=False)
+    ownership_diagnostics, ownership_summary = ownership_quality_diagnostics(snapshot, MAX_DISCLOSURE_AGE_DAYS)
+    ownership_diagnostics.to_csv(output_dir / "ownership_quality_diagnostics.csv", index=False, encoding="utf-8-sig")
+    (output_dir / "ownership_quality_summary.json").write_text(
+        json.dumps(ownership_summary, ensure_ascii=False, indent=2), encoding="utf-8")
     snapshot.to_csv(output_dir / "current_snapshot.csv", index=False, encoding="utf-8-sig")
     snapshot[snapshot["pool_status"].eq("A_STRATEGY_CANDIDATE")].to_csv(
         output_dir / "a_strategy_pool.csv", index=False, encoding="utf-8-sig"
