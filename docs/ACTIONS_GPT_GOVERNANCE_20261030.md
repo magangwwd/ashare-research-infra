@@ -40,3 +40,10 @@
 - 根目录55个 workflow YAML 未出现精确股票代码600031；因此目前**未识别需停用的600031专属GitHub自动动作**，但专项GPT定时已暂停。保留共享行情和Gold采集。
 - 发现离线多角色投研 Run 40954899551 因真实候选4只、请求上限5只而被等值断言误拒；修复及五项离线回归测试提交至草稿PR #134，待CI、复核及真实发布验收，不视为已上线。
 - 本次专项 GPT 决策证据与完成条件统一追踪 Issue #128；专项验收完成后仅停用整合 GPT 任务。
+
+## 2026-10-30 多轮续查：关键证据与安全决策
+- PR #134 为草稿、未合并；变更仅限 `ai-research-data-only.yml` 的报告数量断言及5项回归测试。CI run 40992107948 offline-unit-tests=success、verified-drive=skipped，故不得宣称真实发布修复成功。原 run 40954899551 verified-drive=failure。
+- Task01 run 40948715414 与 40972437556 的 task01 job 最终均为 cancelled，drive-publish 均 skipped；必须调查取消原因及是否有其他已验收主备运行覆盖，不能仅凭这两次推断全日数据缺失。
+- Task01 `concurrency.group=task01-data` 且 `cancel-in-progress=false`；有 schedule 三时点及 daily-guard，故取消状态不应在无证据下归咎于 concurrency 自动取消。下一轮应检查对应 run/job 事件和取消者、日志、后续运行。
+- 海外采集的 `push` 允许 main 及两个明确的 feature 分支，且 collect-and-publish 条件允许这些 feature 分支进入带凭证发布作业；这是需安全审查的授权边界，不能贸然取消已部署的业务流程。建议最小化为仅 main 可发布，PR/feature 分支只测试；通过隔离分支PR及CI验证后再合并，保留必要手动发布的main权限。
+- 暂未修改生产 cron；没有经过实际运行/Drive读回的精简不得标为完成。
