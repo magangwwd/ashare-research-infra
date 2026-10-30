@@ -117,3 +117,10 @@ PR #116 诊断脚本新增 Task01 指针与 manifest SHA256、版本父子关系
 - 在 PR #123 草稿新增 `.github/workflows/task01-stage-audit.yml`：仅手动 `workflow_dispatch`，仅 main，显式传 `source_run_id=40972437556`、`stage_id=1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN`；先验证来源 run 的接受状态、工件摘要和解包安全，再只读调用 `python -m data_pipeline.drive_publish --audit-resume-stage-id "$STAGE_ID" --report metadata/stage_audit.json`。**代码未合并、工作流未在生产执行；须先审核 CI 和权限**。
 - 仅当审计 artifact 中 `audit_only=true`、`passed=true`、`pointer_unchanged=true`、`production_switch_allowed=false` 且远端 SHA 逐文件无异常时，才可评估受控续传。即使只读核验成功，也不代表发布成功。切勿自动选 staging、直接合并含自动恢复的草稿 PR、修改冻结策略或停止旧下载。
 - 最新正式 Drive：Task01 `2026-10-24`，Gold `2026-10-29`，仍阻止统一切换。证据详见 `docs/mainboard-baseline-audit-20261028.md`。
+
+## 2026-10-30 19:06：生产文件实测与昂贵恢复的显式启用门禁
+
+- 生产文件本轮实际 SHA256 校验：Task01 正式 manifest `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 与 `current.json` 相符，正式日期仍 `2026-10-24`；Gold 正式 manifest `2026-10-29`，其 `instruments.parquet` 与 `daily_snapshot.parquet` 下载哈希均与 manifest 相符。仅验证这三项，不代表历史分区或全量数据完整。
+- 最新取消 run `40972437556` 的暂存目录 `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN` 仍存在；checkpoint artifact `12960014331` 于 `2026-11-02T07:06:43Z` 到期。**7000个暂存文件没有逐项验 SHA**，不可直接续传或当成正式库。
+- PR #123 已给自动超时恢复增加显式仓库变量 `TASK01_TIMEOUT_RECOVERY_ENABLED == 'true'` 和源工作流路径核验，默认不触发高成本350分钟自动重传；提交 `b9d04d8`、`e810cfc5`，必须核验新 CI 终态。未完成生产只读核验前不要启用变量或合并草稿为生产恢复。
+- 下一轮优先：确认 CI → 安全审核并执行只读 stage 审计（需合法可用的 main 工作流）→ 保存 `stage_audit.json`、逐文件校验与缺失字节 → 评估续传成本及生产发布 → 5交易日影子验证。始终保留旧指针、Gold下载与冻结V1。完整证据在 `docs/mainboard-baseline-audit-20261028.md`。
