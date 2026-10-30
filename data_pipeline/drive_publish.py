@@ -304,9 +304,21 @@ def verify_previous_snapshot(drive, pointer: dict, expected_manifest: bytes | No
     info = drive.metadata(version_id)
     if info.get("mimeType") != FOLDER or info.get("trashed"):
         raise PublishError("Previous production version folder is not recoverable.")
+    manifest_info = drive.metadata(manifest_id)
+    if (manifest_info.get("name") != "production_manifest.json"
+            or manifest_info.get("trashed")
+            or manifest_info.get("parents") != [version_id]
+            or manifest_info.get("mimeType") == FOLDER):
+        raise PublishError("Previous production manifest is not in the referenced version.")
     manifest_bytes = drive.read(manifest_id)
     if expected_manifest is not None and manifest_bytes != expected_manifest:
         raise PublishError("Previous production manifest changed during publication.")
+    expected_sha = pointer.get("manifest_sha256")
+    if expected_sha is not None:
+        if (not isinstance(expected_sha, str) or len(expected_sha) != 64
+                or any(c not in "0123456789abcdef" for c in expected_sha)
+                or hashlib.sha256(manifest_bytes).hexdigest() != expected_sha):
+            raise PublishError("Previous production manifest SHA256 mismatch; pointer unchanged.")
     try:
         manifest = json.loads(manifest_bytes)
     except (ValueError, TypeError):
@@ -316,13 +328,45 @@ def verify_previous_snapshot(drive, pointer: dict, expected_manifest: bytes | No
     return manifest_bytes
 
 
-def publish(drive, target, items, acceptance, progress, prepared, quota=None):
+
+def verified_stage_reuse(drive, staging_id, stage_id, items):
+    """Read-only reconcile an explicitly selected unfinished stage.
+
+    Never trust a staged name/size alone: compare every existing file against
+    the accepted local inventory by path, byte size and remote SHA256.
+    Unknown/duplicate/changed files fail closed without modifying current.json.
+    """
+    info = drive.metadata(stage_id)
+    if (info.get("mimeType") != FOLDER or info.get("trashed")
+            or info.get("parents") != [staging_id]
+            or not isinstance(info.get("name"), str) or not info["name"]):
+        raise PublishError("Resume stage is not a direct child of staging; pointer unchanged.")
+    expected = {item["path"]: item for item in items}
+    if len(expected) != len(items):
+        raise PublishError("Duplicate accepted inventory paths; pointer unchanged.")
+    observed = remote_inventory(drive, stage_id)
+    if set(observed) - set(expected):
+        raise PublishError("Resume stage contains unexpected files; pointer unchanged.")
+    reused = {}
+    for path, remote in observed.items():
+        item = expected[path]
+        try:
+            size_matches = int(remote.get("size", -1)) == item["bytes"]
+        except (TypeError, ValueError):
+            size_matches = False
+        if not size_matches or remote.get("mimeType") == FOLDER:
+            raise PublishError("Resume stage file size/type mismatch; pointer unchanged.")
+        if drive.remote_digest(remote["id"]) != (item["bytes"], item["sha256"]):
+            raise PublishError("Resume stage SHA256 mismatch; pointer unchanged.")
+        reused[path] = remote["id"]
+    return info["name"], reused
+
+
+def publish(drive, target, items, acceptance, progress, prepared, quota=None, resume_stage_id=None):
     if not acceptance.get("passed"):
         raise PublishError("Acceptance is required before publication.")
     total = sum(i["bytes"] for i in items)
     remaining = (quota or {}).get("remaining_bytes")
-    if remaining is not None and remaining < total + 1024 * 1024:
-        raise PublishError("Drive remaining capacity is insufficient for a new immutable snapshot.")
     pointers = [f for f in drive.children(target) if f["name"] == "current.json"]
     if len(pointers) > 1 or pointers and pointers[0]["mimeType"] == FOLDER:
         raise PublishError("Ambiguous current pointer; publication blocked.")
@@ -339,11 +383,42 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None):
             raise PublishError("Existing current pointer is not an accepted snapshot pointer.") from None
         # A second or later publication must start from a genuinely recoverable old production.
         old_manifest_bytes = verify_previous_snapshot(drive, old_pointer)
-    staging = drive.folder(target, "staging")
+        # A delayed checkpoint recovery must never roll back a newer production date.
+        # Legacy pointers without snapshot_as_of are still verified by the existing
+        # manifest contract; all current production pointers carry this field.
+        previous_date = old_pointer.get("snapshot_as_of")
+        if previous_date is not None:
+            try:
+                stale = date.fromisoformat(acceptance["as_of"]) < date.fromisoformat(previous_date)
+            except (KeyError, TypeError, ValueError):
+                raise PublishError("Production snapshot date cannot be compared; pointer unchanged.") from None
+            if stale:
+                raise PublishError("Accepted snapshot is older than current production; pointer unchanged.")
+    if resume_stage_id is not None:
+        # A resumed stage must already exist: do not create a new staging folder
+        # while deciding whether a low-quota recovery can safely continue.
+        candidates = [f for f in drive.children(target) if f["name"] == "staging"]
+        if len(candidates) != 1 or candidates[0]["mimeType"] != FOLDER:
+            raise PublishError("Resume stage is not a direct child of an unambiguous staging root; pointer unchanged.")
+        staging = candidates[0]["id"]
+        version, reused = verified_stage_reuse(drive, staging, resume_stage_id, items)
+        # Already verified staged bytes consume Drive quota. Only missing bytes
+        # and the new manifest require additional capacity.
+        required_bytes = sum(item["bytes"] for item in items if item["path"] not in reused)
+    else:
+        reused = {}
+        required_bytes = total
+    if remaining is not None and remaining < required_bytes + 1024 * 1024:
+        raise PublishError("Drive remaining capacity is insufficient for missing snapshot files and manifest.")
+    if resume_stage_id is not None:
+        stage = resume_stage_id
+        print(f"SUCCESS resume stage validated files={len(reused)}/{len(items)}; current pointer unchanged")
+    else:
+        staging = drive.folder(target, "staging")
+        version = utcnow().replace(":", "").replace("+", "_") + "-" + uuid.uuid4().hex[:8]
+        stage = drive.create_folder(staging, version)
+        print(f"SUCCESS staging created folder_id={stage} files={len(items)} bytes={total}; current pointer unchanged")
     versions = drive.folder(target, "versions")
-    version = utcnow().replace(":", "").replace("+", "_") + "-" + uuid.uuid4().hex[:8]
-    stage = drive.create_folder(staging, version)
-    print(f"SUCCESS staging created folder_id={stage} files={len(items)} bytes={total}; current pointer unchanged")
     directories = {"": stage}
     files = []
     for item in items:
@@ -353,11 +428,15 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None):
             relative = "/".join(parts[:count])
             if relative not in directories:
                 parent = "/".join(parts[:count - 1])
-                directories[relative] = drive.create_folder(directories[parent], parts[count - 1])
+                directories[relative] = (drive.folder(directories[parent], parts[count - 1])
+                                         if resume_stage_id is not None
+                                         else drive.create_folder(directories[parent], parts[count - 1]))
         source = Path(item["local_path"])
         if digest(source) != (item["bytes"], item["sha256"]):
             raise PublishError("Local snapshot changed during upload.")
-        file_id = drive.upload(directories[path.parent.as_posix() if parts else ""], path.name, source)
+        file_id = reused.get(item["path"])
+        if file_id is None:
+            file_id = drive.upload(directories[path.parent.as_posix() if parts else ""], path.name, source)
         files.append({k: v for k, v in item.items() if k != "local_path"} | {"file_id": file_id})
         if len(files) % 100 == 0:
             print(f"SUCCESS staged files={len(files)}/{len(items)}; remote verification pending")
@@ -412,11 +491,72 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None):
     return report
 
 
+
+def audit_resume_stage(drive, target, items, acceptance, quota, stage_id):
+    """Read-only production/stage preflight; never creates folders or commits a pointer.
+
+    Run this before enabling an expensive staged recovery. Every reused file is
+    downloaded for SHA256 verification; the returned counts are not a publish receipt.
+    """
+    if not acceptance.get("passed") or not acceptance.get("as_of"):
+        raise PublishError("Accepted snapshot required for read-only stage audit.")
+    pointers = [f for f in drive.children(target) if f["name"] == "current.json"]
+    if len(pointers) != 1 or pointers[0]["mimeType"] == FOLDER:
+        raise PublishError("Unique existing production pointer required for stage audit.")
+    try:
+        pointer_id = pointers[0]["id"]
+        pointer_bytes = drive.read(pointer_id)
+        pointer = json.loads(pointer_bytes)
+        if not pointer.get("validated") or not pointer.get("snapshot_as_of"):
+            raise ValueError
+        current_date = date.fromisoformat(pointer["snapshot_as_of"])
+        accepted_date = date.fromisoformat(acceptance["as_of"])
+    except (ValueError, TypeError, KeyError, AttributeError):
+        raise PublishError("Invalid production or accepted date; stage audit blocked.") from None
+    if accepted_date < current_date:
+        raise PublishError("Accepted snapshot is older than current production; audit blocked.")
+    previous_manifest = verify_previous_snapshot(drive, pointer)
+    if (not pointer.get("manifest_sha256") or
+            hashlib.sha256(previous_manifest).hexdigest() != pointer["manifest_sha256"]):
+        raise PublishError("Existing production manifest SHA256 mismatch; audit blocked.")
+    staging = [f for f in drive.children(target) if f["name"] == "staging"]
+    if len(staging) != 1 or staging[0]["mimeType"] != FOLDER:
+        raise PublishError("Unique existing staging root required; audit blocked.")
+    _version, reused = verified_stage_reuse(drive, staging[0]["id"], stage_id, items)
+    missing = [item for item in items if item["path"] not in reused]
+    missing_bytes = sum(item["bytes"] for item in missing)
+    remaining = (quota or {}).get("remaining_bytes")
+    if remaining is not None and remaining < missing_bytes + 1024 * 1024:
+        raise PublishError("Drive capacity insufficient for verified missing files; audit blocked.")
+    # A full remote SHA audit can take hours. Do not claim pointer_unchanged
+    # based solely on the pointer observed before the long-running audit.
+    current_pointers = [f for f in drive.children(target) if f["name"] == "current.json"]
+    if (len(current_pointers) != 1 or current_pointers[0].get("id") != pointer_id
+            or drive.read(pointer_id) != pointer_bytes):
+        raise PublishError("Production pointer changed during stage audit; audit blocked.")
+    verify_previous_snapshot(drive, pointer, previous_manifest)
+    return {
+        "audit_only": True, "passed": True, "production_switch_allowed": False,
+        "pointer_unchanged": True, "accepted_as_of": acceptance["as_of"],
+        "stage_id": stage_id,
+        "pointer_sha256": hashlib.sha256(pointer_bytes).hexdigest(),
+        "current_as_of": pointer["snapshot_as_of"], "expected_files": len(items),
+        "sha256_verified_staged_files": len(reused), "missing_files": len(missing),
+        "missing_bytes": missing_bytes,
+        "warning": "Read-only stage preflight; no publication, no pointer switch."
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path("config/config.yaml"))
     parser.add_argument("--root", type=Path, default=Path("."))
     parser.add_argument("--report", type=Path, default=Path("metadata/drive_publish.json"))
+    # Explicit opt-in only; production schedules never infer or auto-select a stage.
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--resume-stage-id", default=None)
+    mode.add_argument("--audit-resume-stage-id", default=None,
+                      help="Read-only SHA256 preflight; never uploads or switches current.json")
     args = parser.parse_args(argv)
     try:
         config = load_config(args.config)
@@ -432,11 +572,18 @@ def main(argv=None):
             with AuthorizedSession(credentials) as session:
                 verify_folder(session, target)
                 quota = storage_quota(session)
-                report = publish(Drive(session), target, items, acceptance, progress, prepared, quota)
+                if args.audit_resume_stage_id:
+                    report = audit_resume_stage(Drive(session), target, items, acceptance,
+                                                quota, args.audit_resume_stage_id)
+                else:
+                    report = publish(Drive(session), target, items, acceptance, progress, prepared,
+                                     quota, resume_stage_id=args.resume_stage_id)
         atomic_json(args.report, report)
         if os.environ.get("GITHUB_ACTIONS") == "true":
-            print("::notice title=Drive publication::" + json.dumps(report))
-        print("SUCCESS Drive snapshot published and verified.")
+            print("::notice title=Drive stage audit::" + json.dumps(report) if report.get("audit_only")
+                  else "::notice title=Drive publication::" + json.dumps(report))
+        print("SUCCESS read-only stage audit completed; pointer unchanged." if report.get("audit_only")
+              else "SUCCESS Drive snapshot published and verified.")
         return 0
     except (PublishError, SetupError) as error:
         print("FAILED " + str(error))

@@ -94,6 +94,27 @@ def test_failed_publish_preserves_entire_old_production(tmp_path, fault):
         assert drive.files[ident] == old[ident]
 
 
+
+@pytest.mark.parametrize("damage", ["manifest_sha", "wrong_parent", "wrong_name"])
+def test_corrupt_previous_manifest_blocks_staging_and_pointer_update(tmp_path, damage):
+    drive = MemoryDrive()
+    pointer = json.loads(drive.read("pointer"))
+    pointer["manifest_sha256"] = hashlib.sha256(drive.read("old-manifest")).hexdigest()
+    if damage == "manifest_sha":
+        pointer["manifest_sha256"] = "0" * 64
+    elif damage == "wrong_parent":
+        drive.files["old-manifest"]["parents"] = ["root"]
+    else:
+        drive.files["old-manifest"]["name"] = "not-production.json"
+    drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+    before = copy.deepcopy(drive.files)
+    with pytest.raises(dp.PublishError, match="manifest"):
+        dp.publish(drive, "root", snapshot(tmp_path),
+                   {"passed": True, "as_of": "2026-10-29"}, {}, tmp_path)
+    assert drive.files == before
+    assert drive.upload_count == 0
+
+
 def test_success_pointer_references_only_verified_immutable_files(tmp_path):
     drive = MemoryDrive()
     old = copy.deepcopy(drive.files)
@@ -296,3 +317,241 @@ def test_unconfirmed_final_chunk_stays_failed(tmp_path, monkeypatch):
     monkeypatch.setattr(dp.time, "sleep", lambda _: None)
     with pytest.raises(dp.PublishError, match="not completed"):
         dp.Drive(Session()).upload("parent", path.name, path)
+
+
+def test_timeout_recovery_rejects_stale_checkpoint_without_staging(tmp_path):
+    drive = MemoryDrive()
+    pointer = json.loads(drive.read("pointer"))
+    pointer["snapshot_as_of"] = "2026-10-28"
+    drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+    before = copy.deepcopy(drive.files)
+    with pytest.raises(dp.PublishError, match="older than current production"):
+        dp.publish(drive, "root", snapshot(tmp_path),
+                   {"passed": True, "as_of": "2026-10-27"}, {}, tmp_path)
+    assert drive.files == before
+
+
+def test_timeout_recovery_accepts_equal_date_for_history_repair(tmp_path):
+    drive = MemoryDrive()
+    pointer = json.loads(drive.read("pointer"))
+    pointer["snapshot_as_of"] = "2026-10-03"
+    drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+    report = dp.publish(drive, "root", snapshot(tmp_path),
+                        {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path)
+    assert report["passed"]
+
+
+def test_timeout_recovery_rejects_malformed_previous_date_without_staging(tmp_path):
+    drive = MemoryDrive()
+    pointer = json.loads(drive.read("pointer"))
+    pointer["snapshot_as_of"] = "not-a-date"
+    drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+    before = copy.deepcopy(drive.files)
+    with pytest.raises(dp.PublishError, match="date cannot be compared"):
+        dp.publish(drive, "root", snapshot(tmp_path),
+                   {"passed": True, "as_of": "2026-10-29"}, {}, tmp_path)
+    assert drive.files == before
+
+
+def _seed_cancelled_stage(drive, item):
+    """Mimic a cancelled real upload: a stage with one completed file."""
+    staging = drive.folder("root", "staging")
+    stage = drive.create_folder(staging, "cancelled-20261029")
+    parent = stage
+    for part in item["path"].split("/")[:-1]:
+        parent = drive.folder(parent, part)
+    file_id = drive.upload(parent, item["path"].split("/")[-1], Path(item["local_path"]))
+    return stage, file_id
+
+
+def test_resume_stage_reuses_sha_verified_file_without_reupload(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, original_id = _seed_cancelled_stage(drive, items[0])
+    assert drive.upload_count == 1
+    report = dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                        {}, tmp_path, resume_stage_id=stage)
+    assert report["passed"]
+    # Only the missing data file and final manifest are uploaded.
+    assert drive.upload_count == 3
+    pointer = json.loads(drive.read("pointer"))
+    manifest = json.loads(drive.read(pointer["manifest_file_id"]))
+    assert pointer["version_folder_id"] == stage
+    assert manifest["version"] == "cancelled-20261029"
+    assert manifest["files"][0]["file_id"] == original_id
+    assert all(drive.remote_digest(f["file_id"]) == (f["bytes"], f["sha256"])
+               for f in manifest["files"])
+
+
+def test_resume_stage_rejects_foreign_parent_without_pointer_change(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    foreign = drive.create_folder(drive.folder("root", "versions"), "not-staging")
+    before = drive.read("pointer")
+    with pytest.raises(dp.PublishError, match="direct child"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                   {}, tmp_path, resume_stage_id=foreign)
+    assert drive.read("pointer") == before
+    assert drive.upload_count == 0
+
+
+def test_resume_stage_rejects_tampered_sha_without_pointer_change(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, file_id = _seed_cancelled_stage(drive, items[0])
+    original = drive.files[file_id]["body"]
+    drive.files[file_id]["body"] = bytes([original[0] ^ 1]) + original[1:]
+    before = drive.read("pointer")
+    with pytest.raises(dp.PublishError, match="SHA256 mismatch"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                   {}, tmp_path, resume_stage_id=stage)
+    assert drive.read("pointer") == before
+    assert drive.upload_count == 1
+
+
+def test_resume_stage_rejects_unexpected_files_without_pointer_change(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, _ = _seed_cancelled_stage(drive, items[0])
+    stray = tmp_path / "untracked.txt"
+    stray.write_text("not in accepted inventory")
+    drive.upload(stage, stray.name, stray)
+    before = drive.read("pointer")
+    with pytest.raises(dp.PublishError, match="unexpected files"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                   {}, tmp_path, resume_stage_id=stage)
+    assert drive.read("pointer") == before
+
+
+def test_resume_stage_rejects_wrong_remote_size_without_pointer_change(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, file_id = _seed_cancelled_stage(drive, items[0])
+    drive.files[file_id]["size"] = "1"
+    before = drive.read("pointer")
+    with pytest.raises(dp.PublishError, match="size/type mismatch"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                   {}, tmp_path, resume_stage_id=stage)
+    assert drive.read("pointer") == before
+
+
+def test_resume_quota_counts_only_missing_verified_bytes(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, original_id = _seed_cancelled_stage(drive, items[0])
+    missing_bytes = items[1]["bytes"]
+    # Enough for missing files and a manifest, but not another full snapshot.
+    quota = {"remaining_bytes": missing_bytes + 1024 * 1024}
+    assert quota["remaining_bytes"] < sum(i["bytes"] for i in items) + 1024 * 1024
+    report = dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                        {}, tmp_path, quota=quota, resume_stage_id=stage)
+    assert report["passed"]
+    pointer = json.loads(drive.read("pointer"))
+    manifest = json.loads(drive.read(pointer["manifest_file_id"]))
+    assert manifest["files"][0]["file_id"] == original_id
+    assert drive.upload_count == 3  # staged, missing, manifest
+
+
+def test_resume_quota_insufficient_for_missing_bytes_fails_without_writes(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, _ = _seed_cancelled_stage(drive, items[0])
+    before_pointer = drive.read("pointer")
+    before_files = copy.deepcopy(drive.files)
+    quota = {"remaining_bytes": items[1]["bytes"] + 1024 * 1024 - 1}
+    with pytest.raises(dp.PublishError, match="insufficient"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                   {}, tmp_path, quota=quota, resume_stage_id=stage)
+    assert drive.read("pointer") == before_pointer
+    assert drive.files == before_files
+    assert drive.upload_count == 1
+
+
+def _seed_audit_pointer(drive, as_of="2026-10-24"):
+    pointer = json.loads(drive.read("pointer"))
+    pointer["snapshot_as_of"] = as_of
+    pointer["manifest_sha256"] = hashlib.sha256(drive.read("old-manifest")).hexdigest()
+    drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+
+
+def test_read_only_stage_audit_sha_checks_and_never_writes(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, file_id = _seed_cancelled_stage(drive, items[0])
+    _seed_audit_pointer(drive)
+    before = copy.deepcopy(drive.files)
+    uploads = drive.upload_count
+    result = dp.audit_resume_stage(
+        drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+        {"remaining_bytes": items[1]["bytes"] + 1024 * 1024}, stage)
+    assert result["audit_only"] and result["passed"]
+    assert result["production_switch_allowed"] is False
+    assert result["pointer_unchanged"] is True
+    assert result["stage_id"] == stage
+    assert result["pointer_sha256"] == hashlib.sha256(before["pointer"]["body"]).hexdigest()
+    assert result["sha256_verified_staged_files"] == 1
+    assert result["missing_files"] == 1
+    assert result["missing_bytes"] == items[1]["bytes"]
+    assert drive.files == before
+    assert drive.upload_count == uploads
+    assert file_id in drive.files
+
+
+@pytest.mark.parametrize("fault", ["stale", "tampered", "manifest", "quota", "foreign"])
+def test_read_only_stage_audit_fail_closed_no_mutations(tmp_path, fault):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, file_id = _seed_cancelled_stage(drive, items[0])
+    _seed_audit_pointer(drive)
+    accepted_as_of = "2026-10-29"
+    quota = {"remaining_bytes": 10_000_000}
+    if fault == "stale":
+        accepted_as_of = "2026-10-23"
+    elif fault == "tampered":
+        drive.files[file_id]["body"] = b"X" + drive.files[file_id]["body"][1:]
+    elif fault == "manifest":
+        drive.files["old-manifest"]["body"] = b'{"version":"old","validated":false}'
+    elif fault == "quota":
+        quota = {"remaining_bytes": 1}
+    elif fault == "foreign":
+        stage = drive.create_folder(drive.folder("root", "versions"), "foreign")
+    before = copy.deepcopy(drive.files)
+    uploads = drive.upload_count
+    with pytest.raises(dp.PublishError):
+        dp.audit_resume_stage(drive, "root", items,
+                              {"passed": True, "as_of": accepted_as_of}, quota, stage)
+    assert drive.files == before
+    assert drive.upload_count == uploads
+
+
+@pytest.mark.parametrize("mutation", ["pointer_bytes", "pointer_id", "manifest_bytes"])
+def test_read_only_stage_audit_detects_concurrent_production_change(tmp_path, monkeypatch, mutation):
+    """A multi-hour SHA audit must not report a stale pointer_unchanged=true."""
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, _ = _seed_cancelled_stage(drive, items[0])
+    _seed_audit_pointer(drive)
+    original_remote_digest = drive.remote_digest
+    upload_count = drive.upload_count
+
+    def remote_digest_with_concurrent_change(ident):
+        result = original_remote_digest(ident)
+        if mutation == "pointer_bytes":
+            pointer = json.loads(drive.read("pointer"))
+            pointer["snapshot_as_of"] = "2026-10-30"
+            drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+        elif mutation == "pointer_id":
+            drive.files["pointer"]["parents"] = ["unrelated"]
+            drive.files["new-pointer"] = {
+                **drive.files["pointer"], "id": "new-pointer", "parents": ["root"]
+            }
+        else:
+            drive.files["old-manifest"]["body"] = b'{"version":"old","validated":false}'
+        return result
+
+    monkeypatch.setattr(drive, "remote_digest", remote_digest_with_concurrent_change)
+    with pytest.raises(dp.PublishError, match="pointer changed|manifest"):
+        dp.audit_resume_stage(
+            drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+            {"remaining_bytes": 10_000_000}, stage)
+    assert drive.upload_count == upload_count
