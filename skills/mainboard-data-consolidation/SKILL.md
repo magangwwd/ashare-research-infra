@@ -137,3 +137,8 @@ PR #123 的暂存审计可能耗时数小时。审计开始时记录正式 `curr
 - 审计工作流验收后在 artifact 中补记 `source_run_id`、`checkpoint_sha256`、`audit_run_id`、`audit_commit_sha`，供后续受控恢复核对来源。只读报告不是发布凭证；仅在CI、生产审计和后续正式指针读回均通过后才讨论续传。
 - 2026-10-30 实读 Task01 `2026-10-24`、Gold `2026-10-29`，Task01 manifest SHA 与指针一致，Gold manifest SHA `79699efb7c09423450e02b4e1a2a1ca7fb28b1fffca7dd847847a45b13b38291`；详见 `docs/mainboard-baseline-audit-20261028.md`。未核验暂存7000文件、未切换生产。
 - GitHub `task01-stage-audit.yml` 的早期 push failure run `41023552472` 为零jobs，**不等于实际审计失败或成功**。工作流尚未部署main；需先解决可执行入口，不得重复全量上传试错。
+
+
+## 2026-10-31：独立只读审计部署顺序（PR #140）
+
+原 #123 包含自动恢复与写入续传，不宜为运行只读审计而整包合并。已建立独立草稿 PR #140，只含手动 main-only 的 `task01-stage-audit.yml`、`--audit-resume-stage-id` 只读路径及测试，默认 `publish()` 不变。先验收 #140 CI、安全边界；再合并独立只读 PR 到 main；**只在 main** 用仍有效的来源 run/checkpoint 和明确 stage ID 手动执行。工作流需保存 `audit_only=true`、`passed=true`、`pointer_unchanged=true`、`production_switch_allowed=false`、源run/checkpoint/pointer SHA 与实际 Actions run ID。若工件过期或有SHA不符，停止，不能用旧 staging 推断成功。#123 继续 draft，严禁为绕过 job main-only 限制而在 PR 分支放宽密钥门禁。2026-10-31 实测 Task01正式日期10-24、Gold正式日期10-29，仍不得切换。
