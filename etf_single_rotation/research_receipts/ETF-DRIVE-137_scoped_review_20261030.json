@@ -13,13 +13,15 @@
     "0d76573d590a5e6cd3670d8e91add3b1adb41351",
     "685ec12addb22a26ac4082dc624a31831d06e09a",
     "d5e9c36dcc350e3ae718bd6f1c19019946779cae",
-    "1fae428d8c56024f8ea941997d4dbc4a968cc24d"
+    "1fae428d8c56024f8ea941997d4dbc4a968cc24d",
+    "3ecb0249f795b729bff36ea05a0448c9a1af6a72",
+    "95e36ca835458b5c40f521b18650f817411c4c37"
   ],
   "scope": "Drive upload idempotency preflight and fail-closed response handling only; no historical data changes",
   "checks": {
     "code_written": true,
     "code_readback_verified": true,
-    "tests_written": 13,
+    "tests_written": 15,
     "tests_executed": false,
     "tests_passed": null,
     "tests_failed": null,
@@ -28,7 +30,12 @@
     "artifact_id": null,
     "drive_byte_readback_performed": false,
     "formal_sop_receipt_issued": false,
-    "pagination_guard_code_readback_pending": true
+    "pagination_guard_code_readback_pending": false,
+    "stale_checkpoint_cross_run_guard_code_readback_verified": true,
+    "stale_checkpoint_synthetic_cases_written": 2,
+    "source_blob_sha": "576867bf45fd8882b3bb07b68870f8f257347f25",
+    "tests_blob_sha": "245bc5b1e9d92c3bc01795da6e1205e20d1efadf",
+    "exact_head_ci_run_id": null
   },
   "risk_controls": [
     "No remote deletion",
@@ -37,7 +44,8 @@
     "No historical backtest",
     "Fixed 8 ETFs, at most 1 ETF or cash, 25% historical MDD research target",
     "ETF-DIV-004 REVIEW_REQUIRED; ETF-PAPER-005 BLOCKED",
-    "Cyclic/repeated Drive list page tokens fail closed after a bounded number of pages"
+    "Cyclic/repeated Drive list page tokens fail closed after a bounded number of pages",
+    "Checkpoint from an earlier run cannot silently claim that earlier Drive object as the current run's output"
   ],
-  "next_action": "Run 13 exact-head mocked offline tests on GitHub only after explicit approval; verify job logs and evidence before a formal SOP receipt. Independently validate Drive preflight against a non-production fixture. Preserve both historical duplicate objects; never merge on code-only evidence."
+  "next_action": "Execute the 15 mocked offline tests against exact PR head only when explicitly approved; inspect Run/Job/logs and issue formal SOP receipt only with real evidence. Independently verify non-production Drive preflight. Preserve both historic duplicate objects; no merge or PAPER-005 activation."
 }
