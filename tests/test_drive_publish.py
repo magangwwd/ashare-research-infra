@@ -367,7 +367,7 @@ def test_read_only_stage_audit_fail_closed_no_mutations(tmp_path, fault):
     assert drive.upload_count == uploads
 
 
-@pytest.mark.parametrize("mutation", ["pointer_bytes", "pointer_id", "manifest_bytes"])
+@pytest.mark.parametrize("mutation", ["pointer_bytes", "pointer_id", "manifest_bytes", "manifest_location"])
 def test_read_only_stage_audit_detects_concurrent_production_change(tmp_path, monkeypatch, mutation):
     """A multi-hour SHA audit must not report a stale pointer_unchanged=true."""
     drive = MemoryDrive()
@@ -388,6 +388,8 @@ def test_read_only_stage_audit_detects_concurrent_production_change(tmp_path, mo
             drive.files["new-pointer"] = {
                 **drive.files["pointer"], "id": "new-pointer", "parents": ["root"]
             }
+        elif mutation == "manifest_location":
+            drive.files["old-manifest"]["parents"] = ["root"]
         else:
             drive.files["old-manifest"]["body"] = b'{"version":"old","validated":false}'
         return result
