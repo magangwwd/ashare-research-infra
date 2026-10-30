@@ -1,10 +1,8 @@
 name: Fixed five-stock PIT research after validated R1 (paper only)
 
 on:
-  workflow_run:
-    workflows: ["R1 five-stock paper candidates after verified Gold (no orders)"]
-    types: [completed]
-    branches: [main]
+  # Fixed five-stock automation retired 2026-10-30 at user request.
+  # Manual recovery only; do not re-enable automatic upstream triggers.
   workflow_dispatch:
     inputs:
       as_of:
@@ -12,16 +10,6 @@ on:
         type: string
         required: true
         default: '2026-10-16'
-  push:
-    branches: [main]
-    paths:
-      - 'ai_research/five_stock_decision.py'
-      - '.github/workflows/five-stock-decision.yml'
-  pull_request:
-    paths:
-      - 'ai_research/five_stock_decision.py'
-      - 'ai_research/tests/test_five_stock_decision.py'
-      - '.github/workflows/five-stock-decision.yml'
 
 permissions:
   contents: read
