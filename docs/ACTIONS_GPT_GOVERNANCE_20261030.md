@@ -47,3 +47,9 @@
 - Task01 `concurrency.group=task01-data` 且 `cancel-in-progress=false`；有 schedule 三时点及 daily-guard，故取消状态不应在无证据下归咎于 concurrency 自动取消。下一轮应检查对应 run/job 事件和取消者、日志、后续运行。
 - 海外采集的 `push` 允许 main 及两个明确的 feature 分支，且 collect-and-publish 条件允许这些 feature 分支进入带凭证发布作业；这是需安全审查的授权边界，不能贸然取消已部署的业务流程。建议最小化为仅 main 可发布，PR/feature 分支只测试；通过隔离分支PR及CI验证后再合并，保留必要手动发布的main权限。
 - 暂未修改生产 cron；没有经过实际运行/Drive读回的精简不得标为完成。
+
+## 2026-10-30 三轮执行续记
+- 轮1：复核PR #134（draft/open，报告数量限制1..requested及Clean一致性、5个回归用例），CI 40992107948 offline-unit-tests success、verified-drive skipped；原40954899551 verified-drive failure，未合并。
+- 轮2：复核Task01 runs 40948715414、40972437556，均 task01 cancelled、drive-publish skipped；`cancel-in-progress=false`，不可武断归因于并发自动取消。海外工作流发现两个feature分支也可触发带凭证发布作业。
+- 轮3：已在隔离分支 `fix/overseas-main-only-publish-20261030` 提交最小权限门禁修复 `dbf2cd4034999f9e1f928f238b78b74e53914072`，新建草稿PR #138，仅main可执行海外`collect-and-publish`，PR测试仍保留；待CI与正式Drive回读验收，不能宣称已上线。
+- 本轮未改生产cron、未删除数据、未合并PR。下轮优先查PR #138 CI与Task01取消原因，随后推进PR #134的生产验收。
