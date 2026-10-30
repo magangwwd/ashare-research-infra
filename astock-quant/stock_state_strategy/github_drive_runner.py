@@ -16,6 +16,7 @@ import tempfile
 from datetime import date, datetime, timezone
 from pathlib import Path
 from state_run_contracts import phase_status_path, validate_state_output
+from current_ownership_contract import current_config
 
 REPO = Path(__file__).resolve().parents[1]
 CODE = Path(__file__).resolve().parent
@@ -217,14 +218,27 @@ def main() -> int:
         elif args.task == "ownership-refresh":
             if not os.getenv("TUSHARE_TOKEN"):
                 raise RuntimeError("TUSHARE_TOKEN secret missing")
-            copy(REMOTE + "stock_state_strategy/runtime/data", work / "stock_state_strategy/runtime/data")
+            # Refresh and consume the same isolated version, never legacy/default outputs.
+            snapshot = work / "ownership_snapshots" / as_of / run_id
+            snapshot.mkdir(parents=True, exist_ok=False)
+            config = current_config(load(CODE / "configs/ownership_rebuild.json"),
+                                    gold_path, snapshot, as_of)
+            config_path = snapshot / "current_config.json"
+            config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
             run(sys.executable, "download_ownership.py",
-                "--config", "configs/ownership_rebuild.json", cwd=CODE)
+                "--config", str(config_path), cwd=CODE)
             run(sys.executable, "ownership_pipeline.py",
-                "--config", "configs/ownership_rebuild.json", cwd=CODE)
-            local = work / "stock_state_strategy/runtime/data"
-            copy(local, REMOTE + "stock_state_strategy/runtime/data")
-            check(local, REMOTE + "stock_state_strategy/runtime/data")
+                "--config", str(config_path), "--skip-labels", cwd=CODE)
+            run(sys.executable, "run_pipeline.py", "current-state", "--as-of", as_of,
+                "--config", str(config_path), cwd=CODE)
+            state = work / "stock_state_strategy/output" / ("state_definition_" + as_of.replace("-", ""))
+            validate_state_output(state, as_of)
+            shutil.copytree(state, snapshot / "state")
+            target = REMOTE + "stock_state_strategy/research/ownership/" + as_of + "/" + run_id
+            copy(snapshot, target)
+            check(snapshot, target)
+            status["ownership_snapshot"] = target
+            status["publication_scope"] = "ISOLATED_RESEARCH_NOT_PRODUCTION_PROMOTION"
         status["status"] = "PASSED_AND_SAVED_TO_DRIVE"
         return 0
     finally:

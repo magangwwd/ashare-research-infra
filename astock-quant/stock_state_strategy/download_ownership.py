@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from data_source_paths import resolve_project_path
+from current_ownership_contract import batch_can_resume
 from typing import Callable
 
 import pandas as pd
@@ -113,14 +114,16 @@ def download_endpoint(
         output_path = target / f"batch_{batch_index:04d}.parquet"
         meta_path = target / f"batch_{batch_index:04d}.json"
         batch_symbols = symbols[offset : offset + batch_size]
+        requested_symbols = list(batch_symbols)
         existing = pd.DataFrame(columns=[*spec.columns, "queried_symbol"])
         if output_path.exists() and meta_path.exists():
             metadata = json.loads(meta_path.read_text(encoding="utf-8"))
-            failed_symbols = [item["symbol"] for item in metadata.get("failures", [])]
-            if not failed_symbols:
-                continue
-            existing = pd.read_parquet(output_path)
-            batch_symbols = failed_symbols
+            if batch_can_resume(metadata, start_date, end_date, requested_symbols):
+                failed_symbols = [item["symbol"] for item in metadata.get("failures", [])]
+                if not failed_symbols:
+                    continue
+                existing = pd.read_parquet(output_path)
+                batch_symbols = failed_symbols
 
         frames: list[pd.DataFrame] = []
         failures: list[dict[str, str]] = []
@@ -164,6 +167,7 @@ def download_endpoint(
             "batch_index": batch_index,
             "batch_count": total_batches,
             "symbols": batch_symbols,
+            "requested_symbols": requested_symbols,
             "row_count": int(len(combined)),
             "failures": failures,
             "start_date": start_date,
