@@ -538,6 +538,8 @@ def audit_resume_stage(drive, target, items, acceptance, quota, stage_id):
     return {
         "audit_only": True, "passed": True, "production_switch_allowed": False,
         "pointer_unchanged": True, "accepted_as_of": acceptance["as_of"],
+        "stage_id": stage_id,
+        "pointer_sha256": hashlib.sha256(pointer_bytes).hexdigest(),
         "current_as_of": pointer["snapshot_as_of"], "expected_files": len(items),
         "sha256_verified_staged_files": len(reused), "missing_files": len(missing),
         "missing_bytes": missing_bytes,
