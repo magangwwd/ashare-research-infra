@@ -62,3 +62,20 @@ def test_artifact_and_archive_handling_limits():
     assert text.index('rm -f "$RUNNER_TEMP/checkpoint.zip"') < text.index('tf.extractall(".", filter="data")')
     assert 'path.parts[0] not in ("data", "metadata")' in text
     assert 'not (member.isfile() or member.isdir() or member.issym() or member.islnk())' in text
+
+
+def test_audit_receipt_is_bound_to_explicit_source_stage_and_pointer():
+    text = WORKFLOW.read_text(encoding="utf-8")
+    for guard in (
+        'SOURCE_RUN_ID: ${{ inputs.source_run_id }}',
+        'CHECKPOINT_SHA: ${{ steps.gate.outputs.checkpoint_sha }}',
+        'r.get("stage_id") != os.environ["STAGE_ID"]',
+        'r.get("pointer_sha256")',
+        'r["source_run_id"] = int(os.environ["SOURCE_RUN_ID"])',
+        'r["checkpoint_sha256"] = os.environ["CHECKPOINT_SHA"]',
+        'r["audit_run_id"] = int(os.environ["GITHUB_RUN_ID"])',
+        'r["audit_commit_sha"] = os.environ["GITHUB_SHA"]',
+    ):
+        assert guard in text, guard
+    assert "python -m data_pipeline.drive_publish --audit-resume-stage-id" in text
+    assert "--resume-stage-id " not in text
