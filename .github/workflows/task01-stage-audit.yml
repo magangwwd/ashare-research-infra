@@ -150,7 +150,7 @@ jobs:
           r["checkpoint_sha256"] = os.environ["CHECKPOINT_SHA"]
           r["audit_run_id"] = int(os.environ["GITHUB_RUN_ID"])
           r["audit_commit_sha"] = os.environ["GITHUB_SHA"]
-          report_path.write_text(json.dumps(r, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+          report_path.write_text(json.dumps(r, indent=2, sort_keys=True) + "\n", encoding="utf-8")
           print("PASS: read-only stage SHA audit with source/checkpoint/pointer provenance; NO publication")
           PY
       - name: Archive read-only evidence
