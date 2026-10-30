@@ -494,6 +494,12 @@ def audit_resume_stage(drive, target, items, acceptance, quota, stage_id):
             or drive.read(pointer_id) != pointer_bytes):
         raise PublishError("Production pointer changed during stage audit; audit blocked.")
     verify_previous_snapshot(drive, pointer, previous_manifest)
+    # A long-running audit must also reject relocation of the referenced manifest.
+    latest_manifest_info = drive.metadata(pointer["manifest_file_id"])
+    if (latest_manifest_info.get("name") != "production_manifest.json"
+            or latest_manifest_info.get("parents") != [pointer["version_folder_id"]]
+            or latest_manifest_info.get("trashed") or latest_manifest_info.get("mimeType") == FOLDER):
+        raise PublishError("Production manifest location changed during stage audit; audit blocked.")
     return {
         "audit_only": True, "passed": True, "production_switch_allowed": False,
         "pointer_unchanged": True, "accepted_as_of": acceptance["as_of"],
