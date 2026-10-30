@@ -35,9 +35,13 @@ def verified_ownership_prefix(pointer: dict, as_of: str) -> str:
     return prefix
 
 
-def verified_reuse_source(status: dict, run_id: str, as_of: str) -> str:
+def validate_ownership_run_id(run_id: str) -> None:
     if not re.fullmatch(r"[0-9]+-[0-9]+", run_id):
         raise RuntimeError("Invalid ownership run identifier")
+
+
+def verified_reuse_source(status: dict, run_id: str, as_of: str) -> str:
+    validate_ownership_run_id(run_id)
     if status.get("status") != "PASSED_AND_SAVED_TO_DRIVE" or status.get("task") != "ownership-refresh":
         raise RuntimeError("Only a successful verified ownership refresh can be reused")
     prefix = str(status.get("ownership_snapshot", "")).removeprefix("gdrive:")

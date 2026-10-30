@@ -16,7 +16,7 @@ import tempfile
 from datetime import date, datetime, timezone
 from pathlib import Path
 from state_run_contracts import phase_status_path, validate_state_output
-from current_ownership_contract import current_config, verified_ownership_prefix, verified_reuse_source
+from current_ownership_contract import current_config, verified_ownership_prefix, verified_reuse_source, validate_ownership_run_id
 
 REPO = Path(__file__).resolve().parents[1]
 CODE = Path(__file__).resolve().parent
@@ -126,6 +126,8 @@ def main() -> int:
         p.error("--promote-ownership requires ownership-refresh")
     if args.reuse_ownership_run and args.task != "ownership-refresh":
         p.error("--reuse-ownership-run requires ownership-refresh")
+    if args.reuse_ownership_run:
+        validate_ownership_run_id(args.reuse_ownership_run)
     if args.min_as_of:
         date.fromisoformat(args.min_as_of)
     if args.as_of != "auto":
