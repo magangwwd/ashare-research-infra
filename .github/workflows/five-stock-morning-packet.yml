@@ -1,10 +1,8 @@
 name: Fixed five-stock morning GPT role packet (no model API)
 
 on:
-  workflow_run:
-    workflows: ["Fixed five-stock PIT research after validated R1 (paper only)"]
-    types: [completed]
-    branches: [main]
+  # Fixed five-stock automation retired 2026-10-30 at user request.
+  # Manual recovery only; do not re-enable automatic upstream triggers.
   workflow_dispatch:
     inputs:
       as_of:
@@ -12,16 +10,6 @@ on:
         required: true
         type: string
         default: '2026-10-16'
-  push:
-    branches: [main]
-    paths:
-      - 'ai_research/morning_review_packet.py'
-      - '.github/workflows/five-stock-morning-packet.yml'
-  pull_request:
-    paths:
-      - 'ai_research/morning_review_packet.py'
-      - 'ai_research/tests/test_morning_review_packet.py'
-      - '.github/workflows/five-stock-morning-packet.yml'
 
 permissions:
   contents: read
