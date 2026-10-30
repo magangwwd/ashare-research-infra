@@ -188,10 +188,14 @@ jobs:
           r=json.loads(p.read_text(encoding="utf-8"))
           assert r["mode"]=="DETERMINISTIC_MULTI_ROLE_NO_LLM_NO_NETWORK"
           assert r["authorization"]=="PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
-          assert len(r["stocks"])==int(os.environ["RESEARCH_TOP"])
+          requested=int(os.environ["RESEARCH_TOP"])
+          actual=len(r["stocks"])
+          assert 1 <= actual <= requested, "A-pool report count outside requested cap"
+          if actual < requested:
+              print(f"::warning::Only {actual} verified A-pool candidates available (requested cap {requested}); do not invent extra stocks")
           assert isinstance(r["source"]["clean_coverage_complete"], bool)
           audit=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"ai_output/financial_clean_coverage.json").read_text())
-          assert len(audit["symbols"])==int(os.environ["RESEARCH_TOP"])
+          assert len(audit["symbols"])==actual, "Clean coverage count differs from actual researched symbols"
           assert audit["authorization"]=="PAPER_ONLY_NO_ENTRY_AUTHORIZATION"
           if not audit["all_target_symbols_covered"]:
               print("::warning::Accepted Clean finance has gaps for ranked stocks; legacy dated-source fallback is clearly labeled")
