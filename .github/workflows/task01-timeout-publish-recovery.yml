@@ -20,7 +20,8 @@ jobs:
     if: >-
       github.event.workflow_run.conclusion == 'cancelled' &&
       github.event.workflow_run.head_branch == 'main' &&
-      github.event.workflow_run.head_repository.full_name == github.repository
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      vars.TASK01_TIMEOUT_RECOVERY_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
@@ -53,7 +54,8 @@ jobs:
           jobs = json.loads((root / "source-jobs.json").read_text()).get("jobs", [])
           artifacts = json.loads((root / "source-artifacts.json").read_text()).get("artifacts", [])
           repo = os.environ["GITHUB_REPOSITORY"]
-          if (source.get("conclusion") != "cancelled"
+          if (source.get("path") != ".github/workflows/task01.yml"
+                  or source.get("conclusion") != "cancelled"
                   or source.get("head_branch") != "main"
                   or (source.get("head_repository") or {}).get("full_name") != repo
                   or source.get("event") not in ("schedule", "workflow_dispatch")):
