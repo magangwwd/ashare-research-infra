@@ -21,6 +21,7 @@ import pandas as pd
 
 from ownership_pipeline import ROOT, load_config, resolve
 from state_cache_contract import fingerprint, record_cache, verify_cache
+from pit_name_states import historical_name_states
 from state_definition_pool import (
     MAX_DISCLOSURE_AGE_DAYS,
     MAX_ONE_WORD_DAYS_20,
@@ -164,7 +165,9 @@ def add_historical_pool_fields(
     result["confidence_before_eligibility"] = np.minimum(raw_confidence, confidence_cap)
 
     base_market = (
-        result["listing_sessions"].ge(MIN_LISTING_SESSIONS)
+        result["historical_state_known"]
+        & ~result["historical_is_st"]
+        & result["listing_sessions"].ge(MIN_LISTING_SESSIONS)
         & result["history_observations_250"].ge(MIN_HISTORY_OBSERVATIONS_250)
         & result["recent_observations_20"].ge(MIN_RECENT_OBSERVATIONS_20)
         & result["average_turnover_cny_20"].ge(MIN_MONITOR_TURNOVER_CNY)
@@ -261,6 +264,9 @@ def build_or_load_state_history(
     del panel
     gc.collect()
     features = _attach_disclosures(features, events)
+    name_states = historical_name_states(features, pd.read_parquet(market_root / "name_history.parquet"))
+    features["historical_state_known"] = name_states["historical_state_known"]
+    features["historical_is_st"] = name_states["historical_is_st"]
     features = add_phase_scores(features)
     features = add_historical_pool_fields(features, instruments, calendar)
     features = add_transitions(features)

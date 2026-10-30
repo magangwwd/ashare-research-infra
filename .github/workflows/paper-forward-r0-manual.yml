@@ -87,6 +87,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          rclone copyto 'gdrive:down_data/data/gold/main_board/trading_calendar.parquet' "$RUNNER_TEMP/mainboard/trading_calendar.parquet"
           python astock-quant/stock_state_strategy/paper_forward_r0.py \
             --manifest "$RUNNER_TEMP/gold_manifest.json" \
             --market-root "$RUNNER_TEMP/mainboard" \

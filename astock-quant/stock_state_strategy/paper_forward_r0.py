@@ -7,6 +7,8 @@ as a safe buy. Trigger only after dated Gold price/limit data is verified.
 from __future__ import annotations
 import argparse, hashlib, json
 from pathlib import Path
+from datetime import datetime, timezone
+from state_run_contracts import require_current_closed_session
 import pandas as pd
 import numpy as np
 import research_mainboard_daily_pit_v0 as baseline
@@ -95,6 +97,10 @@ def main():
     day=pd.Timestamp(args.as_of).normalize()
     meta=json.loads(args.manifest.read_text(encoding="utf-8"))
     verified_as_of(meta,day)
+    calendar=pd.read_parquet(args.market_root / "trading_calendar.parquet")
+    require_current_closed_session(str(day.date()),
+        list(zip(calendar["calendar_date"], calendar["is_open"].fillna(False))),
+        datetime.now(timezone.utc))
     panel=recent_panel(args.market_root,day)
     risks=GoldPITRisk(args.risk_root)
     if day not in {d for _,d in risks.limits}:

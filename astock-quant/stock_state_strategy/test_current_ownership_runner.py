@@ -9,7 +9,7 @@ import github_drive_runner as runner
 
 
 class CurrentOwnershipRunnerTests(unittest.TestCase):
-    def execute(self, actual_day="2026-10-29"):
+    def execute(self, actual_day="2026-10-29", promote=False, fail_check=False):
         temporary=tempfile.TemporaryDirectory();self.addCleanup(temporary.cleanup)
         root=Path(temporary.name);code=root/'code';(code/'configs').mkdir(parents=True)
         (code/'configs/ownership_rebuild.json').write_text(json.dumps({'research_end':'2026-08-11'}))
@@ -34,11 +34,12 @@ class CurrentOwnershipRunnerTests(unittest.TestCase):
                     (output/'summary.json').write_text(json.dumps({'as_of_date':actual_day}))
         with patch.object(runner,'CODE',code),patch.object(runner,'require_drive'),\
              patch.object(runner.tempfile,'mkdtemp',return_value=str(scratch)),\
-             patch.object(runner,'copy',side_effect=copy),patch.object(runner,'check'),\
+             patch.object(runner,'copy',side_effect=copy),\
+             patch.object(runner,'check',side_effect=RuntimeError('byte mismatch') if fail_check else None),\
              patch.object(runner,'run',side_effect=run),\
              patch.dict(os.environ,{'TUSHARE_TOKEN':'SYNTHETIC_TEST_ONLY','GITHUB_RUN_ID':'123','GITHUB_RUN_ATTEMPT':'1'}),\
-             patch('sys.argv',['github_drive_runner.py','ownership-refresh']):
-            if actual_day!='2026-10-29':
+             patch('sys.argv',['github_drive_runner.py','ownership-refresh']+(['--promote-ownership'] if promote else [])):
+            if actual_day!='2026-10-29' or fail_check:
                 with self.assertRaisesRegex(RuntimeError,'mismatch'):runner.main()
             else:self.assertEqual(runner.main(),0)
         return root,seen_configs,publications,commands
@@ -54,3 +55,14 @@ class CurrentOwnershipRunnerTests(unittest.TestCase):
     def test_wrong_state_date_never_publishes_snapshot(self):
         root,configs,published,commands=self.execute('2026-10-28')
         self.assertEqual(published,[])
+
+    def test_promotion_occurs_only_after_snapshot_and_state_checks(self):
+        root,configs,published,commands=self.execute(promote=True)
+        self.assertEqual(published[-1],'gdrive:stock_state_strategy/output/state_definition_20261029')
+        markers=[c for c in commands if len(c)>1 and c[0:2]==('rclone','copyto')
+                 and str(c[-1]).endswith('/current_ownership.json')]
+        self.assertEqual(len(markers),1)
+
+    def test_failed_snapshot_check_never_switches_pointer(self):
+        root,configs,published,commands=self.execute(promote=True,fail_check=True)
+        self.assertFalse(any(str(c[-1]).endswith('/current_ownership.json') for c in commands))
