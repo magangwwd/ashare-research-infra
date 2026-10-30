@@ -180,7 +180,7 @@
 
 ## 2026-10-30 19:57 CST：只读暂存审计的生产指针竞态修复（草稿）
 
-- 本轮实读 main 最近提交 SHA `cab18441fe059aa3a04516b371987bef213d26e8`；PR #116 与 PR #123 均保持 draft/open。
+- 本轮 GitHub commit search 返回仓库近期提交 `cab18441fe059aa3a04516b371987bef213d26e8`；**该接口不能证明它就是 main HEAD SHA**，因此不将其冒充为已确认的 main HEAD。已读取 main 的两条生产 workflow 内容及 PR #116/#123 状态；PR 均为 draft/open。
 - Task01 正式 `current.json` 实读仍为 `snapshot_as_of=2026-10-24`、`validated=true`、`critical_history_complete=false`；Gold 正式 `manifest.json` 实读为 `as_of_date=2026-10-29`，两项质量标志为 true。两者未对齐，禁止生产切换。
 - Task01 run `40972437556` 的 task01 job `cancelled`，下载更新、生产验收均 success，发布步骤 cancelled；checkpoint artifact `12960014331` 未过期，至 `2026-11-02T07:06:43Z` 到期；正式发布未成功。
 - Drive staging 目录 `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN` 已确认存在，直接父目录是 staging `1oXqyvWAJytdi3EMJRGucUX8U7Lsx4_c1`；**未逐项核验其中的文件**。
