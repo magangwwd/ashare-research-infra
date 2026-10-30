@@ -176,3 +176,14 @@
 - 下一步：先查最新 head CI，安全审核并实测手动只读 `task01-stage-audit.yml`（仍须合并/获准后方可在 main 使用）；审计成功且未修改 pointer 才能评估受控续传。保持原下载、旧数据与冻结V1。
 
 - 本轮后续复核：PR #123 新 head `e810cfc577246f3bf6ed80eef0ed5e13fd15565c` 的 CI [#41045851944](https://github.com/magangwwd/ashare-research-infra/actions/runs/41045851944) **completed/success，178 passed、2 skipped**；仅证明离线代码测试通过。新建手动审计 workflow 曾出现 push run [#41023529395](https://github.com/magangwwd/ashare-research-infra/actions/runs/41023529395)、[#41023552472](https://github.com/magangwwd/ashare-research-infra/actions/runs/41023552472) `failure` 且无 job，需单独排查 GitHub 工作流注册/语义校验；这两次失败**不是**生产暂存数据 SHA 审计结果。
+
+
+## 2026-10-30 19:57 CST：只读暂存审计的生产指针竞态修复（草稿）
+
+- 本轮实读 main 最近提交 SHA `cab18441fe059aa3a04516b371987bef213d26e8`；PR #116 与 PR #123 均保持 draft/open。
+- Task01 正式 `current.json` 实读仍为 `snapshot_as_of=2026-10-24`、`validated=true`、`critical_history_complete=false`；Gold 正式 `manifest.json` 实读为 `as_of_date=2026-10-29`，两项质量标志为 true。两者未对齐，禁止生产切换。
+- Task01 run `40972437556` 的 task01 job `cancelled`，下载更新、生产验收均 success，发布步骤 cancelled；checkpoint artifact `12960014331` 未过期，至 `2026-11-02T07:06:43Z` 到期；正式发布未成功。
+- Drive staging 目录 `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN` 已确认存在，直接父目录是 staging `1oXqyvWAJytdi3EMJRGucUX8U7Lsx4_c1`；**未逐项核验其中的文件**。
+- 发现 PR #123 的只读审计报告原先直接填写 `pointer_unchanged=true`，但完整 SHA 审计可能持续数小时，审计过程中正式指针可能被其他 Task01 运行更新。已在 PR #123 添加结束时再次核对 pointer 文件 ID、原始字节及旧 manifest 字节的只读门禁，变化即拒绝出具通过报告；代码 commit `fb4c59a58f2a95c11cbc8da206c02e2c2f63aa76`，三种并发变更回归测试 commit `7ee479a6f76486c413e3cbc2b290404135469955`。
+- **最新提交 CI/真实生产端审计尚未完成**；此变更仅存在草稿 PR，不是生产修复。不得启用自动恢复变量、合并生产切换、停止旧下载或删除旧数据。
+- 下一轮：查新 CI 终态；确认工作流注册问题；安全评估能否将只读审计最小化部署到 main 并运行一次，保留 stage SHA 报告；仅在报告通过后评估受控续传。
