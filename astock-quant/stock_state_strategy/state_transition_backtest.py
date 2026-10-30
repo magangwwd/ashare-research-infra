@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import gc
+import hashlib
 import json
 import math
 import sys
@@ -19,6 +20,7 @@ import numpy as np
 import pandas as pd
 
 from ownership_pipeline import ROOT, load_config, resolve
+from state_cache_contract import fingerprint, record_cache, verify_cache
 from state_definition_pool import (
     MAX_DISCLOSURE_AGE_DAYS,
     MAX_ONE_WORD_DAYS_20,
@@ -239,7 +241,17 @@ def build_or_load_state_history(
     end: pd.Timestamp,
     rebuild: bool,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
+    event_bytes = pd.util.hash_pandas_object(events, index=False).to_numpy().tobytes()
+    signature = fingerprint(
+        {"end": str(end.date()), "event_columns": list(events.columns),
+         "events_sha256": hashlib.sha256(event_bytes).hexdigest()},
+        {"gold_manifest": market_root / "manifest.json",
+         "name_history": market_root / "name_history.parquet",
+         **{name: ROOT / name for name in ("state_definition_pool.py", "state_transition_backtest.py",
+            "ownership_pipeline.py", "pit_name_states.py", "state_cache_contract.py")}},
+    )
     if cache_path.exists() and not rebuild:
+        verify_cache(cache_path, signature)
         states = pd.read_parquet(cache_path)
         return states, {"loaded_cache": True, "rows": int(len(states))}
     panel, instruments, calendar = load_market_history(
@@ -278,6 +290,7 @@ def build_or_load_state_history(
     states = features[keep_columns].copy()
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     states.to_parquet(cache_path, index=False)
+    record_cache(cache_path, signature)
     audit = {
         "loaded_cache": False,
         "rows": int(len(states)),
