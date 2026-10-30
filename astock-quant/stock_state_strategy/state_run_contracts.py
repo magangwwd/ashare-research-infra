@@ -45,3 +45,8 @@ def require_current_closed_session(requested: str, calendar: list, observed_at: 
     if not closed:
         raise RuntimeError("No confirmed closed session")
     require_exact_date(max(closed).isoformat(), requested)
+    # A prior-close signal created after the next auction starts has already
+    # observed part of its execution session and cannot be forward evidence.
+    if (max(closed) < today and any(d == today and is_open for d, is_open in days)
+            and local.time() >= time(9, 15)):
+        raise RuntimeError("Forward first-observation window closed at next-session auction")
