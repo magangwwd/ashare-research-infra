@@ -102,3 +102,11 @@ PR #116 诊断脚本新增 Task01 指针与 manifest SHA256、版本父子关系
 - PR #123 新增 `--audit-resume-stage-id <人工指定的stage ID>`：对恢复 checkpoint 的已验收本地清单与远端暂存逐文件核对 SHA256/大小/路径，核验正式 pointer/manifest、日期与剩余配额，输出已验证复用数、缺失数和缺失字节；**仅 GET/read，不创建文件夹、不上传、不移动版本、不更新指针**。调用示例：`python -m data_pipeline.drive_publish --audit-resume-stage-id <STAGE_ID> --report metadata/stage_audit.json`。需在受控、具备已验收 checkpoint 的运行环境中执行；不可从旧日志自动挑选 stage。
 - 代码提交 `07595d89`，无写入回归测试 `dfdf78cc`；新 CI `40977006624` / `40977014204` 仍待终态。**尚未用生产凭据执行只读预检**，不能声称4400个暂存文件已核验。原 `40944992102` 离线 CI 已通过。
 - 必须先审查并通过最新 CI，确认 stage 与本地 checkpoint 内容完全一致，再决定是否受控续传；恢复工件 `12878879550` 到期时间为 2026-11-01 06:59:59 UTC，不得因此跳过安全审查。
+
+
+## 2026-10-30 12:00 CST：旧生产 Manifest 完整性保护（修复草稿）
+
+- 实读 main SHA `68831d6cd4d2b2f7292a3539b7bb662ef51babe4`，整合 PR #116 与恢复 PR #123 均未合并。Task01 run `40948715414` 已 cancelled（发布步骤超时），备份 run `40972437556` 检查时仍在发布，不能称为成功。
+- 本轮真实下载 Drive 两侧正式 JSON：Task01 pointer `2026-10-24`、5406文件、2,331,724,247字节，正式 manifest SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 与 pointer 相符；Gold `2026-10-29`，两项质量标志为 true。两侧相差5个自然日，**仍不准切换**。
+- 在恢复草稿 PR #123 发现一项真实风险：原发布前只检查旧生产 manifest 的 `validated` 和版本名，未核对指针记录的 SHA256 和 manifest 的版本目录父子关系。已补充发布前拒绝损坏/错目录的旧 manifest，避免在旧版本不可确认恢复时启动新 staging。提交 `a0888bf238b7681c30353c7cdd596e6f5b4acf1d`；新增3组无写入回归测试提交 `591d582cb02a2c26e8720e53b625d0aed786fc07`。最新 CI `41000945440` 创建时为 queued，**须复核终态，不可称测试通过或已生产修复**。
+- 本次只修复草稿的安全门禁，没有触发全量下载、没有改生产指针、没有停止 Gold，也没有修改冻结 V1。下一步先核验 CI，再评估旧 checkpoint 和 staging 的只读校验及恢复可执行性。
