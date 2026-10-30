@@ -18,6 +18,16 @@ on:
           - ownership-refresh
           - gold-refresh
           - backup-repo-data
+      promote_ownership:
+        description: "Publish verified ownership/state version (ownership-refresh only)"
+        required: false
+        default: false
+        type: boolean
+      reuse_ownership_run:
+        description: "Optional successful ownership run ID-attempt; reuse verified inputs without API redownload"
+        required: false
+        default: ""
+        type: string
       as_of:
         description: "State date YYYY-MM-DD, or auto from Gold manifest"
         required: false
@@ -73,10 +83,19 @@ jobs:
       - name: Execute isolated task and save outputs to Google Drive
         if: github.event_name == 'workflow_dispatch'
         working-directory: astock-quant/stock_state_strategy
+        env:
+          STRATEGY_TASK: ${{ inputs.task }}
+          STRATEGY_AS_OF: ${{ inputs.as_of }}
+          STRATEGY_MIN_AS_OF: ${{ inputs.min_as_of }}
+          STRATEGY_PROMOTE: ${{ inputs.promote_ownership }}
+          STRATEGY_REUSE: ${{ inputs.reuse_ownership_run }}
         run: |
-          python github_drive_runner.py "${{ inputs.task }}" \
-            --as-of "${{ inputs.as_of }}" \
-            --min-as-of "${{ inputs.min_as_of }}"
+          extra=()
+          if [[ "$STRATEGY_PROMOTE" == "true" ]]; then extra+=(--promote-ownership); fi
+          if [[ -n "$STRATEGY_REUSE" ]]; then extra+=(--reuse-ownership-run "$STRATEGY_REUSE"); fi
+          python github_drive_runner.py "$STRATEGY_TASK" \
+            --as-of "$STRATEGY_AS_OF" \
+            --min-as-of "$STRATEGY_MIN_AS_OF" "${extra[@]}"
       - name: Nightly validated Gold refresh and latest state snapshot
         if: github.event_name == 'schedule'
         working-directory: astock-quant/stock_state_strategy
@@ -84,4 +103,4 @@ jobs:
         run: |
           set -euo pipefail
           python github_drive_runner.py gold-refresh --as-of auto
-          python github_drive_runner.py current-state --as-of auto
+          python github_drive_runner.py ownership-refresh --as-of auto --promote-ownership

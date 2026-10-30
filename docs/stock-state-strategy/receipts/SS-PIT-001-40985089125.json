@@ -1,0 +1,58 @@
+{
+  "schema_version": "stock-state-implementation-receipt/1.0",
+  "project": "stock_state_strategy",
+  "task_id": "SS-PIT-001",
+  "decision": "ACCEPT_IMPLEMENTATION_TESTS",
+  "created_at_utc": "2026-10-30T01:22:14.587Z",
+  "repository": "magangwwd/ashare-research-infra",
+  "tested_head_sha": "926fff48e94e2de038c161dc0f8f0c48006449c2",
+  "github_event": "pull_request",
+  "pull_request": 133,
+  "run_id": 40985089125,
+  "run_attempt": 1,
+  "run_url": "https://github.com/magangwwd/ashare-research-infra/actions/runs/40985089125",
+  "jobs": [
+    {
+      "id": 123834131817,
+      "name": "full-strategy-tests",
+      "conclusion": "success",
+      "python": "3.13.17",
+      "tests_passed": 113,
+      "tests_failed": 0,
+      "warnings": 19
+    },
+    {
+      "id": 123834131514,
+      "name": "offline-preflight",
+      "conclusion": "success",
+      "unittest_passed": 11
+    }
+  ],
+  "local_checks": {
+    "python": "3.12.14",
+    "unittest_passed": 70,
+    "ast_isolated_disclosure_regressions_passed": 3
+  },
+  "source": {
+    "kind": "synthetic_offline_fixtures",
+    "market_data_as_of": null
+  },
+  "frozen_rules_changed": false,
+  "production_deployed": false,
+  "full_market_replay_performed": false,
+  "drive_readback": {
+    "performed": false,
+    "reason": "No market artifacts or Drive writes in offline CI"
+  },
+  "research_effectiveness": "UNPROVEN",
+  "followup": "Remove new NumPy NaT-unit deprecation without changing rule semantics; verify successor CI. Continue SS-DATA-002 and SS-CACHE-003.",
+  "gpt_schedule": {
+    "automation_id": "6acb3d1d96448191a52d99d6823a2ce4",
+    "schedule": "DAILY_08_00_ASIA_SHANGHAI",
+    "update_and_readback_confirmed": true
+  },
+  "next_ready": [
+    "SS-DATA-002",
+    "SS-CACHE-003"
+  ]
+}

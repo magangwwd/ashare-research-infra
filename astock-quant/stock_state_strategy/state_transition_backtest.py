@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import gc
+import hashlib
 import json
 import math
 import sys
@@ -19,6 +20,8 @@ import numpy as np
 import pandas as pd
 
 from ownership_pipeline import ROOT, load_config, resolve
+from state_cache_contract import fingerprint, record_cache, verify_cache, market_input_files
+from pit_name_states import historical_name_states
 from state_definition_pool import (
     MAX_DISCLOSURE_AGE_DAYS,
     MAX_ONE_WORD_DAYS_20,
@@ -89,7 +92,7 @@ def add_stability(frame: pd.DataFrame) -> pd.DataFrame:
     stability = np.zeros(len(result), dtype="int8")
     for positions in result.groupby("instrument_id", sort=False).indices.values():
         pos = np.asarray(positions, dtype=np.int64)
-        states = result.loc[pos, "raw_state"].to_numpy(dtype=object)
+        states = result.iloc[pos]["raw_state"].to_numpy(dtype=object)
         local = np.zeros(len(pos), dtype="int8")
         for state in ("accumulation", "lock", "markup", "distribution"):
             counts = (
@@ -162,7 +165,9 @@ def add_historical_pool_fields(
     result["confidence_before_eligibility"] = np.minimum(raw_confidence, confidence_cap)
 
     base_market = (
-        result["listing_sessions"].ge(MIN_LISTING_SESSIONS)
+        result["historical_state_known"]
+        & ~result["historical_is_st"]
+        & result["listing_sessions"].ge(MIN_LISTING_SESSIONS)
         & result["history_observations_250"].ge(MIN_HISTORY_OBSERVATIONS_250)
         & result["recent_observations_20"].ge(MIN_RECENT_OBSERVATIONS_20)
         & result["average_turnover_cny_20"].ge(MIN_MONITOR_TURNOVER_CNY)
@@ -205,8 +210,8 @@ def add_transitions(frame: pd.DataFrame) -> pd.DataFrame:
     previous_date = np.full(len(result), np.datetime64("NaT"), dtype="datetime64[ns]")
     for positions in result.groupby("instrument_id", sort=False).indices.values():
         pos = np.asarray(positions, dtype=np.int64)
-        states = result.loc[pos, "defined_state"].replace("uncertain", np.nan)
-        dates = result.loc[pos, "trade_date"]
+        states = result.iloc[pos]["defined_state"].replace("uncertain", np.nan)
+        dates = result.iloc[pos]["trade_date"]
         previous_state[pos] = states.ffill().shift(1).to_numpy(dtype=object)
         previous_date[pos] = dates.where(states.notna()).ffill().shift(1).to_numpy(
             dtype="datetime64[ns]"
@@ -239,8 +244,20 @@ def build_or_load_state_history(
     end: pd.Timestamp,
     rebuild: bool,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
+    event_bytes = pd.util.hash_pandas_object(events, index=False).to_numpy().tobytes()
+    signature = fingerprint(
+        {"end": str(end.date()), "event_columns": list(events.columns),
+         "events_sha256": hashlib.sha256(event_bytes).hexdigest()},
+        {**market_input_files(market_root),
+         **{name: ROOT / name for name in ("state_definition_pool.py", "state_transition_backtest.py",
+            "ownership_pipeline.py", "pit_name_states.py", "state_cache_contract.py")}},
+    )
     if cache_path.exists() and not rebuild:
+        verify_cache(cache_path, signature)
         states = pd.read_parquet(cache_path)
+        for column in ("instrument_id", "vendor_symbol", "industry_vendor", "raw_state",
+                       "defined_state", "pool_status", "previous_defined_state", "transition"):
+            states[column] = states[column].astype(object).where(states[column].notna(), None)
         return states, {"loaded_cache": True, "rows": int(len(states))}
     panel, instruments, calendar = load_market_history(
         market_root, pd.Timestamp("2020-01-01"), end
@@ -249,6 +266,9 @@ def build_or_load_state_history(
     del panel
     gc.collect()
     features = _attach_disclosures(features, events)
+    name_states = historical_name_states(features, pd.read_parquet(market_root / "name_history.parquet"))
+    features["historical_state_known"] = name_states["historical_state_known"]
+    features["historical_is_st"] = name_states["historical_is_st"]
     features = add_phase_scores(features)
     features = add_historical_pool_fields(features, instruments, calendar)
     features = add_transitions(features)
@@ -276,8 +296,14 @@ def build_or_load_state_history(
         "transition",
     ]
     states = features[keep_columns].copy()
+    # pandas 3 can infer a new string dtype on Parquet read. Keep the same
+    # explicit text schema on both fresh calculation and cached reuse.
+    for column in ("instrument_id", "vendor_symbol", "industry_vendor", "raw_state",
+                   "defined_state", "pool_status", "previous_defined_state", "transition"):
+        states[column] = states[column].astype(object).where(states[column].notna(), None)
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     states.to_parquet(cache_path, index=False)
+    record_cache(cache_path, signature)
     audit = {
         "loaded_cache": False,
         "rows": int(len(states)),

@@ -7,6 +7,8 @@ as a safe buy. Trigger only after dated Gold price/limit data is verified.
 from __future__ import annotations
 import argparse, hashlib, json
 from pathlib import Path
+from datetime import datetime, timezone
+from state_run_contracts import require_current_closed_session
 import pandas as pd
 import numpy as np
 import research_mainboard_daily_pit_v0 as baseline
@@ -95,6 +97,10 @@ def main():
     day=pd.Timestamp(args.as_of).normalize()
     meta=json.loads(args.manifest.read_text(encoding="utf-8"))
     verified_as_of(meta,day)
+    calendar=pd.read_parquet(args.market_root / "trading_calendar.parquet")
+    require_current_closed_session(str(day.date()),
+        list(zip(calendar["calendar_date"], calendar["is_open"].fillna(False))),
+        datetime.now(timezone.utc))
     panel=recent_panel(args.market_root,day)
     risks=GoldPITRisk(args.risk_root)
     if day not in {d for _,d in risks.limits}:
@@ -123,6 +129,11 @@ def main():
     args.output.mkdir(parents=True,exist_ok=True)
     dest=args.output/f"signal_snapshot_{day.date()}.json"
     if dest.exists():raise RuntimeError("Local forward snapshot exists: immutability")
+    observed_at = datetime.now(timezone.utc)
+    require_current_closed_session(str(day.date()),
+        list(zip(calendar["calendar_date"], calendar["is_open"].fillna(False))), observed_at)
+    report["first_observed_at_utc"] = observed_at.isoformat()
+    report["observation_window"] = "AFTER_CLOSE_BEFORE_NEXT_SESSION_AUCTION"
     dest.write_text(json.dumps(report,indent=2,ensure_ascii=False),encoding="utf-8")
     print("FORWARD_R0_STATUS="+json.dumps({
         "date":report["date"],"source_rows_today":report["source_rows_today"],

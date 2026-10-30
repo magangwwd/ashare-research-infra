@@ -15,6 +15,9 @@ import sys
 import tempfile
 from datetime import date, datetime, timezone
 from pathlib import Path
+from state_run_contracts import phase_status_path, validate_state_output
+from current_ownership_contract import current_config, verified_ownership_prefix, verified_reuse_source, validate_ownership_run_id
+from state_cache_contract import file_sha256
 
 REPO = Path(__file__).resolve().parents[1]
 CODE = Path(__file__).resolve().parent
@@ -57,6 +60,20 @@ def require_drive() -> None:
 
 def load(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def write_snapshot_manifest(snapshot: Path, gold_manifest: Path, status: dict) -> str:
+    """Persist byte identities with the version before remote copy/check."""
+    record = {"schema_version": 1, "as_of_date": status["as_of"],
+              "github_sha": status["github_sha"],
+              "gold_manifest_sha256": file_sha256(gold_manifest),
+              "reused_ownership_source": status.get("reused_ownership_source"),
+              "files_sha256": {str(p.relative_to(snapshot)): file_sha256(p)
+                               for p in sorted(snapshot.rglob("*"))
+                               if p.is_file() and p.name != "snapshot_manifest.json"}}
+    target = snapshot / "snapshot_manifest.json"
+    target.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
+    return file_sha256(target)
 
 
 def link_persistent(name: str, work: Path) -> None:
@@ -116,7 +133,16 @@ def main() -> int:
     p.add_argument("task", choices=TASKS)
     p.add_argument("--as-of", default="auto", help="ISO trading day or auto=Gold manifest")
     p.add_argument("--min-as-of", default="", help="Require Gold data no older than YYYY-MM-DD")
+    p.add_argument("--promote-ownership", action="store_true",
+                   help="Publish validated ownership/state pointer after isolated byte verification")
+    p.add_argument("--reuse-ownership-run", default="", help="Reuse a byte-verified successful run ID-attempt")
     args = p.parse_args()
+    if args.promote_ownership and args.task != "ownership-refresh":
+        p.error("--promote-ownership requires ownership-refresh")
+    if args.reuse_ownership_run and args.task != "ownership-refresh":
+        p.error("--reuse-ownership-run requires ownership-refresh")
+    if args.reuse_ownership_run:
+        validate_ownership_run_id(args.reuse_ownership_run)
     if args.min_as_of:
         date.fromisoformat(args.min_as_of)
     if args.as_of != "auto":
@@ -192,15 +218,25 @@ def main() -> int:
             link_persistent(dirname, work)
         os.environ["ASTOCK_MARKET_DATA_ROOT"] = str(gold_path)
         if args.task == "current-state":
-            copy(REMOTE + "stock_state_strategy/artifacts/legacy/demo02_data/processed",
-                 work / "stock_state_strategy/artifacts/legacy/demo02_data/processed")
             chosen = as_of if args.as_of == "auto" else args.as_of
             if chosen > as_of:
                 raise RuntimeError(f"Requested state day {chosen} is newer than Gold {as_of}")
-            run(sys.executable, "run_pipeline.py", "current-state", "--as-of", chosen, cwd=CODE)
+            pointer_file = scratch / "ownership_current.json"
+            run("rclone", "copyto", REMOTE + "stock_state_strategy/current_ownership.json", str(pointer_file))
+            prefix = verified_ownership_prefix(load(pointer_file), chosen)
+            source = work / "current_ownership"
+            copy(REMOTE + prefix + "/processed", source / "processed")
+            config = current_config(load(CODE / "configs/ownership_rebuild.json"), gold_path, source, chosen)
+            config_path = scratch / "state_current_config.json"
+            config_path.write_text(json.dumps(config), encoding="utf-8")
+            run(sys.executable, "run_pipeline.py", "current-state", "--as-of", chosen,
+                "--config", str(config_path), cwd=CODE)
             local = work / "stock_state_strategy/output" / ("state_definition_" + chosen.replace("-", ""))
             if not local.is_dir() or not any(local.rglob("*")):
                 raise RuntimeError("No state output files created")
+            # Validate generated evidence before any output publication.
+            status["requested_as_of"] = chosen
+            status["actual_as_of"] = validate_state_output(local, chosen)
             copy(local, REMOTE + "stock_state_strategy/output/" + local.name)
             check(local, REMOTE + "stock_state_strategy/output/" + local.name)
         elif args.task == "forward-baseline":
@@ -211,16 +247,55 @@ def main() -> int:
             copy(local, REMOTE + "stock_state_strategy/output/forward_20260818")
             check(local, REMOTE + "stock_state_strategy/output/forward_20260818")
         elif args.task == "ownership-refresh":
-            if not os.getenv("TUSHARE_TOKEN"):
+            if not os.getenv("TUSHARE_TOKEN") and not args.reuse_ownership_run:
                 raise RuntimeError("TUSHARE_TOKEN secret missing")
-            copy(REMOTE + "stock_state_strategy/runtime/data", work / "stock_state_strategy/runtime/data")
-            run(sys.executable, "download_ownership.py",
-                "--config", "configs/ownership_rebuild.json", cwd=CODE)
-            run(sys.executable, "ownership_pipeline.py",
-                "--config", "configs/ownership_rebuild.json", cwd=CODE)
-            local = work / "stock_state_strategy/runtime/data"
-            copy(local, REMOTE + "stock_state_strategy/runtime/data")
-            check(local, REMOTE + "stock_state_strategy/runtime/data")
+            # Refresh and consume the same isolated version, never legacy/default outputs.
+            snapshot = work / "ownership_snapshots" / as_of / run_id
+            snapshot.mkdir(parents=True, exist_ok=False)
+            config = current_config(load(CODE / "configs/ownership_rebuild.json"),
+                                    gold_path, snapshot, as_of)
+            config_path = snapshot / "current_config.json"
+            config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+            if args.reuse_ownership_run:
+                prior = scratch / "previous_ownership_status.json"
+                run("rclone", "copyto", REMOTE + phase_status_path(args.reuse_ownership_run, "ownership-refresh"), str(prior))
+                prefix = verified_reuse_source(load(prior), args.reuse_ownership_run, as_of)
+                copy(REMOTE + prefix + "/processed", snapshot / "processed")
+                check(snapshot / "processed", REMOTE + prefix + "/processed")
+                status["reused_ownership_source"] = prefix
+            else:
+                run(sys.executable, "download_ownership.py",
+                    "--config", str(config_path), cwd=CODE)
+                run(sys.executable, "ownership_pipeline.py",
+                    "--config", str(config_path), "--skip-labels", cwd=CODE)
+            run(sys.executable, "run_pipeline.py", "current-state", "--as-of", as_of,
+                "--config", str(config_path), cwd=CODE)
+            state = work / "stock_state_strategy/output" / ("state_definition_" + as_of.replace("-", ""))
+            validate_state_output(state, as_of)
+            shutil.copytree(state, snapshot / "state")
+            status["snapshot_manifest_sha256"] = write_snapshot_manifest(
+                snapshot, gold_path / "manifest.json", status)
+            target = REMOTE + "stock_state_strategy/research/ownership/" + as_of + "/" + run_id
+            copy(snapshot, target)
+            check(snapshot, target)
+            status["ownership_snapshot"] = target
+            status["publication_scope"] = "ISOLATED_RESEARCH_NOT_PRODUCTION_PROMOTION"
+            if args.promote_ownership:
+                formal = REMOTE + "stock_state_strategy/output/" + state.name
+                copy(state, formal)
+                check(state, formal)
+                pointer = {"as_of_date": as_of, "snapshot_prefix": target.removeprefix(REMOTE),
+                           "verification": "RCLONE_CHECK_PASSED", "run_id": run_id,
+                           "snapshot_manifest_sha256": status["snapshot_manifest_sha256"],
+                           "github_sha": os.getenv("GITHUB_SHA")}
+                verified_ownership_prefix(pointer, as_of)
+                pointer_file = scratch / "current_ownership.json"
+                pointer_file.write_text(json.dumps(pointer, indent=2), encoding="utf-8")
+                # Publication marker is last; failure leaves the previous verified pointer.
+                run("rclone", "copyto", str(pointer_file), REMOTE + "stock_state_strategy/current_ownership.json")
+                run("rclone", "check", str(scratch), REMOTE + "stock_state_strategy",
+                    "--include", "/current_ownership.json", "--one-way")
+                status["publication_scope"] = "VERIFIED_CURRENT_OWNERSHIP_AND_STATE"
         status["status"] = "PASSED_AND_SAVED_TO_DRIVE"
         return 0
     finally:
@@ -230,6 +305,9 @@ def main() -> int:
         # Status is diagnostic only; failures must remain failures even if this
         # supplemental upload cannot complete.
         try:
+            run("rclone", "copyto", str(report),
+                REMOTE + phase_status_path(run_id, args.task))
+            # Preserve the legacy latest-status address for existing readers.
             run("rclone", "copyto", str(report),
                 REMOTE + "stock_state_strategy/runs/" + run_id + "/run_status.json")
         except Exception as exc:

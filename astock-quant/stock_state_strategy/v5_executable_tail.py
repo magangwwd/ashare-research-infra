@@ -10,6 +10,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from numpy.lib.stride_tricks import sliding_window_view
+from pit_name_states import historical_name_states
 
 from backtest_mfe_mae import (
     load_config,
@@ -148,32 +149,9 @@ def add_point_in_time_states(
     ).astype("int8")
 
     history = pd.read_parquet(data_root / "name_history.parquet")
-    history["effective_date"] = pd.to_datetime(history["effective_date"])
-    history["end_date"] = pd.to_datetime(history["end_date"])
-    history = history.sort_values(["instrument_id", "effective_date", "end_date"])
-    history_groups = {
-        instrument_id: group
-        for instrument_id, group in history.groupby("instrument_id", sort=False)
-    }
-    state_known = np.zeros(len(panel), dtype=bool)
-    historical_is_st = np.zeros(len(panel), dtype=bool)
-    for instrument_id, positions in panel.groupby(
-        "instrument_id", sort=False
-    ).indices.items():
-        states = history_groups.get(instrument_id)
-        if states is None or states.empty:
-            continue
-        pos = np.asarray(positions, dtype=np.int64)
-        dates = panel.loc[pos, "trade_date"].to_numpy(dtype="datetime64[ns]")
-        starts = states["effective_date"].to_numpy(dtype="datetime64[ns]")
-        indices = np.searchsorted(starts, dates, side="right") - 1
-        has_start = indices >= 0
-        safe_indices = np.maximum(indices, 0)
-        ends = states["end_date"].to_numpy(dtype="datetime64[ns]")[safe_indices]
-        active = has_start & (np.isnat(ends) | (dates <= ends))
-        values = states["is_st"].fillna(False).to_numpy(dtype=bool)[safe_indices]
-        state_known[pos] = active
-        historical_is_st[pos] = active & values
+    name_states = historical_name_states(panel, history)
+    state_known = name_states["historical_state_known"].to_numpy(dtype=bool)
+    historical_is_st = name_states["historical_is_st"].to_numpy(dtype=bool)
     if not state_known.all():
         raise ValueError(
             f"{int((~state_known).sum())} panel rows lack point-in-time name/ST state"

@@ -20,6 +20,10 @@ import pyarrow as pa
 import pyarrow.dataset as ds
 
 from ownership_pipeline import ROOT, load_config, resolve
+from pit_name_states import historical_name_states
+from state_run_contracts import require_exact_date
+from ownership_quality_diagnostics import ownership_quality_diagnostics
+from state_cache_contract import fingerprint, market_input_files, verify_cache, record_cache
 
 
 HISTORY_START = pd.Timestamp("2020-01-01")
@@ -331,6 +335,8 @@ def _attach_disclosures(recent: pd.DataFrame, events: pd.DataFrame) -> pd.DataFr
     holder = holder.sort_values(
         ["holder_announcement_date", "vendor_symbol"], kind="stable"
     ).drop_duplicates(["vendor_symbol", "holder_announcement_date"], keep="last")
+    # Count only disclosures already visible at each matched announcement.
+    holder["holder_update_count"] = holder.groupby("vendor_symbol", sort=False).cumcount() + 1
     left = pd.merge_asof(
         left,
         holder,
@@ -363,6 +369,7 @@ def _attach_disclosures(recent: pd.DataFrame, events: pd.DataFrame) -> pd.DataFr
     composition = composition.sort_values(
         ["composition_announcement_date", "vendor_symbol"], kind="stable"
     ).drop_duplicates(["vendor_symbol", "composition_announcement_date"], keep="last")
+    composition["composition_update_count"] = composition.groupby("vendor_symbol", sort=False).cumcount() + 1
     left = pd.merge_asof(
         left.sort_values(["trade_date", "vendor_symbol"], kind="stable"),
         composition,
@@ -371,13 +378,6 @@ def _attach_disclosures(recent: pd.DataFrame, events: pd.DataFrame) -> pd.DataFr
         by="vendor_symbol",
         direction="backward",
         allow_exact_matches=True,
-    )
-    holder_counts = holder.groupby("vendor_symbol").size().rename("holder_update_count")
-    composition_counts = composition.groupby("vendor_symbol").size().rename(
-        "composition_update_count"
-    )
-    left = left.merge(holder_counts, on="vendor_symbol", how="left").merge(
-        composition_counts, on="vendor_symbol", how="left"
     )
     for column in ("holder_update_count", "composition_update_count"):
         left[column] = left[column].fillna(0).astype("int16")
@@ -578,15 +578,9 @@ def add_current_pool_fields(
     current.loc[pd.isna(current["list_date"]), "listing_sessions"] = 0
 
     history = pd.read_parquet(market_root / "name_history.parquet")
-    history["effective_date"] = pd.to_datetime(history["effective_date"])
-    history["end_date"] = pd.to_datetime(history["end_date"])
-    history = history[
-        (history["effective_date"] <= current_date)
-        & (history["end_date"].isna() | (history["end_date"] >= current_date))
-    ].sort_values(["instrument_id", "effective_date"], kind="stable")
-    active = history.drop_duplicates("instrument_id", keep="last").set_index("instrument_id")
-    current["historical_state_known"] = current["instrument_id"].isin(active.index)
-    current["historical_is_st"] = current["instrument_id"].map(active["is_st"]).fillna(False)
+    name_states = historical_name_states(current, history)
+    current["historical_state_known"] = name_states["historical_state_known"]
+    current["historical_is_st"] = name_states["historical_is_st"]
 
     disclosure_age = pd.concat(
         [
@@ -885,13 +879,14 @@ def main() -> int:
 
     cache_path = output_dir / "recent_feature_cache.parquet"
     cache_key = f"{history_start.date()}_{current_date.date()}"
-    cache_meta_path = output_dir / "recent_feature_cache.json"
+    signature = fingerprint({"kind": "recent_features", "cache_key": cache_key},
+        {**market_input_files(market_root), "code": Path(__file__)})
     cache_valid = False
-    if cache_path.exists() and cache_meta_path.exists():
+    if cache_path.exists():
         try:
-            cache_meta = json.loads(cache_meta_path.read_text(encoding="utf-8"))
-            cache_valid = cache_meta.get("cache_key") == cache_key
-        except (OSError, json.JSONDecodeError):
+            verify_cache(cache_path, signature)
+            cache_valid = True
+        except RuntimeError:
             cache_valid = False
     if cache_valid:
         recent = pd.read_parquet(cache_path)
@@ -909,18 +904,20 @@ def main() -> int:
             market_root, history_start, current_date
         )
         available_end = panel["trade_date"].max()
-        if available_end < current_date:
-            current_date = pd.Timestamp(available_end)
+        if pd.isna(available_end):
+            raise RuntimeError("No valid market rows for requested state date")
+        require_exact_date(str(current_date.date()), str(available_end.date()))
         open_dates = calendar.loc[calendar["calendar_date"] <= current_date, "calendar_date"]
         recent_dates = set(open_dates.tail(5))
         recent = build_recent_features(panel, recent_dates)
         recent.to_parquet(cache_path, index=False)
-        cache_meta_path.write_text(
-            json.dumps({"cache_key": cache_key}, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        record_cache(cache_path, signature)
         del panel
 
+    recent_end = recent["trade_date"].max()
+    if pd.isna(recent_end):
+        raise RuntimeError("No current state features for requested date")
+    require_exact_date(str(current_date.date()), str(recent_end.date()))
     events = pd.read_parquet(resolve(config["processed_data_dir"]) / "ownership_events.parquet")
     events["ann_date"] = pd.to_datetime(events["ann_date"])
     events = events[events["ann_date"] <= current_date].copy()
@@ -973,6 +970,10 @@ def main() -> int:
         top_a = top_a.rename(columns={"average_turnover_cny_20": "日均成交额_亿元"})
 
     snapshot.to_parquet(output_dir / "current_snapshot.parquet", index=False)
+    ownership_diagnostics, ownership_summary = ownership_quality_diagnostics(snapshot, MAX_DISCLOSURE_AGE_DAYS)
+    ownership_diagnostics.to_csv(output_dir / "ownership_quality_diagnostics.csv", index=False, encoding="utf-8-sig")
+    (output_dir / "ownership_quality_summary.json").write_text(
+        json.dumps(ownership_summary, ensure_ascii=False, indent=2), encoding="utf-8")
     snapshot.to_csv(output_dir / "current_snapshot.csv", index=False, encoding="utf-8-sig")
     snapshot[snapshot["pool_status"].eq("A_STRATEGY_CANDIDATE")].to_csv(
         output_dir / "a_strategy_pool.csv", index=False, encoding="utf-8-sig"
