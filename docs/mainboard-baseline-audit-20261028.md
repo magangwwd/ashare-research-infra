@@ -189,3 +189,12 @@
 - 下一轮：查新 CI 终态；确认工作流注册问题；安全评估能否将只读审计最小化部署到 main 并运行一次，保留 stage SHA 报告；仅在报告通过后评估受控续传。
 
 - 19:59后复核：PR #123 commit `7ee479a6f76486c413e3cbc2b290404135469955` 的 Pipeline CI [#41052013279](https://github.com/magangwwd/ashare-research-infra/actions/runs/41052013279) **completed/success，181 passed、2 skipped**。这仅证明离线防护测试通过，仍未执行生产端暂存SHA审计或正式发布。
+
+
+## 2026-10-30 23:59 CST：只读暂存审计证据绑定（未生产执行）
+
+- 实读 main HEAD `cab18441fe059aa3a04516b371987bef213d26e8`；整合 PR #116 与恢复 PR #123 仍为 draft/open。GitHub Task01 最近完成的发布 run `40972437556` 为 cancelled，stage `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN` 只确认位于 `staging/` 直接子目录；未核验约7000个暂存文件。
+- 本轮从 Drive 文件 ID 直接重新下载：Task01 `current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB` SHA256 `5d712e4c30c5ccc9c70ebd6672ebc401df97ba14f5d46d07e877baf915482926`，`as_of=2026-10-24`、`critical_history_complete=false`；`production_manifest.json` ID `1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1` SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，与指针一致；Gold `manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn` SHA256 `79699efb7c09423450e02b4e1a2a1ca7fb28b1fffca7dd847847a45b13b38291`，`as_of=2026-10-29`、两个质量标志true。只校验这3个 JSON，不代表全量Parquet通过。
+- PR #123 草稿新增只读审计报告证据绑定：`stage_id`、`pointer_sha256`，以及手动审计工作流写入的 `source_run_id`、`checkpoint_sha256`、`audit_run_id`、`audit_commit_sha`。提交 `60b06393`、`0037e0e6`、`4061c6be`、`6af40911`、`6c747895`；最新 CI run `41086147876` 提交时尚未结束，必须核验最终状态。
+- 先前 `task01-stage-audit.yml` push run `41023552472` failure、**jobs=0**，未真正执行任何云盘SHA审计；不能将其视为已校验stage。新工作流仍在草稿分支，不在main，生产手动审计未运行。
+- 来源 checkpoint `12960014331` GitHub 仍标为未过期，预计 `2026-11-02T07:06:43Z` 到期。禁止因时限紧迫而合并自动恢复或跳过安全检查。下一轮优先核验新CI、审计工作流可注册性，再评估受控只读运行与续传。旧数据、双下载、冻结V1不变。
