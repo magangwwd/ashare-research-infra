@@ -198,3 +198,13 @@
 - PR #123 草稿新增只读审计报告证据绑定：`stage_id`、`pointer_sha256`，以及手动审计工作流写入的 `source_run_id`、`checkpoint_sha256`、`audit_run_id`、`audit_commit_sha`。提交 `60b06393`、`0037e0e6`、`4061c6be`、`6af40911`、`6c747895`；最新 CI run `41086147876` 提交时尚未结束，必须核验最终状态。
 - 先前 `task01-stage-audit.yml` push run `41023552472` failure、**jobs=0**，未真正执行任何云盘SHA审计；不能将其视为已校验stage。新工作流仍在草稿分支，不在main，生产手动审计未运行。
 - 来源 checkpoint `12960014331` GitHub 仍标为未过期，预计 `2026-11-02T07:06:43Z` 到期。禁止因时限紧迫而合并自动恢复或跳过安全检查。下一轮优先核验新CI、审计工作流可注册性，再评估受控只读运行与续传。旧数据、双下载、冻结V1不变。
+
+
+## 2026-10-31 04:00 北京时间：独立只读暂存审计 PR #140（尚未部署）
+
+- 实读 main ref SHA `cab18441fe059aa3a04516b371987bef213d26e8`；整合 PR #116、发布恢复 PR #123 均仍 draft，禁止直接合并 #123 启用自动恢复。
+- 本轮实际下载 Task01 `current.json` 和 `production_manifest.json`，`snapshot_as_of=2026-10-24`、5406文件；Manifest 实测 SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 与正式 pointer 相同。Gold 正式 `manifest.json` 实读 `as_of_date=2026-10-29`、`primary_keys_unique=true`、`ohlc_valid=true`；未重验全部 Parquet。**日期不齐，不允许切换。**
+- 确认此前 `.github/workflows/task01-stage-audit.yml` 仅在 #123 草稿分支存在，而 job 又要求 `refs/heads/main`，所以直接从草稿分支手动触发无法运行生产核验；不能放宽 main-only 门禁或直接合并自动恢复工作流。
+- 新建独立 **draft PR #140** `fix/task01-isolated-readonly-stage-audit-20261031`：只从 #123 提取**只读**暂存 SHA 核验逻辑、手动 main-only 工作流及测试；**保留 main 现有 `publish()` 默认上传路径原样不变**，不引入 workflow_run 自动恢复、续传上传、Gold 调度修改。提交 `0eb022aa`、`25df48d5`、`8a06a36e`、`886ed9e8`、`a05e2051`、`7275c924`；尚无新 CI 最终结果、尚未合并、未用生产凭据运行。
+- 来源 Task01 run `40972437556` 的 checkpoint artifact `12960014331` 实查 `expired=false`、SHA256 `b264d0851ec2d3c174c9b08016d9b2f1aa20322cfbfd01a23dfb899e278ed3f4`，预计 `2026-11-02T07:06:43Z` 到期；stage `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN` 仍待生产只读逐文件核验。
+- 下一步先查 PR #140 CI 与代码安全审查，审核通过后才考虑将**独立只读**工作流部署 main，再手动执行 `source_run_id=40972437556`、`stage_id=1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN`；须保存实际 run ID 和 `task01-stage-audit` artifact，不能将草稿 CI 视为云盘核验成功。旧链路、旧数据、冻结 V1 均不变。
