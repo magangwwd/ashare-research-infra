@@ -336,9 +336,21 @@ def verify_previous_snapshot(drive, pointer: dict, expected_manifest: bytes | No
     info = drive.metadata(version_id)
     if info.get("mimeType") != FOLDER or info.get("trashed"):
         raise PublishError("Previous production version folder is not recoverable.")
+    manifest_info = drive.metadata(manifest_id)
+    if (manifest_info.get("name") != "production_manifest.json"
+            or manifest_info.get("trashed")
+            or manifest_info.get("parents") != [version_id]
+            or manifest_info.get("mimeType") == FOLDER):
+        raise PublishError("Previous production manifest is not in the referenced version.")
     manifest_bytes = drive.read(manifest_id)
     if expected_manifest is not None and manifest_bytes != expected_manifest:
         raise PublishError("Previous production manifest changed during publication.")
+    expected_sha = pointer.get("manifest_sha256")
+    if expected_sha is not None:
+        if (not isinstance(expected_sha, str) or len(expected_sha) != 64
+                or any(c not in "0123456789abcdef" for c in expected_sha)
+                or hashlib.sha256(manifest_bytes).hexdigest() != expected_sha):
+            raise PublishError("Previous production manifest SHA256 mismatch; pointer unchanged.")
     try:
         manifest = json.loads(manifest_bytes)
     except (ValueError, TypeError):
@@ -346,6 +358,7 @@ def verify_previous_snapshot(drive, pointer: dict, expected_manifest: bytes | No
     if not manifest.get("validated") or manifest.get("version") != pointer.get("version"):
         raise PublishError("Previous production manifest does not match the current pointer.")
     return manifest_bytes
+
 
 
 def verified_stage_reuse(drive, staging_id, stage_id, items):
