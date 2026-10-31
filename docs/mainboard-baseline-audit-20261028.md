@@ -231,3 +231,22 @@
 - 下一可验证操作（必须重新实查备份仍存在）是只读工作流 `Task 01 read-only staged snapshot audit`，输入 `source_run_id=41119601566`、`stage_id=1CHTuLs2_VS_MGbqlJnpZiJwOinR7ihGf`。GitHub 连接器本轮没有新 workflow_dispatch 工具；**没有调用、没有运行 ID、没有审计工件，不得称已通过**。若 checkpoint 已被修剪，直接标记 BLOCKED 并选用下一次**日志确认 stage 且具备同 run 验收+checkpoint**的取消运行，不得跨 run 拼接。
 - PR #141 的 resumable partial-ACK 修复仍为草稿，仅处理单文件会话已接受部分字节后的安全续传；其离线测试不等于跨 run staging 复用，也不等于生产成功。PR #123 继续草稿，不自动部署大规模重传。
 - **禁止切换：** Task01 比 Gold 落后，Task01 历史完整性为 false；Gold 旧下载、冻结V1、旧数据及当前指针均保持不变。下一轮优先核验 411417 终态、现存最新同run checkpoint/stage 配对，完成只读 SHA 审计，再评估受控续传和五日影子测试。
+
+
+## 2026-10-31 当前窗口：暂存四类分区真实 SHA256 抽验
+
+- 源 Task01 run [41119601566](https://github.com/magangwwd/ashare-research-infra/actions/runs/41119601566)，实下载验收工件 `13016738862`（ZIP 463,617 bytes）。`metadata/acceptance.json` 明确 `passed=true`, `as_of=2026-10-30`；`metadata/history_progress.json` 为 `full_requested_core_range_complete=false`，不能称历史齐全。该验收报告不是 Drive 正式发布报告。
+- 实际 Drive 暂存目录 `1CHTuLs2_VS_MGbqlJnpZiJwOinR7ihGf` 在 `Ashare_Quant/staging/` 的直系目录下；通过 Drive 连接器逐级列目录，下载四个文件并对照**该 run 本身** `metadata/manifest/partitions.json` 的 bytes/SHA256：
+
+| 该 run 验收分区（staging/data 下） | 远端 file_id | 实际 bytes | SHA256 匹配 |
+|---|---|---:|---|
+| `raw/daily/year=2026/month=10/part-000.parquet` | `1LU9s6yAx3Pfh2ov2gC1LSNTvd01oBTtO` | 18,904,000 | `c9c506d8febe04065686b70d00dab83e1993bc7e97df19d29706af1f8f2ee19d` ✅ |
+| `clean/daily/year=2026/month=10/part-000.parquet` | `1hdnhah0gmryHFDfbOhr8FehXkE5Fo-gI` | 3,659,870 | `51b547aa43bc5d08d30445d756ce49ea9fbb94c6042b28509b8d62d4623d0ec5` ✅ |
+| `raw/income/ann_year=2026/ann_month=10/part-000.parquet` | `1q4PNjFEVfQLeOwpxqDYLK5ErCLZm9u8X` | 75,300 | `9bc0740e02cdb7d63299841d804a13fcd861685a109b2c7f2ae4862b439b0596` ✅ |
+| `raw/stk_mins/year=2024/month=01/bucket=00/part-000.parquet` | `17lI5BM-gRZMaQdMO-MJ2aW77mTTgac1g` | 281,281 | `52a2abaf46b1bbf7aa8052a0ad3515e0f9a51c850970abd245c851072f806e08` ✅ |
+
+**限制：** 这是 **4文件抽样**，不是约4,200已暂存文件的完整 SHA audit，更不是所有7,104目标文件完成上传。必须通过全量只读工作流才能为 `--resume-stage-id` 提供足够生产证据。checkpoint `13025260198` 曾确认有效但可能被后续 Task01 checkpoint 清理，每次执行前重新核验。
+
+- 无冲突续传修复 [PR #142](https://github.com/magangwwd/ashare-research-infra/pull/142) 已合并 main `312bac8ecda78abed4ada17d59c9b88d56309549`；最新两套 CI 167 passed/2 skipped。其作用仅是**单文件会话**安全部分 ACK，不解决跨运行重传。
+- 新建隔离草稿 [PR #143](https://github.com/magangwwd/ashare-research-infra/pull/143)：在 #142 后 main 上加显式 `--resume-stage-id`，按路径、字节、SHA 核对并复用，只上传缺失分区；先前独立 CI 180 passed/2 skipped，最新安全校验新增后需重新核验 CI。尚未部署自动恢复，也未执行生产发布。旧 PR #141 因冲突由 #142 替代关闭，PR #123 仍保持草稿。
+- Task01 正式指针此前实读仍为 `2026-10-24`，Gold 正式为 `2026-10-30`。**保留两条下载、冻结 V1、生产指针和所有旧数据。**
