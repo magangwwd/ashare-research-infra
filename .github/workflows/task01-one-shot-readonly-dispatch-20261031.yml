@@ -1,11 +1,8 @@
 name: One-shot authorized Task01 read-only audit dispatch (2026-10-31)
 
+# Already used once; disable push event after successful audit dispatch.
 on:
-  push:
-    branches:
-      - ops/one-shot-readonly-stage-audit-20261031
-    paths:
-      - .github/workflows/task01-one-shot-readonly-dispatch-20261031.yml
+  workflow_dispatch:
 
 permissions:
   contents: read
