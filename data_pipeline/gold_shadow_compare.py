@@ -103,9 +103,13 @@ def compare_shadow_daily(candidate_rows, gold_rows, *, as_of_date, sample_limit=
     gold_invalid = sum(not flag for _, flag in gold.values())
     unvalidated_shadow = sum(not flag for _, flag in candidate.values())
     has_differences = bool(missing_gold or missing_task or difference_count or gold_invalid or not common)
+    # The adapter deliberately marks every shadow row as unvalidated. A price
+    # match is not a quality pass: expose that state instead of a green match.
+    status = ("DIFFERENCES_FOUND" if has_differences else
+              "SHADOW_UNVALIDATED" if unvalidated_shadow else "MATCHED_OHLCV_ONLY")
     return {
         "schema_version": 1,
-        "status": "DIFFERENCES_FOUND" if has_differences else "MATCHED_OHLCV_ONLY",
+        "status": status,
         "as_of_date": cutoff.isoformat(),
         "task01_rows": len(candidate), "gold_rows": len(gold),
         "common_keys": len(common),
