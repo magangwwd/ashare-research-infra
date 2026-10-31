@@ -110,9 +110,18 @@ jobs:
           with tarfile.open(archive, "r:gz") as tf:
               for member in tf.getmembers():
                   path = Path(member.name)
+                  # Task01 legitimately archives data/current as a relative
+                  # symlink into data/.versions/. Reject every other link.
+                  link = Path(member.linkname) if member.issym() else None
+                  safe_current_link = (
+                      member.issym() and member.name == "data/current"
+                      and link is not None and not link.is_absolute()
+                      and len(link.parts) == 2 and link.parts[0] == ".versions"
+                      and link.parts[1] not in (".", "..")
+                  )
                   if (not path.parts or path.is_absolute() or ".." in path.parts
                           or path.parts[0] not in ("data", "metadata")
-                          or not (member.isfile() or member.isdir())):
+                          or not (member.isfile() or member.isdir() or safe_current_link)):
                       raise SystemExit("BLOCKED: unsafe checkpoint member")
               tf.extractall(".", filter="data")
           accepted = Path("data/current/acceptance.json")
