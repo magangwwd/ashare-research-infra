@@ -85,12 +85,14 @@
       "id": "ETF-PAPER-005",
       "priority": 4,
       "title": "Freeze untouched forward paper-account model",
-      "status": "READY",
+      "status": "BLOCKED",
       "depends_on": [
         "ETF-DATA-003",
         "ETF-DIV-004"
       ],
-      "acceptance": "Frozen immutable code/rule SHA before new trading date; append-only daily simulation receipts and source freshness"
+      "acceptance": "Frozen immutable code/rule SHA before new trading date; append-only daily simulation receipts and source freshness",
+      "next_action": "Remain BLOCKED until ETF-DATA-003 and ETF-DIV-004 each have independently reviewed VERIFIED_DONE receipts and validated source/market-price/cash/Drive evidence; PR #92 synthetic CI is not final acceptance. No paper activation or live trading.",
+      "blocker": "ETF-DIV-004 is REVIEW_REQUIRED, not VERIFIED_DONE; dependency cannot be unlocked by successful synthetic CI or draft PR."
     },
     {
       "id": "ETF-ACCEPT-006",
@@ -106,5 +108,5 @@
   "latest_verified_run": 39599580852,
   "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 13 sequential stages; 38 tests OK; 48 Drive uploads; all 5 declared ETF halts source-matched",
   "last_known_research_status": "NOT_FOR_TRADING",
-  "updated_utc": "2026-10-21T22:26:42Z"
+  "updated_utc": "2026-10-24T20:30:00Z"
 }
