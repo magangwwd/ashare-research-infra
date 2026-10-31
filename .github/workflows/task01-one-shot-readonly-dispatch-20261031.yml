@@ -1,0 +1,59 @@
+name: One-shot authorized Task01 read-only audit dispatch (2026-10-31)
+
+on:
+  push:
+    branches:
+      - ops/one-shot-readonly-stage-audit-20261031
+    paths:
+      - .github/workflows/task01-one-shot-readonly-dispatch-20261031.yml
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: one-shot-task01-readonly-audit-dispatch-20261031
+  cancel-in-progress: false
+
+jobs:
+  request_audit:
+    if: >-
+      github.repository == 'magangwwd/ashare-research-infra' &&
+      github.ref == 'refs/heads/ops/one-shot-readonly-stage-audit-20261031' &&
+      github.event.head_commit.message == 'ops(task01): one-shot authorized readonly audit dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify source checkpoint and absence of duplicate audit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repository="$GITHUB_REPOSITORY"
+          source_run="41119601566"
+          [[ "$(gh api "repos/$repository/actions/runs/$source_run" --jq '.conclusion')" == "cancelled" ]] || {
+            echo "BLOCKED: source Task01 is not cancelled"
+            exit 1
+          }
+          artifact_count="$(gh api "repos/$repository/actions/runs/$source_run/artifacts?per_page=100" --jq '[.artifacts[] | select(.expired == false and (.name == "task01-checkpoint" or .name == "task01-validation-report"))] | length')"
+          [[ "$artifact_count" == "2" ]] || {
+            echo "BLOCKED: source checkpoint or validation artifact is unavailable"
+            exit 1
+          }
+          active_audits="$(gh api "repos/$repository/actions/workflows/task01-stage-audit.yml/runs?per_page=25" --jq '[.workflow_runs[] | select(.status != "completed")] | length')"
+          [[ "$active_audits" == "0" ]] || {
+            echo "BLOCKED: a stage audit is already active"
+            exit 1
+          }
+          echo "PASS: matching source artifacts are present; no active stage audit"
+      - name: Dispatch exactly one read-only main-branch audit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' '{"ref":"main","inputs":{"source_run_id":"41119601566","stage_id":"1CHTuLs2_VS_MGbqlJnpZiJwOinR7ihGf"}}' > "$RUNNER_TEMP/read-only-dispatch.json"
+          gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/task01-stage-audit.yml/dispatches" --input "$RUNNER_TEMP/read-only-dispatch.json"
+          echo "SUCCESS: one-time workflow_dispatch requested for read-only staging SHA audit"
+          echo "No production publication triggered; audit must independently validate source, staged SHA and pointer"
