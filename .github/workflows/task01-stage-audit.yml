@@ -1,0 +1,163 @@
+name: Task 01 read-only staged snapshot audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Cancelled accepted Task01 run ID; must own the checkpoint"
+        required: true
+        type: string
+      stage_id:
+        description: "Explicit existing staging folder ID (never inferred from logs)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: task01-stage-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Verify explicitly selected accepted source run and artifact
+        id: gate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          STAGE_ID: ${{ inputs.stage_id }}
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_RUN_ID" =~ ^[0-9]{8,15}$ ]] || { echo "BLOCKED invalid source run ID"; exit 1; }
+          [[ "$STAGE_ID" =~ ^[A-Za-z0-9_-]{10,100}$ ]] || { echo "BLOCKED invalid stage ID"; exit 1; }
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > "$RUNNER_TEMP/source-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/jobs?per_page=100" > "$RUNNER_TEMP/source-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/source-artifacts.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          source = json.loads((root / "source-run.json").read_text())
+          jobs = json.loads((root / "source-jobs.json").read_text()).get("jobs", [])
+          artifacts = json.loads((root / "source-artifacts.json").read_text()).get("artifacts", [])
+          if (source.get("path") != ".github/workflows/task01.yml"
+                  or source.get("conclusion") != "cancelled"
+                  or source.get("head_branch") != "main"
+                  or (source.get("head_repository") or {}).get("full_name") != os.environ["GITHUB_REPOSITORY"]
+                  or source.get("event") not in ("schedule", "workflow_dispatch")):
+              raise SystemExit("BLOCKED: source is not a cancelled authorized Task01 main run")
+          matches = [j for j in jobs if j.get("name") == "task01" and j.get("conclusion") == "cancelled"]
+          if len(matches) != 1:
+              raise SystemExit("BLOCKED: ambiguous cancelled Task01 job")
+          steps = matches[0].get("steps") or []
+          def step(name):
+              found = [s.get("conclusion") for s in steps if s.get("name") == name]
+              if len(found) != 1:
+                  raise SystemExit("BLOCKED: missing/ambiguous step " + name)
+              return found[0]
+          if (step("Daily update or maintenance") != "success"
+                  or step("Production acceptance") != "success"
+                  or step("Publish accepted snapshot to Drive") != "cancelled"):
+              raise SystemExit("BLOCKED: not a cancelled accepted publication")
+          def artifact(name):
+              found = [a for a in artifacts if a.get("name") == name and not a.get("expired")]
+              if len(found) != 1:
+                  raise SystemExit("BLOCKED: missing/ambiguous source artifact " + name)
+              return found[0]
+          artifact("task01-validation-report")
+          checkpoint = artifact("task01-checkpoint")
+          sha = checkpoint.get("digest") or ""
+          size = checkpoint.get("size_in_bytes")
+          if (not sha.startswith("sha256:") or len(sha) != 71
+                  or any(c not in "0123456789abcdef" for c in sha[7:])
+                  or not isinstance(size, int) or not 0 < size <= 5_000_000_000):
+              raise SystemExit("BLOCKED: invalid checkpoint digest or size")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write("checkpoint_id=" + str(int(checkpoint["id"])) + "\n")
+              f.write("checkpoint_sha=" + sha[7:] + "\n")
+          print("PASS: accepted source and unexpired checkpoint; audit only")
+          PY
+      - name: Restore verified checkpoint without network writes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHECKPOINT_ID: ${{ steps.gate.outputs.checkpoint_id }}
+          CHECKPOINT_SHA: ${{ steps.gate.outputs.checkpoint_sha }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$CHECKPOINT_ID/zip" > "$RUNNER_TEMP/checkpoint.zip"
+          printf '%s  %s\n' "$CHECKPOINT_SHA" "$RUNNER_TEMP/checkpoint.zip" | sha256sum -c -
+          unzip -p "$RUNNER_TEMP/checkpoint.zip" task01-state.tar.gz > "$RUNNER_TEMP/task01-state.tar.gz"
+          rm -f "$RUNNER_TEMP/checkpoint.zip"
+          python - <<'PY'
+          import json, os, tarfile
+          from pathlib import Path
+          archive = Path(os.environ["RUNNER_TEMP"]) / "task01-state.tar.gz"
+          with tarfile.open(archive, "r:gz") as tf:
+              for member in tf.getmembers():
+                  path = Path(member.name)
+                  if (not path.parts or path.is_absolute() or ".." in path.parts
+                          or path.parts[0] not in ("data", "metadata")
+                          or not (member.isfile() or member.isdir() or member.issym() or member.islnk())):
+                      raise SystemExit("BLOCKED: unsafe checkpoint member")
+              tf.extractall(".", filter="data")
+          accepted = Path("data/current/acceptance.json")
+          if not accepted.is_file() or not json.loads(accepted.read_text()).get("passed"):
+              raise SystemExit("BLOCKED: restored snapshot is not accepted")
+          print("PASS: checkpoint restored and accepted")
+          PY
+      - name: Install only required Python dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Read-only SHA256 reconciliation of explicit Drive stage
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+          STAGE_ID: ${{ inputs.stage_id }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          CHECKPOINT_SHA: ${{ steps.gate.outputs.checkpoint_sha }}
+          PYTHONUNBUFFERED: '1'
+        run: |
+          set -euo pipefail
+          python -m data_pipeline.drive_publish --audit-resume-stage-id "$STAGE_ID" --report metadata/stage_audit.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          report_path = Path("metadata/stage_audit.json")
+          r = json.loads(report_path.read_text())
+          if (r.get("audit_only") is not True or r.get("passed") is not True
+                  or r.get("production_switch_allowed") is not False
+                  or r.get("pointer_unchanged") is not True):
+              raise SystemExit("BLOCKED: read-only report contract failed")
+          digest = r.get("pointer_sha256")
+          if (r.get("stage_id") != os.environ["STAGE_ID"]
+                  or not isinstance(digest, str) or len(digest) != 64
+                  or any(ch not in "0123456789abcdef" for ch in digest)):
+              raise SystemExit("BLOCKED: stage or pointer receipt provenance invalid")
+          r["source_run_id"] = int(os.environ["SOURCE_RUN_ID"])
+          r["checkpoint_sha256"] = os.environ["CHECKPOINT_SHA"]
+          r["audit_run_id"] = int(os.environ["GITHUB_RUN_ID"])
+          r["audit_commit_sha"] = os.environ["GITHUB_SHA"]
+          report_path.write_text(json.dumps(r, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print("PASS: read-only stage SHA audit with source/checkpoint/pointer provenance; NO publication")
+          PY
+      - name: Archive read-only evidence
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: task01-stage-audit
+          path: metadata/stage_audit.json
+          retention-days: 30
+          if-no-files-found: error

@@ -316,6 +316,39 @@ def verify_previous_snapshot(drive, pointer: dict, expected_manifest: bytes | No
     return manifest_bytes
 
 
+def verified_stage_reuse(drive, staging_id, stage_id, items):
+    """Read-only reconcile an explicitly selected unfinished stage.
+
+    Never trust a staged name/size alone: compare every existing file against
+    the accepted local inventory by path, byte size and remote SHA256.
+    Unknown/duplicate/changed files fail closed without modifying current.json.
+    """
+    info = drive.metadata(stage_id)
+    if (info.get("mimeType") != FOLDER or info.get("trashed")
+            or info.get("parents") != [staging_id]
+            or not isinstance(info.get("name"), str) or not info["name"]):
+        raise PublishError("Resume stage is not a direct child of staging; pointer unchanged.")
+    expected = {item["path"]: item for item in items}
+    if len(expected) != len(items):
+        raise PublishError("Duplicate accepted inventory paths; pointer unchanged.")
+    observed = remote_inventory(drive, stage_id)
+    if set(observed) - set(expected):
+        raise PublishError("Resume stage contains unexpected files; pointer unchanged.")
+    reused = {}
+    for path, remote in observed.items():
+        item = expected[path]
+        try:
+            size_matches = int(remote.get("size", -1)) == item["bytes"]
+        except (TypeError, ValueError):
+            size_matches = False
+        if not size_matches or remote.get("mimeType") == FOLDER:
+            raise PublishError("Resume stage file size/type mismatch; pointer unchanged.")
+        if drive.remote_digest(remote["id"]) != (item["bytes"], item["sha256"]):
+            raise PublishError("Resume stage SHA256 mismatch; pointer unchanged.")
+        reused[path] = remote["id"]
+    return info["name"], reused
+
+
 def publish(drive, target, items, acceptance, progress, prepared, quota=None):
     if not acceptance.get("passed"):
         raise PublishError("Acceptance is required before publication.")
@@ -412,11 +445,80 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None):
     return report
 
 
+def audit_resume_stage(drive, target, items, acceptance, quota, stage_id):
+    """Read-only production/stage preflight; never creates folders or commits a pointer.
+
+    Run this before enabling an expensive staged recovery. Every reused file is
+    downloaded for SHA256 verification; the returned counts are not a publish receipt.
+    """
+    if not acceptance.get("passed") or not acceptance.get("as_of"):
+        raise PublishError("Accepted snapshot required for read-only stage audit.")
+    pointers = [f for f in drive.children(target) if f["name"] == "current.json"]
+    if len(pointers) != 1 or pointers[0]["mimeType"] == FOLDER:
+        raise PublishError("Unique existing production pointer required for stage audit.")
+    try:
+        pointer_id = pointers[0]["id"]
+        pointer_bytes = drive.read(pointer_id)
+        pointer = json.loads(pointer_bytes)
+        if not pointer.get("validated") or not pointer.get("snapshot_as_of"):
+            raise ValueError
+        current_date = date.fromisoformat(pointer["snapshot_as_of"])
+        accepted_date = date.fromisoformat(acceptance["as_of"])
+    except (ValueError, TypeError, KeyError, AttributeError):
+        raise PublishError("Invalid production or accepted date; stage audit blocked.") from None
+    if accepted_date < current_date:
+        raise PublishError("Accepted snapshot is older than current production; audit blocked.")
+    previous_manifest = verify_previous_snapshot(drive, pointer)
+    # Audit-only strict parent/name binding, without changing the production publish path.
+    manifest_info = drive.metadata(pointer["manifest_file_id"])
+    if (manifest_info.get("name") != "production_manifest.json"
+            or manifest_info.get("parents") != [pointer["version_folder_id"]]
+            or manifest_info.get("trashed") or manifest_info.get("mimeType") == FOLDER):
+        raise PublishError("Production manifest location mismatch; audit blocked.")
+    if (not pointer.get("manifest_sha256") or
+            hashlib.sha256(previous_manifest).hexdigest() != pointer["manifest_sha256"]):
+        raise PublishError("Existing production manifest SHA256 mismatch; audit blocked.")
+    staging = [f for f in drive.children(target) if f["name"] == "staging"]
+    if len(staging) != 1 or staging[0]["mimeType"] != FOLDER:
+        raise PublishError("Unique existing staging root required; audit blocked.")
+    _version, reused = verified_stage_reuse(drive, staging[0]["id"], stage_id, items)
+    missing = [item for item in items if item["path"] not in reused]
+    missing_bytes = sum(item["bytes"] for item in missing)
+    remaining = (quota or {}).get("remaining_bytes")
+    if remaining is not None and remaining < missing_bytes + 1024 * 1024:
+        raise PublishError("Drive capacity insufficient for verified missing files; audit blocked.")
+    # A full remote SHA audit can take hours. Do not claim pointer_unchanged
+    # based solely on the pointer observed before the long-running audit.
+    current_pointers = [f for f in drive.children(target) if f["name"] == "current.json"]
+    if (len(current_pointers) != 1 or current_pointers[0].get("id") != pointer_id
+            or drive.read(pointer_id) != pointer_bytes):
+        raise PublishError("Production pointer changed during stage audit; audit blocked.")
+    verify_previous_snapshot(drive, pointer, previous_manifest)
+    # A long-running audit must also reject relocation of the referenced manifest.
+    latest_manifest_info = drive.metadata(pointer["manifest_file_id"])
+    if (latest_manifest_info.get("name") != "production_manifest.json"
+            or latest_manifest_info.get("parents") != [pointer["version_folder_id"]]
+            or latest_manifest_info.get("trashed") or latest_manifest_info.get("mimeType") == FOLDER):
+        raise PublishError("Production manifest location changed during stage audit; audit blocked.")
+    return {
+        "audit_only": True, "passed": True, "production_switch_allowed": False,
+        "pointer_unchanged": True, "accepted_as_of": acceptance["as_of"],
+        "stage_id": stage_id,
+        "pointer_sha256": hashlib.sha256(pointer_bytes).hexdigest(),
+        "current_as_of": pointer["snapshot_as_of"], "expected_files": len(items),
+        "sha256_verified_staged_files": len(reused), "missing_files": len(missing),
+        "missing_bytes": missing_bytes,
+        "warning": "Read-only stage preflight; no publication, no pointer switch."
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path("config/config.yaml"))
     parser.add_argument("--root", type=Path, default=Path("."))
     parser.add_argument("--report", type=Path, default=Path("metadata/drive_publish.json"))
+    parser.add_argument("--audit-resume-stage-id", default=None,
+                        help="Read-only SHA256 audit of an explicit existing Drive staging folder")
     args = parser.parse_args(argv)
     try:
         config = load_config(args.config)
@@ -432,11 +534,17 @@ def main(argv=None):
             with AuthorizedSession(credentials) as session:
                 verify_folder(session, target)
                 quota = storage_quota(session)
-                report = publish(Drive(session), target, items, acceptance, progress, prepared, quota)
+                if args.audit_resume_stage_id:
+                    report = audit_resume_stage(Drive(session), target, items, acceptance,
+                                                quota, args.audit_resume_stage_id)
+                else:
+                    report = publish(Drive(session), target, items, acceptance, progress, prepared, quota)
         atomic_json(args.report, report)
         if os.environ.get("GITHUB_ACTIONS") == "true":
-            print("::notice title=Drive publication::" + json.dumps(report))
-        print("SUCCESS Drive snapshot published and verified.")
+            print(("::notice title=Drive stage audit::" if report.get("audit_only")
+                   else "::notice title=Drive publication::") + json.dumps(report))
+        print("SUCCESS read-only stage audit; pointer unchanged." if report.get("audit_only")
+              else "SUCCESS Drive snapshot published and verified.")
         return 0
     except (PublishError, SetupError) as error:
         print("FAILED " + str(error))
