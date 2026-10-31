@@ -123,9 +123,9 @@ def test_restore_script_rejects_checkpoint_links_before_extraction(member_type):
 
 def _run_restore_script_with_archive(archive_bytes):
     workflow = WORKFLOW.read_text(encoding="utf-8")
-    step = workflow.split("      - name: Restore verified checkpoint without network writes\\n", 1)[1]
+    step = workflow.split("      - name: Restore verified checkpoint without network writes\n", 1)[1]
     script = textwrap.dedent(
-        step.split("          python - <<'PY'\\n", 1)[1].split("\\n          PY", 1)[0]
+        step.split("          python - <<'PY'\n", 1)[1].split("\n          PY", 1)[0]
     )
     with tempfile.TemporaryDirectory() as temp:
         root = Path(temp)
