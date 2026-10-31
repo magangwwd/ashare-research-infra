@@ -40,7 +40,6 @@ class ETFBacklogDependencyTests(unittest.TestCase):
         data = copy.deepcopy(self.backlog)
         by_id = {task["id"]: task for task in data["tasks"]}
         by_id["ETF-BENCH-002"]["status"] = "VERIFIED_DONE"
-        by_id["ETF-BENCH-002"]["status"] = "VERIFIED_DONE"
         by_id["ETF-DATA-003"]["status"] = "VERIFIED_DONE"
         by_id["ETF-DIV-004"]["status"] = "VERIFIED_DONE"
         by_id["ETF-PAPER-005"]["status"] = "READY"
