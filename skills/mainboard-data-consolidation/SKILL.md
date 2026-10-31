@@ -171,3 +171,14 @@ PR #123 的暂存审计可能耗时数小时。审计开始时记录正式 `curr
 截至本轮确认，一个可核验的来源配对是 `source_run_id=41119601566`、`stage_id=1CHTuLs2_VS_MGbqlJnpZiJwOinR7ihGf`；源运行日志唯一记录此 ID，checkpoint artifact `13025260198` 在核验时仍未到期，文件预计 2026-11-03 09:34:28 北京时间到期，**可能被后续自动运行提前清理**，只要同 run 工件缺失就必须停止，不得借用其他 run 的 checkpoint。当前 GitHub 连接器**不提供 workflow_dispatch 动作**，故本轮未运行正式恢复、未生成两项受控工作流工件。若使用 GitHub 网页 Run workflow，需在 main 选择该工作流并手工填写两个原样 ID，先确认 checkpoint 和正在运行任务状态；工作流本身执行严格安全门禁。禁止从旧日志自动挑选 staging。
 
 真实云盘先前读取的 Task01 `current.json` 仍为 `2026-10-24`（5406 文件，历史完整性 false），Gold 正式 manifest `2026-10-30`。即使 Task01 新指针成功，也必须继续推进独立适配器、连续5个交易日影子策略对比、冻结 V1 输出一致性和回滚演练，才能考虑切换 Gold 下载。没有完成前两条生产链路照常保留，不删数据、不碰冻结 V1。详情见 `docs/mainboard-baseline-audit-20261028.md`、Issue #99。
+
+
+## 2026-10-31 原生 Actions 一次性启动：已真实验证
+
+**已实测**：GitHub GitHub connector 缺直接 `workflow_dispatch` 动作不等于无法在仓库授权范围内发起工作流。一次性独立分支 `ops/one-shot-readonly-stage-audit-20261031` 使用 GitHub Runner 临时 `github.token`（仅 `contents:read/actions:write`），经 GitHub 正规 REST API `POST .../actions/workflows/task01-stage-audit.yml/dispatches` 在主分支发起手动审计：
+
+- 仅 push 一次的 GitHub Runner 中转 run [41160251568](https://github.com/magangwwd/ashare-research-infra/actions/runs/41160251568)：gate 和 dispatch job 均 `success`；起始提交 `433f755aa65e14673dbaea067a44262525925d38`。中转所需来源 `41119601566`（接受数据、发布取消）、暂存 `1CHTuLs2_VS_MGbqlJnpZiJwOinR7ihGf`，与同run有效 checkpoint/validation 工件对齐。
+- 实际目标 run [41160259395](https://github.com/magangwwd/ashare-research-infra/actions/runs/41160259395) 已确认为 main 上 `event=workflow_dispatch`，通过来源、备份 SHA 校验并进入完整 `Read-only SHA256 reconciliation`。本段写入时尚无完整审计报告或生产指针切换证据；**绝不能标为 Task01 已恢复**。
+- 中转分支已在成功触发后更新为不接受 push 的 `workflow_dispatch` 事件：提交 `28f6f0a88fe14d3020887f9c4da6d99b0fe61b3d`。实查该分支仅一次启动，**不可重复沿用**。
+- 具体安全方法及限制合并主分支 `docs/task01-actions-start-method.md`（PR #145，合并 SHA `3958a844042b99daf74dbe45f6d04117ee640d7c`）。这不是特权绕过，用户须已授权，GitHub Actions 正规权限缺失时立即停止，不写明文密钥，不建立长期调度，不修改正式工作流安全门禁。仅针对核实来源的**一次性、无副作用只读审计**使用该回退方案。
+- 每4小时自动接续任务 `6ae1d4406dc88191ad3acdcd168c3afc` 已更新接续锚点：每轮先实读 #41160259395 的 jobs/artifact。若任务仍运行，**不得再起一个相同审计**；若失败按日志定位而非盲重试。审计全量通过且源同run checkpoint仍有效、生产未并发后，再按独立安全审核决定是否启动 main `task01-verified-stage-resume.yml` 受控发布。保留旧指针、Gold、冻结 V1。
