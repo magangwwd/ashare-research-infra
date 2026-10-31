@@ -1,5 +1,13 @@
 """Safety contract for the manual, non-publishing Task01 staging audit."""
 from pathlib import Path
+import os
+import subprocess
+import sys
+import tarfile
+import tempfile
+import textwrap
+
+import pytest
 
 WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/task01-stage-audit.yml"
 
@@ -61,7 +69,7 @@ def test_artifact_and_archive_handling_limits():
     assert text.index("sha256sum -c -") < text.index("unzip -p")
     assert text.index('rm -f "$RUNNER_TEMP/checkpoint.zip"') < text.index('tf.extractall(".", filter="data")')
     assert 'path.parts[0] not in ("data", "metadata")' in text
-    assert 'not (member.isfile() or member.isdir() or member.issym() or member.islnk())' in text
+    assert 'not (member.isfile() or member.isdir())' in text
 
 
 def test_audit_receipt_is_bound_to_explicit_source_stage_and_pointer():
@@ -79,3 +87,33 @@ def test_audit_receipt_is_bound_to_explicit_source_stage_and_pointer():
         assert guard in text, guard
     assert "python -m data_pipeline.drive_publish --audit-resume-stage-id" in text
     assert "--resume-stage-id " not in text
+
+
+
+@pytest.mark.parametrize("member_type", [tarfile.SYMTYPE, tarfile.LNKTYPE])
+def test_restore_script_rejects_checkpoint_links_before_extraction(member_type):
+    """A same-run checkpoint must not plant symlinks/hardlinks during audit."""
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+    step = workflow.split("      - name: Restore verified checkpoint without network writes\n", 1)[1]
+    script = textwrap.dedent(
+        step.split("          python - <<'PY'\n", 1)[1].split("\n          PY", 1)[0]
+    )
+    with tempfile.TemporaryDirectory() as temp:
+        archive = Path(temp) / "task01-state.tar.gz"
+        with tarfile.open(archive, "w:gz") as tar:
+            member = tarfile.TarInfo("data/current/unsafe-link")
+            member.type = member_type
+            member.linkname = "data/current/acceptance.json"
+            tar.addfile(member)
+        env = {**os.environ, "RUNNER_TEMP": temp}
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=temp,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode != 0
+        assert "BLOCKED: unsafe checkpoint member" in result.stderr + result.stdout
+        assert not (Path(temp) / "data").exists()
