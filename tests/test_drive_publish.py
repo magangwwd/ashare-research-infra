@@ -208,7 +208,8 @@ def test_resumable_upload_transfers_exact_chunks_and_preallocated_id(tmp_path):
                 assert kwargs["headers"]["X-Upload-Content-Length"] == str(path.stat().st_size)
                 return SimpleNamespace(status_code=200, headers={"Location": dp.UPLOAD + "?upload_id=test"})
             received.append(kwargs)
-            return SimpleNamespace(status_code=308 if len(received) == 1 else 200)
+            return SimpleNamespace(status_code=308 if len(received) == 1 else 200,
+                                   headers={"Range": "bytes=0-8388607"} if len(received) == 1 else {})
     assert dp.Drive(Session()).upload("parent", path.name, path) == "allocated"
     assert b"".join(i["data"] for i in received) == path.read_bytes()
     assert received[0]["headers"]["Content-Range"] == f"bytes 0-8388607/{path.stat().st_size}"
@@ -337,5 +338,41 @@ def test_lost_chunk_response_with_remote_ack_ahead_fails_closed(tmp_path, monkey
             import requests
             raise requests.ConnectionError("simulated lost response")
     monkeypatch.setattr(dp.time, "sleep", lambda _: None)
+    with pytest.raises(dp.PublishError, match="offset mismatch"):
+        dp.Drive(Session()).upload("parent", path.name, path)
+
+
+def test_successful_308_partial_ack_resends_only_unconfirmed_suffix(tmp_path):
+    # Drive can acknowledge a strict prefix even when the PUT returned 308.
+    path = tmp_path / "part.parquet"
+    path.write_bytes(b"x" * (8 * 1024 * 1024) + b"tail")
+    size = path.stat().st_size
+    sent = []
+    class Session:
+        def request(self, method, url, **kwargs):
+            if url.endswith("generateIds"):
+                return SimpleNamespace(status_code=200, json=lambda: {"ids": ["allocated"]})
+            if method == "POST":
+                return SimpleNamespace(status_code=200, headers={"Location": dp.UPLOAD + "?upload_id=test"})
+            sent.append((kwargs["headers"]["Content-Range"], kwargs["data"]))
+            if len(sent) == 1:
+                return SimpleNamespace(status_code=308, headers={"Range": "bytes=0-8388603"})
+            assert kwargs["headers"]["Content-Range"] == f"bytes 8388604-{size-1}/{size}"
+            return SimpleNamespace(status_code=200, headers={})
+    assert dp.Drive(Session()).upload("parent", path.name, path) == "allocated"
+    assert sent[0][0] == f"bytes 0-8388607/{size}"
+    assert sent[1][1] == path.read_bytes()[8388604:]
+
+
+def test_successful_308_invalid_remote_range_fails_closed(tmp_path):
+    path = tmp_path / "part.parquet"
+    path.write_bytes(b"x" * (8 * 1024 * 1024) + b"tail")
+    class Session:
+        def request(self, method, url, **kwargs):
+            if url.endswith("generateIds"):
+                return SimpleNamespace(status_code=200, json=lambda: {"ids": ["allocated"]})
+            if method == "POST":
+                return SimpleNamespace(status_code=200, headers={"Location": dp.UPLOAD + "?upload_id=test"})
+            return SimpleNamespace(status_code=308, headers={"Range": "bytes=0-999999999"})
     with pytest.raises(dp.PublishError, match="offset mismatch"):
         dp.Drive(Session()).upload("parent", path.name, path)
