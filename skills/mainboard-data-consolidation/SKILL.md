@@ -142,3 +142,12 @@ PR #123 的暂存审计可能耗时数小时。审计开始时记录正式 `curr
 ## 2026-10-31：独立只读审计部署顺序（PR #140）
 
 原 #123 包含自动恢复与写入续传，不宜为运行只读审计而整包合并。已建立独立草稿 PR #140，只含手动 main-only 的 `task01-stage-audit.yml`、`--audit-resume-stage-id` 只读路径及测试，默认 `publish()` 不变。先验收 #140 CI、安全边界；再合并独立只读 PR 到 main；**只在 main** 用仍有效的来源 run/checkpoint 和明确 stage ID 手动执行。工作流需保存 `audit_only=true`、`passed=true`、`pointer_unchanged=true`、`production_switch_allowed=false`、源run/checkpoint/pointer SHA 与实际 Actions run ID。若工件过期或有SHA不符，停止，不能用旧 staging 推断成功。#123 继续 draft，严禁为绕过 job main-only 限制而在 PR 分支放宽密钥门禁。2026-10-31 实测 Task01正式日期10-24、Gold正式日期10-29，仍不得切换。
+
+
+## 2026-10-31：只读暂存审计已部署，必须先检查工件仍存在
+
+- 独立只读审计 [PR #140](https://github.com/magangwwd/ashare-research-infra/pull/140) 经CI #41120148907（test job success）与代码/权限检查，已合并 main，SHA `4afc2d300dfa328c010ddab4a5f7d9d0421ea747`。工作流 `.github/workflows/task01-stage-audit.yml` 仅允许 main 上手动运行，需显式 `source_run_id` 与 `stage_id`；无 schedule、无自动恢复、无行情下载或Drive写入。原 `publish(...)` 默认路径不变。**合并仅代表可部署，不代表已完成生产审计。**
+- 手动审计前必须通过 GitHub Actions artifact API **实时列出同一来源run的两项未过期工件**：`task01-validation-report` 和 `task01-checkpoint`（含合法SHA256 digest、<=5GB）；检查来源run为 main Task01 已验收、发布步骤取消；检查stage是该run实际创建且仍位于 staging 下。不可仅信旧PR文本、曾经的工件ID或job步骤“Save checkpoint success”。
+- 反例：本轮对 Task01 run `40972437556` 的工件列表只查到验收报告 `12953020958`，**未查到**曾记录的checkpoint `12960014331`。即使其stage `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN` 仍存在，也不得直接提交该run的只读审计或续传；应先寻找最新合法可用的同run工件并核实其来源stage。
+- 只有实际审计 run 成功、下载 `task01-stage-audit` artifact、核验 `audit_only=true`、`passed=true`、`production_switch_allowed=false`、`pointer_unchanged=true`、`stage_id`、`source_run_id`、`checkpoint_sha256`、`pointer_sha256`、`sha256_verified_staged_files`、`missing_files` 和 `missing_bytes` 后，才考虑后续受控发布；审计成功仍不能算发布成功。若连接器缺少 workflow_dispatch 能力，明确记录“未触发”，不得虚构 run ID。
+- 2026-10-31 实际两侧正式核验：Task01 `as_of=2026-10-24`，production manifest SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 匹配；Gold `as_of=2026-10-30`，instruments SHA256 `6e06b2f17c6d46384df35b15c558f2fb1c9fe845e0cc7f608eec95d5e0789586`、daily_snapshot SHA256 `6eb60191b7c9f589b3de9028fe9e55ac7200daa0772846d3da61d1cf7f906f08` 均匹配。日期不一致且Task01历史不完整，继续禁止切换、删除、停Gold或修改冻结V1。
