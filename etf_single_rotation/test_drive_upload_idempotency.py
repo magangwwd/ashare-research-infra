@@ -177,6 +177,19 @@ class DriveIdempotencyTests(unittest.TestCase):
             u.main()
         self.assertEqual(self.session.post.call_count, 1)
 
+    def test_incomplete_drive_search_never_attempts_upload(self):
+        # Drive can return HTTP 200 with incompleteSearch=true.
+        # Absence of a match in that response is not proof of uniqueness.
+        self.session.get.return_value = Reply(
+            200, {"files": [], "incompleteSearch": True}
+        )
+        with self.assertRaisesRegex(SystemExit, "incomplete search"):
+            u.main()
+        self.session.post.assert_not_called()
+        self.assertEqual(
+            json.loads(self.progress.read_text())["files"], {}
+        )
+
     def test_preflight_network_error_blocks_post(self):
         self.session.get.side_effect = requests.exceptions.Timeout("Drive list unavailable")
         with self.assertRaisesRegex(SystemExit, "preflight unavailable"):
