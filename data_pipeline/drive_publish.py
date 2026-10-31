@@ -172,11 +172,27 @@ class Drive:
                         raise PublishError("Upload completed before all bytes were sent.")
                     offset = size
                     break
-                if end + 1 == size and reply.status_code == 308:
-                    raise PublishError("Upload was not completed.")
-                if end + 1 < size and reply.status_code != 308:
+                if reply.status_code == 308:
+                    if end + 1 == size:
+                        raise PublishError("Upload was not completed.")
+                    # A regular 308 is also an acknowledgement, not proof that
+                    # the entire chunk was received. Resume at its confirmed byte.
+                    raw = reply.headers.get("Range", "")
+                    try:
+                        confirmed = int(raw.removeprefix("bytes=0-")) if raw.startswith("bytes=0-") else -1
+                    except ValueError:
+                        raise PublishError("Upload offset mismatch; production pointer unchanged.") from None
+                    if confirmed < offset - 1 or confirmed > end:
+                        raise PublishError("Upload offset mismatch; production pointer unchanged.")
+                    next_offset = confirmed + 1
+                    stalled = stalled + 1 if next_offset == offset else 0
+                    if stalled > 2:
+                        raise PublishError("Upload offset mismatch; production pointer unchanged.")
+                    offset = next_offset
+                    continue
+                if end + 1 < size:
                     raise PublishError("Upload ended before all bytes were sent.")
-                offset, stalled = end + 1, 0
+                offset, stalled = size, 0
         if not size:
             self.request("PUT", location, expected=(200, 201), data=b"", headers={"Content-Length": "0"})
         return file_id
