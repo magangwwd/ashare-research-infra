@@ -4,10 +4,10 @@
   "task_id": "ETF-DRIVE-137",
   "issue": 137,
   "source_pr": 139,
-  "source_head_sha": "94addd596525d47314957c1c7656356ced9d118a",
+  "source_head_sha": "ccd97b9552516a820b7c1724e5b4bee13d43c2a6",
   "staging_branch": "research/etf-drive137-approval-gated-ci-20261031",
   "staging_workflow": ".github/workflows/etf-drive137-approval-gated-ci.yml",
-  "workflow_commit_sha": "c6a90f26cd1974675045ebfdb34feec51690427b",
+  "workflow_commit_sha": "89b435eb8d8f6e0eb13f73795536c98c0600c782",
   "status": "REVIEW_REQUIRED",
   "trading_status": "NOT_FOR_TRADING",
   "observed_date_utc": "2026-10-31",
@@ -15,7 +15,7 @@
     "workflow_written": true,
     "exact_head_checkout_configured": true,
     "offline_test_module": "etf_single_rotation.test_drive_upload_idempotency",
-    "mock_tests_declared": 16,
+    "mock_tests_declared": 18,
     "run_id": null,
     "job_id": null,
     "tests_executed": false,
@@ -23,7 +23,8 @@
     "tests_failed": null,
     "artifact_verified": false,
     "drive_byte_readback_performed": false,
-    "formal_sop_receipt_issued": false
+    "formal_sop_receipt_issued": false,
+    "malformed_list_failclosed_cases_written": 2
   },
   "constraints": [
     "No push/schedule/workflow_dispatch trigger; draft PR requires human ready_for_review event",
@@ -33,5 +34,5 @@
     "Fixed 8 ETFs; at most one ETF or cash; 25% historical MDD research goal",
     "ETF-DIV-004 remains REVIEW_REQUIRED; ETF-PAPER-005 dependency-blocked"
   ],
-  "next_action": "Keep draft until explicit authorization; then run once via ready_for_review, verify exact PR head SHA, Run/Job/logs and test results, and independently assess Drive behavior before any merge or formal SOP receipt."
+  "next_action": "Keep draft until explicit authorization; run 18 mocked offline tests once via ready_for_review on this PR's exact head; verify Run/Job/logs and test results. The source PR #139 has been updated, and the same code/test patch was mirrored into this staging branch; no CI, real Drive write/readback or formal SOP receipt yet."
 }
