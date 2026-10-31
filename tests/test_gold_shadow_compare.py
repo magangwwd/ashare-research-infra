@@ -21,13 +21,21 @@ class ShadowDailyCompareTests(unittest.TestCase):
             sample_limit=kwargs.get("sample_limit", 20),
         )
 
-    def test_identical_rows_are_only_field_match(self):
+    def test_identical_prices_but_unvalidated_shadow_is_not_a_match(self):
         report = self.compare()
-        self.assertEqual(report["status"], "MATCHED_OHLCV_ONLY")
+        self.assertEqual(report["status"], "SHADOW_UNVALIDATED")
         self.assertEqual(report["common_keys"], 1)
         self.assertFalse(report["production_switch_allowed"])
         self.assertFalse(report["five_trading_days_verified"])
         self.assertEqual(report["shadow_unvalidated_rows"], 1)
+
+    def test_explicitly_validated_shadow_only_matches_ohlcv(self):
+        validated = dict(self.task, is_quality_valid=True)
+        report = self.compare(task=[validated])
+        self.assertEqual(report["status"], "MATCHED_OHLCV_ONLY")
+        self.assertEqual(report["shadow_unvalidated_rows"], 0)
+        self.assertFalse(report["production_switch_allowed"])
+        self.assertFalse(report["point_in_time_membership_verified"])
 
     def test_price_difference_is_reported(self):
         report = self.compare(gold=[dict(self.gold, close=10.6)])
@@ -92,7 +100,7 @@ class ShadowDailyCompareTests(unittest.TestCase):
     def test_date_object_normalized(self):
         from datetime import date
         report = self.compare(gold=[dict(self.gold, trade_date=date(2026, 10, 24))])
-        self.assertEqual(report["status"], "MATCHED_OHLCV_ONLY")
+        self.assertEqual(report["status"], "SHADOW_UNVALIDATED")
 
     def test_empty_inputs_do_not_claim_match(self):
         report = self.compare(task=[], gold=[])
