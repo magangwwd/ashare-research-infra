@@ -135,32 +135,64 @@ class Drive:
         parsed = urlparse(location)
         if parsed.scheme != "https" or parsed.hostname != "www.googleapis.com" or not parsed.path.startswith("/upload/drive/"):
             raise PublishError("Unexpected upload endpoint.")
-        # Bounded memory; retry each fixed byte range on the same resumable session.
+        # Bounded memory; after a lost response Drive may have accepted only a
+        # prefix of a chunk. Resume the *same session* from the confirmed byte,
+        # never replay a confirmed prefix or advance on an unverified offset.
         with path.open("rb") as source:
-            offset = 0
+            offset, stalled = 0, 0
             while offset < size:
-                block = source.read(8 * 1024 * 1024)
+                source.seek(offset)
+                block = source.read(min(8 * 1024 * 1024, size - offset))
                 end = offset + len(block) - 1
                 try:
                     reply = self.request("PUT", location, expected=(200, 201, 308), data=block,
                                          headers={"Content-Length": str(len(block)),
                                                   "Content-Range": f"bytes {offset}-{end}/{size}"})
                 except PublishError:
-                    # Resolve a lost response before sending the next chunk.
                     probe = self.request("PUT", location, expected=(200, 201, 308),
                                          data=b"", headers={"Content-Length": "0",
                                                            "Content-Range": f"bytes */{size}"})
                     if probe.status_code == 308:
-                        if probe.headers.get("Range") != f"bytes=0-{end}":
+                        raw = probe.headers.get("Range", "")
+                        try:
+                            confirmed = int(raw.removeprefix("bytes=0-")) if raw.startswith("bytes=0-") else -1
+                        except ValueError:
+                            raise PublishError("Upload offset mismatch; production pointer unchanged.") from None
+                        if confirmed < offset - 1 or confirmed > end:
                             raise PublishError("Upload offset mismatch; production pointer unchanged.")
-                    elif end + 1 != size:
+                        if end + 1 == size and confirmed == end:
+                            raise PublishError("Upload was not completed.")
+                        next_offset = confirmed + 1
+                        stalled = stalled + 1 if next_offset == offset else 0
+                        if stalled > 2:
+                            raise PublishError("Upload offset mismatch; production pointer unchanged.")
+                        offset = next_offset
+                        continue
+                    if end + 1 != size:
                         raise PublishError("Upload completed before all bytes were sent.")
-                    reply = probe
-                if end + 1 == size and reply.status_code == 308:
-                    raise PublishError("Upload was not completed.")
-                if end + 1 < size and reply.status_code != 308:
+                    offset = size
+                    break
+                if reply.status_code == 308:
+                    if end + 1 == size:
+                        raise PublishError("Upload was not completed.")
+                    # A regular 308 is also an acknowledgement, not proof that
+                    # the entire chunk was received. Resume at its confirmed byte.
+                    raw = reply.headers.get("Range", "")
+                    try:
+                        confirmed = int(raw.removeprefix("bytes=0-")) if raw.startswith("bytes=0-") else -1
+                    except ValueError:
+                        raise PublishError("Upload offset mismatch; production pointer unchanged.") from None
+                    if confirmed < offset - 1 or confirmed > end:
+                        raise PublishError("Upload offset mismatch; production pointer unchanged.")
+                    next_offset = confirmed + 1
+                    stalled = stalled + 1 if next_offset == offset else 0
+                    if stalled > 2:
+                        raise PublishError("Upload offset mismatch; production pointer unchanged.")
+                    offset = next_offset
+                    continue
+                if end + 1 < size:
                     raise PublishError("Upload ended before all bytes were sent.")
-                offset = end + 1
+                offset, stalled = size, 0
         if not size:
             self.request("PUT", location, expected=(200, 201), data=b"", headers={"Content-Length": "0"})
         return file_id
