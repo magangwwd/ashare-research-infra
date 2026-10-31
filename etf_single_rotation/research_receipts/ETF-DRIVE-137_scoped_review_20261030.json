@@ -15,13 +15,15 @@
     "d5e9c36dcc350e3ae718bd6f1c19019946779cae",
     "1fae428d8c56024f8ea941997d4dbc4a968cc24d",
     "3ecb0249f795b729bff36ea05a0448c9a1af6a72",
-    "95e36ca835458b5c40f521b18650f817411c4c37"
+    "95e36ca835458b5c40f521b18650f817411c4c37",
+    "051fc3be6dedf5733f73027360261bcd4e5c21fe",
+    "b921ca5b285e5493cf9f4a47a432354744346695"
   ],
   "scope": "Drive upload idempotency preflight and fail-closed response handling only; no historical data changes",
   "checks": {
     "code_written": true,
     "code_readback_verified": true,
-    "tests_written": 15,
+    "tests_written": 16,
     "tests_executed": false,
     "tests_passed": null,
     "tests_failed": null,
@@ -33,9 +35,11 @@
     "pagination_guard_code_readback_pending": false,
     "stale_checkpoint_cross_run_guard_code_readback_verified": true,
     "stale_checkpoint_synthetic_cases_written": 2,
-    "source_blob_sha": "576867bf45fd8882b3bb07b68870f8f257347f25",
-    "tests_blob_sha": "245bc5b1e9d92c3bc01795da6e1205e20d1efadf",
-    "exact_head_ci_run_id": null
+    "source_blob_sha": "7c36915b7002972548c615d33b8f999ed857c1ee",
+    "tests_blob_sha": "beec6cf534062c42f8402c2c1b0b04baa1bf61c8",
+    "exact_head_ci_run_id": null,
+    "incomplete_search_failclosed_code_readback_verified": true,
+    "incomplete_search_synthetic_cases_written": 1
   },
   "risk_controls": [
     "No remote deletion",
@@ -45,7 +49,9 @@
     "Fixed 8 ETFs, at most 1 ETF or cash, 25% historical MDD research target",
     "ETF-DIV-004 REVIEW_REQUIRED; ETF-PAPER-005 BLOCKED",
     "Cyclic/repeated Drive list page tokens fail closed after a bounded number of pages",
-    "Checkpoint from an earlier run cannot silently claim that earlier Drive object as the current run's output"
+    "Checkpoint from an earlier run cannot silently claim that earlier Drive object as the current run's output",
+    "Drive list incompleteSearch=true must stop before any create POST; 16 mocked tests written, not executed"
   ],
-  "next_action": "Execute the 15 mocked offline tests against exact PR head only when explicitly approved; inspect Run/Job/logs and issue formal SOP receipt only with real evidence. Independently verify non-production Drive preflight. Preserve both historic duplicate objects; no merge or PAPER-005 activation."
+  "next_action": "Run 16 mocked offline tests against exact PR #139 head only after explicit approval; inspect actual Run/Job/logs, then issue formal SOP receipt if warranted. Verify non-production Drive behavior separately; preserve both historic duplicates; no merge or PAPER-005 activation.",
+  "review_updated_at_utc": "2026-10-31T00:00:00Z"
 }
