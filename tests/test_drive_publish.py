@@ -480,3 +480,140 @@ def test_successful_308_invalid_remote_range_fails_closed(tmp_path):
             return SimpleNamespace(status_code=308, headers={"Range": "bytes=0-999999999"})
     with pytest.raises(dp.PublishError, match="offset mismatch"):
         dp.Drive(Session()).upload("parent", path.name, path)
+
+
+def test_timeout_recovery_rejects_stale_checkpoint_without_staging(tmp_path):
+    drive = MemoryDrive()
+    pointer = json.loads(drive.read("pointer"))
+    pointer["snapshot_as_of"] = "2026-10-28"
+    drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+    before = copy.deepcopy(drive.files)
+    with pytest.raises(dp.PublishError, match="older than current production"):
+        dp.publish(drive, "root", snapshot(tmp_path),
+                   {"passed": True, "as_of": "2026-10-27"}, {}, tmp_path)
+    assert drive.files == before
+
+
+def test_timeout_recovery_accepts_equal_date_for_history_repair(tmp_path):
+    drive = MemoryDrive()
+    pointer = json.loads(drive.read("pointer"))
+    pointer["snapshot_as_of"] = "2026-10-03"
+    drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+    report = dp.publish(drive, "root", snapshot(tmp_path),
+                        {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path)
+    assert report["passed"]
+
+
+def test_timeout_recovery_rejects_malformed_previous_date_without_staging(tmp_path):
+    drive = MemoryDrive()
+    pointer = json.loads(drive.read("pointer"))
+    pointer["snapshot_as_of"] = "not-a-date"
+    drive.files["pointer"]["body"] = dp.json_bytes(pointer)
+    before = copy.deepcopy(drive.files)
+    with pytest.raises(dp.PublishError, match="date cannot be compared"):
+        dp.publish(drive, "root", snapshot(tmp_path),
+                   {"passed": True, "as_of": "2026-10-29"}, {}, tmp_path)
+    assert drive.files == before
+
+
+def test_resume_stage_reuses_sha_verified_file_without_reupload(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, original_id = _seed_cancelled_stage(drive, items[0])
+    assert drive.upload_count == 1
+    report = dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                        {}, tmp_path, resume_stage_id=stage)
+    assert report["passed"]
+    # Only the missing data file and final manifest are uploaded.
+    assert drive.upload_count == 3
+    pointer = json.loads(drive.read("pointer"))
+    manifest = json.loads(drive.read(pointer["manifest_file_id"]))
+    assert pointer["version_folder_id"] == stage
+    assert manifest["version"] == "cancelled-20261029"
+    assert manifest["files"][0]["file_id"] == original_id
+    assert all(drive.remote_digest(f["file_id"]) == (f["bytes"], f["sha256"])
+               for f in manifest["files"])
+
+
+def test_resume_stage_rejects_foreign_parent_without_pointer_change(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    foreign = drive.create_folder(drive.folder("root", "versions"), "not-staging")
+    before = drive.read("pointer")
+    with pytest.raises(dp.PublishError, match="direct child"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                   {}, tmp_path, resume_stage_id=foreign)
+    assert drive.read("pointer") == before
+    assert drive.upload_count == 0
+
+
+def test_resume_stage_rejects_tampered_sha_without_pointer_change(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, file_id = _seed_cancelled_stage(drive, items[0])
+    original = drive.files[file_id]["body"]
+    drive.files[file_id]["body"] = bytes([original[0] ^ 1]) + original[1:]
+    before = drive.read("pointer")
+    with pytest.raises(dp.PublishError, match="SHA256 mismatch"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                   {}, tmp_path, resume_stage_id=stage)
+    assert drive.read("pointer") == before
+    assert drive.upload_count == 1
+
+
+def test_resume_stage_rejects_unexpected_files_without_pointer_change(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, _ = _seed_cancelled_stage(drive, items[0])
+    stray = tmp_path / "untracked.txt"
+    stray.write_text("not in accepted inventory")
+    drive.upload(stage, stray.name, stray)
+    before = drive.read("pointer")
+    with pytest.raises(dp.PublishError, match="unexpected files"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                   {}, tmp_path, resume_stage_id=stage)
+    assert drive.read("pointer") == before
+
+
+def test_resume_stage_rejects_wrong_remote_size_without_pointer_change(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, file_id = _seed_cancelled_stage(drive, items[0])
+    drive.files[file_id]["size"] = "1"
+    before = drive.read("pointer")
+    with pytest.raises(dp.PublishError, match="size/type mismatch"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                   {}, tmp_path, resume_stage_id=stage)
+    assert drive.read("pointer") == before
+
+
+def test_resume_quota_counts_only_missing_verified_bytes(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, original_id = _seed_cancelled_stage(drive, items[0])
+    missing_bytes = items[1]["bytes"]
+    # Enough for missing files and a manifest, but not another full snapshot.
+    quota = {"remaining_bytes": missing_bytes + 1024 * 1024}
+    assert quota["remaining_bytes"] < sum(i["bytes"] for i in items) + 1024 * 1024
+    report = dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                        {}, tmp_path, quota=quota, resume_stage_id=stage)
+    assert report["passed"]
+    pointer = json.loads(drive.read("pointer"))
+    manifest = json.loads(drive.read(pointer["manifest_file_id"]))
+    assert manifest["files"][0]["file_id"] == original_id
+    assert drive.upload_count == 3  # staged, missing, manifest
+
+
+def test_resume_quota_insufficient_for_missing_bytes_fails_without_writes(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, _ = _seed_cancelled_stage(drive, items[0])
+    before_pointer = drive.read("pointer")
+    before_files = copy.deepcopy(drive.files)
+    quota = {"remaining_bytes": items[1]["bytes"] + 1024 * 1024 - 1}
+    with pytest.raises(dp.PublishError, match="insufficient"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                   {}, tmp_path, quota=quota, resume_stage_id=stage)
+    assert drive.read("pointer") == before_pointer
+    assert drive.files == before_files
+    assert drive.upload_count == 1
