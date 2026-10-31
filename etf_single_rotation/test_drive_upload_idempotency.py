@@ -190,6 +190,20 @@ class DriveIdempotencyTests(unittest.TestCase):
             json.loads(self.progress.read_text())["files"], {}
         )
 
+    def test_preflight_missing_files_field_blocks_post(self):
+        # HTTP 200 without files must never be interpreted as zero matches.
+        self.session.get.return_value = Reply(200, {"nextPageToken": None})
+        with self.assertRaisesRegex(SystemExit, "malformed file list"):
+            u.main()
+        self.session.post.assert_not_called()
+
+    def test_preflight_null_files_field_blocks_post(self):
+        # A malformed list type is not authoritative proof of absence.
+        self.session.get.return_value = Reply(200, {"files": None})
+        with self.assertRaisesRegex(SystemExit, "malformed file list"):
+            u.main()
+        self.session.post.assert_not_called()
+
     def test_preflight_network_error_blocks_post(self):
         self.session.get.side_effect = requests.exceptions.Timeout("Drive list unavailable")
         with self.assertRaisesRegex(SystemExit, "preflight unavailable"):
