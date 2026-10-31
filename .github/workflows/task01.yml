@@ -252,25 +252,24 @@ jobs:
           if-no-files-found: ignore
           compression-level: 0
       - name: Prune superseded recovery checkpoints
-        # No new checkpoint was produced if the live smoke gate blocked updates;
-        # leave the previous recovery checkpoint untouched for the next run.
-        if: always() && steps.restore.outcome == 'success' && steps.daily_update.outcome != 'skipped'
+        # Never delete a checkpoint while Drive publication is unfinished: an older
+        # same-run checkpoint may still be required by a verified staging audit.
+        # Unpublished checkpoints expire naturally (retention-days: 3).
+        # After a successful Drive pointer commit, Drive is the recovery authority.
+        if: >-
+          always() &&
+          steps.restore.outcome == 'success' &&
+          steps.daily_update.outcome != 'skipped' &&
+          steps.drive_publish.outcome == 'success'
         shell: bash
-        env:
-          DRIVE_PUBLISHED: ${{ steps.drive_publish.outcome == 'success' }}
         run: |
           set -euo pipefail
-          # Once this run has published to Drive, Drive is the source of truth: drop every
-          # GitHub checkpoint so the next run restores from Drive. Otherwise keep only the
-          # newest checkpoint so an unfinished run can resume.
-          if [ "$DRIVE_PUBLISHED" = "true" ]; then keep=0; else keep=1; fi
           gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100&name=task01-checkpoint" \
-            --jq '.artifacts[] | select(.expired | not) | [.created_at, .id] | @tsv' \
-            | sort -r | tail -n +"$((keep + 1))" | cut -f2 \
+            --jq '.artifacts[] | select(.expired | not) | .id' \
             | while read -r id; do
                 [ -n "$id" ] || continue
                 gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id"
-                echo "deleted task01-checkpoint $id"
+                echo "deleted task01-checkpoint $id after successful Drive publication"
               done
       - name: Generate Task 02 readiness (non-blocking)
         id: task02_readiness
