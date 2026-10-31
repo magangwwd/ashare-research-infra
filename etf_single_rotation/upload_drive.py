@@ -131,7 +131,7 @@ def _find_existing(session, path, target_name):
     while True:
         params = {
             "q": query,
-            "fields": "nextPageToken,files(id,name,size,md5Checksum,parents)",
+            "fields": "nextPageToken,incompleteSearch,files(id,name,size,md5Checksum,parents)",
             "pageSize": 100,
         }
         if page_token:
@@ -146,6 +146,9 @@ def _find_existing(session, path, target_name):
         if response.status_code != 200:
             raise SystemExit(f"Drive preflight failed: HTTP {response.status_code}")
         payload = response.json()
+        # A partial Drive search cannot establish that a name is unique.
+        if payload.get("incompleteSearch") is True:
+            raise SystemExit("Drive preflight incomplete search; no upload attempted.")
         matches.extend(payload.get("files", []))
         if len(matches) > 1:
             raise SystemExit(
