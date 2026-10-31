@@ -434,6 +434,11 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None, re
             raise PublishError("Resume stage is not a direct child of an unambiguous staging root; pointer unchanged.")
         staging = candidates[0]["id"]
         version, reused = verified_stage_reuse(drive, staging, resume_stage_id, items)
+        # This name becomes the immutable version identifier. Never accept Drive
+        # folder names containing separators, control characters or Unicode.
+        if (len(version) > 128 or not version[0].isascii() or not version[0].isalnum()
+                or any(not c.isascii() or not (c.isalnum() or c in "._-") for c in version)):
+            raise PublishError("Resume stage version name is unsafe; pointer unchanged.")
         # Already verified staged bytes consume Drive quota. Only missing bytes
         # and the new manifest require additional capacity.
         required_bytes = sum(item["bytes"] for item in items if item["path"] not in reused)
