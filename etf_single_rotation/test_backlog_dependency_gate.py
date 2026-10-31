@@ -20,6 +20,7 @@ class ETFBacklogDependencyTests(unittest.TestCase):
     def test_ready_paper_rejected_while_dividend_unverified(self):
         data = copy.deepcopy(self.backlog)
         by_id = {task["id"]: task for task in data["tasks"]}
+        by_id["ETF-DATA-003"]["status"] = "VERIFIED_DONE"
         by_id["ETF-PAPER-005"]["status"] = "READY"
         with self.assertRaisesRegex(ValueError, "ETF-DIV-004"):
             validate_dependencies(data)
@@ -27,6 +28,7 @@ class ETFBacklogDependencyTests(unittest.TestCase):
     def test_legacy_research_complete_does_not_unlock(self):
         data = copy.deepcopy(self.backlog)
         by_id = {task["id"]: task for task in data["tasks"]}
+        by_id["ETF-DATA-003"]["status"] = "VERIFIED_DONE"
         by_id["ETF-PAPER-005"]["status"] = "READY"
         by_id["ETF-DIV-004"]["status"] = "VERIFIED_RESEARCH_COMPLETE"
         with self.assertRaisesRegex(ValueError, "not VERIFIED_DONE"):
