@@ -1,0 +1,57 @@
+name: ETF Drive #137 approval-gated offline idempotency tests
+
+# REVIEW ONLY: no push, schedule, workflow_dispatch or Drive credentials.
+# Creating this draft stacked PR does not execute any tests.
+# A human must explicitly approve by moving the PR out of draft.
+on:
+  pull_request:
+    types: [ready_for_review]
+    branches:
+      - research/etf-drive-idempotent-preflight-20261030
+    paths:
+      - '.github/workflows/etf-drive137-approval-gated-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: etf-drive137-approved-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  mocked-drive-only:
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.ref == 'research/etf-drive137-approval-gated-ci-20261031' &&
+      github.event.pull_request.base.ref == 'research/etf-drive-idempotent-preflight-20261030'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Checkout exact reviewed head with no persisted credentials
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install only offline-test imports
+        run: python -m pip install 'requests>=2.31,<3' 'google-auth>=2.38,<3'
+      - name: Verify exact head SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$PR_HEAD_SHA"
+          echo "ETF_DRIVE137_EXACT_SHA=$PR_HEAD_SHA"
+      - name: Run only 18 mocked Drive idempotency tests
+        run: python -m unittest -v etf_single_rotation.test_drive_upload_idempotency
+      - name: Preserve scope and pending acceptance
+        if: always()
+        run: |
+          echo 'REVIEW_REQUIRED / NOT_FOR_TRADING'
+          echo 'No real Drive readback, no issuer or market data, no historical backtest.'
+          echo 'CI pass is not an SOP receipt or authorization to merge.'
