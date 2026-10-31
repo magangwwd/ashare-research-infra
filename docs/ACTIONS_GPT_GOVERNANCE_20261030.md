@@ -68,3 +68,10 @@
 ### 2026-10-30 19:xx 自动投研短名单修复上线
 - PR #134 已squash合并main：`3d085f2647900e6d846854f57512a9765941428b`。保留纸面研究限制，修复候选股票数小于上限导致Drive发布错误中断，新增5个断言回归测试。PR CI 40992107948 离线127项success。
 - **尚缺**合并后main实际`verified-drive`作业及Drive发布回读；不可将离线测试通过等同完整生产修复。下轮核验新main `ai-research-data-only.yml` 运行证据。
+
+### 2026-10-31 10:25 CST — 发布滞后与恢复前安全门禁
+- 重新从Google Drive独立读取Task01 `current.json`，仍为`snapshot_as_of=2026-10-24`；下载1,371,895字节的`production_manifest.json`并重算SHA256，与current记录的`118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`完全相符，旧指针完整但未更新。
+- Gold最新manifest `as_of_date=2026-10-30`，`primary_keys_unique=true`、`ohlc_valid=true`；Task01与Gold日期不同，不能以Gold成功代替Task01生产发布。
+- PR #123只读审计的归档预检原允许tar符号链接/硬链接，已在草稿分支修复为仅文件/目录：commit `3698446797890be850c6a8258b3028126bf5837e`；恶意symlink/hardlink执行回归测试commit `aabfe222fc64416d068c3f1650f0759b75808ab8`。新head CI待确认，**未合并**。
+- 源Task01 run `40972437556` 当前artifact列表仅有validation-report，先前记录的同run checkpoint `12960014331`未返回；Task01有“未发布时只保留最新checkpoint”的清理逻辑，需先查可用checkpoint与同run stage是否匹配。严禁跨run拼接、无审计续传、擅自启用350分钟自动恢复。
+- 决策顺序：新head CI → 同run checkpoint及stage来源 → 只读SHA审计 → 受控生产发布及current/manifest回读 → 回滚验收 → 全仓调度验收。上述条件未满足，不关Issue #128、不停专项GPT任务。
