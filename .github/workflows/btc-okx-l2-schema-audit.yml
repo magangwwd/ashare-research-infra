@@ -1,14 +1,6 @@
 name: BTC OKX private official L2 schema audit (no raw event export)
 
 on:
-  push:
-    branches: [feature/okx-l2-structure-audit-20261020]
-    paths:
-      - '.github/workflows/btc-okx-l2-schema-audit.yml'
-      - 'btc-quant/data/okx_l2_schema_probe.py'
-      - 'btc-quant/tests/test_okx_l2_schema_probe.py'
-      - 'btc-quant/data/okx_l2_event_quality.py'
-      - 'btc-quant/tests/test_okx_l2_event_quality.py'
   workflow_dispatch:
 
 permissions:
@@ -16,6 +8,7 @@ permissions:
 
 jobs:
   audit:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:

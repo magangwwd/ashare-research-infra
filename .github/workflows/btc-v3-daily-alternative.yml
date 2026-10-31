@@ -3,6 +3,7 @@ name: BTC V3 native daily alternative (research only)
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - '.github/workflows/btc-v3-daily-alternative.yml'
       - 'btc-quant/backtest/**'
@@ -17,6 +18,7 @@ concurrency:
 
 jobs:
   native-daily-research:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 100
     env:

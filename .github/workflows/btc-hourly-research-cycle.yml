@@ -12,9 +12,9 @@ on:
         required: true
         default: deep
         options: [quick, deep]
-  # Test new file on isolated feature branch; branch cannot write to Drive.
+  # Production deep research and Drive access only on reviewed main.
   push:
-    branches: [main, feat/btc-hourly-research-loop-20261021, fix/btc-hourly-schedule-dedup-recovery-20261021]
+    branches: [main]
     paths:
       - '.github/workflows/btc-hourly-research-cycle.yml'
       - 'btc-quant/ops/research_loop.py'
@@ -32,6 +32,7 @@ concurrency:
 
 jobs:
   autonomous-research:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:

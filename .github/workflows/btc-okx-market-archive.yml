@@ -1,7 +1,7 @@
 name: BTC OKX sparse archive
 on:
   push:
-    branches: [main, feature/okx-market-data-archive-20261018]
+    branches: [main]
     paths:
       - '.github/workflows/btc-okx-market-archive.yml'
       - 'btc-quant/data/okx_*.py'
@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   capture:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:

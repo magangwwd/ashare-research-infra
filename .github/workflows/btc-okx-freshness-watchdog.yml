@@ -1,12 +1,6 @@
 name: BTC OKX independent Drive freshness watchdog
 
 on:
-  push:
-    branches: [feature/okx-market-data-archive-20261018]
-    paths:
-      - '.github/workflows/btc-okx-freshness-watchdog.yml'
-      - 'btc-quant/ops/okx_freshness.py'
-      - 'btc-quant/tests/test_okx_freshness.py'
   workflow_run:
     workflows: ["BTC OKX sparse archive"]
     types: [completed]
@@ -26,6 +20,7 @@ concurrency:
 
 jobs:
   check:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
