@@ -160,3 +160,14 @@ PR #123 的暂存审计可能耗时数小时。审计开始时记录正式 `curr
 - `.github/workflows/task01-stage-audit.yml` 已由 PR #140 合并到 main；手动只读审计需要明确 `source_run_id` 和 `stage_id`，工作流将先确认同 run 验收通过、发布被取消、工件 SHA/大小门禁，再执行逐文件 SHA/路径/配额/正式指针稳定性核验。**未真实 workflow_dispatch + 取得 artifact 时，标记 NOT_RUN**；连接器不支持 dispatch 时明确报阻碍，不使用其他动作绕过安全边界。
 - 生产直读：Task01 `current.json` 截至 `2026-10-24`、5406文件、manifest SHA `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 匹配；Gold `as_of_date=2026-10-30`、核心两 Parquet SHA 实际下载验证匹配。**不可据此声称暂存已验或新数据已发布**。完整证据：`docs/mainboard-baseline-audit-20261028.md`。
 - 修复次序：先审计最新仍可用的配对；验证 staging 里的可复用文件；再经 CI/安全审查执行受控续传、独立验证全部远端文件，最后确认正式指针/manifest SHA 与旧版本可恢复性。恢复发布之前不切换 Gold，不停止 Gold 原下载，不改变冻结 V1，不删除版本。
+
+
+## 2026-10-31 受控恢复工作流部署与操作门禁
+
+正式主分支已依次合并：#142（Google Drive 部分 308 ACK 安全偏移，`312bac8e`）、#143（显式 `--resume-stage-id` SHA 核验复用，`7fcc975f`）、#144（主分支**只手动**启用受控暂存审计+恢复的工作流，`fe10223718f12d6bf3f148877981d7796e9338b1`）。#144 最终双 CI [41159199544](https://github.com/magangwwd/ashare-research-infra/actions/runs/41159199544)、[41159204815](https://github.com/magangwwd/ashare-research-infra/actions/runs/41159204815) 均成功，186 passed/2 skipped；**未进行真实受控发布，不代表 Task01 正式指针已更新**。
+
+受控工作流：`.github/workflows/task01-verified-stage-resume.yml`（Actions 名称 `Task 01 verified staged publication (manual)`）。仅 `workflow_dispatch`，无 schedule、无 Tushare 下载，限制 `main`，通过 `task01-data` 并发锁避免和 Task01 生产重叠，350 分钟上限。严格先确认指定 source run 的验收完成但发布步骤被取消，同 run 的 acceptance+checkpoint 工件未过期、checkpoint ZIP digest、源 task01 job **真实日志中唯一的 staging ID**；安全提取存档后用生产 OAuth 先运行 `--audit-resume-stage-id` 完整远端 SHA 核验和正式 pointer 稳定性验证，仅审计合格才调用 `--resume-stage-id` 复用文件补缺，然后核对最终正式发布回执及旧版本可恢复。独立留下 `task01-stage-audit` 和 `task01-stage-recovery-publication` 工件。任何异常不得认定上线。
+
+截至本轮确认，一个可核验的来源配对是 `source_run_id=41119601566`、`stage_id=1CHTuLs2_VS_MGbqlJnpZiJwOinR7ihGf`；源运行日志唯一记录此 ID，checkpoint artifact `13025260198` 在核验时仍未到期，文件预计 2026-11-03 09:34:28 北京时间到期，**可能被后续自动运行提前清理**，只要同 run 工件缺失就必须停止，不得借用其他 run 的 checkpoint。当前 GitHub 连接器**不提供 workflow_dispatch 动作**，故本轮未运行正式恢复、未生成两项受控工作流工件。若使用 GitHub 网页 Run workflow，需在 main 选择该工作流并手工填写两个原样 ID，先确认 checkpoint 和正在运行任务状态；工作流本身执行严格安全门禁。禁止从旧日志自动挑选 staging。
+
+真实云盘先前读取的 Task01 `current.json` 仍为 `2026-10-24`（5406 文件，历史完整性 false），Gold 正式 manifest `2026-10-30`。即使 Task01 新指针成功，也必须继续推进独立适配器、连续5个交易日影子策略对比、冻结 V1 输出一致性和回滚演练，才能考虑切换 Gold 下载。没有完成前两条生产链路照常保留，不删数据、不碰冻结 V1。详情见 `docs/mainboard-baseline-audit-20261028.md`、Issue #99。
