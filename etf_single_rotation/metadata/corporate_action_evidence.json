@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "purpose": "Auditable public corporate action reference events; NOT a cash-dividend total-return certification.",
+  "interpretation": "Split factor here means new shares per old share, with 1->2 = 2, consolidation 0.36555. Fund adjusted-factor semantics and cash-dividend treatment need independent calculation.",
+  "events": [
+    {
+      "symbol": "510500.SH",
+      "event_date": "2015-04-14",
+      "type": "UNIT_CONSOLIDATION",
+      "new_units_per_old_unit": 0.28032483,
+      "source_url": "https://pdf.dfcfw.com/pdf/H2_AN201504150009203406_1.pdf",
+      "issuer": "南方基金",
+      "source_description": "2015-04-15 unit-conversion results and resumption notice"
+    },
+    {
+      "symbol": "512100.SH",
+      "event_date": "2022-09-02",
+      "type": "UNIT_CONSOLIDATION",
+      "new_units_per_old_unit": 0.36555,
+      "source_url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2022-09-01/512100_20220901_1_3EvmduvU.pdf",
+      "issuer": "南方基金",
+      "source_description": "Exchange-hosted unit consolidation issuer notice"
+    },
+    {
+      "symbol": "512690.SH",
+      "event_date": "2021-05-14",
+      "type": "UNIT_SPLIT",
+      "new_units_per_old_unit": 2,
+      "source_url": "https://www.sohu.com/a/466808768_120988533",
+      "issuer": "鹏华基金",
+      "source_description": "Fund-manager issued result and resumption notice (reproduced)"
+    },
+    {
+      "symbol": "512690.SH",
+      "event_date": "2021-12-31",
+      "type": "CASH_DIVIDEND",
+      "dividend_per_current_share_cny": 0.35,
+      "registration_date": "2021-12-30",
+      "cash_payment_date": "2022-01-06",
+      "distribution_mode": "CASH_ONLY",
+      "source_url": "https://pdf.dfcfw.com/pdf/H2_AN202112291537271726_1.pdf?1640764817000.pdf=",
+      "issuer": "鹏华基金",
+      "source_description": "2021 first distribution announcement (RMB 3.50 per 10 shares), cash dividend"
+    }
+  ],
+  "research_status": "SOURCE_EVENTS_IDENTIFIED_PRICE_FACTOR_CASH_RETURNS_UNVERIFIED",
+  "next_action": "Compare expected share ratio and dividend cash return to Tushare adjusted/raw close and adjusted-factor discontinuities; audit ETF share quantity across corporate actions, do not assume factor changes are equivalent to cash distribution receipt.",
+  "updated_utc": "2026-10-21T12:29:00Z"
+}

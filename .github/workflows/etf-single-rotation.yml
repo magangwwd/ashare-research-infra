@@ -1,0 +1,48 @@
+name: ETF single rotation research
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/etf-single-rotation-v1
+    paths:
+      - etf_single_rotation/.run_data_audit
+permissions:
+  contents: read
+jobs:
+  manual-backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+      GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/etf-single-rotation-v1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install existing project dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Download real ETF prices from Tushare
+        run: python etf_single_rotation/download_prices.py
+      - name: Audit ETF data coverage and quality
+        run: python etf_single_rotation/audit_data.py
+      - name: Run preliminary backtest
+        run: python etf_single_rotation/backtest.py
+      - name: Save data and reports as workflow artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: etf-single-rotation-research
+          path: |
+            etf_single_rotation/data/prices.csv
+            etf_single_rotation/data/trade_calendar.csv
+            etf_single_rotation/results/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Upload real data and reports to dedicated Google Drive folder
+        if: success()
+        run: python etf_single_rotation/upload_drive.py

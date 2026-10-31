@@ -1,0 +1,210 @@
+# ETF GitHub Actions 启动与验收记录
+
+原则：仅记录已证实的结果；提交成功不等于运行成功；运行成功不等于数据质量合格。不得存储凭据。时间均为北京时间（UTC+8）。
+
+## 已验证运行
+| 日期 | 操作路径 | GitHub run / job | 检出 SHA | 结果 | 证据与限制 |
+|---|---|---|---|---|---|
+| 2026-10-19 18:01 | workflow_dispatch；具体发起工具未知 | 39234376712 / 117999779860 | f6d1d977 | 成功 | 原始日志、Artifact；旧版无质量审计 |
+| 2026-10-19 18:57 | GitHub 插件 rerun_workflow_job(117999779860) | 39234376712 / 118022035934 | 27d04977 | 成功 | 日志和 Drive 四个文件上传；旧版步骤无审计 |
+| 2026-10-19 19:01 | GitHub 插件 rerun_workflow_job(118022035934) | 39234376712 / 118023342723 | c44c936e | 成功，质量有警告 | 下载脚本内调用 audit_data.py；日志提示缺失交易日、复权/分红未验证。Artifact 成功，Drive 日志仅确认 prices/equity_curve/trades/summary 四文件，不能宣称质量报告已上传 Drive |
+
+## 新增验证运行（2026-10-19）
+
+
+| 2026-10-19 19:23–19:25 | GitHub 插件 rerun_workflow_job(118023342723)；复用既有运行流程并检出最新分支代码 | 39234376712 / 118032110611 | 54f0148a | 运行成功；数据仍需复核，策略不合格 | Tushare fund_adj 与 SSE trade_cal 均成功；21,398 行、8 只 ETF；数据质量报告和 7 类文件已上传 Drive。4 个缺失交易日；CAGR 2.91%，最大回撤 -34.38%，未达到回撤≤20%目标。复权因子已逐行匹配，但其分红再投/总收益语义仍需独立验证。 |
+
+## 未验证的触发尝试
+| 日期 | 方法 | 提交 | 结果与教训 |
+|---|---|---|---|
+| 2026-10-19 | 为工作流增加 push + 指定路径触发 | b7a89bb | 工作流配置已提交；未取得运行编号 |
+| 2026-10-19 | 新建 .run_data_audit | e90eb442 | 提交成功；查询接口仅返回 PR 事件相关运行，空结果不能证明 push 未执行 |
+| 2026-10-19 | 修改 .run_data_audit 重试 | 27d04977 | 提交成功；仍无可验证的新增 run ID |
+
+## 已验证的快速启动方式
+1. 在分支 feature/etf-single-rotation-v1 提交并核对新代码 SHA。
+2. 如果要复用已有工作流，使用 GitHub 插件 rerun_workflow_job 对最近已完成的 job 重跑。此方法沿用原工作流定义，但 checkout 明确指向 feature 分支，因此可取最新代码；务必核对日志中的 `git log -1 --format=%H`。
+3. 获取最新 job ID；轮询 fetch_workflow_run_jobs，直至 completed；核对各步骤 conclusion 和 fetch_workflow_job_logs。
+4. 查验审计输出、Artifact 文件清单及 Google Drive 上传日志。缺失日期、异常跳变、复权/分红状态需独立评估。
+5. 每次追加本表：时间、操作方法、分支/提交、run ID、job ID、实际状态、日志/产物、失败原因、下次改进。
+
+## 待改进
+- 当前连接不提供 workflow_dispatch 直接创建新运行，也不提供完整运行列表；不应把 push 提交当作成功触发证据。
+- 正式接入新工作流后，优先使用明确的 workflow_dispatch + 新 run ID；在此之前可用 rerun_workflow_job，但必须辨别旧工作流定义。
+- 修复 Google Drive 上传脚本以包含 data_quality.csv 与 data_quality_summary.json；本次日志仅确认它们在运行器本地生成并包含于 results/ Artifact 路径。
+- 数据质量报告显示部分 ETF 缺失交易日，且复权/分红状态为 NOT_VERIFIED；回测结果不能据此认定策略可用。
+- 不启用定时触发，不进行真实交易。
+
+
+## 最新回测记录（2026-10-19 19:32）
+| 日期 | 操作路径 | GitHub run / job | 检出 SHA | 结果 | 证据与限制 |
+|---|---|---|---|---|---|
+| 2026-10-19 19:32 | GitHub 插件 rerun_workflow_job(118032110611) | 39234376712 / 118035806755 | c3634d3e | 运行成功；策略不合格 | 21,398 行、8 只 ETF；CAGR 6.61%、总收益 +112.66%、最大回撤 -43.25%、Sharpe 0.428、111 个交易事件。复权因子已匹配，数据审计仍 REVIEW_REQUIRED；Drive 确认上传行情、交易日历、质量报告、净值曲线、交易记录和摘要。 |
+
+## 2026-10-19 数据链路改进
+- `download_prices.py`：下载 `fund_daily` 原始行情、按年分段获取 `fund_adj`（接口单次最多 2000 行），用复权因子对价格缩放，并下载 SSE 开市日历；若复权因子缺失或接口失败则拒绝回测。
+- `audit_data.py`：以 SSE 交易日历检查每只 ETF 上市后的缺失日期，输出 `data_quality.csv` 与 `data_quality_summary.json`。
+- `upload_drive.py`：将行情、交易日历、数据质量报告、净值曲线、交易记录和摘要共 7 类文件上传到指定 Drive 文件夹。
+- `backtest.py`：止损退出当日不再重新买入，等待下一次月度再平衡；但最大回撤仍明显超过目标。
+- 本次审计发现的缺失日期：159915.SZ 2021-02-08；510500.SH 2015-04-13、2015-04-14；512100.SH 2022-09-02；512690.SH 2021-05-14（共 5 个缺失 ETF-交易日记录，分布于 4 只 ETF）。在确认是否停牌/数据漏抓前，状态保持 REVIEW_REQUIRED。
+- 当前复权数据只能标记为“复权因子已匹配”，不可等同于已独立证明完整总收益序列；需要核对基金分红事件及独立基准后，才可用于正式策略验收。
+
+
+## 回测逻辑复核与下一次验证（2026-10-19）
+- 对上一版复权数据回测的交易记录做了二次检查：组合回撤跌破退出阈值后，旧逻辑仍会在每个月重新买入，造成多次“买入后下一交易日止损”的反复交易；不能把它当作合理的风险控制。
+- 还发现估值逻辑在持仓 ETF 某交易日缺少行情行时，会把持仓市值错误地按现金处理。已改为：收盘估值只允许沿用最近一个已观测收盘价；交易信号和成交价仍只使用实际观测数据；若调仓所需开盘价缺失，则整笔调仓跳过，不把权益错误清零。
+- 回测止损改为按单个持仓的滚动高点回撤 12% 触发，并阻止同一 ETF 在信号轮换前被立即重新买回。组合最大回撤仍须独立检验；不能据此保证回撤上限。
+- 当前验证任务已完成：run 39234376712，job 118035806755；代码 SHA c3634d3e8c5bac8c7399fef6cf5448da6caa9e8f；全部步骤成功，7 类数据/报告均已上传 Drive。结果：总收益 +112.66%，CAGR 6.61%，最大回撤 -43.25%，Sharpe 0.428，交易事件 111；最大回撤仍严重超标，策略不合格。数据 21,398 行、8 只 ETF，SSE 日历审计仍有 5 个 ETF-交易日记录缺失。
+
+
+## 下一阶段实验方案（2026-10-19）
+- 基准冻结文件：`etf_single_rotation/experiments/baseline_backtest_frozen_20261019.py`，冻结来源 SHA `ee30daa360ac16525e714d842bbad7419a417ed0`，冻结提交 `b3e7d32b1c2b754ffe1a9bd115a8b1e57f5bfb6c`。后续不覆盖该文件。
+- 实验范围固定为现有 8 只 ETF：510300.SH、510500.SH、159915.SZ、510050.SH、510880.SH、518880.SH、512100.SH、512690.SH。
+- 四组实验统一使用同一价格面板与成本代理（每 100% 权重变化按 5bp 费用 + 5bp 滑点，即 0.10% turnover cost）：
+  1. `trend_filter`：120 日均线趋势过滤 + 1/3/6 个月加权动量，月度轮动；
+  2. `volatility_control`：同一趋势动量选基，20 日年化波动率目标 12%，仓位最高 100%；
+  3. `cross_asset_defensive`：股票类 ETF 均不满足趋势时，只有黄金趋势条件通过才持有黄金，否则现金；
+  4. `regime_switch`：用宽基趋势与股票 ETF 趋势广度识别风险状态，风险关闭时转黄金或现金，风险开启时使用动量并进行波动率缩放。
+- 每次实验输出：`strategy_comparison.csv`、`strategy_equity_curves.csv`、`strategy_monthly_signals.csv`、`strategy_daily_weights.csv`、`strategy_experiment_manifest.json`。全部与数据质量明细、缺口列表一起保存至 Actions Artifact 和 Google Drive。
+- 数据审计已加强：同时下载 SSE/SZSE 交易日历；输出 `data_quality_gaps.csv`，逐项列出缺失交易日及 >20% 调整后价格跳变。复权因子匹配与“完整总收益语义验证”明确分开；缺口仍需确认是停牌、上市历史边界还是供应商缺失。
+- 本阶段不调参、不使用未来数据、不启用定时任务、不进行真实交易。所有新策略结果都是探索性结果；任何回撤超过 20%、数据审计未关闭或缺乏样本外验证的方案均不通过验收。
+
+- 本轮启动：通过 GitHub 插件 `rerun_workflow_job(118035806755)` 发起；run 39234376712，最新 job 118040847004。当前正在执行依赖安装，尚未获得新回测结果；结束后根据实际日志补录，不把排队/执行中视为成功。
+
+## 实验框架首次运行失败与修复（2026-10-19）
+- run 39234376712 / job 118040847004：依赖安装、Tushare 数据下载和原基准回测完成；四组实验脚本失败，日志报错 `Missing real prices.csv`。
+- 原因：实验脚本位于 `experiments/` 子目录，错误地将该目录当作 ETF 项目根目录，导致查找 `experiments/data/prices.csv` 而非 `data/prices.csv`。
+- 修复提交：`33368e9a3ffd76b3effbdb379bd5eb39d4aa7381`，将数据和结果路径改为 ETF 项目根目录。
+- 已使用已验证的 GitHub 插件 `rerun_workflow_job(118040847004)` 重新运行；新 attempt job 118044813146。当时记录状态为行情下载中，尚无实验结果。严禁把第一次失败误记为成功。
+
+## 四组策略实验第一轮结果（2026-10-19）
+- run 39234376712 / job 118044813146：全部步骤成功；Tushare 下载 21,398 行、8 只 ETF，数据质量仍 `REVIEW_REQUIRED`（5 个 ETF-交易日缺口；复权因子匹配不等于已验证完整总收益）。Actions Artifact 已保存，Google Drive 已确认上传数据缺口与四组实验输出。
+- trend_filter：CAGR 2.36%，最大回撤 -48.24%，Sharpe 0.222；不合格。
+- volatility_control（12% 波动目标）：CAGR 5.41%，最大回撤 -25.02%，Sharpe 0.500；不合格。
+- cross_asset_defensive：CAGR 1.86%，最大回撤 -54.80%，Sharpe 0.202；不合格。
+- regime_switch（12% 波动目标）：CAGR 7.50%，最大回撤 -23.15%，Sharpe 0.607；四者中最好，但仍未达到最大回撤 20% 的验收目标。
+- 本轮代码/逻辑修正后基准回测：CAGR 6.61%，最大回撤 -43.25%，Sharpe 0.428；不合格。
+- 下一轮预先声明的敏感性实验：新增 `regime_switch_lowvol`，将风险开启时的波动率目标由 12% 降至 8%，用于测试是否能在保留合理收益的同时把最大回撤压到 20% 以下。不是参数寻优，仍需样本外验证。随后通过 `rerun_workflow_job(118044813146)` 启动复跑，等待结果。
+
+## 第二轮低波动敏感性复跑状态（2026-10-19）
+- 已提交 `regime_switch_lowvol`（8% 波动目标）预先声明的敏感性实验，代码提交 `d0c7ca47652e378eaf62c59ca3c8c514d214448f`。
+- 已通过 GitHub 插件 `rerun_workflow_job(118044813146)` 直接启动；run 39234376712 / 最新 job 118045945107。依赖安装完成，目前下载 ETF 行情步骤仍显示 `in_progress`，尚未产出第二轮结果。第一轮结论仍是四组策略均未达到 20% 最大回撤目标；在第二轮完成前，不宣称低波动方案达标。
+
+## 第二轮敏感性实验结果（2026-10-19）
+- run 39234376712 / job 118045945107：运行及归档成功；数据审计仍 `REVIEW_REQUIRED`，结果仍标记 `NOT_FOR_TRADING`。
+- `regime_switch_lowvol`（8% 波动目标）：年化收益 6.92%，最大回撤 -21.69%，年化波动 11.89%，Sharpe 0.643，平均仓位 59.13%。相对 12% 目标，收益回撤比改善，但最大回撤仍超过 20% 目标 1.69 个百分点，因此仍不合格。
+- 已新增 `regime_switch_ultralow`（6% 目标）进行下一轮敏感性验证，代码提交 `7eeaf3c4c9deaba230457102f58391dc26482b7e`，并通过 GitHub Actions 重跑直接启动；最新 job 118064272721 当前停留在行情下载步骤，尚未取得该轮结果。
+
+## 25% 最大回撤目标与组合熔断实验（2026-10-19）
+- 用户将最大回撤验收目标从 20% 调整为 25%。实验比较脚本的验收门槛已改为 25%，并记录在实验 manifest。
+- 6% 波动率目标实验结果：CAGR 6.55%，最大回撤 -21.69%，Sharpe 0.655；达到新的 25% 回撤门槛，但由于数据审计仍未关闭、无样本外验证，仍仅为候选，不可实盘。
+- 新增两组组合层面回撤熔断实验：`regime_dd_guard15` 与 `regime_dd_guard20`。触发条件分别为组合净值相对历史高点回撤 15%/20%，之后现金冷静期 20 个交易日；冷静期结束后只依据既有月度状态策略信号恢复。熔断不是硬性回撤保证，可能受跳空、滞后和成本影响。
+- 已启动新一轮 GitHub Actions 重跑，需核验两个熔断策略的实际结果后才能判断是否优于现有候选。
+
+- 2026-10-19 20:xx：针对 25% 最大回撤目标新增 `regime_dd_guard15`、`regime_dd_guard20` 两组组合回撤熔断/20 个交易日现金冷静期实验，并将策略实验验收门槛从 20% 调整为 25%。代码提交 `91d0e8bd39ec291c0128e16d426343160254747a` 后，通过 `rerun_workflow_job(118064272721)` 直接重跑；新 job 118066068403 当前状态 `in_progress`，卡在 Tushare 行情下载步骤，尚无该轮绩效结果。不得据此宣称熔断策略有效或验收通过。
+
+## 25% 回撤目标下组合熔断实验结果（2026-10-19）
+- run 39234376712 / job 118066068403：成功完成行情下载、回测、Artifact 保存及 Google Drive 上传。数据 21,398 行、8 只 ETF、2015-01-05 至 2026-10-19；审计状态仍 `REVIEW_REQUIRED`。
+- `regime_dd_guard15`：年化收益 3.97%，最大回撤 -16.30%，年化波动 8.42%，Sharpe 0.522，平均仓位 35.59%，现金交易日 40.69%；达到 25% 数值回撤门槛，但收益降低、空仓时间高，仅为候选。
+- `regime_dd_guard20`：年化收益 6.16%，最大回撤 -21.69%，年化波动 11.52%，Sharpe 0.597；达到 25% 数值门槛，收益高于 guard15，但风险调整收益低于 6% 波动目标候选。
+- 当前较优候选比较：regime_switch_ultralow CAGR 6.55%、MDD -21.69%、Sharpe 0.655；regime_dd_guard15 CAGR 3.97%、MDD -16.30%、Sharpe 0.522；regime_dd_guard20 CAGR 6.16%、MDD -21.69%、Sharpe 0.597。
+- 以上仍为同一历史区间的探索性回测，未完成缺口核验、复权总收益语义独立确认、基准比较及 walk-forward 样本外测试；不构成最终投资验收，不进入实盘。
+
+## 后续最终验收推进（2026-10-19）
+- 新增固定样本外评估报告 `walk_forward_oos_comparison.csv`，分别统计 2021-01-01 起与 2023-01-01 起的表现；策略参数未在这些窗口上拟合。此为固定 holdout 稳健性检查，不等同于完整 walk-forward 优化验证。
+- 修正数据审计：每只 ETF 仅与其所属交易所日历比较（`.SH`→SSE、`.SZ`→SZSE），避免把另一交易所独有的开市日期误判为缺失。
+- 策略数值验收阈值已统一为最大回撤 25%；正式通过仍需数据审计和样本外表现同时满足要求。
+- 已将样本外报告加入 Google Drive 上传清单；本轮需检查真实运行日志、审计缺口数、样本外报告与上传结果。
+
+## 固定样本外评估与交易所日历修正运行（2026-10-19 21:21 北京时间）
+- 直接通过 GitHub 插件重跑 job 118066068403；新 job 118082150896，运行成功。下载 21,398 行、8 ETF，2015-01-05 至 2026-10-19；数据审计仍 REVIEW_REQUIRED，正确交易所日历下仍有 5 条缺失 ETF-交易日记录：159915.SZ 2021-02-08；510500.SH 2015-04-13/14；512100.SH 2022-09-02；512690.SH 2021-05-14。未发现重复/非正价格行；调整因子逐行匹配但完整总收益语义仍未独立验证。
+- 全样本：regime_switch_ultralow CAGR 6.55%、MDD -21.69%、Sharpe 0.655；regime_dd_guard15 CAGR 3.97%、MDD -16.30%、Sharpe 0.522；regime_dd_guard20 CAGR 6.16%、MDD -21.69%、Sharpe 0.597。
+- 固定样本外起点 2021-01-01：regime_switch_ultralow CAGR 4.14%、MDD -21.69%、Sharpe 0.452；regime_dd_guard15 CAGR -1.94%、MDD -16.30%、Sharpe -0.277；regime_dd_guard20 CAGR 2.32%、MDD -21.69%、Sharpe 0.314。
+- 固定样本外起点 2023-01-01：regime_switch CAGR 8.93%、MDD -21.69%、Sharpe 0.688；regime_switch_lowvol CAGR 7.75%、MDD -21.69%、Sharpe 0.651；regime_switch_ultralow CAGR 7.47%、MDD -21.69%、Sharpe 0.649；regime_dd_guard15 在该窗口全程现金（0%收益），显示熔断冷静期实现需要进一步复核。
+- 数据审计报告、缺口清单、样本外比较 CSV、策略清单均确认上传 Drive；Artifact 保存成功。该固定 holdout 只是初步稳健性检查，尚非严格逐段 walk-forward；当前所有策略仍 NOT_FOR_TRADING。
+
+## 2026-10-20：阶段 1，逻辑回归测试与黄金风险敏感性核验完成
+
+- 源代码分支 `feature/etf-single-rotation-v1`，关键提交：`a52264238f58d02f9163834640d810580db44d80`（黄金风险期方案与全品种 75% 限仓）、`be631dade32583318014d0fb4fa402d8ca56a9d8`（回归测试）、`5475144c3d1c20a2f7209b1b20e4c9a075410125`（将测试加入实际回测步骤）。
+- GitHub Actions run `39234376712` / job `118398520436`：`completed/success`。依赖安装、Tushare 下载、真实回测、Artifact 归档、Google Drive 上传均成功。
+- 本次执行 `python -m unittest etf_single_rotation.experiments.test_strategy_regressions -v`：`Ran 4 tests ... OK`。涵盖 CASH 月度信号平仓、包括黄金在内的 75% 仓位上限、净值口径样本外收益及 25% 回撤判断。四个回归测试通过不等于策略交易可用。
+- 输入行情：8 只 ETF，21,398 行，2015-01-05～2026-10-19。仍有 5 条 ETF-交易日记录缺口；数据质量 `REVIEW_REQUIRED`，完整总收益语义未独立验证。
+- 重测 `regime_switch_cap75`：CAGR 5.2919%，最大回撤 -17.7492%，Sharpe 0.5954，注意与先前错误仅限制股票持仓的版本不同，不能直接使用旧结果。
+- 新增 `regime_switch_gold_vol8`：CAGR 5.2944%，最大回撤 -18.6641%，Sharpe 0.6616；2021-01-01 起固定窗口 CAGR 2.0026%、最大回撤 -18.6641%，2023-01-01 起 CAGR 6.2100%、最大回撤 -11.2260%。仅固定窗口，并非严格 walk-forward。
+- 新增 `regime_switch_gold_cash`：CAGR 4.4469%，最大回撤 -21.6870%，Sharpe 0.4838。相比黄金波动控制暂无优势。
+- 所有实验报告与 `walk_forward_oos_comparison.csv` 上传 Google Drive 成功；策略 `NOT_FOR_TRADING`。
+- **当前工作**：阶段 2 数据质量缺口与复权/分红语义核验；阶段 3 要实现严格时间序列 walk-forward 训练/验证与评估，防止参数选择泄漏。
+- **后续**：交易成本敏感性、不同市场周期压力测试、冻结候选、最终验收。保留最大历史回撤≤25%、不进行实盘、不在 GitHub 建立自动定时回测。
+- 通知机制：按已验证里程碑报告“完成内容和证据 / 当前工作 / 下一阶段”；每日独立检查并推进，但不会把其当作已成功的仓库回测。
+
+## 2026-10-20 最新核验与风控机制对照
+- GitHub 插件上一轮重跑对应 run 39234376712 / job 118398520436，运行成功，实际日志时间 2026-10-20 01:13–01:14 UTC。12 组实验执行、全部 4 项回归测试 OK、Actions Artifact 和 Google Drive 上传成功。行情 21,398 行、8 ETF、截至 2026-10-19。
+- 黄金风险对照实验，全样本历史指标：regime_switch_gold_vol8 年化 5.2944%，最大回撤 -18.6641%，Sharpe 0.6616；regime_switch_cap75 年化 5.2919%，最大回撤 -17.7492%，Sharpe 0.5954；regime_switch_gold_cash 年化 4.4469%，最大回撤 -21.6870%，Sharpe 0.4838。黄金也受 75% 权重上限约束，回归测试已验证。
+- 数据质量仍 REVIEW_REQUIRED（缺口及总收益复权语义未独立证实）；策略仍 NOT_FOR_TRADING。历史结果不代表未来。
+
+## 2026-10-21 滚动样本外验证运行结果（已核验）
+- GitHub 插件从完成的 job 118398520436 发起重跑；run 39234376712 / 新 job **118786818275** 已 `completed/success`，所有步骤成功。7 项 unittest 回归测试通过（现金信号、25% 验收、黄金75%上限、收益核算、未来数据隔离、空仓退路、样本外路径拼接）。Google Drive 上传成功，日志确认 walk_forward_folds.csv、walk_forward_training_scores.csv、walk_forward_portfolio_equity.csv 和 walk_forward_summary.json。
+- 最新行情 Tushare 8 ETF，2015-01-05 至 2026-10-20；全样本累计原结果参数不变，仅增加最新交易日。数据审计仍 REVIEW_REQUIRED，复权分红总收益语义尚未独立核对。
+- 扩展训练窗口、过去训练最高夏普且须训练 CAGR>0、MDD>=-25%，否则现金。互不重叠测试段：2019–2021 选 6% 波动，测试累计+37.94%，年化+11.28%，最大回撤-9.31%；2022–2023 选 8% 波动，累计-7.54%，年化-3.86%，最大回撤-18.02%；2024–2026-10-20 选6%波动，累计+22.87%，年化+7.61%，最大回撤-21.69%。
+- 三段样本外拼接，历史累计+56.72%、年化+5.92%、最大回撤-21.69%、Sharpe 0.554。明确限定 RETROSPECTIVE_EXPLORATORY_NOT_FOR_TRADING：候选参数已经在全历史上研究过，不是完全未接触未来行情的前瞻实验；数据缺口、股基和黄金复权/分红、执行和隐性日频调仓成本仍须独立核查。
+- 下一项优先：净值资金曲线自融资/持仓权重漂移及执行时间、交易成本审计；随后正式验证数据缺口和复权语义、独立基准，并在新行情上开展前瞻检验。策略与 GitHub 不自动交易、不增设 GitHub schedule。
+
+## 2026-10-21 13:53 北京时间：独立交易执行/仓位漂移审计（已核验）
+- GitHub 插件 `rerun_workflow_job(118786818275)` 后 run 39234376712 / job **119063012117**，状态 completed/success；行情 Tushare 8 ETF 共 21,406 行，止于 2026-10-20；原实验执行、Artifact 保存和 Drive 上传均 success。10 项单元测试 OK（新增 3 项验证仓位隐含调仓/全仓漂移/非法权重）。
+- 新增 `experiments/audit_execution_model.py`，不篡改既有策略收益，审计组合在目标仓位连续不变时的权重价格漂移。如果仍记录固定权重且账面不扣调仓成本，意味着引擎隐含日频再平衡。生成 `execution_accounting_audit.csv`、`execution_accounting_implicit_turnover.csv` 和 `execution_accounting_summary.json`，三者均已由 GitHub logs 确认上传 Google Drive。
+- 实测 **12 组策略中 10 组**存在至少一天的隐含再平衡未计费，原 `regime_switch_gold_vol8` 2,115 天；`regime_switch_cap75` 2,343 天；`regime_switch_lowvol` 1,331 天；`regime_switch_ultralow` 1,385 天。仅 `trend_filter` 与 `cross_asset_defensive` 无检测到该特定问题。
+- 示例：gold_vol8 隐含累计换手约 4.4731 倍本金，按 0.10% 单位周转成本粗略求和约 0.4473%（**非净值修正和非真实总成本**）；cap75 隐含累计 4.6913 倍本金，粗略成本 0.4691%。该问题不仅影响成本，还涉及部分仓位自融资权重路径，不能直接从回测年化收益简单扣除以上比率。
+- **重要限制**：既有12组原始绩效，以及使用这些净值选择参数的滚动样本外结果均须在独立自融资、仅实际调仓日成交、逐日自然漂移权重并实际计费的引擎中重算；目前全部仍为 PRELIMINARY / NOT_FOR_TRADING。数据缺口、复权分红语义依旧 REVIEW_REQUIRED。
+- 下一项：实现独立逐日自融资现金和 ETF 持仓记账（按月信号次日实际可成交价、价差、费用、现金/股份、组合估值）；明确暂停交易/ETF 暂停行情处理。设置守恒、持仓数与现金、没有额外日频再平衡、无前视和费用压力回归测试。与旧模型并行对照，以新模型为最终选型基础，再重新 rolling walk-forward、数据审计和最终验收。
+
+## 2026-10-21 自融资现金/ETF份额模型实测（已核验，研究阶段）
+- GitHub 插件基于 job 119063012117 重跑，run **39234376712** / job **119067247754**；completed/success，各步骤包括 Tushare 下载、回测、Artifact 和 Google Drive 上传均成功。行情 8 ETFs / 21,406 行 / 2015-01-05 至 2026-10-20。16 项单元测试全部 OK，其中新增 6 项覆盖现金/份额守恒、只在目标变化时调仓、下一个交易日开盘成交、缺开盘价拒单重试、同标的只成交增量和成本敏感性。
+- 代码 `experiments/simulate_self_financing.py` 是独立模型；使用月末收盘后信号、下一个可成交日实际开盘价、现金与 ETF 份额逐日自然漂移、不做隐含日频再平衡，买卖按成交额收费/滑点代理 0.10% 每边，调仓价不可用则跳过并重试。实际运行 12 组策略并另存 `results/self_financing/`，没有覆盖原探索性版本。Google Drive 日志确认上传全部新比较、每日台账、交易、收益曲线、新旧对比、滚动训练及报告和 manifest。
+- 修正模型下全样本：`regime_switch_ultralow` 年化 5.8874%，最大回撤 -21.6870%，Sharpe 0.5973；`regime_switch_lowvol` 年化 6.1072%，回撤 -21.6870%，Sharpe 0.5781；`regime_switch_midvol` 年化 6.2158%，回撤 -22.6767%，Sharpe 0.5513；`regime_switch_gold_vol8` 年化 4.8236%，回撤 -19.4279%，Sharpe 0.6003；`regime_switch_cap75` 年化 4.7917%，回撤 -18.4733%，Sharpe 0.5375。`regime_switch` 12% 方案年化 6.3253% 但回撤 -26.7929%，超过 25% 数值要求。
+- 自融资模型下追溯性扩展训练/滚动测试：2019–2021 选6%波动目标，累计+40.46%，年化+11.95%，MDD -9.31%；2022–2023 仍选6%目标，累计-2.92%，年化-1.48%，MDD -15.70%；2024–2026-10-20 选6%目标，累计+21.13%，年化+7.06%，MDD -21.69%。三段拼接累计+65.17%，年化+6.6348%，MDD -21.6870%，Sharpe 0.6154。需明确多次查看全样本后选择过候选，这不是未接触过历史的纯独立前瞻试验，也没有将切换策略边界的真实成交费用纳入，仍仅供研究。
+- Tushare 调整因子并不自动证明全分红再投收益；5 条历史 ETF-交易日缺口仍待归因；交易成本/冲击按固定假设而非券商实盘撮合；新模型不构成 25% 未来回撤保证；`results/self_financing/self_financing_manifest.json` 为 `NOT_FOR_TRADING`。不得沿用旧模型历史数值作为最新决策依据。
+- **下一项**：核实数据缺口及分红复权真实语义，再做费率/滑点多情景、切换日成交成本、基准比较、前瞻冻结。GitHub 自动 schedule 保持关闭；不得做实盘交易。
+
+## 2026-10-21 北京时间 18:29：25% 统一口径与可执行滚动样本外账本（已核验）
+- 背景：一次旧版自动检查报告仍声称固定权重核算未修复、仅7项测试且GitHub写入失败，与已验证的自融资回测 job 119067247754 不符。本轮实际GitHub写入成功并触发工作流；该旧报告必须以新证据覆盖。
+- 修改 `backtest.py`，将旧基准 20% 警告统一为用户确认的25%历史回撤数值目标，并将验收标为探索性（参考提交 9f0993043f90bebe86e482cf69a8635db6a1748b）。20%只属于旧版本历史说明，不再用于新运行的验收判断。
+- 新增 `executable_walk_forward`：将扩展训练期选出的每一段策略转成**同一现金+ETF份额账本**的实际目标，在下一个交易日开盘价成交；折叠切换费用、自然权重漂移；交易与报告严格裁剪至测试期内，防止最后一个测试交易日之后的平仓成本污染绩效。
+- 首次测试 job 119168816295 `failure`：20项测试中2项失败。已验证并修复：尾段测试期后交易被错误计入统计；合成训练收益序列不稳定，可能倒置预期模型选择。失败当轮不上传Drive且不能声称成功。随后通过 GitHub 插件重跑，**最新 job 119169971147 `completed/success`**，20项回归测试全部通过，8 ETF真实行情与12组策略完成，Artifact和Google Drive均上传成功。
+- 行情 8 ETF 更新至2026-10-21；真正逐日自融资的滚动测试复核结果：2019–2021 持有6%目标，累计+40.57%、年化+11.98%、最大回撤-9.31%；2022–2023 仍持6%目标，累计-2.92%、年化-1.48%、最大回撤-15.70%；2024–2026-10-21 仍持6%目标，累计+21.13%、年化+7.05%、最大回撤-21.69%。
+- 单一账本拼接2019–2026-10-21：累计收益+65.2934%、年化+6.6429%、最大回撤-21.6870%、Sharpe 0.6160；执行102笔买卖腿，名义费用滑点累计0.0541054个初始本金单位（此费用为逐笔历史资金量累计，不能直接视为最终权益减项）。本轮三个测试折叠均选择6%目标策略，因此实际历史折间没有策略种类切换；额外合成测试验证了不同策略切换时买卖两侧费用确实进入账本。
+- 完整证据：run https://github.com/magangwwd/ashare-research-infra/actions/runs/39234376712 ，job 119169971147；日志有 `Ran 20 tests ... OK`、`EXECUTABLE_WALK_FORWARD` 及 `Uploaded executable_walk_forward_{folds,training_scores,ledger,trades,summary}`。Google Drive成功。
+- 仍然 **NOT_FOR_TRADING**：完整历史参数已经事后挑选，不是未接触历史的严格独立前瞻；5条行情缺失、复权/分红总收益口径未核实，交易费用只是代理值。历史25%回撤约束不能保证未来。下一阶段实际成本压力测试、数据缺口/分红核对及基准比较。
+
+## 2026-10-21 北京时间18:35：自融资交易成本压力测试（已核验）
+- GitHub 插件基于成功 job 119169971147 重跑后，本次 run 39234376712 / job **119172502536 completed/success**。实测数据最新交易日2026-10-21，20项unittest全部通过。12组原策略、独立自融资回测、真实折间切换费用报告和本轮成本压力均执行成功，Artifact / Google Drive三份新成本报告上传成功。
+- 测试冻结的5个主要自融资候选，在每笔买卖单边手续费加滑点 0.10%、0.30%、0.50% 三档下分别回测，禁调参。`regime_switch_ultralow` 年化收益 5.886% / 4.902% / 3.927%，最大回撤三档均 -21.687%，夏普0.597 /0.508/0.419。
+- `regime_switch_lowvol` 年化 6.106% /4.995%/3.896%，回撤三档均 -21.687%；`regime_switch_midvol` 年化6.214%/4.994%/3.788%，回撤-22.677%/-24.241%/-26.971%（0.50%单边成本档已超25%回撤门槛）。
+- `regime_switch_gold_vol8` 年化4.822%/3.775%/2.738%，回撤-19.428%/-20.999%/-23.826%；`regime_switch_cap75` 年化4.791%/3.861%/2.940%，回撤-18.473%/-19.762%/-22.043%。
+- 冻结0.10%参考费率训练选择规则并用同一本自融资账本执行的追溯滚动测试：每笔单边0.10% /0.30%/0.50%时，组合年化6.643%/5.520%/4.409%，三档最大回撤均-21.687%，夏普0.616/0.524/0.432；三个测试折间所选均为 `regime_switch_ultralow`。此为成本代理与追溯训练，不能宣称未来稳定低于25%。
+- 已归档 `results/self_financing/cost_stress_strategy_comparison.csv`、`cost_stress_executable_walk_forward.csv`、`cost_stress_manifest.json`；上传日志有文件ID。数值门槛合格不等于最终验收：5条ETF交易日缺口与分红复权总收益语义仍未解决。
+- **下一项**：来源复核5处具体日频缺口、核验Tushare复权因子及分红事件是否正确纳入现金回报；随后独立基准和真正未来纸面模拟。依然不启用GitHub schedule、不进行真实交易。
+
+
+## 2026-10-21 20:03 北京时间：ETF 一次性自动研发流水线正式实测验收
+- 架构：GitHub 默认分支 main 的独立工作流 `.github/workflows/etf-research-one-shot.yml`，无每小时 cron。首次启动后 GitHub runner 从 ETF 研究分支 `feature/etf-single-rotation-v1` 读取 `etf_single_rotation/research_pipeline.py`，串行执行数据下载、质量审计、会计测试、旧基线对照、探索性比较、隐含再平衡审计、提供商历史缺口复核、自融资真实现金/份额回测、费用压力测试、保守验收门禁、Drive 上传。单次运行完成后停止，不自主生成新的未定义研究方向。
+- 最终实测证据：GitHub Actions run **39595995359** / job **119208318683**，状态 `completed/success`；日志顺序出现11个 `PIPELINE_OK`（含 `archive_google_drive`）、`DRIVE_UPLOAD_COMPLETE files=43`、`ETF_PIPELINE_STATUS RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED`。GitHub Artifact `etf-research-checkpoint` 已保存（检查点、行情、策略报告）。链接：https://github.com/magangwwd/ashare-research-infra/actions/runs/39595995359 。
+- 首轮 run 39595088983 曾失败：10个研究阶段成功，Drive上传HTTP 500导致 archive 失败；已修正为对瞬时500/502/503/504/429重试、已确认成功文件逐文件保留进度并跳过。后续 run 39595995359 在真实GitHub运行中证实43个报告上传成功；失败不能直接声称上传成功。
+- `etf_single_rotation/research_gate.py` 自动核验：固定8只ETF、三档费用压力（单边0.10%、0.30%、0.50%）在此次追溯滚动测试中年化约6.643%/5.520%/4.409%，各档最大历史回撤约-21.687%；数据质量仍 `REVIEW_REQUIRED`，5条历史ETF日频缺口、分红/总收益口径、独立前瞻、基准未闭环，因此 `NOT_FOR_TRADING`，不是最终策略验收通过。
+- 任务检查点：`etf_single_rotation/state/run_checkpoint.json` 记录每个阶段状态、代码SHA、输入/产物Hash及重试次数；`etf_single_rotation/state/drive_upload_checkpoint.json` 保留逐文件云盘上传结果。**恢复跨Run须采用相同研究代码SHA、恢复对应GitHub Artifact，且所有已完成产物Hash一致**；代码变更后应从新版本重新运行，不可把旧产物称为新版本验收。GitHub无自动无限次跨Run重试；超出重试上限须GPT或用户审核。
+- **准确的角色边界**：GitHub按既定阶段顺序自主运行完成并停止；GPT每天北京时间08:00审核结果、异常和新研究决策，但用户随时发问或委托时可即时参与。无任何任务要求个人电脑开机或GPT全天在线。未部署周期性每小时ETF全量回测。
+- 下一项需要研究决策后写入程序的工作：独立核实5条缺口及现金分红后的ETF总回报、ETF收益基准和前瞻纸面账本；此处不把计划当已执行。
+
+## 2026-10-21 北京时间20:18：GPT自主研发接续及同区间可执行基准（已核验）
+- 已建立 `AUTONOMOUS_RESEARCH_PLAN.md` 和 `research_backlog.json`，显式记录已经完成的任务、任务依赖、验收标准、Github Run证据和下一项。GitHub内部按有序任务立即接续并停止；GPT另有**条件触发的自主研发巡检**（最多每小时查看一次新异常/待办，不等于每小时重新运行ETF回测），原有每天北京时间08:00日报任务继续独立启用。GPT按规则、权限及工具实际可用性参与修复/设计下一阶段，不能因无人值守便推定其无间断开发。
+- 新增可执行基准 `experiments/benchmark_self_financing.py`：同一区间（2019-01-02 至 2026-10-21）现金（0%利息）、510300.SH沪深300 ETF、518880.SH黄金 ETF 的单标的现货买入持有，2019年首次可用开盘成交价、买入费用滑点每边0.10%，与策略自融资账本尽量一致。三条专门回归测试覆盖初始买入费用、缺开盘价禁止虚拟买入、测试区间基准日。
+- **实测通过**：一次性主分支 GitHub workflow `etf-research-one-shot.yml` Run **39597990839** / Job **119215003886** 为 `completed/success`；日志 `Ran 34 tests ... OK`、`PIPELINE_OK like_for_like_benchmarks`、`ETF_PIPELINE_STATUS RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED`，累计12个预设研究阶段、`DRIVE_UPLOAD_COMPLETE files=46`，3份新基准CSV/JSON实际上传Drive；GitHub Artifact `etf-research-checkpoint` ID **12344916336**。核验链接：https://github.com/magangwwd/ashare-research-infra/actions/runs/39597990839
+- **同一历史区间初步对照**：滚动选型ETF策略执行账本年化约**6.643%**、最大历史回撤**-21.687%**；510300.SH买入持有年化约**6.018%**、回撤**-42.155%**；518880.SH买入持有年化约**14.993%**、回撤**-30.519%**；0%利息现金年化0%、回撤0%。这些基于同一个Tushare调整价数据源，不是第二数据源独立复核；黄金收益高于本策略，但历史回撤也超过项目25%数值门槛；不能据此声称本ETF策略优于所有被动策略或保证未来达标。
+- 自动门禁仍 `NOT_FOR_TRADING`，数据质量 `REVIEW_REQUIRED`：5条ETF历史交易日缺口与调整价格/分红总收益口径仍待**独立核实**，此前候选曾后验查看全样本，不存在不可更改的未来纸面证据，券商真实成交价格成本未得到验证。
+- **下一项自主研究**：按 `research_backlog.json` 转入 `ETF-DATA-003`，逐条收集独立交易所停牌公告或第二数据商报价核验5处缺口；不能捏造缺口行情。之后 `ETF-DIV-004` 分红/复权对账、冻结前瞻，阶段证明不能互相替代。
+
+## 2026-10-21 北京时间20:32：独立公告核验全部5处ETF交易日缺口（已核验）
+- 已在 `metadata/announced_suspensions.json` 保存5处来源及公告，新增 `experiments/audit_suspension_notices.py` 对真实Tushare `data_quality_gaps.csv` 的缺失日期进行完全键匹配、排斥同日期存在真实成交报价的矛盾、不能自动插值/填造交易K线。
+- 证据：159915.SZ 2021-02-08基金持有人大会计票日停牌（易方达基金签章公告的公开PDF，并有券商复牌时间核对）；510500.SH 2015-04-13及14为南方基金份额折算登记/除权停牌（上交所公告）；512100.SH 2022-09-02为南方ETF份额合并停牌（上交所公告）；512690.SH 2021-05-14为鹏华酒ETF份额拆分停牌（多家券商引述交易所公告）。所有源链接与分类直接保存在注册表，分清官方交易所与券商证据。**并非全部缺口均由数据商传输错误造成；不能凭交易所营业日就推定ETF该日开市。**
+- GitHub真实回测验收：Run **39599580852** / Job **119220366735**，最终 `completed/success`。日志 `Ran 38 tests ... OK`，13个研究阶段先后完成，`ETF_SUSPENSION_CROSSCHECK` 显示 `observed_provider_missing_exchange_session_rows=5`、`documented_announced_halt_rows=5`、`unexplained_rows=0`，Drive `DRIVE_UPLOAD_COMPLETE files=48`，包含 `documented_suspension_gaps.csv` 和 `documented_suspension_summary.json` 的真实上传记录；Github Artifact ID **12345747366**。链接：https://github.com/magangwwd/ashare-research-infra/actions/runs/39599580852
+- **不得误判为策略数据完全验收**：原有 `audit_data.py` 仍将ETF交易所开市日的非报价列为原始缺口供追溯，但新增来源核验解释了5个日期的停牌原因；份额折算/合并后 `fund_adj` 是否正确保留总收益、酒ETF现金分红是否纳入投资者现金回报**仍未独立验证**。门禁保持 `NOT_FOR_TRADING`、data quality `REVIEW_REQUIRED`；历史累计回撤≤25%不是未来保证。
+- 下一个自主任务切换至 `ETF-DIV-004`：已建立 `metadata/corporate_action_evidence.json`，列出南方500ETF 2015折算比例0.28032483、中证1000ETF 2022合并比例0.36555、酒ETF 2021拆分比例2.0、酒ETF 2021-12-31现金分红每份0.35元及支付日2022-01-06，均附公开证据来源。下一轮必须与Tushare `raw_close/adj_factor`、原始现金/份额台账逐条交叉计算，不可仅凭公告就认定收益已修复。
