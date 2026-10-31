@@ -637,3 +637,17 @@ def test_corrupt_previous_manifest_blocks_staging_and_pointer_update(tmp_path, d
                    {"passed": True, "as_of": "2026-10-29"}, {}, tmp_path)
     assert drive.files == before
     assert drive.upload_count == 0
+
+
+def test_resume_stage_rejects_unsafe_folder_name_without_pointer_change(tmp_path):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, _ = _seed_cancelled_stage(drive, items[0])
+    drive.files[stage]["name"] = "../unsafe-version"
+    before = copy.deepcopy(drive.files)
+    upload_count = drive.upload_count
+    with pytest.raises(dp.PublishError, match="version name is unsafe"):
+        dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+                   {}, tmp_path, resume_stage_id=stage)
+    assert drive.files == before
+    assert drive.upload_count == upload_count
