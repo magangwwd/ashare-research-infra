@@ -62,3 +62,15 @@ def test_manual_recovery_does_not_trigger_expensive_price_downloads():
     assert "python -m data_pipeline.run_task01" not in s
     assert "secrets.TUSHARE_TOKEN" not in s
 
+
+def test_yaml_structure_and_input_contract():
+    import yaml
+    data = yaml.load(WF.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+    assert set(data["on"]) == {"workflow_dispatch"}
+    dispatch = data["on"]["workflow_dispatch"]["inputs"]
+    assert set(dispatch) == {"source_run_id", "stage_id"}
+    assert all(dispatch[key]["required"] == "true" for key in dispatch)
+    assert data["concurrency"]["group"] == "task01-data"
+    assert data["concurrency"]["cancel-in-progress"] == "false"
+    assert data["jobs"]["audit"]["if"] == "github.ref == 'refs/heads/main'"
+    assert data["jobs"]["audit"]["timeout-minutes"] == "350"
