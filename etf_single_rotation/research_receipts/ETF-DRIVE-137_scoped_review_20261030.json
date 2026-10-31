@@ -19,13 +19,15 @@
     "051fc3be6dedf5733f73027360261bcd4e5c21fe",
     "b921ca5b285e5493cf9f4a47a432354744346695",
     "9f0b486f46e1f728296ec1c924164940d7d1cd40",
-    "2c33881e82070aafa77e7fc3306038b0c8e80ba1"
+    "2c33881e82070aafa77e7fc3306038b0c8e80ba1",
+    "823ef7f31d0f0ff3e2b9fb56bc3ad0777ab82787",
+    "a74893251bbf951dda9512af7189031550e5bbd8"
   ],
   "scope": "Drive upload idempotency preflight and fail-closed response handling only; no historical data changes",
   "checks": {
     "code_written": true,
     "code_readback_verified": true,
-    "tests_written": 18,
+    "tests_written": 20,
     "tests_executed": false,
     "tests_passed": null,
     "tests_failed": null,
@@ -37,13 +39,15 @@
     "pagination_guard_code_readback_pending": false,
     "stale_checkpoint_cross_run_guard_code_readback_verified": true,
     "stale_checkpoint_synthetic_cases_written": 2,
-    "source_blob_sha": "ad88713edcf22d27c62f49960b726f6b3d0ea047",
-    "tests_blob_sha": "c522890c1aa5c86fddeda70dfab9784804fb8f20",
+    "source_blob_sha": "ba4e684b4a2fd8bba25f3d425d05eb0b7e8fc59e",
+    "tests_blob_sha": "9a2af895fd739275152565b87b593f725a7181c3",
     "exact_head_ci_run_id": null,
     "incomplete_search_failclosed_code_readback_verified": true,
     "incomplete_search_synthetic_cases_written": 1,
     "malformed_list_failclosed_code_readback_verified": true,
-    "malformed_list_synthetic_cases_written": 2
+    "malformed_list_synthetic_cases_written": 2,
+    "falsey_pagination_token_failclosed_case_written": 1,
+    "malformed_incomplete_search_flag_failclosed_case_written": 1
   },
   "risk_controls": [
     "No remote deletion",
@@ -55,8 +59,9 @@
     "Cyclic/repeated Drive list page tokens fail closed after a bounded number of pages",
     "Checkpoint from an earlier run cannot silently claim that earlier Drive object as the current run's output",
     "Drive list incompleteSearch=true must stop before any create POST; 18 mocked tests written, not executed",
-    "Malformed Drive list response missing/null files fails closed before create POST"
+    "Malformed Drive list response missing/null files fails closed before create POST",
+    "Malformed falsey pagination tokens and non-boolean incompleteSearch flags are rejected before Drive create; two additional synthetic cases written, not executed."
   ],
-  "next_action": "Run 18 mocked offline tests against exact PR #139 head only after explicit approval; inspect actual Run/Job/logs, then issue formal SOP receipt if warranted. Verify non-production Drive behavior separately; preserve both historic duplicates; no merge or PAPER-005 activation.",
+  "next_action": "Run 20 mocked offline tests against exact PR #139 head a74893251bbf951dda9512af7189031550e5bbd8 only after explicit approval; inspect real Run/Job/logs, issue SOP receipt only when supported. Verify real Drive behavior separately; do not delete historic duplicates, merge, or activate PAPER-005.",
   "review_updated_date_utc": "2026-10-31"
 }
