@@ -204,6 +204,20 @@ class DriveIdempotencyTests(unittest.TestCase):
             u.main()
         self.session.post.assert_not_called()
 
+    def test_preflight_falsey_nonstring_page_token_blocks_post(self):
+        # HTTP 200 with an invalid falsey token cannot prove pagination ended.
+        self.session.get.return_value = Reply(200, {"files": [], "nextPageToken": 0})
+        with self.assertRaisesRegex(SystemExit, "malformed pagination token"):
+            u.main()
+        self.session.post.assert_not_called()
+
+    def test_preflight_malformed_incomplete_search_flag_blocks_post(self):
+        # A string flag is not the API's boolean false, so uniqueness is unknown.
+        self.session.get.return_value = Reply(200, {"files": [], "incompleteSearch": "false"})
+        with self.assertRaisesRegex(SystemExit, "malformed flag"):
+            u.main()
+        self.session.post.assert_not_called()
+
     def test_preflight_network_error_blocks_post(self):
         self.session.get.side_effect = requests.exceptions.Timeout("Drive list unavailable")
         with self.assertRaisesRegex(SystemExit, "preflight unavailable"):
