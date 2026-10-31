@@ -151,3 +151,12 @@ PR #123 的暂存审计可能耗时数小时。审计开始时记录正式 `curr
 - 反例：本轮对 Task01 run `40972437556` 的工件列表只查到验收报告 `12953020958`，**未查到**曾记录的checkpoint `12960014331`。即使其stage `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN` 仍存在，也不得直接提交该run的只读审计或续传；应先寻找最新合法可用的同run工件并核实其来源stage。
 - 只有实际审计 run 成功、下载 `task01-stage-audit` artifact、核验 `audit_only=true`、`passed=true`、`production_switch_allowed=false`、`pointer_unchanged=true`、`stage_id`、`source_run_id`、`checkpoint_sha256`、`pointer_sha256`、`sha256_verified_staged_files`、`missing_files` 和 `missing_bytes` 后，才考虑后续受控发布；审计成功仍不能算发布成功。若连接器缺少 workflow_dispatch 能力，明确记录“未触发”，不得虚构 run ID。
 - 2026-10-31 实际两侧正式核验：Task01 `as_of=2026-10-24`，production manifest SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 匹配；Gold `as_of=2026-10-30`，instruments SHA256 `6e06b2f17c6d46384df35b15c558f2fb1c9fe845e0cc7f608eec95d5e0789586`、daily_snapshot SHA256 `6eb60191b7c9f589b3de9028fe9e55ac7200daa0772846d3da61d1cf7f906f08` 均匹配。日期不一致且Task01历史不完整，继续禁止切换、删除、停Gold或修改冻结V1。
+
+
+## 当前窗口备份与暂存配对门禁（2026-10-31）
+
+- **优先 live evidence**：每轮查最新 main、正在运行的 task01 jobs、具体失败步骤、同 run 验收报告及 checkpoint artifacts（`expired=false`、digest、大小、到期时间），并从该 run 日志读取 `staging created folder_id=...`。绝不可将**不同 run** 的备份和 stage 混用；避免与 in_progress run 重复下载或发布。
+- 经过连接器实证的暂时可用配对：源 `41119601566`、stage `1CHTuLs2_VS_MGbqlJnpZiJwOinR7ihGf`、checkpoint `13025260198`、validation `13016738862`，工件到期 `2026-11-03T01:34:28Z`；**每次使用前重新列工件**。主 `task01.yml` 在未发布时仅留最新1份 checkpoint，下次失败运行可提前删掉旧工件。不得根据历史日志推定工件仍在。
+- `.github/workflows/task01-stage-audit.yml` 已由 PR #140 合并到 main；手动只读审计需要明确 `source_run_id` 和 `stage_id`，工作流将先确认同 run 验收通过、发布被取消、工件 SHA/大小门禁，再执行逐文件 SHA/路径/配额/正式指针稳定性核验。**未真实 workflow_dispatch + 取得 artifact 时，标记 NOT_RUN**；连接器不支持 dispatch 时明确报阻碍，不使用其他动作绕过安全边界。
+- 生产直读：Task01 `current.json` 截至 `2026-10-24`、5406文件、manifest SHA `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 匹配；Gold `as_of_date=2026-10-30`、核心两 Parquet SHA 实际下载验证匹配。**不可据此声称暂存已验或新数据已发布**。完整证据：`docs/mainboard-baseline-audit-20261028.md`。
+- 修复次序：先审计最新仍可用的配对；验证 staging 里的可复用文件；再经 CI/安全审查执行受控续传、独立验证全部远端文件，最后确认正式指针/manifest SHA 与旧版本可恢复性。恢复发布之前不切换 Gold，不停止 Gold 原下载，不改变冻结 V1，不删除版本。
