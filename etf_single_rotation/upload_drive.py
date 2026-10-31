@@ -151,8 +151,8 @@ def _find_existing(session, path, target_name):
         if not isinstance(payload, dict) or not isinstance(payload.get("files"), list):
             raise SystemExit("Drive preflight malformed file list; no upload attempted.")
         # A partial Drive search cannot establish that a name is unique.
-        if payload.get("incompleteSearch") is True:
-            raise SystemExit("Drive preflight incomplete search; no upload attempted.")
+        if "incompleteSearch" in payload and payload["incompleteSearch"] is not False:
+            raise SystemExit("Drive preflight incomplete search or malformed flag; no upload attempted.")
         matches.extend(payload.get("files", []))
         if len(matches) > 1:
             raise SystemExit(
@@ -160,10 +160,12 @@ def _find_existing(session, path, target_name):
                 "no automatic reconciliation or deletion."
             )
         next_page_token = payload.get("nextPageToken")
-        if next_page_token:
+        # A falsey malformed token (e.g. 0) must not look like end-of-list.
+        if next_page_token is not None and (not isinstance(next_page_token, str) or not next_page_token):
+            raise SystemExit("Drive preflight malformed pagination token; no upload attempted.")
+        if next_page_token is not None:
             # Fail closed on broken/cyclic pagination rather than looping forever.
-            if (not isinstance(next_page_token, str)
-                    or next_page_token in seen_page_tokens
+            if (next_page_token in seen_page_tokens
                     or len(seen_page_tokens) >= 50):
                 raise SystemExit("Drive preflight pagination loop/limit; no upload attempted.")
             seen_page_tokens.add(next_page_token)
