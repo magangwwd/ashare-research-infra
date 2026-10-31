@@ -47,7 +47,7 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$PR_HEAD_SHA"
           echo "ETF_DRIVE137_EXACT_SHA=$PR_HEAD_SHA"
-      - name: Run only 18 mocked Drive idempotency tests
+      - name: Run only 20 mocked Drive idempotency tests
         run: python -m unittest -v etf_single_rotation.test_drive_upload_idempotency
       - name: Preserve scope and pending acceptance
         if: always()
