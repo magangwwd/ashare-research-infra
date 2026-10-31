@@ -381,13 +381,11 @@ def verified_stage_reuse(drive, staging_id, stage_id, items):
     return info["name"], reused
 
 
-def publish(drive, target, items, acceptance, progress, prepared, quota=None):
+def publish(drive, target, items, acceptance, progress, prepared, quota=None, resume_stage_id=None):
     if not acceptance.get("passed"):
         raise PublishError("Acceptance is required before publication.")
     total = sum(i["bytes"] for i in items)
     remaining = (quota or {}).get("remaining_bytes")
-    if remaining is not None and remaining < total + 1024 * 1024:
-        raise PublishError("Drive remaining capacity is insufficient for a new immutable snapshot.")
     pointers = [f for f in drive.children(target) if f["name"] == "current.json"]
     if len(pointers) > 1 or pointers and pointers[0]["mimeType"] == FOLDER:
         raise PublishError("Ambiguous current pointer; publication blocked.")
@@ -404,11 +402,42 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None):
             raise PublishError("Existing current pointer is not an accepted snapshot pointer.") from None
         # A second or later publication must start from a genuinely recoverable old production.
         old_manifest_bytes = verify_previous_snapshot(drive, old_pointer)
-    staging = drive.folder(target, "staging")
+        # A delayed checkpoint recovery must never roll back a newer production date.
+        # Legacy pointers without snapshot_as_of are still verified by the existing
+        # manifest contract; all current production pointers carry this field.
+        previous_date = old_pointer.get("snapshot_as_of")
+        if previous_date is not None:
+            try:
+                stale = date.fromisoformat(acceptance["as_of"]) < date.fromisoformat(previous_date)
+            except (KeyError, TypeError, ValueError):
+                raise PublishError("Production snapshot date cannot be compared; pointer unchanged.") from None
+            if stale:
+                raise PublishError("Accepted snapshot is older than current production; pointer unchanged.")
+    if resume_stage_id is not None:
+        # A resumed stage must already exist: do not create a new staging folder
+        # while deciding whether a low-quota recovery can safely continue.
+        candidates = [f for f in drive.children(target) if f["name"] == "staging"]
+        if len(candidates) != 1 or candidates[0]["mimeType"] != FOLDER:
+            raise PublishError("Resume stage is not a direct child of an unambiguous staging root; pointer unchanged.")
+        staging = candidates[0]["id"]
+        version, reused = verified_stage_reuse(drive, staging, resume_stage_id, items)
+        # Already verified staged bytes consume Drive quota. Only missing bytes
+        # and the new manifest require additional capacity.
+        required_bytes = sum(item["bytes"] for item in items if item["path"] not in reused)
+    else:
+        reused = {}
+        required_bytes = total
+    if remaining is not None and remaining < required_bytes + 1024 * 1024:
+        raise PublishError("Drive remaining capacity is insufficient for missing snapshot files and manifest.")
+    if resume_stage_id is not None:
+        stage = resume_stage_id
+        print(f"SUCCESS resume stage validated files={len(reused)}/{len(items)}; current pointer unchanged")
+    else:
+        staging = drive.folder(target, "staging")
+        version = utcnow().replace(":", "").replace("+", "_") + "-" + uuid.uuid4().hex[:8]
+        stage = drive.create_folder(staging, version)
+        print(f"SUCCESS staging created folder_id={stage} files={len(items)} bytes={total}; current pointer unchanged")
     versions = drive.folder(target, "versions")
-    version = utcnow().replace(":", "").replace("+", "_") + "-" + uuid.uuid4().hex[:8]
-    stage = drive.create_folder(staging, version)
-    print(f"SUCCESS staging created folder_id={stage} files={len(items)} bytes={total}; current pointer unchanged")
     directories = {"": stage}
     files = []
     for item in items:
@@ -418,11 +447,15 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None):
             relative = "/".join(parts[:count])
             if relative not in directories:
                 parent = "/".join(parts[:count - 1])
-                directories[relative] = drive.create_folder(directories[parent], parts[count - 1])
+                directories[relative] = (drive.folder(directories[parent], parts[count - 1])
+                                         if resume_stage_id is not None
+                                         else drive.create_folder(directories[parent], parts[count - 1]))
         source = Path(item["local_path"])
         if digest(source) != (item["bytes"], item["sha256"]):
             raise PublishError("Local snapshot changed during upload.")
-        file_id = drive.upload(directories[path.parent.as_posix() if parts else ""], path.name, source)
+        file_id = reused.get(item["path"])
+        if file_id is None:
+            file_id = drive.upload(directories[path.parent.as_posix() if parts else ""], path.name, source)
         files.append({k: v for k, v in item.items() if k != "local_path"} | {"file_id": file_id})
         if len(files) % 100 == 0:
             print(f"SUCCESS staged files={len(files)}/{len(items)}; remote verification pending")
@@ -475,6 +508,7 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None):
               "previous_version_recovery_verified": previous_recovery_verified,
               "remote_validation": "all file paths, byte sizes and downloaded SHA256 verified", "storage_quota": quota}
     return report
+
 
 
 def audit_resume_stage(drive, target, items, acceptance, quota, stage_id):
@@ -549,8 +583,11 @@ def main(argv=None):
     parser.add_argument("--config", type=Path, default=Path("config/config.yaml"))
     parser.add_argument("--root", type=Path, default=Path("."))
     parser.add_argument("--report", type=Path, default=Path("metadata/drive_publish.json"))
-    parser.add_argument("--audit-resume-stage-id", default=None,
-                        help="Read-only SHA256 audit of an explicit existing Drive staging folder")
+    # Explicit opt-in only; production schedules never infer or auto-select a stage.
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--resume-stage-id", default=None)
+    mode.add_argument("--audit-resume-stage-id", default=None,
+                      help="Read-only SHA256 preflight; never uploads or switches current.json")
     args = parser.parse_args(argv)
     try:
         config = load_config(args.config)
@@ -570,12 +607,13 @@ def main(argv=None):
                     report = audit_resume_stage(Drive(session), target, items, acceptance,
                                                 quota, args.audit_resume_stage_id)
                 else:
-                    report = publish(Drive(session), target, items, acceptance, progress, prepared, quota)
+                    report = publish(Drive(session), target, items, acceptance, progress, prepared,
+                                     quota, resume_stage_id=args.resume_stage_id)
         atomic_json(args.report, report)
         if os.environ.get("GITHUB_ACTIONS") == "true":
-            print(("::notice title=Drive stage audit::" if report.get("audit_only")
-                   else "::notice title=Drive publication::") + json.dumps(report))
-        print("SUCCESS read-only stage audit; pointer unchanged." if report.get("audit_only")
+            print("::notice title=Drive stage audit::" + json.dumps(report) if report.get("audit_only")
+                  else "::notice title=Drive publication::" + json.dumps(report))
+        print("SUCCESS read-only stage audit completed; pointer unchanged." if report.get("audit_only")
               else "SUCCESS Drive snapshot published and verified.")
         return 0
     except (PublishError, SetupError) as error:
