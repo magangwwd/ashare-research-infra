@@ -296,3 +296,46 @@ def test_unconfirmed_final_chunk_stays_failed(tmp_path, monkeypatch):
     monkeypatch.setattr(dp.time, "sleep", lambda _: None)
     with pytest.raises(dp.PublishError, match="not completed"):
         dp.Drive(Session()).upload("parent", path.name, path)
+
+
+def test_lost_chunk_response_with_partial_remote_ack_resumes_suffix(tmp_path, monkeypatch):
+    path = tmp_path / "data.parquet"
+    path.write_bytes(b"abcdefg")
+    sent = []
+    class Session:
+        def request(self, method, url, **kwargs):
+            if url.endswith("generateIds"):
+                return SimpleNamespace(status_code=200, json=lambda: {"ids": ["allocated"]})
+            if method == "POST":
+                return SimpleNamespace(status_code=200, headers={"Location": dp.UPLOAD + "?upload_id=test"})
+            rng = kwargs["headers"]["Content-Range"]
+            sent.append((rng, kwargs["data"]))
+            if rng == "bytes 0-6/7":
+                import requests
+                raise requests.ConnectionError("simulated lost response after partial receipt")
+            if rng == "bytes */7":
+                return SimpleNamespace(status_code=308, headers={"Range": "bytes=0-2"})
+            assert rng == "bytes 3-6/7"
+            assert kwargs["data"] == b"defg"
+            return SimpleNamespace(status_code=200, headers={})
+    monkeypatch.setattr(dp.time, "sleep", lambda _: None)
+    assert dp.Drive(Session()).upload("parent", path.name, path) == "allocated"
+    assert sent[-1] == ("bytes 3-6/7", b"defg")
+
+
+def test_lost_chunk_response_with_remote_ack_ahead_fails_closed(tmp_path, monkeypatch):
+    path = tmp_path / "data.parquet"
+    path.write_bytes(b"abcdefg")
+    class Session:
+        def request(self, method, url, **kwargs):
+            if url.endswith("generateIds"):
+                return SimpleNamespace(status_code=200, json=lambda: {"ids": ["allocated"]})
+            if method == "POST":
+                return SimpleNamespace(status_code=200, headers={"Location": dp.UPLOAD + "?upload_id=test"})
+            if kwargs["headers"]["Content-Range"] == "bytes */7":
+                return SimpleNamespace(status_code=308, headers={"Range": "bytes=0-99"})
+            import requests
+            raise requests.ConnectionError("simulated lost response")
+    monkeypatch.setattr(dp.time, "sleep", lambda _: None)
+    with pytest.raises(dp.PublishError, match="offset mismatch"):
+        dp.Drive(Session()).upload("parent", path.name, path)
