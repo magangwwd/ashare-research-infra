@@ -1,0 +1,37 @@
+{
+  "schema_version": "ETF_SCOPED_REVIEW_NOTE_V1_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DRIVE-137",
+  "issue": 137,
+  "source_pr": 139,
+  "source_head_sha": "94addd596525d47314957c1c7656356ced9d118a",
+  "staging_branch": "research/etf-drive137-approval-gated-ci-20261031",
+  "staging_workflow": ".github/workflows/etf-drive137-approval-gated-ci.yml",
+  "workflow_commit_sha": "c6a90f26cd1974675045ebfdb34feec51690427b",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "observed_date_utc": "2026-10-31",
+  "checks": {
+    "workflow_written": true,
+    "exact_head_checkout_configured": true,
+    "offline_test_module": "etf_single_rotation.test_drive_upload_idempotency",
+    "mock_tests_declared": 16,
+    "run_id": null,
+    "job_id": null,
+    "tests_executed": false,
+    "tests_passed": null,
+    "tests_failed": null,
+    "artifact_verified": false,
+    "drive_byte_readback_performed": false,
+    "formal_sop_receipt_issued": false
+  },
+  "constraints": [
+    "No push/schedule/workflow_dispatch trigger; draft PR requires human ready_for_review event",
+    "No Drive or market secrets",
+    "No repeat historical backtest, no real Drive write or deletion",
+    "Preserve 49 historic objects/48 distinct names until independently reviewed",
+    "Fixed 8 ETFs; at most one ETF or cash; 25% historical MDD research goal",
+    "ETF-DIV-004 remains REVIEW_REQUIRED; ETF-PAPER-005 dependency-blocked"
+  ],
+  "next_action": "Keep draft until explicit authorization; then run once via ready_for_review, verify exact PR head SHA, Run/Job/logs and test results, and independently assess Drive behavior before any merge or formal SOP receipt."
+}
