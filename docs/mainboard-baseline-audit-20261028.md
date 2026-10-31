@@ -217,3 +217,17 @@
 - Gold 正式 `main_board/manifest.json` file ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn` 实读 `as_of_date=2026-10-30`，`primary_keys_unique=true`、`ohlc_valid=true`；`instruments.parquet` ID `1KyHYGngvkUIkqisQFO5qZCTeFxzzBO0q`（3486行）实测 SHA256 `6e06b2f17c6d46384df35b15c558f2fb1c9fe845e0cc7f608eec95d5e0789586`；`daily_snapshot.parquet` ID `1rw_0sRymrWSr2kIeOZ5AeS0L9m9qG0eQ`（3190行）实测 SHA256 `6eb60191b7c9f589b3de9028fe9e55ac7200daa0772846d3da61d1cf7f906f08`；均与Gold manifest一致。只验证这三项SHA，不代表全部历史分区验收。
 - **新发现：备份工件缺失风险。** [Task01 run #40972437556](https://github.com/magangwwd/ashare-research-infra/actions/runs/40972437556) 的 `task01` job `cancelled`，更新/验收成功、发布步骤取消；当前 GitHub `fetch_workflow_run_artifacts` 只返回 `task01-validation-report` artifact `12953020958`，**没有返回**原先记录的 `task01-checkpoint` `12960014331`。该job的日志步骤虽标记“Save recovery checkpoint success”，不能替代当前工件可下载性；可能被后续清理，不得声称可恢复。stage `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN` 仍在 Drive staging，但没有逐文件SHA审计结果。下一轮先查最新run与可用checkpoint所属run；只有源run、stage、checkpoint一一匹配且工件未过期，才允许手动只读审计。
 - 当前 GitHub 连接器未提供 `workflow_dispatch` 操作，**本轮没有触发** `task01-stage-audit.yml`；无 `task01-stage-audit` artifact、无生产续传、无新正式指针。PR #123 仍是高成本恢复草稿，不合并、不启用；保持 Gold 下载和冻结V1，5交易日影子验证与回滚均未开始。下一步寻找合法可执行的手动审计入口及有效源工件，不为测试重复全量下载。
+
+
+## 2026-10-31 当前窗口：新备份与暂存目录配对复核
+
+**性质：真实 GitHub/Google Drive 只读核验，未执行生产审计、未恢复发布。**
+
+- main SHA `4afc2d300dfa328c010ddab4a5f7d9d0421ea747`；独立只读审计 PR #140 已合并，主分支有手动 `task01-stage-audit.yml`，不自动触发。
+- GitHub Task01 源 run [41119601566](https://github.com/magangwwd/ashare-research-infra/actions/runs/41119601566)：job `task01` cancelled；更新、验收、恢复演练成功，**发布步骤取消**。日志明确 `SUCCESS staging created folder_id=1CHTuLs2_VS_MGbqlJnpZiJwOinR7ihGf files=7104 bytes=2968021630`；最后进度为 `4200/7104`，尚未做暂存逐文件 SHA 核验。
+- 与该**同一 run** 对应的 GitHub 工件已经直接查询，均未过期：验收报告 `13016738862`（SHA256 `f41b48ac8319187e8202464c8a92c36b5d33cffb3b6479895f1fe0623453ca1a`）；checkpoint `13025260198`（3,823,043,284 bytes，SHA256 `bbecce2be390dc45f2d899c0ae72003e2e5145f8dee2f4e5185b294bd1a188c4`，2026-11-03T01:34:28Z 到期）。此处仅证明 GitHub 工件存在及含官方 digest，**不是已下载验证 checkpoint ZIP**。
+- 另一个 Task01 run [41141750990](https://github.com/magangwwd/ashare-research-infra/actions/runs/41141750990) 核验时仍 in_progress，不能重复启动。现行 `task01.yml` 的失败运行备份修剪只保留**最新1份**，因此 411196 的工件随下一运行结束可能被删除；每次手动审计前都必须重新实查 artifact 是否存在，绝不可凭上段历史编号直接执行。
+- Google Drive 真实读回：Task01 `current.json` 仍 `snapshot_as_of=2026-10-24`，5,406文件、2,331,724,247字节，`critical_history_complete=false`；直接下载生产 manifest 后 SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 与指针一致，manifest 的文件数及字节合计也一致。Gold `manifest.json` 为 `2026-10-30`，已直接下载 `instruments.parquet`（180559字节，SHA256 `6e06b2f17c6d46384df35b15c558f2fb1c9fe845e0cc7f608eec95d5e0789586`）和 `daily_snapshot.parquet`（376747字节，SHA256 `6eb60191b7c9f589b3de9028fe9e55ac7200daa0772846d3da61d1cf7f906f08`），均与 Gold manifest 声明一致。**没有完成 Task01 全部5,406分区和 Gold 全历史的验证。**
+- 下一可验证操作（必须重新实查备份仍存在）是只读工作流 `Task 01 read-only staged snapshot audit`，输入 `source_run_id=41119601566`、`stage_id=1CHTuLs2_VS_MGbqlJnpZiJwOinR7ihGf`。GitHub 连接器本轮没有新 workflow_dispatch 工具；**没有调用、没有运行 ID、没有审计工件，不得称已通过**。若 checkpoint 已被修剪，直接标记 BLOCKED 并选用下一次**日志确认 stage 且具备同 run 验收+checkpoint**的取消运行，不得跨 run 拼接。
+- PR #141 的 resumable partial-ACK 修复仍为草稿，仅处理单文件会话已接受部分字节后的安全续传；其离线测试不等于跨 run staging 复用，也不等于生产成功。PR #123 继续草稿，不自动部署大规模重传。
+- **禁止切换：** Task01 比 Gold 落后，Task01 历史完整性为 false；Gold 旧下载、冻结V1、旧数据及当前指针均保持不变。下一轮优先核验 411417 终态、现存最新同run checkpoint/stage 配对，完成只读 SHA 审计，再评估受控续传和五日影子测试。
