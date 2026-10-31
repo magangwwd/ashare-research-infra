@@ -53,5 +53,5 @@
     "Drive list incompleteSearch=true must stop before any create POST; 16 mocked tests written, not executed"
   ],
   "next_action": "Run 16 mocked offline tests against exact PR #139 head only after explicit approval; inspect actual Run/Job/logs, then issue formal SOP receipt if warranted. Verify non-production Drive behavior separately; preserve both historic duplicates; no merge or PAPER-005 activation.",
-  "review_updated_at_utc": "2026-10-31T00:00:00Z"
+  "review_updated_date_utc": "2026-10-31"
 }
