@@ -146,6 +146,10 @@ def _find_existing(session, path, target_name):
         if response.status_code != 200:
             raise SystemExit(f"Drive preflight failed: HTTP {response.status_code}")
         payload = response.json()
+        # A malformed HTTP 200 response cannot prove the target name is absent.
+        # Treat missing/null/wrong-type files as unsafe, never as an empty list.
+        if not isinstance(payload, dict) or not isinstance(payload.get("files"), list):
+            raise SystemExit("Drive preflight malformed file list; no upload attempted.")
         # A partial Drive search cannot establish that a name is unique.
         if payload.get("incompleteSearch") is True:
             raise SystemExit("Drive preflight incomplete search; no upload attempted.")
