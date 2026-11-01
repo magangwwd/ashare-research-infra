@@ -38,6 +38,7 @@ def _make(tmp_path, *, gold_close=10.5, gold_extra_future=False, gold_duplicate=
     instruments = [{
         "instrument_id": "CN.XSHG.600031", "vendor_symbol": "600031.SH",
         "board": "MAIN_BOARD", "exchange": "SSE", "currency": "CNY",
+        "list_date": date(2000, 1, 1), "delist_date": None,
         "as_of_date": date(2026, 10, 30),
     }]
     pq.write_table(pa.Table.from_pylist(instruments), instruments_path)
@@ -326,6 +327,72 @@ def test_gold_board_member_and_sha_required(tmp_path):
     with pytest.raises(ValueError, match="instruments SHA mismatch"):
         diagnose(p, m, gold, t, g, task_relative_path=REL,
                  gold_instruments_path=inst)
+
+
+def _mutate_gold_instruments(tmp_path, gold, change):
+    inst = tmp_path / "instruments.parquet"
+    rows = pq.read_table(inst).to_pylist()
+    change(rows)
+    pq.write_table(pa.Table.from_pylist(rows), inst)
+    gold["files"]["instruments.parquet"]["sha256"] = hashlib.sha256(inst.read_bytes()).hexdigest()
+    return inst
+
+
+def test_listing_window_sample_date_is_consistent(tmp_path):
+    report = run(tmp_path)
+    assert report["gold_instruments_missing_listing_date_count"] == 0
+    assert report["task_rows_outside_recorded_listing_window"] == 0
+    assert report["gold_rows_outside_recorded_listing_window"] == 0
+    assert report["recorded_listing_window_is_not_historical_board_pit_proof"] is True
+    assert report["gold_historical_pit_universe_verified"] is False
+
+
+def test_listing_window_flags_prelisting_records_without_silently_excluding(tmp_path):
+    p, m, gold, t, g = _make(tmp_path)
+    _mutate_gold_instruments(tmp_path, gold, lambda rows: rows[0].update(
+        list_date=date(2026, 10, 24)
+    ))
+    report = diagnose(p, m, gold, t, g, task_relative_path=REL,
+                      gold_instruments_path=t.parent / "instruments.parquet")
+    assert report["task_rows_outside_recorded_listing_window"] == 1
+    assert report["gold_rows_outside_recorded_listing_window"] == 1
+    assert report["common_keys"] == 1
+    assert not report["production_switch_allowed"]
+
+
+def test_listing_window_flags_post_delisting_records(tmp_path):
+    p, m, gold, t, g = _make(tmp_path)
+    _mutate_gold_instruments(tmp_path, gold, lambda rows: rows[0].update(
+        delist_date=date(2026, 10, 22)
+    ))
+    report = diagnose(p, m, gold, t, g, task_relative_path=REL,
+                      gold_instruments_path=t.parent / "instruments.parquet")
+    assert report["task_rows_outside_recorded_listing_window"] == 1
+    assert report["gold_rows_outside_recorded_listing_window"] == 1
+    assert not report["gold_historical_pit_universe_verified"]
+
+
+def test_missing_list_date_is_not_historical_pit_pass(tmp_path):
+    p, m, gold, t, g = _make(tmp_path)
+    _mutate_gold_instruments(tmp_path, gold, lambda rows: rows[0].update(
+        list_date=None
+    ))
+    report = diagnose(p, m, gold, t, g, task_relative_path=REL,
+                      gold_instruments_path=t.parent / "instruments.parquet")
+    assert report["gold_instruments_missing_listing_date_count"] == 1
+    assert report["task_rows_with_unknown_listing_start"] == 1
+    assert report["gold_rows_with_unknown_listing_start"] == 1
+    assert not report["production_switch_allowed"]
+
+
+def test_impossible_listing_window_fails_closed(tmp_path):
+    p, m, gold, t, g = _make(tmp_path)
+    _mutate_gold_instruments(tmp_path, gold, lambda rows: rows[0].update(
+        list_date=date(2026, 10, 24), delist_date=date(2026, 10, 22)
+    ))
+    with pytest.raises(ValueError, match="invalid listing window"):
+        diagnose(p, m, gold, t, g, task_relative_path=REL,
+                 gold_instruments_path=t.parent / "instruments.parquet")
 
 
 def test_main_board_only_rejects_non_cny_gold_instrument(tmp_path):
