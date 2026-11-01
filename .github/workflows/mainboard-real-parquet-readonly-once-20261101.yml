@@ -1,7 +1,11 @@
 name: Mainboard real Parquet diagnostic (one-shot, read-only)
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - ops/one-shot-real-parquet-diff-20261101
+    paths:
+      - .github/workflows/mainboard-real-parquet-readonly-once-20261101.yml
 
 permissions:
   contents: read
