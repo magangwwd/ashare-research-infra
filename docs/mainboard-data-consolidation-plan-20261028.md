@@ -3,6 +3,7 @@
 状态：PROPOSED / 未切换生产；禁止以计划代替验收。
 
 ## 权威数据与边界
+- **2026-11-01 用户确认：只要沪深A股主板证券数据。** 用 `stock_basic.market=主板` 及 Gold 正式 SHA 校验名录 `board=MAIN_BOARD, exchange∈{SSE,SZSE}, currency=CNY` 确定集合；创业板、科创板、北交所数据不进入最终兼容层/主板缺口和策略比较。仅凭股票代码前缀不构成历史上市板块证明，退市与转板必须保留真实时点状态，PIT未验收则阻止生产切换。Task01 已有其他板块 Raw/Clean 历史不得擅自删除或更改尚未完成的生产下载。
 - Task01 `Ashare_Quant/current.json -> versions/<version>/data/clean` 为目标统一原始/清洗数据权威层；现有 Gold `project/down_data/data/gold/main_board` 暂作冻结策略的兼容视图，不直接删除。
 - Task01 管日线、15min、daily_basic、adj_factor、财务；Gold 兼容层必须补齐 instruments、daily_snapshot、历史月分区、复权及状态数据，不得简单复制 Task01 daily 冒充 Gold。
 - Task01 独立 OAuth 凭据与 Gold rclone 凭据的 Drive 根不同；显式验证两侧文件夹访问，不复制凭据到仓库。
