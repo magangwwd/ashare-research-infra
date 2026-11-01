@@ -63,3 +63,14 @@
 - 尚未做 15min/财务/复权因子/daily_basic/停复牌/涨跌停等正式全量一致性，也未完成连续5个交易日的冻结V1影子策略、回滚演练。
 - Task01 正式数据仍停在 `2026-10-24`，历史完整性 false，旧上传 [#41234129775](https://github.com/magangwwd/ashare-research-infra/actions/runs/41234129775) 至此检查还处于 `in_progress`；后续任务 [#41248659151](https://github.com/magangwwd/ashare-research-infra/actions/runs/41248659151) `pending`。不启动重复上传，不切正式 Gold、不删除旧数据或修改冻结 V1。
 
+
+
+## 2026-11-01 12:00 范围修订：历史PIT保守分类（尚未重新执行真实Parquet）
+
+用户最终目标仅沪深A股主板（含上市、暂停上市、退市有效历史），并要求按历史时点过滤。此前真实只读 Runner #41261678723 和 #41261928673 的共同键38265、OHLCV差0、Gold当前名录3486，只证明**当前 Gold 签名证券集合与指定历史样本的数值诊断**，不是完整历史主板PIT，也不是五交易日策略影子验收。
+
+- 旧报告中 Task01 的额外记录不能因为不在 **2026-10-30 Gold 当前名录**就直接认定为非主板。代码前缀 300/301/302/688/689 不作为独立历史PIT证据；它们先计入 `unclassified_historical_rows`，不得算作 `only_in_gold`/Gold缺失，也不得直接宣称全部已排除。只有交易所标识为 `.BJ` 的记录能凭交易所范围排除，单列 `excluded_non_mainboard_rows`；现有 `task_non_mainboard_rows_excluded` 为兼容别名。
+- 当前 Gold instruments 官方 SHA 校验成功仅确认**当前**主板证券集合；Tushare `stock_basic.market=主板` 当前快照及退市历史、板块转移的逐日PIT证据尚未完成独立认证。代码显式标记 `tushare_stock_basic_market_mainboard_verified=false`、`gold_historical_pit_universe_verified=false`。历史未知记录出现时状态为 `UNCLASSIFIED_HISTORICAL_UNIVERSE`，不能视为全部匹配。
+- PR #149 修订代码提交 `a51ed040`、`a9154ba9`，测试提交 `665f71d3`、`c1c1e1b5`；PR #116 的 Skill 同步提交 `daa3757d`。这些变更均是离线审计逻辑，**没有再次触发**已完成的一次性真实 Parquet Runner，新增口径尚未得到生产数据重算验收。
+- Task01 生产 run #41234129775 已于2026-11-01终止为 cancelled，#41248659151 本轮核验仍在运行；正式 Drive `current.json` 仍为 2026-10-24、5406文件、`critical_history_complete=false`；Gold `manifest.json` 仍为2026-10-30。不得并发重启发布或恢复旧 stage。
+- 后续必须取得可核验的 Tushare 主板/非主板历史PIT归属（含转板、退市）、逐日统计 `excluded_non_mainboard_rows` 与真正主板缺口，再开展 daily_basic、复权、停牌、财务、连续5交易日冻结V1影子和回滚。全部通过前不得切换、删旧文件或停原下载。
