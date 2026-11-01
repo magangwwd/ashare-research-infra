@@ -1,0 +1,137 @@
+name: Mainboard real Parquet diagnostic (one-shot, read-only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mainboard-real-parquet-readonly-20261101
+  cancel-in-progress: false
+
+jobs:
+  diagnostic:
+    if: >-
+      github.repository == 'magangwwd/ashare-research-infra' &&
+      github.ref == 'refs/heads/ops/one-shot-real-parquet-diff-20261101' &&
+      github.actor == 'magangwwd'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install read-only Python dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Read exactly five existing Drive files, no writes
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import os
+          from pathlib import Path
+          from google.auth.transport.requests import AuthorizedSession, Request
+          from data_pipeline.drive_auth import parse_credentials
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "shadow-readonly"
+          root.mkdir(parents=True, exist_ok=False)
+          ids = {
+              "current.json": "1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB",
+              "production_manifest.json": "1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1",
+              "gold_manifest.json": "1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn",
+              "task_oct.parquet": "11J4PMUpBHn-wK5bjXG7mckYbssd9cHwx",
+              "gold_oct.parquet": "1OcZ9Jvg_0MtzccR4n80vidu0S7b2Bsvu",
+          }
+          frozen_sha = {
+              "current.json": "5d712e4c30c5ccc9c70ebd6672ebc401df97ba14f5d46d07e877baf915482926",
+              "gold_manifest.json": "3687f018cad6c96bdaf704217900925a773cc90fcb050031d6dd07cf20f33580",
+              "production_manifest.json": "118e6afb6febd3993656afce9e5a05bf412db7c87515a891bc3e9e8",
+              "task_oct.parquet": "22c1fa25caba35d49fa662f03ffc83f05572039672ecf1250df112dca9990858",
+              "gold_oct.parquet": "e084260b2d6829f3e0f439a877a25b94b866fa480dc05e8e057c444b9db23cca",
+          }
+          try:
+              cred = parse_credentials(os.environ["GDRIVE_OAUTH_JSON"])
+              cred.refresh(Request())
+              with AuthorizedSession(cred) as sess:
+                  def download(fid, dest):
+                      with sess.get(
+                          f"https://www.googleapis.com/drive/v3/files/{fid}",
+                          params={"alt": "media", "supportsAllDrives": "true"},
+                          stream=True, timeout=(20, 120)
+                      ) as response:
+                          if response.status_code != 200:
+                              raise ValueError("Drive read not authorized or incomplete")
+                          h = hashlib.sha256()
+                          size = 0
+                          with open(dest, "wb") as output:
+                              for chunk in response.iter_content(1024 * 1024):
+                                  if not chunk:
+                                      continue
+                                  size += len(chunk)
+                                  if size > 20_000_000:
+                                      raise ValueError("Drive file exceeds read-only limit")
+                                  h.update(chunk)
+                                  output.write(chunk)
+                          return h.hexdigest()
+                  for name, fid in ids.items():
+                      observed = download(fid, root / name)
+                      if observed != frozen_sha[name]:
+                          raise ValueError("Drive file changed since baseline: " + name)
+                  # Snapshot both pointer and Gold manifest again after reading data.
+                  for name in ("current.json", "gold_manifest.json"):
+                      if download(ids[name], root / ("second-" + name)) != frozen_sha[name]:
+                          raise ValueError("Concurrent formal pointer/manifest change: " + name)
+          except Exception:
+              raise SystemExit("BLOCKED: read-only Drive access or baseline digest changed; no retry")
+          print("PASS: 5 Drive files read, SHA pinned, pointer and Gold manifest stable")
+          PY
+      - name: Compare real month OHLCV and always label as diagnostic only
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/shadow-readonly"
+          set +e
+          python -m tools.mainboard_real_parquet_shadow \
+            --pointer "$ROOT/current.json" \
+            --task-manifest "$ROOT/production_manifest.json" \
+            --gold-manifest "$ROOT/gold_manifest.json" \
+            --task-daily "$ROOT/task_oct.parquet" \
+            --gold-daily "$ROOT/gold_oct.parquet" \
+            --task-relative-path data/clean/daily/year=2026/month=10/part-000.parquet \
+            --output metadata/mainboard_real_parquet_diff.json
+          code=$?
+          set -e
+          if [ "$code" != 0 ] && [ "$code" != 2 ]; then
+            echo "BLOCKED: diagnostic tool execution failed"
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("metadata/mainboard_real_parquet_diff.json")
+          if not p.is_file():
+              raise SystemExit("BLOCKED: missing diagnostic report")
+          r = json.loads(p.read_text())
+          if (r.get("production_switch_allowed") is not False or
+              r.get("five_trading_days_shadow_verified") is not False or
+              r.get("task01_file_sha256_verified_against_official_manifest") is not True):
+              raise SystemExit("BLOCKED: diagnostic safety contract violated")
+          print("READONLY_DIAGNOSTIC", r["status"], "common", r["common_keys"],
+                "only_task", r["only_in_task01"], "only_gold", r["only_in_gold"],
+                "numeric_diff", r["numeric_field_difference_count"])
+          PY
+      - name: Save sanitized diagnostic receipt only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mainboard-real-parquet-readonly-diagnostic
+          path: metadata/mainboard_real_parquet_diff.json
+          retention-days: 30
+          if-no-files-found: ignore
