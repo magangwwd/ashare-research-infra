@@ -500,3 +500,26 @@ def test_current_gold_membership_not_claimed_as_historical_pit(tmp_path):
     assert not report["gold_historical_pit_universe_verified"]
     assert report["non_mainboard_exclusion_basis"] == "BJ_EXCHANGE_ONLY_NO_NUMERIC_PREFIX_GUESS"
     assert report["production_switch_allowed"] is False
+
+
+
+def test_excluded_bj_row_does_not_fail_mainboard_numeric_validation(tmp_path):
+    p, m, gold, t, g = _make(tmp_path)
+    rows = pq.read_table(t).to_pylist()
+    rows.append(dict(rows[0], ts_code="920001.BJ", vol=None, amount=None))
+    pq.write_table(pa.Table.from_pylist(rows), t)
+    entry = {"path": REL, "bytes": t.stat().st_size,
+             "sha256": hashlib.sha256(t.read_bytes()).hexdigest()}
+    doc = json.loads(m)
+    doc["files"] = [entry]
+    doc["total_bytes"] = entry["bytes"]
+    m = json.dumps(doc).encode("utf-8")
+    p["total_bytes"] = entry["bytes"]
+    p["manifest_sha256"] = hashlib.sha256(m).hexdigest()
+    report = diagnose(p, m, gold, t, g, task_relative_path=REL,
+                      gold_instruments_path=t.parent / "instruments.parquet")
+    assert report["excluded_non_mainboard_rows"] == 1
+    assert report["unclassified_historical_rows"] == 0
+    assert report["common_keys"] == 1
+    assert report["numeric_field_difference_count"] == 0
+    assert report["production_switch_allowed"] is False
