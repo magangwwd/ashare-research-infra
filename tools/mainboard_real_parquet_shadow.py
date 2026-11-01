@@ -17,7 +17,7 @@ from pathlib import Path
 _FIELDS = ("open", "high", "low", "close", "volume_shares", "turnover_cny")
 _TASK_FIELDS = {"ts_code", "trade_date", "open", "high", "low", "close", "vol", "amount"}
 _GOLD_FIELDS = {"vendor_symbol", "trade_date", *_FIELDS}
-_GOLD_INSTRUMENT_FIELDS = {"instrument_id", "vendor_symbol", "board", "exchange", "as_of_date"}
+_GOLD_INSTRUMENT_FIELDS = {"instrument_id", "vendor_symbol", "board", "exchange", "currency", "as_of_date"}
 
 
 def _day(value):
@@ -82,8 +82,9 @@ def _verified_mainboard_symbols(gold_manifest, gold_instruments_path):
     ids, members = set(), set()
     max_as_of = _day(gold_manifest["as_of_date"])
     for row in records:
-        if row["board"] != "MAIN_BOARD" or row["exchange"] not in {"SSE", "SZSE"}:
-            raise ValueError("Gold instrument list contains non-main-board security")
+        if (row["board"] != "MAIN_BOARD" or row["exchange"] not in {"SSE", "SZSE"}
+                or row["currency"] != "CNY"):
+            raise ValueError("Gold instrument list contains non-main-board A-share security")
         sym, ident = row["vendor_symbol"], row["instrument_id"]
         if (not isinstance(sym, str) or not isinstance(ident, str) or not sym or not ident
                 or len(sym) != 9 or not sym[:6].isdigit()
