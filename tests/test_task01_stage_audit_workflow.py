@@ -71,7 +71,7 @@ def test_artifact_and_archive_handling_limits():
     assert 'path.parts[0] not in ("data", "metadata")' in text
     assert 'member.name == "data/current"' in text
     assert 'len(link.parts) == 2 and link.parts[0] == ".versions"' in text
-    assert 'not (member.isfile() or member.isdir() or safe_current_link or safe_hardlink)' in text
+    assert 'not (member.isfile() or member.isdir() or safe_current_link or safe_data_alias or safe_hardlink)' in text
 
 
 def test_audit_receipt_is_bound_to_explicit_source_stage_and_pointer():
@@ -207,6 +207,50 @@ def test_restore_rejects_untrusted_hardlinks(tmp_path, linkname):
     with tarfile.open(archive, "w:gz") as tf:
         member = tarfile.TarInfo("data/.versions/new/raw/a.parquet")
         member.type = tarfile.LNKTYPE
+        member.linkname = linkname
+        tf.addfile(member)
+    result, restored = _run_restore_script_with_archive(archive.read_bytes())
+    assert result.returncode != 0
+    assert "BLOCKED: unsafe checkpoint member" in result.stderr + result.stdout
+    assert not restored
+
+
+@pytest.mark.parametrize("alias", ["raw", "clean"])
+def test_restore_accepts_exact_task01_current_data_aliases(tmp_path, alias):
+    """Real checkpoints may link data/raw and data/clean to current/{alias}."""
+    import io
+    archive = tmp_path / "accepted-alias.tar.gz"
+    with tarfile.open(archive, "w:gz") as tf:
+        acceptance = b'{"passed":true}'
+        member = tarfile.TarInfo("data/.versions/accepted/acceptance.json")
+        member.size = len(acceptance)
+        tf.addfile(member, io.BytesIO(acceptance))
+        current = tarfile.TarInfo("data/current")
+        current.type = tarfile.SYMTYPE
+        current.linkname = ".versions/accepted"
+        tf.addfile(current)
+        top_level = tarfile.TarInfo(f"data/{alias}")
+        top_level.type = tarfile.SYMTYPE
+        top_level.linkname = f"current/{alias}"
+        tf.addfile(top_level)
+    result, restored = _run_restore_script_with_archive(archive.read_bytes())
+    assert result.returncode == 0, result.stderr + result.stdout
+    assert restored
+
+
+@pytest.mark.parametrize(("path", "linkname"), [
+    ("data/raw", "current/clean"),
+    ("data/raw", "../../etc"),
+    ("data/raw", "/tmp/outside"),
+    ("data/clean", "current/../raw"),
+    ("data/other", "current/other"),
+    ("data/.versions/accepted/raw", "current/raw"),
+])
+def test_restore_rejects_untrusted_data_aliases(tmp_path, path, linkname):
+    archive = tmp_path / "unsafe-alias.tar.gz"
+    with tarfile.open(archive, "w:gz") as tf:
+        member = tarfile.TarInfo(path)
+        member.type = tarfile.SYMTYPE
         member.linkname = linkname
         tf.addfile(member)
     result, restored = _run_restore_script_with_archive(archive.read_bytes())
