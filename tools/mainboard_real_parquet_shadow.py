@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from datetime import date, datetime
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP, ROUND_HALF_EVEN
 import hashlib
 import json
 from pathlib import Path
@@ -143,6 +143,10 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
     field_counts = Counter({name: 0 for name in _FIELDS})
     nearest_yuan_compatible = 0
     nearest_yuan_incompatible = 0
+    nearest_yuan_half_even_compatible = 0
+    turnover_within_half_yuan = 0
+    turnover_beyond_half_yuan = 0
+    turnover_exact_half_yuan_ties = 0
     for key in common:
         for field in _FIELDS:
             if t[key][field] != g[key][field]:
@@ -155,6 +159,18 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
                         nearest_yuan_compatible += 1
                     else:
                         nearest_yuan_incompatible += 1
+                    even_nearest = t[key][field].quantize(
+                        Decimal("1"), rounding=ROUND_HALF_EVEN,
+                    )
+                    if g[key][field] == even_nearest:
+                        nearest_yuan_half_even_compatible += 1
+                    absolute_difference = abs(t[key][field] - g[key][field])
+                    if absolute_difference <= Decimal("0.5"):
+                        turnover_within_half_yuan += 1
+                    else:
+                        turnover_beyond_half_yuan += 1
+                    if absolute_difference == Decimal("0.5"):
+                        turnover_exact_half_yuan_ties += 1
                 if len(diffs) < max_examples:
                     diffs.append({
                         "symbol": key[0], "date": key[1], "field": field,
@@ -179,6 +195,10 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
         "field_difference_counts": dict(field_counts),
         "turnover_nearest_yuan_compatible_differences": nearest_yuan_compatible,
         "turnover_nearest_yuan_incompatible_differences": nearest_yuan_incompatible,
+        "turnover_nearest_yuan_half_even_compatible_differences": nearest_yuan_half_even_compatible,
+        "turnover_absolute_difference_le_half_yuan": turnover_within_half_yuan,
+        "turnover_absolute_difference_gt_half_yuan": turnover_beyond_half_yuan,
+        "turnover_exact_half_yuan_difference_count": turnover_exact_half_yuan_ties,
         "only_in_task01_by_symbol_prefix": dict(sorted(Counter(
             sym.split(".")[0][:3] + "." + sym.split(".")[-1] for sym, day in only_task
         ).items())),
