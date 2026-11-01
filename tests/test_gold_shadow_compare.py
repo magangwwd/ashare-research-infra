@@ -6,7 +6,7 @@ from data_pipeline.gold_shadow_compare import compare_shadow_daily
 class ShadowDailyCompareTests(unittest.TestCase):
     def setUp(self):
         self.task = {
-            "vendor_symbol": "600031.SH", "trade_date": "2026-10-24",
+            "vendor_symbol": "600031.SH", "instrument_id": "gold-id-1", "trade_date": "2026-10-24",
             "open": 10, "high": 11, "low": 9, "close": 10.5,
             "volume_shares": 12345, "turnover_cny": 67890,
             "is_quality_valid": False,
@@ -91,11 +91,36 @@ class ShadowDailyCompareTests(unittest.TestCase):
             self.compare(gold=[dict(self.gold, is_quality_valid=1)])
 
     def test_example_limit_does_not_hide_total_difference_count(self):
-        task = [dict(self.task, vendor_symbol=f"60000{i}.SH") for i in range(3)]
+        task = [dict(self.task, vendor_symbol=f"60000{i}.SH", instrument_id=f"gold-id-{i}") for i in range(3)]
         gold = [dict(r, is_quality_valid=True, close=11) for r in task]
         report = self.compare(task=task, gold=gold, sample_limit=1)
         self.assertEqual(report["field_difference_count"], 3)
         self.assertEqual(len(report["field_difference_examples"]), 1)
+
+    def test_identity_drift_is_reported_even_when_prices_equal(self):
+        gold = dict(self.gold, instrument_id="wrong-gold-id")
+        report = self.compare(gold=[gold])
+        self.assertEqual(report["status"], "DIFFERENCES_FOUND")
+        self.assertEqual(report["field_difference_count"], 0)
+        self.assertEqual(report["instrument_id_difference_count"], 1)
+        self.assertEqual(report["instrument_id_difference_examples"][0]["gold_instrument_id"], "wrong-gold-id")
+        self.assertFalse(report["production_switch_allowed"])
+
+    def test_missing_instrument_id_rejected(self):
+        row = dict(self.gold)
+        del row["instrument_id"]
+        with self.assertRaisesRegex(ValueError, "instrument_id"):
+            self.compare(gold=[row])
+
+    def test_one_symbol_with_two_instrument_ids_rejected(self):
+        earlier = dict(self.gold, trade_date="2026-10-23", instrument_id="wrong-gold-id")
+        with self.assertRaisesRegex(ValueError, "conflicting instrument_id"):
+            self.compare(gold=[self.gold, earlier])
+
+    def test_instrument_id_reused_for_different_symbols_rejected(self):
+        other = dict(self.gold, vendor_symbol="600000.SH")
+        with self.assertRaisesRegex(ValueError, "reused by different symbols"):
+            self.compare(gold=[self.gold, other])
 
     def test_date_object_normalized(self):
         from datetime import date
