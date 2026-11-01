@@ -1,6 +1,6 @@
 """Upload ETF input data and all audit/backtest reports to the dedicated Drive folder."""
 from __future__ import annotations
-import json, os, mimetypes, hashlib, time
+import json, os, mimetypes, hashlib
 import requests
 from datetime import datetime, timezone
 from pathlib import Path
@@ -60,8 +60,6 @@ FILES = [
 ]
 
 PROGRESS = Path("etf_single_rotation/state/drive_upload_checkpoint.json")
-MAX_UPLOAD_ATTEMPTS = 4
-TRANSIENT_STATUSES = {429, 500, 502, 503, 504}
 
 
 def _file_hash(path: Path):
@@ -95,9 +93,103 @@ def _oauth_session():
     return AuthorizedSession(creds)
 
 
+
+def _remote_metadata(session, file_id):
+    """Read by ID; never trust a checkpoint or an upload response alone."""
+    try:
+        response = session.get(
+            f"https://www.googleapis.com/drive/v3/files/{file_id}",
+            params={"fields": "id,name,size,md5Checksum,parents"},
+            timeout=30,
+        )
+    except requests.exceptions.RequestException as exc:
+        raise SystemExit("Drive metadata readback unavailable; refusing unsafe reuse.") from exc
+    if response.status_code != 200:
+        raise SystemExit(f"Drive metadata readback failed: HTTP {response.status_code}")
+    try:
+        item = response.json()
+    except (ValueError, TypeError) as exc:
+        raise SystemExit("Drive metadata malformed JSON; refusing unsafe reuse.") from exc
+    # The by-ID readback must identify the exact object being credited.
+    if not isinstance(item, dict) or item.get("id") != file_id:
+        raise SystemExit("Drive metadata ID mismatch or malformed payload; no reuse.")
+    return item
+
+
+def _verify_metadata(item, path, expected_name):
+    """Drive binary file metadata must match local bytes and destination."""
+    local_md5 = hashlib.md5(path.read_bytes()).hexdigest()
+    if (item.get("name") != expected_name
+            or FOLDER_ID not in item.get("parents", [])
+            or str(item.get("size")) != str(path.stat().st_size)
+            or item.get("md5Checksum") != local_md5):
+        raise SystemExit(
+            f"Drive file mismatch or missing checksum for {expected_name}; "
+            "manual review required, no upload."
+        )
+
+
+def _find_existing(session, path, target_name):
+    """Read-only exact-name preflight; ambiguous duplicates always fail closed."""
+    escaped = target_name.replace("\\", "\\\\").replace("'", "\\'")
+    query = f"'{FOLDER_ID}' in parents and name = '{escaped}' and trashed = false"
+    matches, page_token = [], None
+    seen_page_tokens = set()
+    while True:
+        params = {
+            "q": query,
+            "fields": "nextPageToken,incompleteSearch,files(id,name,size,md5Checksum,parents)",
+            "pageSize": 100,
+        }
+        if page_token:
+            params["pageToken"] = page_token
+        try:
+            response = session.get(
+                "https://www.googleapis.com/drive/v3/files",
+                params=params, timeout=30,
+            )
+        except requests.exceptions.RequestException as exc:
+            raise SystemExit("Drive preflight unavailable; no upload attempted.") from exc
+        if response.status_code != 200:
+            raise SystemExit(f"Drive preflight failed: HTTP {response.status_code}")
+        payload = response.json()
+        # A malformed HTTP 200 response cannot prove the target name is absent.
+        # Treat missing/null/wrong-type files as unsafe, never as an empty list.
+        if not isinstance(payload, dict) or not isinstance(payload.get("files"), list):
+            raise SystemExit("Drive preflight malformed file list; no upload attempted.")
+        # A partial Drive search cannot establish that a name is unique.
+        if "incompleteSearch" in payload and payload["incompleteSearch"] is not False:
+            raise SystemExit("Drive preflight incomplete search or malformed flag; no upload attempted.")
+        matches.extend(payload.get("files", []))
+        if len(matches) > 1:
+            raise SystemExit(
+                f"Duplicate Drive name {target_name}: {len(matches)} objects; "
+                "no automatic reconciliation or deletion."
+            )
+        next_page_token = payload.get("nextPageToken")
+        # A falsey malformed token (e.g. 0) must not look like end-of-list.
+        if next_page_token is not None and (not isinstance(next_page_token, str) or not next_page_token):
+            raise SystemExit("Drive preflight malformed pagination token; no upload attempted.")
+        if next_page_token is not None:
+            # Fail closed on broken/cyclic pagination rather than looping forever.
+            if (next_page_token in seen_page_tokens
+                    or len(seen_page_tokens) >= 50):
+                raise SystemExit("Drive preflight pagination loop/limit; no upload attempted.")
+            seen_page_tokens.add(next_page_token)
+        page_token = next_page_token
+        if not page_token:
+            break
+    if not matches:
+        return None
+    _verify_metadata(matches[0], path, target_name)
+    if not matches[0].get("id"):
+        raise SystemExit("Drive preflight returned no file ID.")
+    return matches[0]
+
+
 def main():
-    # Validate existence first: never partially publish if a required report
-    # is already missing on disk.
+    # A lost POST response may mean the server already created the file.
+    # Never retry a possibly successful create; preserve both bytes and logs.
     for path in FILES:
         if not path.is_file() or path.stat().st_size == 0:
             raise SystemExit(f"Expected nonempty research artifact missing: {path}")
@@ -114,55 +206,73 @@ def main():
         digest = _file_hash(path)
         rel = path.as_posix()
         prior = progress["files"].get(rel, {})
-        if prior.get("sha256") == digest and prior.get("drive_id"):
-            print(f"DRIVE_SKIP_VERIFIED {rel} -> {prior['drive_id']}", flush=True)
-            continue
         path_tag = hashlib.sha256(rel.encode("utf-8")).hexdigest()[:7]
         target_name = f"{path.stem}_{run_id}_{path_tag}_{digest[:12]}{path.suffix}"
-        metadata = {"name": target_name, "parents": [FOLDER_ID]}
-        mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
-        boundary = "etfrotationboundary"
-        body = (
-            f"--{boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"
-            + json.dumps(metadata, separators=(",", ":"))
-            + f"\r\n--{boundary}\r\nContent-Type: {mime}\r\n\r\n"
-        ).encode() + path.read_bytes() + f"\r\n--{boundary}--".encode()
-        for attempt in range(1, MAX_UPLOAD_ATTEMPTS + 1):
+        if prior.get("sha256") == digest and prior.get("drive_id"):
+            prior_name = prior.get("drive_name")
+            if not prior_name:
+                raise SystemExit(f"Checkpoint lacks Drive name for {rel}; manual review required.")
+            # A restored checkpoint can belong to an earlier GitHub run.
+            # Never credit an old run's Drive object to the current run.
+            if prior_name == target_name:
+                existing = _find_existing(session, path, target_name)
+                if not existing or existing["id"] != prior["drive_id"]:
+                    raise SystemExit(f"Checkpoint/Drive mismatch for {rel}; no reupload.")
+                _verify_metadata(_remote_metadata(session, existing["id"]), path, target_name)
+                print(f"DRIVE_SKIP_VERIFIED {rel} -> {existing['id']}", flush=True)
+                continue
+            print(f"DRIVE_STALE_CHECKPOINT {rel}: checking current run target", flush=True)
+
+        existing = _find_existing(session, path, target_name)
+        if existing:
+            _verify_metadata(_remote_metadata(session, existing["id"]), path, target_name)
+            drive_id = existing["id"]
+            print(f"DRIVE_REUSE_VERIFIED {rel} -> {drive_id}", flush=True)
+        else:
+            metadata = {"name": target_name, "parents": [FOLDER_ID]}
+            mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+            boundary = "etfrotationboundary"
+            body = (
+                f"--{boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"
+                + json.dumps(metadata, separators=(",", ":"))
+                + f"\r\n--{boundary}\r\nContent-Type: {mime}\r\n\r\n"
+            ).encode() + path.read_bytes() + f"\r\n--{boundary}--".encode()
             try:
                 response = session.post(
                     "https://www.googleapis.com/upload/drive/v3/files",
                     params={"uploadType": "multipart", "fields": "id,name,webViewLink"},
                     headers={"Content-Type": f"multipart/related; boundary={boundary}"},
-                    data=body, timeout=180
+                    data=body, timeout=180,
                 )
-            except requests.exceptions.RequestException:
-                code = "NETWORK_ERROR"
-                retry = True
-            else:
-                code = response.status_code
-                retry = code in TRANSIENT_STATUSES
-                if code in (200, 201):
-                    result = response.json()
-                    drive_id = result.get("id")
-                    if not drive_id:
-                        raise SystemExit("Drive upload returned no file id; cannot verify save.")
-                    progress["files"][rel] = {
-                        "sha256": digest,
-                        "drive_id": drive_id,
-                        "drive_name": result.get("name"),
-                        "updated_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                    }
-                    _save_progress(progress)
-                    print(f"Uploaded {path.name} -> {result.get('name')} ({drive_id})", flush=True)
-                    break
-            if retry and attempt < MAX_UPLOAD_ATTEMPTS:
-                print(f"DRIVE_UPLOAD_RETRY {rel} status={code} attempt={attempt}", flush=True)
-                time.sleep(min(2 ** attempt, 12))
-                continue
-            raise SystemExit(
-                f"Drive upload failed for {rel} after attempt {attempt}; HTTP/status {code}. "
-                "Partial result remains in Drive, progress preserved in checkpoint."
-            )
+            except requests.exceptions.RequestException as exc:
+                raise SystemExit(
+                    f"Drive create outcome ambiguous for {rel}; no automatic POST retry."
+                ) from exc
+            if response.status_code not in (200, 201):
+                raise SystemExit(
+                    f"Drive create HTTP {response.status_code} for {rel}; "
+                    "server outcome may be ambiguous, no automatic POST retry."
+                )
+            result = response.json()
+            drive_id = result.get("id")
+            if not drive_id:
+                raise SystemExit("Drive upload returned no file ID; no retry.")
+            _verify_metadata(_remote_metadata(session, drive_id), path, target_name)
+            verified = _find_existing(session, path, target_name)
+            if not verified or verified["id"] != drive_id:
+                raise SystemExit(
+                    "Drive name/ID readback missing or ambiguous; "
+                    "preserve remote file and require manual review."
+                )
+            print(f"DRIVE_CREATED_VERIFIED {rel} -> {drive_id}", flush=True)
+
+        progress["files"][rel] = {
+            "sha256": digest,
+            "drive_id": drive_id,
+            "drive_name": target_name,
+            "updated_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        }
+        _save_progress(progress)
     print(f"DRIVE_UPLOAD_COMPLETE files={len(FILES)} checkpoint={PROGRESS}", flush=True)
 
 
