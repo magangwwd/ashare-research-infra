@@ -1,11 +1,7 @@
 name: Mainboard Float64 Turnover Parity (one-shot)
 
 on:
-  push:
-    branches:
-      - ops/one-shot-mainboard-float-parity-20261101
-    paths:
-      - .github/workflows/mainboard-float-parity-readonly-20261101.yml
+  workflow_dispatch:
 
 permissions:
   contents: read
