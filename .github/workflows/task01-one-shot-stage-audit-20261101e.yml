@@ -1,10 +1,6 @@
 name: Task01 one-shot stage SHA audit relay 20261101e
 on:
-  push:
-    branches:
-      - ops/one-shot-task01-stage-audit-20261101e
-    paths:
-      - .github/workflows/task01-one-shot-stage-audit-20261101e.yml
+  workflow_dispatch:
 permissions:
   contents: read
   actions: write
