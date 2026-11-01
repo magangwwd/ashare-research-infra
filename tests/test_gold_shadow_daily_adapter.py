@@ -5,7 +5,7 @@ from data_pipeline.gold_shadow_daily_adapter import adapt_daily_shadow
 
 class GoldShadowDailyAdapterTests(unittest.TestCase):
     def setUp(self):
-        self.instruments = [{"vendor_symbol": "600031.SH", "instrument_id": "gold-id-1"}]
+        self.instruments = [{"vendor_symbol": "600031.SH", "instrument_id": "gold-id-1", "as_of_date": "2026-10-24"}]
         self.row = {
             "ts_code": "600031.SH", "security_id": "task01-uuid5-not-gold-id",
             "trade_date": "2026-10-24", "open": 10, "high": 11, "low": 9,
@@ -35,6 +35,24 @@ class GoldShadowDailyAdapterTests(unittest.TestCase):
     def test_future_gold_universe_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "PIT_UNIVERSE_DATE_MISMATCH"):
             self.adapt(instruments_as_of="2026-10-30")
+
+    def test_forged_pit_date_label_cannot_hide_future_gold_rows(self):
+        future = [dict(self.instruments[0], as_of_date="2026-10-30")]
+        with self.assertRaisesRegex(ValueError, "PIT_UNIVERSE_ROW_DATE_MISMATCH"):
+            self.adapt(instruments=future, instruments_as_of="2026-10-24")
+
+    def test_missing_instrument_row_as_of_is_rejected(self):
+        without_date = [dict(self.instruments[0])]
+        del without_date[0]["as_of_date"]
+        with self.assertRaisesRegex(ValueError, "instrument.as_of_date"):
+            self.adapt(instruments=without_date)
+
+    def test_per_row_date_object_is_accepted_for_same_cutoff_only(self):
+        from datetime import date
+        current = [dict(self.instruments[0], as_of_date=date(2026, 10, 24))]
+        rows, audit = self.adapt(instruments=current)
+        self.assertEqual(len(rows), 1)
+        self.assertFalse(audit["point_in_time_membership_verified"])
 
     def test_nonintegral_units_rejected_instead_of_rounding(self):
         row = dict(self.row, vol="1.001")
