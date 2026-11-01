@@ -1,11 +1,7 @@
 name: Mainboard 4 Turnover Exceptions (one-shot)
 
 on:
-  push:
-    branches:
-      - ops/one-shot-mainboard-4-turnover-20261101
-    paths:
-      - .github/workflows/mainboard-4-turnover-readonly-20261101.yml
+  workflow_dispatch:
 
 permissions:
   contents: read
