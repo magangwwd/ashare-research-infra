@@ -45,9 +45,19 @@
 
 **额外行的代码组**：`300.SZ=11222, 301.SZ=5668, 302.SZ=12, 688.SH=7392, 689.SH=12, 920.BJ=4204`，合计28,510。这反映 Task01 包含更宽的证券范围；不能据此认定 Gold 缺失主板交易日，更不能跳过历史时点股票池校验。
 
+## Gold 原始历史回填代码核对（已实读 Drive，不能替代生产版本锁定）
+
+- 已从 Gold 的 `down_data/` 真正读取历史月分区生成程序 [`backfill_main_board_history.py`](https://drive.google.com/file/d/1VR2k6OLiUYsRaQGn-0LbRP56sYFZmzj7/view)（Drive ID `1VR2k6OLiUYsRaQGn-0LbRP56sYFZmzj7`，修改时间2026-07-23）。其中第144–145行定义 `scaled_int(values,multiplier)=(pd.to_numeric(values, errors="coerce")*multiplier).round().astype("Int64")`，第358–359行将 `vol` 乘100、`amount` 乘1000。这个文件**确实**是历史 `daily_prices` 的处理逻辑，而不是仅看顶层 `daily_snapshot`。
+- [`build_main_board_canonical.py`](https://drive.google.com/file/d/1MAaZMw2JzwN6EHYzvyy1E2x8NkTzsVZO/view)（Drive ID `1MAaZMw2JzwN6EHYzvyy1E2x8NkTzsVZO`）亦采用相同的 `scaled_int` 规则。
+- 这为 Gold 保存整数元、Task01可能保留非整数元提供了**真实源代码解释**。但其版本仍需和实际运行来源匹配；上述4条 `Decimal HALF_EVEN` 不匹配不能直接臆断为某一具体浮点误差，不覆盖原始记录进行伪修复。
+
 ## 已提交的适配器纠偏（仍是研究）
 
-原 `gold_shadow_daily_adapter.py` 的 `_exact_units(amount,1000)` 在真实部分日线上遇到小数元时会报错，导致影子候选转换无法完成。新增 **`_shadow_turnover_cny`** 仅在未验证候选中采用显式 `DECIMAL_HALF_EVEN_UNVERIFIED` 整元转换、记录小数精度丢失行数 `turnover_cny_precision_loss_rows`，并保留 `turnover_cny_rounding_contract_verified_against_gold=false`、`quality_validation_complete=false`、`production_switch_allowed=false`。代码提交 `7b7f0c8a71db1c3dd204ab157dba6f58a32cd6f2`，新增5项单测 `65eb2005d48d2848de9709aec3b3beef7cc46400`；**实际 CI 结果须另外确认**。没有修改正式Gold或Task01。
+原 `gold_shadow_daily_adapter.py` 的 `_exact_units(amount,1000)` 在真实部分日线上遇到非整数元时会报错，导致影子转换无法覆盖全部共同主键。先提交 `7b7f0c8a71db1c3dd204ab157dba6f58a32cd6f2` 引入显式未验证的舍入与精度损失计数，随后基于Gold历史构建源代码，更新为 `FLOAT64_RINT_EMULATES_GOLD_PANDAS_SOURCE_UNVERIFIED` 的影子规则（`19808b0fc7b0a1679ee6c43c33d3a775245b5648`）；增加整型边界安全补丁 `76a674aa80711114e3ecebfb8f64742c6a57b5b9` 和 Pandas 参考回归 `2ab577338fa23d5a7dd98cfdd5babe2dd50dcf26`。
+
+候选 audit 明确记录 `turnover_cny_precision_loss_rows`；仍固定 `turnover_cny_rounding_contract_verified_against_gold=false`、`quality_validation_complete=false`、`production_switch_allowed=false`，因为这只是按源代码模拟，**还没有运行真实新适配器与Gold历史行级结果的全量等价验证**。
+
+本文件截至修订时不得替代最新CI记录；应查询分支最新运行的终态及工件，再评价代码验收。生产数据与冻结V1均未修改。
 
 ## 仍未完成的上线门禁
 
