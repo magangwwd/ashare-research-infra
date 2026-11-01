@@ -1,11 +1,8 @@
 name: Task01 source-locked read-only SHA audit relay (one-shot 2026-11-01c)
 
+# One-shot dispatch completed: relay run #41287574269. Never push-trigger again.
 on:
-  push:
-    branches:
-      - ops/one-shot-task01-stage-audit-20261101c
-    paths:
-      - .github/workflows/task01-one-shot-stage-audit-20261101c.yml
+  workflow_dispatch:
 
 permissions:
   contents: read
