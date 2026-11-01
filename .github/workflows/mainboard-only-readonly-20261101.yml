@@ -1,7 +1,11 @@
 name: Mainboard Official-List Parity (one-shot)
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - ops/one-shot-mainboard-only-20261101
+    paths:
+      - .github/workflows/mainboard-only-readonly-20261101.yml
 
 permissions:
   contents: read
