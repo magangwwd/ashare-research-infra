@@ -162,6 +162,27 @@ class DriveIdempotencyTests(unittest.TestCase):
             u.main()
         self.session.post.assert_not_called()
 
+    def test_by_id_readback_wrong_id_never_credits_checkpoint(self):
+        # A successful HTTP status is not proof that the returned ID is right.
+        self.session.get.side_effect = [
+            Reply(200, {"files": [self.item]}),
+            Reply(200, {**self.item, "id": "wrong-drive-id"}),
+        ]
+        with self.assertRaisesRegex(SystemExit, "metadata ID mismatch"):
+            u.main()
+        self.session.post.assert_not_called()
+        self.assertEqual(json.loads(self.progress.read_text())["files"], {})
+
+    def test_by_id_readback_malformed_payload_never_credits_checkpoint(self):
+        self.session.get.side_effect = [
+            Reply(200, {"files": [self.item]}),
+            Reply(200, []),
+        ]
+        with self.assertRaisesRegex(SystemExit, "malformed payload"):
+            u.main()
+        self.session.post.assert_not_called()
+        self.assertEqual(json.loads(self.progress.read_text())["files"], {})
+
     def test_lost_success_response_never_retries_post(self):
         self.session.get.return_value = Reply(200, {"files": []})
         self.session.post.side_effect = requests.exceptions.Timeout("lost 201 response")
