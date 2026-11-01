@@ -65,20 +65,45 @@
         "ETF-BENCH-002"
       ],
       "acceptance": "Corporate-action/cash-distribution event cross-check and recorded return impact; cannot infer from matching factors alone",
-      "next_action": "Review draft PR #92; add record-date dividend entitlement tests and issuer-verified dividend registry in isolated PR; run scoped CI and independent price/Drive readback before VERIFIED_DONE. PAPER-005 remains dependency blocked.",
+      "next_action": "PR #92 exact-head scoped CI already passed 90 synthetic tests (Run 40197993123 / Job 121182907808 / SHA e9c4cf49); do not repeat it. Review stacked PR #114 and #117 at their current heads; obtain explicit approval before one necessary scoped CI run. Independently verify issuer dividend coverage, market-price/fund_adj reconciliation, record-date cash receivable/payment availability and relevant Drive readback. Keep REVIEW_REQUIRED; PAPER-005 stays BLOCKED until formal VERIFIED_DONE evidence.",
       "review_evidence": {
         "github_pr": "https://github.com/magangwwd/ashare-research-infra/pull/92",
         "pr_state": "DRAFT_UNMERGED",
-        "review_head_sha": "dff9aca9ddab6d2a51dab4cf819abfa6405a079a",
-        "tested": "SIX_SYNTHETIC_TESTS_LOCALLY_PREVIOUSLY; NO_GITHUB_CI_RUN",
+        "review_head_sha": "e9c4cf492709ebb23f22a3b025985b9640025b1b",
+        "tested": "PR92_EXACT_HEAD_GITHUB_CI_RUN_40197993123_JOB_121182907808_90_SYNTHETIC_TESTS_OK; PR114_PR117_CURRENT_HEAD_NO_RUN",
         "artifact_drive_readback": "NOT_PERFORMED_FOR_THIS_CHANGE",
         "blockers": [
           "Independent issuer dividend coverage incomplete",
           "Independent market price and fund_adj reconciliation incomplete",
-          "Record-date cash receivable/payment ledger unverified",
-          "Cloud CI and Drive audit for new code not run"
+          "Record-date cash receivable/payment availability ledger not independently verified",
+          "Newer stacked PR #114/#117 exact-head CI and Drive acceptance not verified"
         ],
-        "last_checked_utc": "2026-10-21T22:26:42Z"
+        "last_checked_utc": "2026-11-01T08:03:06Z",
+        "github_ci": {
+          "run_id": 40197993123,
+          "job_id": 121182907808,
+          "head_sha": "e9c4cf492709ebb23f22a3b025985b9640025b1b",
+          "status": "completed",
+          "conclusion": "success",
+          "synthetic_tests_passed": 90,
+          "synthetic_tests_failed": 0,
+          "artifact_count": 0,
+          "scope": "Synthetic accounting only; not issuer/market/Drive acceptance"
+        },
+        "additional_prs": [
+          {
+            "number": 114,
+            "head_sha": "7aa9084f2a10f88f43b449eac127c52f0c6d05d9",
+            "state": "DRAFT_UNMERGED",
+            "exact_head_ci": "NOT_FOUND"
+          },
+          {
+            "number": 117,
+            "head_sha": "7c29f47922658fe70d3928e301b96b478bfa19e4",
+            "state": "DRAFT_UNMERGED",
+            "exact_head_ci": "NOT_FOUND"
+          }
+        ]
       }
     },
     {
@@ -108,5 +133,5 @@
   "latest_verified_run": 39599580852,
   "last_verified_status": "RESEARCH_RUN_COMPLETED_REVIEW_REQUIRED; 13 sequential stages; 38 tests OK; 48 Drive uploads; all 5 declared ETF halts source-matched",
   "last_known_research_status": "NOT_FOR_TRADING",
-  "updated_utc": "2026-10-24T20:30:00Z"
+  "updated_utc": "2026-11-01T08:03:06Z"
 }
