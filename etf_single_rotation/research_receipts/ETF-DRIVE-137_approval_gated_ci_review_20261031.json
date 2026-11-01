@@ -4,18 +4,18 @@
   "task_id": "ETF-DRIVE-137",
   "issue": 137,
   "source_pr": 139,
-  "source_head_sha": "9af184668f23d5beaee96dfb2716528cdec1b43b",
+  "source_head_sha": "dbf888799fb685db3c38d4dd51aea15832c82d5c",
   "staging_branch": "research/etf-drive137-approval-gated-ci-20261031",
   "staging_workflow": ".github/workflows/etf-drive137-approval-gated-ci.yml",
   "workflow_commit_sha": "5f54b33997f40ab82f9b14ecbc75d70cd8962878",
   "status": "REVIEW_REQUIRED",
   "trading_status": "NOT_FOR_TRADING",
-  "observed_date_utc": "2026-10-31",
+  "observed_date_utc": "2026-11-01",
   "checks": {
     "workflow_written": true,
     "exact_head_checkout_configured": true,
     "offline_test_module": "etf_single_rotation.test_drive_upload_idempotency",
-    "mock_tests_declared": 20,
+    "mock_tests_declared": 22,
     "run_id": null,
     "job_id": null,
     "tests_executed": false,
@@ -27,8 +27,9 @@
     "malformed_list_failclosed_cases_written": 2,
     "falsey_page_token_failclosed_cases_written": 1,
     "malformed_incomplete_search_flag_cases_written": 1,
-    "code_blob_sha": "ba4e684b4a2fd8bba25f3d425d05eb0b7e8fc59e",
-    "tests_blob_sha": "9a2af895fd739275152565b87b593f725a7181c3"
+    "code_blob_sha": "2e6842e480853396985514c46e128e79016c068e",
+    "tests_blob_sha": "d059c846a9b439bb5d428b7d91ebb4950f22db73",
+    "by_id_metadata_negative_cases_written": 2
   },
   "constraints": [
     "No push/schedule/workflow_dispatch trigger; draft PR requires human ready_for_review event",
@@ -37,7 +38,8 @@
     "Preserve 49 historic objects/48 distinct names until independently reviewed",
     "Fixed 8 ETFs; at most one ETF or cash; 25% historical MDD research goal",
     "ETF-DIV-004 remains REVIEW_REQUIRED; ETF-PAPER-005 dependency-blocked",
-    "20 synthetic tests are written but not run; malformed falsey pagination tokens and non-boolean incompleteSearch flags now fail closed."
+    "22 synthetic tests are written but not run; malformed falsey pagination tokens and non-boolean incompleteSearch flags now fail closed.",
+    "Drive by-ID metadata must match requested ID; 2 new negative cases are staged but not executed."
   ],
-  "next_action": "Keep PR #147 draft until explicit authorization; on ready_for_review run 20 offline mocked tests once against exact PR head, verify Run/Job/logs. Do not claim formal SOP acceptance or real Drive byte readback; preserve historical duplicates and PAPER-005 BLOCKED."
+  "next_action": "Keep PR #147 draft until explicit approval; verify current exact head SHA then execute at most one 22-case offline mocked CI, inspect Run/Job/logs. No formal SOP acceptance or real Drive byte readback is claimed; retain historical duplicates and PAPER-005 BLOCKED."
 }
