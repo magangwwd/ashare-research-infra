@@ -1,7 +1,11 @@
 name: Mainboard Listing Window Diagnostic (one-shot)
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - ops/one-shot-mainboard-listing-window-20261101
+    paths:
+      - .github/workflows/mainboard-listing-window-readonly-20261101.yml
 
 permissions:
   contents: read
