@@ -70,6 +70,11 @@ def adapt_daily_shadow(rows, instruments, *, task_as_of, instruments_as_of):
         symbol, ident = item.get("vendor_symbol"), item.get("instrument_id")
         if not isinstance(symbol, str) or not symbol or not isinstance(ident, str) or not ident:
             raise ValueError("missing Gold symbol or instrument_id")
+        # Do not trust the caller's date label alone. Verify each observed Gold row.
+        # Current Gold instrument records have as_of_date; a future snapshot
+        # cannot be passed as a historical PIT universe by relabeling metadata.
+        if _date(item.get("as_of_date"), "instrument.as_of_date") != cutoff:
+            raise ValueError("PIT_UNIVERSE_ROW_DATE_MISMATCH: instrument date differs")
         if symbol in by_symbol or ident in ids:
             raise ValueError("duplicate Gold symbol or instrument_id")
         by_symbol[symbol] = ident
