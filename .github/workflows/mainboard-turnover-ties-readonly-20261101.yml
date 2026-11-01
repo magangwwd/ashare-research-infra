@@ -1,7 +1,11 @@
 name: Mainboard Turnover Tie Diagnostic (one-shot)
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - ops/one-shot-mainboard-turnover-ties-20261101
+    paths:
+      - .github/workflows/mainboard-turnover-ties-readonly-20261101.yml
 
 permissions:
   contents: read
