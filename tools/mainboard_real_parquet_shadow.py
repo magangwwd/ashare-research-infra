@@ -17,7 +17,10 @@ from pathlib import Path
 _FIELDS = ("open", "high", "low", "close", "volume_shares", "turnover_cny")
 _TASK_FIELDS = {"ts_code", "trade_date", "open", "high", "low", "close", "vol", "amount"}
 _GOLD_FIELDS = {"vendor_symbol", "trade_date", *_FIELDS}
-_GOLD_INSTRUMENT_FIELDS = {"instrument_id", "vendor_symbol", "board", "exchange", "currency", "as_of_date"}
+_GOLD_INSTRUMENT_FIELDS = {
+    "instrument_id", "vendor_symbol", "board", "exchange", "currency",
+    "as_of_date", "list_date", "delist_date",
+}
 
 
 def _day(value):
@@ -93,7 +96,8 @@ def _verified_mainboard_symbols(gold_manifest, gold_instruments_path):
     records = _load_rows(path, _GOLD_INSTRUMENT_FIELDS)
     if len(records) != file_contract.get("rows") or not records:
         raise ValueError("official Gold instrument count mismatch")
-    ids, members = set(), set()
+    ids, members, listing_windows = set(), set(), {}
+    missing_list_dates = 0
     max_as_of = _day(gold_manifest["as_of_date"])
     for row in records:
         if (row["board"] != "MAIN_BOARD" or row["exchange"] not in {"SSE", "SZSE"}
@@ -109,9 +113,16 @@ def _verified_mainboard_symbols(gold_manifest, gold_instruments_path):
             raise ValueError("Gold instrument recorded after manifest as_of")
         if sym in members or ident in ids:
             raise ValueError("duplicate Gold instrument identity")
+        start = _day(row["list_date"]) if row["list_date"] is not None else None
+        end = _day(row["delist_date"]) if row["delist_date"] is not None else None
+        if start is not None and end is not None and end < start:
+            raise ValueError("Gold instrument invalid listing window")
+        if start is None:
+            missing_list_dates += 1
+        listing_windows[sym] = (start, end)
         members.add(sym)
         ids.add(ident)
-    return members
+    return members, listing_windows, missing_list_dates
 
 
 def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
@@ -152,11 +163,14 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
     # A local observed hash is NOT an independent official Gold month hash.
     task_raw = _load_rows(task_daily_path, _TASK_FIELDS)
     gold_raw = _load_rows(gold_daily_path, _GOLD_FIELDS)
-    mainboard_symbols = _verified_mainboard_symbols(gold_manifest, gold_instruments_path)
+    mainboard_symbols, listing_windows, missing_list_dates = _verified_mainboard_symbols(
+        gold_manifest, gold_instruments_path
+    )
 
     def index(rows, label):
         out = {}
         outside, excluded = 0, Counter()
+        listing_unknown, listing_violations = 0, []
         for r in rows:
             if label == "task":
                 sym = r["ts_code"]
@@ -177,6 +191,12 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
                     raise ValueError("Gold daily has symbol outside verified main-board list")
                 excluded[sym.split(".")[0][:3] + "." + sym.split(".")[-1]] += 1
                 continue
+            start, end = listing_windows[sym]
+            if start is None:
+                listing_unknown += 1
+            if ((start is not None and day < start)
+                    or (end is not None and day > end)):
+                listing_violations.append((sym, day.isoformat()))
             key = (sym, day.isoformat())
             if key in out:
                 raise ValueError(f"{label}: duplicate symbol/date")
@@ -189,10 +209,10 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
             ):
                 raise ValueError(f"{label}: invalid price/volume")
             out[key] = values
-        return out, outside, excluded
+        return out, outside, excluded, listing_unknown, listing_violations
 
-    t, task_outside, task_non_mainboard = index(task_raw, "task")
-    g, gold_outside, gold_non_mainboard = index(gold_raw, "gold")
+    t, task_outside, task_non_mainboard, t_listing_unknown, t_listing_violations = index(task_raw, "task")
+    g, gold_outside, gold_non_mainboard, g_listing_unknown, g_listing_violations = index(gold_raw, "gold")
     if gold_non_mainboard:
         raise ValueError("Gold must be main-board only")
     common = sorted(t.keys() & g.keys())
@@ -270,6 +290,14 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
         "universe_scope": "SSE_SZSE_A_SHARE_MAIN_BOARD_ONLY",
         "gold_instruments_file_verified": True,
         "current_gold_instruments_count": len(mainboard_symbols),
+        "gold_instruments_missing_listing_date_count": missing_list_dates,
+        "task_rows_with_unknown_listing_start": t_listing_unknown,
+        "gold_rows_with_unknown_listing_start": g_listing_unknown,
+        "task_rows_outside_recorded_listing_window": len(t_listing_violations),
+        "gold_rows_outside_recorded_listing_window": len(g_listing_violations),
+        "task_listing_window_violation_examples": [list(k) for k in t_listing_violations[:max_examples]],
+        "gold_listing_window_violation_examples": [list(k) for k in g_listing_violations[:max_examples]],
+        "recorded_listing_window_is_not_historical_board_pit_proof": True,
         "task_non_mainboard_rows_excluded": sum(task_non_mainboard.values()),
         "task_non_mainboard_excluded_by_prefix": dict(sorted(task_non_mainboard.items())),
         "common_cutoff": cutoff.isoformat(),
