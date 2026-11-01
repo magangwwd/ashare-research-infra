@@ -37,7 +37,8 @@ def _make(tmp_path, *, gold_close=10.5, gold_extra_future=False, gold_duplicate=
     instruments_path = tmp_path / "instruments.parquet"
     instruments = [{
         "instrument_id": "CN.XSHG.600031", "vendor_symbol": "600031.SH",
-        "board": "MAIN_BOARD", "exchange": "SSE", "as_of_date": date(2026, 10, 30),
+        "board": "MAIN_BOARD", "exchange": "SSE", "currency": "CNY",
+        "as_of_date": date(2026, 10, 30),
     }]
     pq.write_table(pa.Table.from_pylist(instruments), instruments_path)
     entry = {"path": REL, "bytes": t_path.stat().st_size, "sha256": hashlib.sha256(t_path.read_bytes()).hexdigest()}
@@ -166,8 +167,9 @@ def test_task_only_prefix_breakdown_does_not_certify_missing_gold(tmp_path):
     p["total_bytes"] = item["bytes"]
     p["manifest_sha256"] = hashlib.sha256(m).hexdigest()
     report = diagnose(p, m, gold, t, g, task_relative_path=REL, gold_instruments_path=t.parent / "instruments.parquet")
-    assert report["only_in_task01"] == 1
-    assert report["only_in_task01_by_symbol_prefix"]["300.SZ"] == 1
+    assert report["only_in_task01"] == 0
+    assert report["task_non_mainboard_rows_excluded"] == 1
+    assert report["task_non_mainboard_excluded_by_prefix"]["300.SZ"] == 1
     assert not report["gold_historical_pit_universe_verified"]
 
 
@@ -241,6 +243,18 @@ def test_gold_board_member_and_sha_required(tmp_path):
                  gold_instruments_path=inst)
     gold["files"]["instruments.parquet"]["sha256"] = "f" * 64
     with pytest.raises(ValueError, match="instruments SHA mismatch"):
+        diagnose(p, m, gold, t, g, task_relative_path=REL,
+                 gold_instruments_path=inst)
+
+
+def test_main_board_only_rejects_non_cny_gold_instrument(tmp_path):
+    p, m, gold, t, g = _make(tmp_path)
+    inst = t.parent / "instruments.parquet"
+    rows = pq.read_table(inst).to_pylist()
+    rows[0]["currency"] = "USD"
+    pq.write_table(pa.Table.from_pylist(rows), inst)
+    gold["files"]["instruments.parquet"]["sha256"] = hashlib.sha256(inst.read_bytes()).hexdigest()
+    with pytest.raises(ValueError, match="non-main-board A-share"):
         diagnose(p, m, gold, t, g, task_relative_path=REL,
                  gold_instruments_path=inst)
 
