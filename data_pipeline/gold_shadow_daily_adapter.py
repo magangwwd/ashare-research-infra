@@ -7,7 +7,9 @@ Task01 security_id is a different UUID5 namespace and is NOT interchangeable.
 from __future__ import annotations
 
 from datetime import date
-from decimal import Decimal, InvalidOperation, ROUND_HALF_EVEN
+from decimal import Decimal, InvalidOperation
+
+import numpy as np
 
 
 _REQUIRED = frozenset({
@@ -39,19 +41,27 @@ def _exact_units(value, multiplier, name):
 
 
 def _shadow_turnover_cny(amount):
-    """Return nearest-integer CNY shadow candidate, plus precision-loss flag.
+    """Emulate observed Gold history's float64/Pandas nearest-even CNY conversion.
 
-    A real Oct 2026 sample showed that Task01 can represent fractional yuan
-    while Gold stores integer yuan. This is a deliberately UNVALIDATED
-    hypothesis, not proof of the Gold producer's historical rounding contract.
+    Gold Drive backfill_main_board_history.py uses
+    (pd.to_numeric(values) * 1000).round().astype("Int64"). The source
+    conversion code is observed, but the historical input provenance and
+    bitwise data parity still require explicit independent verification.
     """
-    scaled = _number(amount, "amount") * Decimal("1000")
-    if scaled < 0:
+    exact_cny = _number(amount, "amount") * Decimal("1000")
+    if exact_cny < 0:
         raise ValueError("amount: negative value")
-    rounded = scaled.quantize(Decimal("1"), rounding=ROUND_HALF_EVEN)
-    if rounded > 9223372036854775807:
+    max_int64 = 9223372036854775807
+    if exact_cny > max_int64:
         raise ValueError("amount: overflowing converted units")
-    return int(rounded), scaled != rounded
+    try:
+        rounded = np.rint(np.float64(float(_number(amount, "amount"))) * np.float64(1000))
+    except (OverflowError, ValueError):
+        raise ValueError("amount: invalid float64 conversion") from None
+    if not np.isfinite(rounded) or rounded < 0 or rounded > max_int64:
+        raise ValueError("amount: overflowing converted units")
+    result = int(rounded)
+    return result, Decimal(result) != exact_cny
 
 
 def _date(value, name):
@@ -153,7 +163,7 @@ def adapt_daily_shadow(rows, instruments, *, task_as_of, instruments_as_of):
     return out, {
         "status": "SHADOW_CANDIDATE_ONLY", "source_rows": len(rows),
         "converted_rows": len(out), "excluded_outside_explicit_gold_universe": excluded,
-        "turnover_cny_shadow_rounding_rule": "DECIMAL_HALF_EVEN_UNVERIFIED",
+        "turnover_cny_shadow_rounding_rule": "FLOAT64_RINT_EMULATES_GOLD_PANDAS_SOURCE_UNVERIFIED",
         "turnover_cny_precision_loss_rows": turnover_rounded_rows,
         "turnover_cny_rounding_contract_verified_against_gold": False,
         "point_in_time_membership_verified": False,
