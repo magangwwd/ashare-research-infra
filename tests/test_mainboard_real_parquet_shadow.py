@@ -137,14 +137,7 @@ def test_half_yuan_tie_separates_half_even_from_half_up(tmp_path):
     assert report["turnover_absolute_difference_le_half_yuan"] == 1
     assert report["turnover_absolute_difference_gt_half_yuan"] == 0
     assert report["turnover_exact_half_yuan_difference_count"] == 1
-    exception = report["turnover_half_even_incompatible_examples"][0]
-    assert exception["vendor_symbol"] == "600031.SH"
-    assert exception["trade_date"] == "2026-10-23"
-    assert exception["task01_turnover_cny"] == "67890.5000"
-    assert exception["gold_turnover_cny"] == "67890"
-    assert exception["half_up_yuan"] == "67891"
-    assert exception["half_even_yuan"] == "67890"
-    assert exception["absolute_difference_cny"] == "0.5000"
+    assert report["turnover_half_even_incompatible_examples"] == []
     assert not report["production_switch_allowed"]
 
 
@@ -181,7 +174,14 @@ def test_turnover_incompatible_examples_are_bounded_by_sample_limit(tmp_path):
     assert report["turnover_nearest_yuan_half_even_compatible_differences"] == 0
     assert report["numeric_field_difference_count"] == 3
     assert len(report["turnover_half_even_incompatible_examples"]) == 1
-    assert report["turnover_half_even_incompatible_examples"][0]["vendor_symbol"] == "600031.SH"
+    exception = report["turnover_half_even_incompatible_examples"][0]
+    assert exception == {
+        "vendor_symbol": "600031.SH", "trade_date": "2026-10-23",
+        "task01_turnover_cny": "67890.5000",
+        "gold_turnover_cny": "67891",
+        "half_up_yuan": "67891", "half_even_yuan": "67890",
+        "absolute_difference_cny": "0.5000",
+    }
     assert report["production_switch_allowed"] is False
 
 
