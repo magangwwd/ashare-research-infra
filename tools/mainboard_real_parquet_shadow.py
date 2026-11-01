@@ -17,6 +17,7 @@ from pathlib import Path
 _FIELDS = ("open", "high", "low", "close", "volume_shares", "turnover_cny")
 _TASK_FIELDS = {"ts_code", "trade_date", "open", "high", "low", "close", "vol", "amount"}
 _GOLD_FIELDS = {"vendor_symbol", "trade_date", *_FIELDS}
+_GOLD_INSTRUMENT_FIELDS = {"instrument_id", "vendor_symbol", "board", "exchange", "as_of_date"}
 
 
 def _day(value):
@@ -61,8 +62,45 @@ def _load_rows(path, required):
     return pq.read_table(str(path), columns=sorted(required)).to_pylist()
 
 
+def _verified_mainboard_symbols(gold_manifest, gold_instruments_path):
+    """Verify official Gold instruments SHA and use its explicit main-board membership.
+
+    Current instruments list is NOT historical PIT membership. The result is
+    diagnostic-only until listing/board transfers have independent PIT proof.
+    """
+    if gold_instruments_path is None:
+        raise ValueError("verified Gold instruments required for MAIN_BOARD_ONLY scope")
+    file_contract = gold_manifest.get("files", {}).get("instruments.parquet")
+    if not isinstance(file_contract, dict) or not isinstance(file_contract.get("sha256"), str):
+        raise ValueError("official Gold instruments digest missing")
+    path = Path(gold_instruments_path)
+    if _sha(path) != file_contract["sha256"]:
+        raise ValueError("official Gold instruments SHA mismatch")
+    records = _load_rows(path, _GOLD_INSTRUMENT_FIELDS)
+    if len(records) != file_contract.get("rows") or not records:
+        raise ValueError("official Gold instrument count mismatch")
+    ids, members = set(), set()
+    max_as_of = _day(gold_manifest["as_of_date"])
+    for row in records:
+        if row["board"] != "MAIN_BOARD" or row["exchange"] not in {"SSE", "SZSE"}:
+            raise ValueError("Gold instrument list contains non-main-board security")
+        sym, ident = row["vendor_symbol"], row["instrument_id"]
+        if (not isinstance(sym, str) or not isinstance(ident, str) or not sym or not ident
+                or len(sym) != 9 or not sym[:6].isdigit()
+                or (row["exchange"] == "SSE" and not sym.endswith(".SH"))
+                or (row["exchange"] == "SZSE" and not sym.endswith(".SZ"))):
+            raise ValueError("invalid main-board Gold instrument identity")
+        if _day(row["as_of_date"]) > max_as_of:
+            raise ValueError("Gold instrument recorded after manifest as_of")
+        if sym in members or ident in ids:
+            raise ValueError("duplicate Gold instrument identity")
+        members.add(sym)
+        ids.add(ident)
+    return members
+
+
 def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
-             gold_daily_path, *, task_relative_path, max_examples=20):
+             gold_daily_path, *, task_relative_path, gold_instruments_path=None, max_examples=20):
     """Compare matched (symbol,date) values only; never return production approval."""
     if isinstance(max_examples, bool) or not isinstance(max_examples, int) or not 1 <= max_examples <= 100:
         raise ValueError("max_examples must be 1..100")
@@ -99,10 +137,11 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
     # A local observed hash is NOT an independent official Gold month hash.
     task_raw = _load_rows(task_daily_path, _TASK_FIELDS)
     gold_raw = _load_rows(gold_daily_path, _GOLD_FIELDS)
+    mainboard_symbols = _verified_mainboard_symbols(gold_manifest, gold_instruments_path)
 
     def index(rows, label):
         out = {}
-        outside = 0
+        outside, excluded = 0, Counter()
         for r in rows:
             if label == "task":
                 sym = r["ts_code"]
@@ -118,6 +157,11 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
             if day > cutoff:
                 outside += 1
                 continue
+            if sym not in mainboard_symbols:
+                if label == "gold":
+                    raise ValueError("Gold daily has symbol outside verified main-board list")
+                excluded[sym.split(".")[0][:3] + "." + sym.split(".")[-1]] += 1
+                continue
             key = (sym, day.isoformat())
             if key in out:
                 raise ValueError(f"{label}: duplicate symbol/date")
@@ -130,10 +174,12 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
             ):
                 raise ValueError(f"{label}: invalid price/volume")
             out[key] = values
-        return out, outside
+        return out, outside, excluded
 
-    t, task_outside = index(task_raw, "task")
-    g, gold_outside = index(gold_raw, "gold")
+    t, task_outside, task_non_mainboard = index(task_raw, "task")
+    g, gold_outside, gold_non_mainboard = index(gold_raw, "gold")
+    if gold_non_mainboard:
+        raise ValueError("Gold must be main-board only")
     common = sorted(t.keys() & g.keys())
     if not common:
         raise ValueError("no overlapping records; do not claim equivalence")
@@ -183,7 +229,12 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
         "schema_version": 1,
         "status": "DIFFERENCES_FOUND" if only_task or only_gold or mismatches else
                   "MATCHED_COMMON_ROWS_DIAGNOSTIC_ONLY",
-        "comparison_scope": "HISTORICAL_MONTH_UNDER_MIN_AS_OF_WITH_CURRENT_GOLD_UNIVERSE",
+        "comparison_scope": "MAIN_BOARD_ONLY_VERIFIED_CURRENT_GOLD_INSTRUMENTS_HISTORICAL_PIT_UNVERIFIED",
+        "universe_scope": "SSE_SZSE_A_SHARE_MAIN_BOARD_ONLY",
+        "gold_instruments_file_verified": True,
+        "current_gold_instruments_count": len(mainboard_symbols),
+        "task_non_mainboard_rows_excluded": sum(task_non_mainboard.values()),
+        "task_non_mainboard_excluded_by_prefix": dict(sorted(task_non_mainboard.items())),
         "common_cutoff": cutoff.isoformat(),
         "task01_as_of": pointer["snapshot_as_of"],
         "gold_as_of": gold_manifest["as_of_date"],
@@ -231,6 +282,7 @@ def main(argv=None):
     p.add_argument("--gold-manifest", required=True, type=Path)
     p.add_argument("--task-daily", required=True, type=Path)
     p.add_argument("--gold-daily", required=True, type=Path)
+    p.add_argument("--gold-instruments", required=True, type=Path)
     p.add_argument("--task-relative-path", required=True)
     p.add_argument("--output", required=True, type=Path)
     args = p.parse_args(argv)
@@ -239,6 +291,7 @@ def main(argv=None):
         args.task_manifest.read_bytes(),
         json.loads(args.gold_manifest.read_text("utf-8")),
         args.task_daily, args.gold_daily, task_relative_path=args.task_relative_path,
+        gold_instruments_path=args.gold_instruments,
     )
     # No network or pointer writes. Caller owns the explicit local report path.
     args.output.parent.mkdir(parents=True, exist_ok=True)
