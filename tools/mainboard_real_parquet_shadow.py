@@ -45,6 +45,20 @@ def _num(value, field):
     return d
 
 
+def reproduce_legacy_gold_turnover_cny(task01_turnover_cny):
+    """Emulate Gold's float64 *1000 then half-even rounding, diagnostics only.
+
+    Gold's existing historical backfill script uses
+    (pd.to_numeric(amount) * 1000).round().astype("Int64").
+    Never use this as a reason to suppress strict decimal differences.
+    """
+    value = _num(task01_turnover_cny, "task01_turnover_cny")
+    amount_thousand_cny = float(value / Decimal("1000"))
+    if amount_thousand_cny == float("inf") or amount_thousand_cny == float("-inf"):
+        raise ValueError("legacy Gold float64 amount overflow")
+    return Decimal(round(amount_thousand_cny * 1000))
+
+
 def _sha(path):
     h = hashlib.sha256()
     with open(path, "rb") as stream:
@@ -195,6 +209,8 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
     turnover_beyond_half_yuan = 0
     turnover_exact_half_yuan_ties = 0
     turnover_half_even_incompatible_examples = []
+    turnover_legacy_float_rule_compatible = 0
+    turnover_legacy_float_rule_incompatible_examples = []
     for key in common:
         for field in _FIELDS:
             if t[key][field] != g[key][field]:
@@ -228,6 +244,16 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
                         turnover_beyond_half_yuan += 1
                     if absolute_difference == Decimal("0.5"):
                         turnover_exact_half_yuan_ties += 1
+                    legacy_gold = reproduce_legacy_gold_turnover_cny(t[key][field])
+                    if g[key][field] == legacy_gold:
+                        turnover_legacy_float_rule_compatible += 1
+                    elif len(turnover_legacy_float_rule_incompatible_examples) < max_examples:
+                        turnover_legacy_float_rule_incompatible_examples.append({
+                            "vendor_symbol": key[0], "trade_date": key[1],
+                            "task01_turnover_cny": str(t[key][field]),
+                            "gold_turnover_cny": str(g[key][field]),
+                            "reproduced_legacy_gold_turnover_cny": str(legacy_gold),
+                        })
                 if len(diffs) < max_examples:
                     diffs.append({
                         "symbol": key[0], "date": key[1], "field": field,
@@ -262,6 +288,12 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
         "turnover_absolute_difference_gt_half_yuan": turnover_beyond_half_yuan,
         "turnover_exact_half_yuan_difference_count": turnover_exact_half_yuan_ties,
         "turnover_half_even_incompatible_examples": turnover_half_even_incompatible_examples,
+        "turnover_legacy_float_rule_compatible_differences": turnover_legacy_float_rule_compatible,
+        "turnover_legacy_float_rule_incompatible_count": (
+            field_counts["turnover_cny"] - turnover_legacy_float_rule_compatible
+        ),
+        "turnover_legacy_float_rule_incompatible_examples": turnover_legacy_float_rule_incompatible_examples,
+        "turnover_legacy_float_rule_is_diagnostic_only": True,
         "only_in_task01_by_symbol_prefix": dict(sorted(Counter(
             sym.split(".")[0][:3] + "." + sym.split(".")[-1] for sym, day in only_task
         ).items())),
