@@ -169,7 +169,7 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
 
     def index(rows, label):
         out = {}
-        outside, excluded = 0, Counter()
+        outside, excluded, unclassified = 0, Counter(), Counter()
         listing_unknown, listing_violations = 0, []
         for r in rows:
             if label == "task":
@@ -189,7 +189,18 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
             if sym not in mainboard_symbols:
                 if label == "gold":
                     raise ValueError("Gold daily has symbol outside verified main-board list")
-                excluded[sym.split(".")[0][:3] + "." + sym.split(".")[-1]] += 1
+                # A present-day Gold list is NOT a historical PIT board registry.
+                # In particular, a delisted/former main-board symbol must not
+                # be labelled non-main-board just because it is absent today.
+                prefix = sym.split(".")[0][:3] + "." + sym.split(".")[-1]
+                if sym.endswith(".BJ"):
+                    # The Beijing exchange is outside the SSE/SZSE target by
+                    # exchange identity, NOT by an assumed numeric prefix.
+                    excluded[prefix] += 1
+                else:
+                    # Includes 300/301/302/688/689 until independent dated
+                    # board evidence establishes their historical status.
+                    unclassified[prefix] += 1
                 continue
             start, end = listing_windows[sym]
             if start is None:
@@ -209,11 +220,11 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
             ):
                 raise ValueError(f"{label}: invalid price/volume")
             out[key] = values
-        return out, outside, excluded, listing_unknown, listing_violations
+        return out, outside, excluded, unclassified, listing_unknown, listing_violations
 
-    t, task_outside, task_non_mainboard, t_listing_unknown, t_listing_violations = index(task_raw, "task")
-    g, gold_outside, gold_non_mainboard, g_listing_unknown, g_listing_violations = index(gold_raw, "gold")
-    if gold_non_mainboard:
+    t, task_outside, task_non_mainboard, task_unclassified, t_listing_unknown, t_listing_violations = index(task_raw, "task")
+    g, gold_outside, gold_non_mainboard, gold_unclassified, g_listing_unknown, g_listing_violations = index(gold_raw, "gold")
+    if gold_non_mainboard or gold_unclassified:
         raise ValueError("Gold must be main-board only")
     common = sorted(t.keys() & g.keys())
     if not common:
@@ -284,7 +295,8 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
             per_day.setdefault(day, {"task_rows": 0, "gold_rows": 0, "common_rows": 0})[label] += 1
     return {
         "schema_version": 1,
-        "status": "DIFFERENCES_FOUND" if only_task or only_gold or mismatches else
+        "status": "UNCLASSIFIED_HISTORICAL_UNIVERSE" if task_unclassified else
+                  "DIFFERENCES_FOUND" if only_task or only_gold or mismatches else
                   "MATCHED_COMMON_ROWS_DIAGNOSTIC_ONLY",
         "comparison_scope": "MAIN_BOARD_ONLY_VERIFIED_CURRENT_GOLD_INSTRUMENTS_HISTORICAL_PIT_UNVERIFIED",
         "universe_scope": "SSE_SZSE_A_SHARE_MAIN_BOARD_ONLY",
@@ -298,8 +310,17 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
         "task_listing_window_violation_examples": [list(k) for k in t_listing_violations[:max_examples]],
         "gold_listing_window_violation_examples": [list(k) for k in g_listing_violations[:max_examples]],
         "recorded_listing_window_is_not_historical_board_pit_proof": True,
+        # Only exchange-proven BJ records are excluded as non-SSE/SZSE.
+        # Unclassified historical SSE/SZSE rows are NOT Gold missing and are
+        # NOT claimed to be non-main-board without dated PIT market evidence.
+        "excluded_non_mainboard_rows": sum(task_non_mainboard.values()),
         "task_non_mainboard_rows_excluded": sum(task_non_mainboard.values()),
         "task_non_mainboard_excluded_by_prefix": dict(sorted(task_non_mainboard.items())),
+        "unclassified_historical_rows": sum(task_unclassified.values()),
+        "unclassified_historical_rows_by_prefix": dict(sorted(task_unclassified.items())),
+        "unclassified_historical_rows_are_not_gold_missing": True,
+        "non_mainboard_exclusion_basis": "BJ_EXCHANGE_ONLY_NO_NUMERIC_PREFIX_GUESS",
+        "tushare_stock_basic_market_mainboard_verified": False,
         "common_cutoff": cutoff.isoformat(),
         "task01_as_of": pointer["snapshot_as_of"],
         "gold_as_of": gold_manifest["as_of_date"],
@@ -335,6 +356,7 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
         "gold_history_month_sha256_observed_only": gold_hash,
         "gold_history_month_sha256_verified_against_official_manifest": False,
         "gold_historical_pit_universe_verified": False,
+        "historical_board_transfer_and_delisting_pit_verified": False,
         "other_factors_and_corporate_actions_verified": False,
         "frozen_v1_equivalence_verified": False,
         "five_trading_days_shadow_verified": False,
