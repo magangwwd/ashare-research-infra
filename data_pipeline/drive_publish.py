@@ -361,7 +361,7 @@ def verify_previous_snapshot(drive, pointer: dict, expected_manifest: bytes | No
 
 
 
-def verified_stage_reuse(drive, staging_id, stage_id, items):
+def verified_stage_reuse(drive, staging_id, stage_id, items, *, audit_diagnostics=False):
     """Read-only reconcile an explicitly selected unfinished stage.
 
     Never trust a staged name/size alone: compare every existing file against
@@ -387,8 +387,23 @@ def verified_stage_reuse(drive, staging_id, stage_id, items):
         except (TypeError, ValueError):
             size_matches = False
         if not size_matches or remote.get("mimeType") == FOLDER:
+            if audit_diagnostics:
+                kind = "metadata_size" if not size_matches else "file_type"
+                fingerprint = hashlib.sha256(path.encode("utf-8")).hexdigest()[:16]
+                raise PublishError(
+                    "Resume stage file size/type mismatch; pointer unchanged. "
+                    f"audit_failure={kind} path_fingerprint={fingerprint} "
+                    f"verified_before_failure={len(reused)}")
             raise PublishError("Resume stage file size/type mismatch; pointer unchanged.")
-        if drive.remote_digest(remote["id"]) != (item["bytes"], item["sha256"]):
+        remote_size, remote_sha = drive.remote_digest(remote["id"])
+        if (remote_size, remote_sha) != (item["bytes"], item["sha256"]):
+            if audit_diagnostics:
+                kind = "downloaded_size" if remote_size != item["bytes"] else "downloaded_sha256"
+                fingerprint = hashlib.sha256(path.encode("utf-8")).hexdigest()[:16]
+                raise PublishError(
+                    "Resume stage SHA256 mismatch; pointer unchanged. "
+                    f"audit_failure={kind} path_fingerprint={fingerprint} "
+                    f"verified_before_failure={len(reused)}")
             raise PublishError("Resume stage SHA256 mismatch; pointer unchanged.")
         reused[path] = remote["id"]
     return info["name"], reused
@@ -565,7 +580,8 @@ def audit_resume_stage(drive, target, items, acceptance, quota, stage_id):
     staging = [f for f in drive.children(target) if f["name"] == "staging"]
     if len(staging) != 1 or staging[0]["mimeType"] != FOLDER:
         raise PublishError("Unique existing staging root required; audit blocked.")
-    _version, reused = verified_stage_reuse(drive, staging[0]["id"], stage_id, items)
+    _version, reused = verified_stage_reuse(drive, staging[0]["id"], stage_id, items,
+                                            audit_diagnostics=True)
     missing = [item for item in items if item["path"] not in reused]
     missing_bytes = sum(item["bytes"] for item in missing)
     remaining = (quota or {}).get("remaining_bytes")
