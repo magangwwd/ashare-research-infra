@@ -19,6 +19,7 @@ FILES = {
     "task_pointer": ("1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB", "5d712e4c30c5ccc9c70ebd6672ebc401df97ba14f5d46d07e877baf915482926"),
     "task_manifest": ("1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1", "118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8"),
     "gold_manifest": ("1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn", "3687f018cad6c96bdaf704217900925a773cc90fcb050031d6dd07cf20f33580"),
+    "gold_instruments": ("1KyHYGngvkUIkqisQFO5qZCTeFxzzBO0q", "6e06b2f17c6d46384df35b15c558f2fb1c9fe845e0cc7f608eec95d5e0789586"),
     "task_oct": ("11J4PMUpBHn-wK5bjXG7mckYbssd9cHwx", "22c1fa25caba35d49fa662f03ffc83f05572039672ecf1250df112dca9990858"),
     "gold_oct": ("1OcZ9Jvg_0MtzccR4n80vidu0S7b2Bsvu", "e084260b2d6829f3e0f439a877a25b94b866fa480dc05e8e057c444b9db23cca"),
 }
@@ -26,6 +27,7 @@ OUTPUTS = {
     "task_pointer": "current.json",
     "task_manifest": "production_manifest.json",
     "gold_manifest": "gold_manifest.json",
+    "gold_instruments": "instruments.parquet",
     "task_oct": "task_oct.parquet",
     "gold_oct": "gold_oct.parquet",
 }
