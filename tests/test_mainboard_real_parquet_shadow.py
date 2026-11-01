@@ -103,6 +103,29 @@ def test_turnover_nearest_yuan_attribution_does_not_erase_difference(tmp_path):
     assert not report["production_switch_allowed"]
 
 
+def test_half_yuan_tie_separates_half_even_from_half_up(tmp_path):
+    p, m, gold, t, g = _make(tmp_path)
+    rows = pq.read_table(t).to_pylist()
+    rows[0]["amount"] = 67.8905
+    pq.write_table(pa.Table.from_pylist(rows), t)
+    item = {"path": REL, "bytes": t.stat().st_size,
+            "sha256": hashlib.sha256(t.read_bytes()).hexdigest()}
+    doc = json.loads(m)
+    doc["files"] = [item]
+    doc["total_bytes"] = item["bytes"]
+    m = json.dumps(doc).encode()
+    p["total_bytes"] = item["bytes"]
+    p["manifest_sha256"] = hashlib.sha256(m).hexdigest()
+    report = diagnose(p, m, gold, t, g, task_relative_path=REL)
+    assert report["numeric_field_difference_count"] == 1
+    assert report["turnover_nearest_yuan_compatible_differences"] == 0
+    assert report["turnover_nearest_yuan_half_even_compatible_differences"] == 1
+    assert report["turnover_absolute_difference_le_half_yuan"] == 1
+    assert report["turnover_absolute_difference_gt_half_yuan"] == 0
+    assert report["turnover_exact_half_yuan_difference_count"] == 1
+    assert not report["production_switch_allowed"]
+
+
 def test_material_turnover_discrepancy_not_explained_by_rounding(tmp_path):
     p, m, gold, t, g = _make(tmp_path)
     rows = pq.read_table(g).to_pylist()
@@ -112,6 +135,8 @@ def test_material_turnover_discrepancy_not_explained_by_rounding(tmp_path):
     assert report["field_difference_counts"]["turnover_cny"] == 1
     assert report["turnover_nearest_yuan_incompatible_differences"] == 1
     assert report["turnover_nearest_yuan_compatible_differences"] == 0
+    assert report["turnover_absolute_difference_gt_half_yuan"] == 1
+    assert report["turnover_absolute_difference_le_half_yuan"] == 0
 
 
 def test_task_only_prefix_breakdown_does_not_certify_missing_gold(tmp_path):
