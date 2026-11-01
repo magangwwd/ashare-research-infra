@@ -71,7 +71,7 @@ def test_artifact_and_archive_handling_limits():
     assert 'path.parts[0] not in ("data", "metadata")' in text
     assert 'member.name == "data/current"' in text
     assert 'len(link.parts) == 2 and link.parts[0] == ".versions"' in text
-    assert 'not (member.isfile() or member.isdir() or safe_current_link)' in text
+    assert 'not (member.isfile() or member.isdir() or safe_current_link or safe_hardlink)' in text
 
 
 def test_audit_receipt_is_bound_to_explicit_source_stage_and_pointer():
@@ -168,3 +168,48 @@ def test_restore_script_rejects_current_symlink_escaping_version_dir(tmp_path, l
     assert result.returncode != 0
     assert "BLOCKED: unsafe checkpoint member" in result.stderr + result.stdout
     assert not extracted
+
+
+def test_restore_accepts_versioned_prior_regular_file_hardlink(tmp_path):
+    import io
+    archive = tmp_path / "internal-hardlink.tar.gz"
+    with tarfile.open(archive, "w:gz") as tf:
+        target = tarfile.TarInfo("data/.versions/old/raw/a.parquet")
+        payload = b"same bytes"
+        target.size = len(payload)
+        tf.addfile(target, io.BytesIO(payload))
+        linked = tarfile.TarInfo("data/.versions/new/raw/a.parquet")
+        linked.type = tarfile.LNKTYPE
+        linked.linkname = target.name
+        tf.addfile(linked)
+        acceptance = b'{"passed":true}'
+        accepted = tarfile.TarInfo("data/.versions/new/acceptance.json")
+        accepted.size = len(acceptance)
+        tf.addfile(accepted, io.BytesIO(acceptance))
+        current = tarfile.TarInfo("data/current")
+        current.type = tarfile.SYMTYPE
+        current.linkname = ".versions/new"
+        tf.addfile(current)
+    result, restored = _run_restore_script_with_archive(archive.read_bytes())
+    assert result.returncode == 0, result.stderr + result.stdout
+    assert restored
+
+
+@pytest.mark.parametrize("linkname", [
+    "/etc/passwd",
+    "../../etc/passwd",
+    "data/.versions/missing/raw/a.parquet",
+    "data/current/acceptance.json",
+    "data/.versions/old/../outside",
+])
+def test_restore_rejects_untrusted_hardlinks(tmp_path, linkname):
+    archive = tmp_path / "hardlink-reject.tar.gz"
+    with tarfile.open(archive, "w:gz") as tf:
+        member = tarfile.TarInfo("data/.versions/new/raw/a.parquet")
+        member.type = tarfile.LNKTYPE
+        member.linkname = linkname
+        tf.addfile(member)
+    result, restored = _run_restore_script_with_archive(archive.read_bytes())
+    assert result.returncode != 0
+    assert "BLOCKED: unsafe checkpoint member" in result.stderr + result.stdout
+    assert not restored
