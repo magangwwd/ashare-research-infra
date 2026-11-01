@@ -1,0 +1,214 @@
+"""Read-only *historical diagnostic* for Task01 and Gold daily Parquet.
+
+Does NOT establish point-in-time Gold membership, live data parity, a five-session
+shadow test, or permission to publish. Requires locally downloaded inputs.
+Never accesses network, GitHub, Google Drive, or production output directories.
+"""
+from __future__ import annotations
+
+import argparse
+from collections import Counter
+from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
+import hashlib
+import json
+from pathlib import Path
+
+_FIELDS = ("open", "high", "low", "close", "volume_shares", "turnover_cny")
+_TASK_FIELDS = {"ts_code", "trade_date", "open", "high", "low", "close", "vol", "amount"}
+_GOLD_FIELDS = {"vendor_symbol", "trade_date", *_FIELDS}
+
+
+def _day(value):
+    if isinstance(value, datetime):
+        if value.tzinfo is not None or value.time() != datetime.min.time():
+            raise ValueError("trade_date timestamp has time/zone")
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if not isinstance(value, str):
+        raise ValueError("invalid date type")
+    # The two sources use ISO YYYY-MM-DD in their normalized Parquet files.
+    return date.fromisoformat(value)
+
+
+def _num(value, field):
+    if isinstance(value, bool) or value is None:
+        raise ValueError(f"{field}: missing/boolean numeric")
+    try:
+        d = Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError) as exc:
+        raise ValueError(f"{field}: invalid numeric") from exc
+    if not d.is_finite():
+        raise ValueError(f"{field}: nonfinite numeric")
+    return d
+
+
+def _sha(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _load_rows(path, required):
+    import pyarrow.parquet as pq
+    parquet = pq.ParquetFile(str(path))
+    available = set(parquet.schema_arrow.names)
+    if required - available:
+        raise ValueError(f"{path.name}: missing columns: {sorted(required - available)}")
+    return pq.read_table(str(path), columns=sorted(required)).to_pylist()
+
+
+def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
+             gold_daily_path, *, task_relative_path, max_examples=20):
+    """Compare matched (symbol,date) values only; never return production approval."""
+    if isinstance(max_examples, bool) or not isinstance(max_examples, int) or not 1 <= max_examples <= 100:
+        raise ValueError("max_examples must be 1..100")
+    task = json.loads(task_manifest_bytes)
+    if not isinstance(pointer, dict) or not isinstance(task, dict) or not isinstance(gold_manifest, dict):
+        raise ValueError("invalid manifest/pointer")
+    if pointer.get("validated") is not True or task.get("validated") is not True:
+        raise ValueError("Task01 production pointer not validated")
+    if _sha_bytes(task_manifest_bytes) != pointer.get("manifest_sha256"):
+        raise ValueError("Task01 manifest SHA mismatch")
+    for k in ("version", "snapshot_as_of", "source_run_id", "file_count", "total_bytes"):
+        if task.get(k) != pointer.get(k):
+            raise ValueError("Task01 pointer/manifest mismatch")
+    cutoff = min(_day(pointer["snapshot_as_of"]), _day(gold_manifest["as_of_date"]))
+    if not isinstance(gold_manifest.get("validation"), dict) or any(
+        gold_manifest["validation"].get(k) is not True
+        for k in ("primary_keys_unique", "ohlc_valid")
+    ):
+        raise ValueError("Gold top-level manifest validation failed")
+    if not isinstance(task_relative_path, str) or not task_relative_path.startswith(
+        "data/clean/daily/year="
+    ) or not task_relative_path.endswith("/part-000.parquet"):
+        raise ValueError("must select an explicit Task01 clean daily month partition")
+    expected = [f for f in task.get("files", []) if f.get("path") == task_relative_path]
+    if len(expected) != 1:
+        raise ValueError("Task01 partition not uniquely listed in manifest")
+    f = expected[0]
+    task_daily_path, gold_daily_path = Path(task_daily_path), Path(gold_daily_path)
+    task_hash = _sha(task_daily_path)
+    if task_hash != f.get("sha256") or task_daily_path.stat().st_size != f.get("bytes"):
+        raise ValueError("Task01 clean daily month SHA/size mismatch")
+    gold_hash = _sha(gold_daily_path)
+    # Gold manifest attests ONLY core snapshot and instruments, not historical month parquet.
+    # A local observed hash is NOT an independent official Gold month hash.
+    task_raw = _load_rows(task_daily_path, _TASK_FIELDS)
+    gold_raw = _load_rows(gold_daily_path, _GOLD_FIELDS)
+
+    def index(rows, label):
+        out = {}
+        outside = 0
+        for r in rows:
+            if label == "task":
+                sym = r["ts_code"]
+                vol = _num(r["vol"], "vol") * 100
+                amount = _num(r["amount"], "amount") * 1000
+            else:
+                sym = r["vendor_symbol"]
+                vol = _num(r["volume_shares"], "volume_shares")
+                amount = _num(r["turnover_cny"], "turnover_cny")
+            if not isinstance(sym, str) or not sym:
+                raise ValueError(f"{label}: invalid symbol")
+            day = _day(r["trade_date"])
+            if day > cutoff:
+                outside += 1
+                continue
+            key = (sym, day.isoformat())
+            if key in out:
+                raise ValueError(f"{label}: duplicate symbol/date")
+            values = {k: _num(r[k], k) for k in ("open", "high", "low", "close")}
+            values.update(volume_shares=vol, turnover_cny=amount)
+            if any(values[k] <= 0 for k in ("open", "high", "low", "close")) or (
+                values["high"] < max(values[k] for k in ("open", "low", "close"))
+                or values["low"] > min(values[k] for k in ("open", "high", "close"))
+                or vol < 0 or amount < 0
+            ):
+                raise ValueError(f"{label}: invalid price/volume")
+            out[key] = values
+        return out, outside
+
+    t, task_outside = index(task_raw, "task")
+    g, gold_outside = index(gold_raw, "gold")
+    common = sorted(t.keys() & g.keys())
+    if not common:
+        raise ValueError("no overlapping records; do not claim equivalence")
+    only_task = sorted(t.keys() - g.keys())
+    only_gold = sorted(g.keys() - t.keys())
+    mismatches, diffs, per_day = 0, [], {}
+    for key in common:
+        for field in _FIELDS:
+            if t[key][field] != g[key][field]:
+                mismatches += 1
+                if len(diffs) < max_examples:
+                    diffs.append({
+                        "symbol": key[0], "date": key[1], "field": field,
+                        "task01": str(t[key][field]), "gold": str(g[key][field]),
+                    })
+    for label, keys in (("task_rows", t.keys()), ("gold_rows", g.keys()), ("common_rows", common)):
+        for sym, day in keys:
+            per_day.setdefault(day, {"task_rows": 0, "gold_rows": 0, "common_rows": 0})[label] += 1
+    return {
+        "schema_version": 1,
+        "status": "DIFFERENCES_FOUND" if only_task or only_gold or mismatches else
+                  "MATCHED_COMMON_ROWS_DIAGNOSTIC_ONLY",
+        "comparison_scope": "HISTORICAL_MONTH_UNDER_MIN_AS_OF_WITH_CURRENT_GOLD_UNIVERSE",
+        "common_cutoff": cutoff.isoformat(),
+        "task01_as_of": pointer["snapshot_as_of"],
+        "gold_as_of": gold_manifest["as_of_date"],
+        "task_month_rows": len(task_raw), "gold_month_rows": len(gold_raw),
+        "task_rows_after_cutoff": task_outside, "gold_rows_after_cutoff": gold_outside,
+        "task_rows_at_or_before_cutoff": len(t), "gold_rows_at_or_before_cutoff": len(g),
+        "common_keys": len(common), "only_in_task01": len(only_task),
+        "only_in_gold": len(only_gold), "numeric_field_difference_count": mismatches,
+        "numeric_field_differences": diffs,
+        "only_in_task01_examples": [list(k) for k in only_task[:max_examples]],
+        "only_in_gold_examples": [list(k) for k in only_gold[:max_examples]],
+        "per_day": dict(sorted(per_day.items())),
+        "task01_file_sha256_verified_against_official_manifest": True,
+        "task01_file_sha256": task_hash,
+        "gold_history_month_sha256_observed_only": gold_hash,
+        "gold_history_month_sha256_verified_against_official_manifest": False,
+        "gold_historical_pit_universe_verified": False,
+        "other_factors_and_corporate_actions_verified": False,
+        "frozen_v1_equivalence_verified": False,
+        "five_trading_days_shadow_verified": False,
+        "production_switch_allowed": False,
+        "delete_old_data_allowed": False,
+    }
+
+
+def _sha_bytes(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--pointer", required=True, type=Path)
+    p.add_argument("--task-manifest", required=True, type=Path)
+    p.add_argument("--gold-manifest", required=True, type=Path)
+    p.add_argument("--task-daily", required=True, type=Path)
+    p.add_argument("--gold-daily", required=True, type=Path)
+    p.add_argument("--task-relative-path", required=True)
+    p.add_argument("--output", required=True, type=Path)
+    args = p.parse_args(argv)
+    report = diagnose(
+        json.loads(args.pointer.read_text("utf-8")),
+        args.task_manifest.read_bytes(),
+        json.loads(args.gold_manifest.read_text("utf-8")),
+        args.task_daily, args.gold_daily, task_relative_path=args.task_relative_path,
+    )
+    # No network or pointer writes. Caller owns the explicit local report path.
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False) + "\n", "utf-8")
+    print("HISTORICAL_DIAGNOSTIC", report["status"], report["common_keys"],
+          report["numeric_field_difference_count"])
+    return 0 if report["status"] == "MATCHED_COMMON_ROWS_DIAGNOSTIC_ONLY" else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
