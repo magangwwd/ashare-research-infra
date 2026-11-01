@@ -7,7 +7,7 @@ Task01 security_id is a different UUID5 namespace and is NOT interchangeable.
 from __future__ import annotations
 
 from datetime import date
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_EVEN
 
 
 _REQUIRED = frozenset({
@@ -36,6 +36,22 @@ def _exact_units(value, multiplier, name):
     if scaled != scaled.to_integral_value() or scaled > 9223372036854775807:
         raise ValueError(f"{name}: nonintegral or overflowing converted units")
     return int(scaled)
+
+
+def _shadow_turnover_cny(amount):
+    """Return nearest-integer CNY shadow candidate, plus precision-loss flag.
+
+    A real Oct 2026 sample showed that Task01 can represent fractional yuan
+    while Gold stores integer yuan. This is a deliberately UNVALIDATED
+    hypothesis, not proof of the Gold producer's historical rounding contract.
+    """
+    scaled = _number(amount, "amount") * Decimal("1000")
+    if scaled < 0:
+        raise ValueError("amount: negative value")
+    rounded = scaled.quantize(Decimal("1"), rounding=ROUND_HALF_EVEN)
+    if rounded > 9223372036854775807:
+        raise ValueError("amount: overflowing converted units")
+    return int(rounded), scaled != rounded
 
 
 def _date(value, name):
@@ -80,7 +96,7 @@ def adapt_daily_shadow(rows, instruments, *, task_as_of, instruments_as_of):
         by_symbol[symbol] = ident
         ids.add(ident)
 
-    out, seen, excluded = [], set(), 0
+    out, seen, excluded, turnover_rounded_rows = [], set(), 0, 0
     # Task01 security_id is not the Gold ID, but it must be stable per symbol.
     # Reject identity collisions even among rows excluded from the Gold universe.
     task_symbol_ids, task_id_symbols = {}, {}
@@ -114,6 +130,9 @@ def adapt_daily_shadow(rows, instruments, *, task_as_of, instruments_as_of):
                 or prices["low"] > min(prices[name] for name in ("open", "close", "high"))
                 or prices["pre_close"] <= 0):
             raise ValueError("invalid OHLC/previous_close")
+        turnover, precision_loss = _shadow_turnover_cny(row["amount"])
+        if precision_loss:
+            turnover_rounded_rows += 1
         out.append({
             "instrument_id": by_symbol[symbol], "vendor_symbol": symbol,
             "trade_date": day.isoformat(),
@@ -123,7 +142,7 @@ def adapt_daily_shadow(rows, instruments, *, task_as_of, instruments_as_of):
             "price_change": float(prices["change"]),
             "return_pct": float(prices["pct_chg"]),
             "volume_shares": _exact_units(row["vol"], 100, "vol"),
-            "turnover_cny": _exact_units(row["amount"], 1000, "amount"),
+            "turnover_cny": turnover,
             "currency": "CNY", "source_vendor": "TUSHARE",
             "is_quality_valid": False,
             "quality_flags": "SHADOW_ONLY_NOT_VALIDATED",
@@ -134,6 +153,9 @@ def adapt_daily_shadow(rows, instruments, *, task_as_of, instruments_as_of):
     return out, {
         "status": "SHADOW_CANDIDATE_ONLY", "source_rows": len(rows),
         "converted_rows": len(out), "excluded_outside_explicit_gold_universe": excluded,
+        "turnover_cny_shadow_rounding_rule": "DECIMAL_HALF_EVEN_UNVERIFIED",
+        "turnover_cny_precision_loss_rows": turnover_rounded_rows,
+        "turnover_cny_rounding_contract_verified_against_gold": False,
         "point_in_time_membership_verified": False,
         "return_pct_scale_verified_against_gold": False,
         "parquet_values_compared_to_gold": False,
