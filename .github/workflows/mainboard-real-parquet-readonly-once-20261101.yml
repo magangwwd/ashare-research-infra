@@ -15,7 +15,7 @@ jobs:
     if: >-
       github.repository == 'magangwwd/ashare-research-infra' &&
       github.ref == 'refs/heads/ops/one-shot-real-parquet-diff-20261101' &&
-      github.actor == 'magangwwd'
+      github.event.head_commit.message == 'audit(mainboard): start one-shot real Parquet read-only'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
