@@ -1,11 +1,7 @@
 name: One-shot Task01 read-only stage audit dispatch (2026-11-02)
 
 on:
-  push:
-    branches:
-      - ops/one-shot-task01-stage-audit-20261102
-    paths:
-      - .github/workflows/task01-one-shot-audit-20261102.yml
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,6 +10,7 @@ permissions:
 jobs:
   dispatch:
     if: >-
+      false &&
       github.repository == 'magangwwd/ashare-research-infra' &&
       github.ref == 'refs/heads/ops/one-shot-task01-stage-audit-20261102' &&
       github.event.head_commit.message == 'ops(task01): one-shot readonly audit dispatch 20261102'
