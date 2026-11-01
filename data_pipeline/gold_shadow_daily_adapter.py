@@ -76,12 +76,22 @@ def adapt_daily_shadow(rows, instruments, *, task_as_of, instruments_as_of):
         ids.add(ident)
 
     out, seen, excluded = [], set(), 0
+    # Task01 security_id is not the Gold ID, but it must be stable per symbol.
+    # Reject identity collisions even among rows excluded from the Gold universe.
+    task_symbol_ids, task_id_symbols = {}, {}
     for row in rows:
         if not isinstance(row, dict) or _REQUIRED - row.keys():
             raise ValueError("Task01 daily row missing required fields")
         symbol = row["ts_code"]
         if not isinstance(symbol, str) or not symbol or not isinstance(row["security_id"], str) or not row["security_id"]:
             raise ValueError("invalid Task01 symbol/security_id")
+        task_id = row["security_id"]
+        if symbol in task_symbol_ids and task_symbol_ids[symbol] != task_id:
+            raise ValueError("conflicting Task01 security_id for ts_code")
+        if task_id in task_id_symbols and task_id_symbols[task_id] != symbol:
+            raise ValueError("Task01 security_id reused by different symbols")
+        task_symbol_ids[symbol] = task_id
+        task_id_symbols[task_id] = symbol
         day = _date(row["trade_date"], "trade_date")
         if day > cutoff:
             raise ValueError("future Task01 row beyond verified pointer")
