@@ -1,0 +1,70 @@
+name: Task01 one-shot stage SHA audit relay 20261101e
+on:
+  push:
+    branches:
+      - ops/one-shot-task01-stage-audit-20261101e
+    paths:
+      - .github/workflows/task01-one-shot-stage-audit-20261101e.yml
+permissions:
+  contents: read
+  actions: write
+concurrency:
+  group: task01-stage-audit-relay-20261101e
+  cancel-in-progress: false
+jobs:
+  dispatch_readonly:
+    if: >-
+      github.repository == 'magangwwd/ashare-research-infra' &&
+      github.ref == 'refs/heads/ops/one-shot-task01-stage-audit-20261101e' &&
+      github.event_name == 'push' &&
+      github.event.head_commit.message == 'ops(task01): dispatch reviewed one-shot same-run SHA audit 20261101e'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify source identity, artifacts, no active producer or audit
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          [[ "$(gh api "repos/$repo/branches/main" --jq .commit.sha)" == "08650e982a10ad2a503d76b35053adb66f6b5f61" ]] || { echo "BLOCKED: main audit workflow commit changed"; exit 1; }
+          gh api "repos/$repo/actions/runs/41248659151" > "$RUNNER_TEMP/source.json"
+          gh api "repos/$repo/actions/runs/41248659151/jobs?per_page=100" > "$RUNNER_TEMP/jobs.json"
+          gh api "repos/$repo/actions/runs/41248659151/artifacts?per_page=100" > "$RUNNER_TEMP/artifacts.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          source=json.loads((root/"source.json").read_text())
+          jobs=json.loads((root/"jobs.json").read_text())["jobs"]
+          artifacts=json.loads((root/"artifacts.json").read_text())["artifacts"]
+          assert source["id"] == 41248659151 and source["conclusion"] == "cancelled"
+          assert source["path"] == ".github/workflows/task01.yml" and source["head_branch"] == "main"
+          assert source["event"] == "schedule" and source["head_repository"]["full_name"] == os.environ["GITHUB_REPOSITORY"]
+          job=[j for j in jobs if j["id"] == 124719079710 and j["name"] == "task01" and j["conclusion"] == "cancelled"]
+          assert len(job)==1
+          steps={s["name"]:s["conclusion"] for s in job[0]["steps"]}
+          assert all(steps.get(k)==v for k,v in {"Daily update or maintenance":"success","Production acceptance":"success","Publish accepted snapshot to Drive":"cancelled","Save recovery checkpoint":"success"}.items())
+          for name in ("task01-checkpoint","task01-validation-report"):
+              found=[a for a in artifacts if a["name"]==name and not a["expired"]]
+              assert len(found)==1 and found[0]["digest"].startswith("sha256:")
+              if name == "task01-checkpoint":
+                  assert found[0]["digest"] == "sha256:b18cf6fe55874e5615e9d24129761cbea71f7ac5b98593d999079ca8708602bc"
+                  assert found[0]["size_in_bytes"] == 3936680028
+          print("PASS: verified accepted source and unexpired same-run artifacts")
+          PY
+          gh api --allow-escape-sequences "repos/$repo/actions/jobs/124719079710/logs" > "$RUNNER_TEMP/source.log"
+          [[ "$(grep -Fc 'SUCCESS staging created folder_id=1Twq0EP00oq6xYjojhTmiTdnAkM1Y7cik files=8657 bytes=3096760067; current pointer unchanged' "$RUNNER_TEMP/source.log" || true)" == "1" ]] || { echo "BLOCKED: source stage provenance"; exit 1; }
+          for wf in task01.yml task01-stage-audit.yml; do
+            count="$(gh api "repos/$repo/actions/runs?per_page=100" --jq "[.workflow_runs[] | select(.path == \".github/workflows/$wf\" and .status != \"completed\")] | length")"
+            [[ "$count" == "0" ]] || { echo "BLOCKED: active $wf"; exit 1; }
+          done
+      - name: Dispatch exactly one existing read-only main audit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' '{"ref":"main","inputs":{"source_run_id":"41248659151","stage_id":"1Twq0EP00oq6xYjojhTmiTdnAkM1Y7cik"}}' > "$RUNNER_TEMP/dispatch.json"
+          gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/task01-stage-audit.yml/dispatches" --input "$RUNNER_TEMP/dispatch.json"
+          echo "SUCCESS: one read-only audit dispatched; no production publication"
