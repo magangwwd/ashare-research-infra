@@ -250,8 +250,10 @@ def test_task_only_prefix_breakdown_does_not_certify_missing_gold(tmp_path):
     p["manifest_sha256"] = hashlib.sha256(m).hexdigest()
     report = diagnose(p, m, gold, t, g, task_relative_path=REL, gold_instruments_path=t.parent / "instruments.parquet")
     assert report["only_in_task01"] == 0
-    assert report["task_non_mainboard_rows_excluded"] == 1
-    assert report["task_non_mainboard_excluded_by_prefix"]["300.SZ"] == 1
+    assert report["excluded_non_mainboard_rows"] == 0
+    assert report["unclassified_historical_rows"] == 1
+    assert report["unclassified_historical_rows_by_prefix"]["300.SZ"] == 1
+    assert report["status"] == "UNCLASSIFIED_HISTORICAL_UNIVERSE"
     assert not report["gold_historical_pit_universe_verified"]
 
 
@@ -306,9 +308,15 @@ def test_main_board_only_excludes_other_markets_not_gold_missing(tmp_path):
     report = diagnose(p, m, gold, t, g, task_relative_path=REL,
                       gold_instruments_path=t.parent / "instruments.parquet")
     assert report["universe_scope"] == "SSE_SZSE_A_SHARE_MAIN_BOARD_ONLY"
-    assert report["task_non_mainboard_rows_excluded"] == 6
+    # BJ is outside SSE/SZSE by exchange identity; the other five are
+    # unclassified until independent historical board/PIT evidence exists.
+    assert report["excluded_non_mainboard_rows"] == 1
+    assert report["task_non_mainboard_excluded_by_prefix"] == {"920.BJ": 1}
+    assert report["unclassified_historical_rows"] == 5
+    assert report["unclassified_historical_rows_by_prefix"]["688.SH"] == 1
     assert report["common_keys"] == 1
     assert report["only_in_task01"] == 0
+    assert report["status"] == "UNCLASSIFIED_HISTORICAL_UNIVERSE"
     assert not report["gold_historical_pit_universe_verified"]
     assert not report["production_switch_allowed"]
 
@@ -459,3 +467,36 @@ def test_future_task_record_outside_cutoff_not_verified(tmp_path):
     assert result["task_rows_after_cutoff"] == 1
     assert result["task_rows_at_or_before_cutoff"] == 1
     assert not result["five_trading_days_shadow_verified"]
+
+
+
+def test_delisted_historical_mainboard_candidate_not_falsely_excluded(tmp_path):
+    p, m, gold, t, g = _make(tmp_path)
+    rows = pq.read_table(t).to_pylist()
+    rows.append(dict(rows[0], ts_code="002999.SZ"))
+    pq.write_table(pa.Table.from_pylist(rows), t)
+    entry = {"path": REL, "bytes": t.stat().st_size,
+             "sha256": hashlib.sha256(t.read_bytes()).hexdigest()}
+    doc = json.loads(m)
+    doc["files"] = [entry]
+    doc["total_bytes"] = entry["bytes"]
+    m = json.dumps(doc).encode("utf-8")
+    p["total_bytes"] = entry["bytes"]
+    p["manifest_sha256"] = hashlib.sha256(m).hexdigest()
+    report = diagnose(p, m, gold, t, g, task_relative_path=REL,
+                      gold_instruments_path=t.parent / "instruments.parquet")
+    assert report["unclassified_historical_rows"] == 1
+    assert report["excluded_non_mainboard_rows"] == 0
+    assert report["only_in_task01"] == 0
+    assert report["unclassified_historical_rows_are_not_gold_missing"]
+    assert not report["historical_board_transfer_and_delisting_pit_verified"]
+    assert not report["production_switch_allowed"]
+
+
+def test_current_gold_membership_not_claimed_as_historical_pit(tmp_path):
+    report = run(tmp_path)
+    assert report["gold_instruments_file_verified"]
+    assert not report["tushare_stock_basic_market_mainboard_verified"]
+    assert not report["gold_historical_pit_universe_verified"]
+    assert report["non_mainboard_exclusion_basis"] == "BJ_EXCHANGE_ONLY_NO_NUMERIC_PREFIX_GUESS"
+    assert report["production_switch_allowed"] is False
