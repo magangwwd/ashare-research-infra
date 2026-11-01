@@ -1,0 +1,50 @@
+{
+  "schema_version": "ETF_SCOPED_REVIEW_NOTE_V1_NOT_SOP_RECEIPT",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "observed_at_utc": "2026-11-01T08:03:06Z",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "scope": "Correct stale authoritative queue evidence only; no strategy code/data changes",
+  "source_branch_sha": "27bbeec248093ef229c0ffebf8e95517ef68cf72",
+  "evidence": {
+    "pr_92": {
+      "url": "https://github.com/magangwwd/ashare-research-infra/pull/92",
+      "head_sha": "e9c4cf492709ebb23f22a3b025985b9640025b1b",
+      "ci_run_id": 40197993123,
+      "ci_job_id": 121182907808,
+      "ci_conclusion": "success",
+      "synthetic_tests_passed": 90,
+      "synthetic_tests_failed": 0,
+      "artifact_count": 0
+    },
+    "pr_114": {
+      "head_sha": "7aa9084f2a10f88f43b449eac127c52f0c6d05d9",
+      "exact_head_ci": "NOT_FOUND"
+    },
+    "pr_117": {
+      "head_sha": "7c29f47922658fe70d3928e301b96b478bfa19e4",
+      "exact_head_ci": "NOT_FOUND"
+    },
+    "historic_research_run": 39599580852,
+    "historic_artifact": 12345747366,
+    "drive_new_write_or_byte_readback": false,
+    "formal_sop_receipt_issued": false
+  },
+  "safety": {
+    "fixed_symbol_count": 8,
+    "max_simultaneous_etf_positions": 1,
+    "cash_allowed": true,
+    "historical_max_drawdown_target": 0.25,
+    "live_trading": false,
+    "paper_005": "BLOCKED"
+  },
+  "blockers": [
+    "Synthetic CI cannot verify true dividend total return",
+    "Issuer event coverage incomplete",
+    "Independent fund_adj and market price reconciliation incomplete",
+    "Record-date cash availability and Drive acceptance not verified",
+    "Stacked PR #114/#117 exact-head CI missing"
+  ],
+  "next_action": "Keep queue REVIEW_REQUIRED and PAPER-005 BLOCKED. Do not rerun PR #92 CI. After explicit approval and only if necessary, test the newer stacked heads once, then independently audit issuer/price/cash/Drive evidence before any VERIFIED_DONE receipt."
+}
