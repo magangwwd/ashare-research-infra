@@ -121,6 +121,13 @@ jobs:
                       and len(link.parts) == 2 and link.parts[0] == ".versions"
                       and link.parts[1] not in (".", "..")
                   )
+                  # Task01 publishes fixed top-level convenience symlinks into
+                  # data/current. Accept only these exact in-tree aliases;
+                  # never accept arbitrary paths or link destinations.
+                  safe_data_alias = (
+                      member.issym() and member.name in ("data/raw", "data/clean")
+                      and link is not None and link.as_posix() == f"current/{path.name}"
+                  )
                   safe_hardlink = (
                       member.islnk() and link is not None
                       and not link.is_absolute() and ".." not in link.parts
@@ -131,7 +138,7 @@ jobs:
                   )
                   if (not path.parts or path.is_absolute() or ".." in path.parts
                           or path.parts[0] not in ("data", "metadata")
-                          or not (member.isfile() or member.isdir() or safe_current_link or safe_hardlink)):
+                          or not (member.isfile() or member.isdir() or safe_current_link or safe_data_alias or safe_hardlink)):
                       raise SystemExit("BLOCKED: unsafe checkpoint member"
                                        + f" type={member.type!r} path={member.name[:160]!r} link={member.linkname[:160]!r}")
                   if member.isfile():
