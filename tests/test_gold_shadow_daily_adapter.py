@@ -77,6 +77,23 @@ class GoldShadowDailyAdapterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "nonfinite"):
             self.adapt([dict(self.row, close=float("nan"))])
 
+    def test_task01_security_id_must_be_stable_across_dates(self):
+        other_day = dict(self.row, trade_date="2026-10-23", security_id="different-task-uuid")
+        with self.assertRaisesRegex(ValueError, "conflicting Task01 security_id"):
+            self.adapt([self.row, other_day])
+
+    def test_task01_security_id_cannot_identify_two_symbols(self):
+        outside_gold = dict(self.row, ts_code="300001.SZ", security_id=self.row["security_id"])
+        with self.assertRaisesRegex(ValueError, "Task01 security_id reused"):
+            self.adapt([self.row, outside_gold])
+
+    def test_consistent_task01_identity_across_dates_remains_shadow_only(self):
+        other_day = dict(self.row, trade_date="2026-10-23")
+        rows, audit = self.adapt([self.row, other_day])
+        self.assertEqual(len(rows), 2)
+        self.assertFalse(audit["production_switch_allowed"])
+        self.assertFalse(audit["point_in_time_membership_verified"])
+
     def test_no_matching_rows_rejected(self):
         with self.assertRaisesRegex(ValueError, "no overlapping"):
             self.adapt([dict(self.row, ts_code="300001.SZ")])
