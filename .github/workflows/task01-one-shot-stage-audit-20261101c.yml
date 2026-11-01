@@ -1,0 +1,93 @@
+name: Task01 source-locked read-only SHA audit relay (one-shot 2026-11-01c)
+
+on:
+  push:
+    branches:
+      - ops/one-shot-task01-stage-audit-20261101c
+    paths:
+      - .github/workflows/task01-one-shot-stage-audit-20261101c.yml
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: task01-one-shot-audit-relay-20261101c
+  cancel-in-progress: false
+
+jobs:
+  dispatch_readonly:
+    if: >-
+      github.repository == 'magangwwd/ashare-research-infra' &&
+      github.ref == 'refs/heads/ops/one-shot-task01-stage-audit-20261101c' &&
+      github.event_name == 'push' &&
+      github.event.head_commit.message == 'ops(task01): dispatch reviewed one-shot same-run SHA audit 20261101c'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Verify exact cancelled accepted source, artifact provenance and stage log
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          source_run="41248659151"
+          source_job="124719079710"
+          stage="1Twq0EP00oq6xYjojhTmiTdnAkM1Y7cik"
+          gh api "repos/$repo/actions/runs/$source_run" > "$RUNNER_TEMP/source-run.json"
+          gh api "repos/$repo/actions/runs/$source_run/jobs?per_page=100" > "$RUNNER_TEMP/source-jobs.json"
+          gh api "repos/$repo/actions/runs/$source_run/artifacts?per_page=100" > "$RUNNER_TEMP/source-artifacts.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          run=json.loads((root/'source-run.json').read_text())
+          jobs=json.loads((root/'source-jobs.json').read_text()).get('jobs', [])
+          artifacts=json.loads((root/'source-artifacts.json').read_text()).get('artifacts', [])
+          if not (run.get('id') == 41248659151
+                  and run.get('path') == '.github/workflows/task01.yml'
+                  and run.get('head_branch') == 'main'
+                  and run.get('event') == 'schedule'
+                  and run.get('conclusion') == 'cancelled'
+                  and (run.get('head_repository') or {}).get('full_name') == os.environ['GITHUB_REPOSITORY']):
+              raise SystemExit('BLOCKED: source run identity invalid')
+          matching=[j for j in jobs if j.get('id') == 124719079710 and j.get('name') == 'task01' and j.get('conclusion') == 'cancelled']
+          if len(matching) != 1:
+              raise SystemExit('BLOCKED: source task01 job identity invalid')
+          steps={s.get('name'):s.get('conclusion') for s in (matching[0].get('steps') or [])}
+          required={'Daily update or maintenance':'success', 'Production acceptance':'success',
+                    'Publish accepted snapshot to Drive':'cancelled',
+                    'Save recovery checkpoint':'success'}
+          if any(steps.get(k) != v for k,v in required.items()):
+              raise SystemExit('BLOCKED: source acceptance/publication job contract mismatch')
+          for name in ('task01-checkpoint','task01-validation-report'):
+              items=[a for a in artifacts if a.get('name') == name and not a.get('expired')]
+              if len(items) != 1:
+                  raise SystemExit('BLOCKED: missing/ambiguous same-run artifact '+name)
+              d=items[0].get('digest') or ''
+              if not (len(d)==71 and d.startswith('sha256:') and all(c in '0123456789abcdef' for c in d[7:])):
+                  raise SystemExit('BLOCKED: artifact digest invalid')
+              if name=='task01-checkpoint' and not (0 < items[0].get('size_in_bytes',0) <= 5_000_000_000):
+                  raise SystemExit('BLOCKED: checkpoint size invalid')
+          print('PASS source identity, acceptance and both same-run artifacts')
+          PY
+          # GH CLI rejects ANSI-containing job logs without this explicit
+          # display option; earlier relay #41287030837 stopped here.
+          # The log is inspected as data only and is never executed.
+          gh api --allow-escape-sequences "repos/$repo/actions/jobs/$source_job/logs" > "$RUNNER_TEMP/source.log"
+          stage_count="$(grep -Fc "SUCCESS staging created folder_id=$stage files=8657 bytes=3096760067; current pointer unchanged" "$RUNNER_TEMP/source.log" || true)"
+          [[ "$stage_count" == "1" ]] || { echo "BLOCKED: exact source staging provenance not unique"; exit 1; }
+          task_active="$(gh api "repos/$repo/actions/workflows/task01.yml/runs?per_page=100" --jq '[.workflow_runs[] | select(.status != "completed")] | length')"
+          audit_active="$(gh api "repos/$repo/actions/workflows/task01-stage-audit.yml/runs?per_page=100" --jq '[.workflow_runs[] | select(.status != "completed")] | length')"
+          [[ "$task_active" == "0" && "$audit_active" == "0" ]] || { echo "BLOCKED: active producer or audit"; exit 1; }
+          echo "PASS exact run/stage provenance, no active producer or audit"
+      - name: Dispatch existing main-branch read-only SHA audit exactly once
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' '{"ref":"main","inputs":{"source_run_id":"41248659151","stage_id":"1Twq0EP00oq6xYjojhTmiTdnAkM1Y7cik"}}' > "$RUNNER_TEMP/dispatch.json"
+          gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/task01-stage-audit.yml/dispatches" --input "$RUNNER_TEMP/dispatch.json"
+          echo "SUCCESS: dispatched one existing main-only read-only audit; no publication attempted"
