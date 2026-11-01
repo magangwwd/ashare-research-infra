@@ -32,6 +32,36 @@ class GoldShadowDailyAdapterTests(unittest.TestCase):
         self.assertFalse(audit["production_switch_allowed"])
         self.assertFalse(audit["return_pct_scale_verified_against_gold"])
 
+    def test_real_fractional_yuan_is_rounded_only_for_unvalidated_shadow(self):
+        rows, audit = self.adapt([dict(self.row, amount="67.8904")])
+        self.assertEqual(rows[0]["turnover_cny"], 67890)
+        self.assertEqual(audit["turnover_cny_precision_loss_rows"], 1)
+        self.assertEqual(audit["turnover_cny_shadow_rounding_rule"], "DECIMAL_HALF_EVEN_UNVERIFIED")
+        self.assertFalse(audit["turnover_cny_rounding_contract_verified_against_gold"])
+        self.assertFalse(rows[0]["is_quality_valid"])
+        self.assertFalse(audit["production_switch_allowed"])
+
+    def test_half_even_turnover_tie_is_explicit_not_silent(self):
+        rows, audit = self.adapt([dict(self.row, amount="67.8905")])
+        self.assertEqual(rows[0]["turnover_cny"], 67890)
+        self.assertEqual(audit["turnover_cny_precision_loss_rows"], 1)
+        rows, audit = self.adapt([dict(self.row, amount="67.8915")])
+        self.assertEqual(rows[0]["turnover_cny"], 67892)
+        self.assertFalse(audit["quality_validation_complete"])
+
+    def test_negative_turnover_is_rejected_even_in_shadow(self):
+        with self.assertRaisesRegex(ValueError, "amount: negative"):
+            self.adapt([dict(self.row, amount="-1")])
+
+    def test_turnover_overflow_rejected(self):
+        with self.assertRaisesRegex(ValueError, "amount: overflowing"):
+            self.adapt([dict(self.row, amount="9223372036854776")])
+
+    def test_exact_integer_turnover_is_not_counted_as_rounded(self):
+        rows, audit = self.adapt([dict(self.row, amount="67.890")])
+        self.assertEqual(rows[0]["turnover_cny"], 67890)
+        self.assertEqual(audit["turnover_cny_precision_loss_rows"], 0)
+
     def test_future_gold_universe_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "PIT_UNIVERSE_DATE_MISMATCH"):
             self.adapt(instruments_as_of="2026-10-30")
