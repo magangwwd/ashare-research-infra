@@ -58,9 +58,12 @@ def _shadow_turnover_cny(amount):
         rounded = np.rint(np.float64(float(_number(amount, "amount"))) * np.float64(1000))
     except (OverflowError, ValueError):
         raise ValueError("amount: invalid float64 conversion") from None
-    if not np.isfinite(rounded) or rounded < 0 or rounded > max_int64:
+    if not np.isfinite(rounded) or rounded < 0:
         raise ValueError("amount: overflowing converted units")
     result = int(rounded)
+    # Comparing np.float64 to int64 max may round the limit up to 2**63.
+    if result > max_int64:
+        raise ValueError("amount: overflowing converted units")
     return result, Decimal(result) != exact_cny
 
 
