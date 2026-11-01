@@ -33,6 +33,21 @@
 
 排除记录的代码组：`300.SZ=11222,301.SZ=5668,302.SZ=12,688.SH=7392,689.SH=12,920.BJ=4204`。这些记录不是 Gold 主板缺失，后续不再需要为它们做主板补齐/失败诊断。成交额的4处不符合半数取偶舍入，但每处差异均不超过0.5元；**仍需查明具体数值转换或浮点规则，不能未经证据放松严格验收。**
 
+
+## 第二次精度复核：13,002项均符合 Gold 旧浮点换算（2026-11-01）
+
+- Gold 源脚本 `backfill_main_board_history.py` 对成交额的原路径为 `(pd.to_numeric(values) * 1000).round().astype("Int64")`：先按 `float64` 浮点运算乘1000，再用 pandas/NumPy 整元舍入，**不是直接对 Task01 十进制元金额调用 Decimal ROUND_HALF_EVEN**。
+- 上一轮真实 run [#41261404901](https://github.com/magangwwd/ashare-research-infra/actions/runs/41261404901)、artifact `#13065516697` 提取唯一4条 `Decimal ROUND_HALF_EVEN` 未解释的成交额记录，均为恰好0.5元。具体 `vendor_symbol/trade_date/Task01(元)→Gold(元)`：
+  - `000698.SZ/2026-10-21/8321273.5000→8321273`
+  - `002293.SZ/2026-10-14/66806632.5000→66806633`
+  - `002422.SZ/2026-10-16/1050605834.5000→1050605835`
+  - `002695.SZ/2026-10-08/133873966.5000→133873967`
+- PR #149 增加受限**诊断性** `reproduce_legacy_gold_turnover_cny()`（`35454404b8444b3f801575c965be13db1963af98`）以及4个真实金额和不放宽原始差异的回归测试（`495fe91068506ce60c7a66adb91ffeaaae69c829`）。[CI #41261572708](https://github.com/magangwwd/ashare-research-infra/actions/runs/41261572708) `completed/success`，**294 passed / 2 skipped / 9 subtests**。
+- 独立受控**真实主板只读** Runner [#41261678723](https://github.com/magangwwd/ashare-research-infra/actions/runs/41261678723) `completed/success`；工件 `mainboard-float-parity-report` `#13065377643`，GitHub artifact ZIP `sha256:7a9962dd51f14ed029392fe7bf21e177992ed79ffe6d1ccde26fb91f480c4f74`。
+- **实际统计**：主板共同键 `38265`，OHLC和成交量差 `0`，严格成交额差 `13002`；`turnover_legacy_float_rule_compatible_differences=13002`，`turnover_legacy_float_rule_incompatible_count=0`。因此当前样本所有成交额数值差均由原Gold浮点换算和舍入复现；但**仍保留严格原始差异计数，绝不当作生产完全相等**。历史PIT、其他字段、5交易日冻结V1重放与回滚仍未验收。
+- 唯一隔离触发分支 `ops/one-shot-mainboard-float-parity-20261101` 在生成run后已通过 `c969b492d6eddb1ec502b8c7a071465d4c2adcdf` 禁用 `push`；没有创建 schedule、没有 Drive 上传、没有修改冻结V1。
+
+
 ## 保留闸门
 
 - 使用的是 Gold 在 `2026-10-30` 的正式名录，对 10月8日至23日历史证券范围的逐日**point-in-time归属仍未独立验收**。对板块变动、退市、停牌等事件需时点复核；不能声称所有历史日均无差异。
