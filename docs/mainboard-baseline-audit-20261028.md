@@ -1,0 +1,252 @@
+# A股主板双链路首轮实查记录（2026-10-28）
+
+状态：**BLOCKED / 禁止切换与删除**。这是 Google Drive 连接器对指定文件夹的元数据只读检查，不是 Actions 日志或生产端 OAuth/rclone 的完整验证。
+
+## 仓库证据
+- main SHA: `b2d6191e7b86cd4c87443c6582d2a083f07bea7b`。
+- 整合 PR #116: draft/open，原计划与使用指南、Skill 在 `plan/unify-mainboard-data-20261028`。
+- Gold 生产计划 23:50 北京时间运行 `gold-refresh` 然后 `current-state`；Task01 夜间 21:17/23:30/次日03:23。
+- GitHub 连接器的通用 fetch 拒绝直接访问 workflow runs REST 列表（400 URL not allowed）；不能据此判定 Actions 失败。该轮新增代码提交后的 PR CI run `40676481865` 曾显示 `in_progress`，需复查最终结论。
+
+## Google Drive 实际元数据
+1. `Ashare_Quant/` 根目录 folder ID `1rkC99Ymgp8mjvAcJNRPJMlOGLdI9_bue`：根目录列出 `versions/`、`staging/` 等文件夹，但**未发现 `current.json`**。精确文件名全盘查询也未返回该文件。
+2. `Ashare_Quant/versions/`（`1zZgsIjjzKe236ddYQ1DBpgddEhdcjyib`）：可见最新命名版本 `2026-10-24T211915.119571_0000-7c30e07d`，该版本根目录列出 `data/`、`metadata/`、`docs/`，**未发现 `production_manifest.json`**。目录存在不等于已正式发布。
+3. `Ashare_Quant/staging/`（`1oXqyvWAJytdi3EMJRGucUX8U7Lsx4_c1`）：可见 2026-10-28 01:56 UTC 新暂存版本，**绝不能作为正式数据**。有多日未清理的暂存目录，尚未确认原因，不应贸然删除。
+4. Gold 预期目录 `down_data/data/gold/main_board/`（`1vCz7H5aeePjFapg7xLPu44x-PUSQOX_8`）：根目录列出 `daily_prices/`、`daily_metrics/`、`adjustment_factors/` 等文件夹，**未发现 `manifest.json`、`instruments.parquet`、`daily_snapshot.parquet`**。精确文件名全盘查询未返回这三者。
+
+**重要限定**：以上是当前连接器可见目录的结果。仍须通过两条生产工作流各自的 OAuth/rclone 根目录和 GitHub run 日志交叉确认：可能是生产使用不同根目录、发布未完成、文件被移动或连接器可见性差异，不能直接断言数据已丢失。
+
+## 本轮代码
+- `tools/mainboard_inventory_gate.py`：读取两侧**完整根目录列表 JSON**，只检查必须的生产标志是否存在且类型唯一，输出 JSON 诊断报告。缺失、重复、类型错误时退出码 2；不连接云盘、不上传、不删除、不切换生产。
+- `tests/test_mainboard_inventory_gate.py`：覆盖齐全但不可切换、缺 Task01 指针、缺 Gold manifest、重复指针、暂存冒充正式、文件类型错误、无效 JSON。
+- 运行方式（需要先保存完整、未截断的两个根目录 JSON）：`python -m tools.mainboard_inventory_gate --task01-listing task01-root.json --gold-listing gold-root.json --output audit.json`；`python -m pytest -q tests/test_mainboard_inventory_gate.py`。
+- 此门禁只是**元数据第一关**，即使 PASS 仍需校验 Task01 指针与 SHA256、Gold 数据、日期和策略回放；脚本始终返回 `production_switch_allowed=false` 与 `deletion_allowed=false`。
+
+## 下一轮优先级
+1. 读取 CI run `40676481865` 终态、失败 job 日志并修复代码问题。
+2. 从 Task01/Gold 各自实际 Actions 日志确认真实远端根 ID、最近7次 run 结果；重点定位缺 `current.json` 和 Gold manifest 的原因。
+3. 在不触发全量 Tushare 下载的情况下，执行只读 OAuth/rclone 目录与指针检查，产出有 run ID 的审计报告；未解决前不开发生产切换、不删除旧数据。
+
+
+## 2026-10-28 20:02 北京时间第二轮进展
+
+- GitHub Pipeline CI `40676481865`、`40676538851` 的 job 均为 `completed/success`。后一轮日志实际显示 **125 passed, 2 skipped**，属于离线单测，不是生产云盘验收。
+- 通过 Google Drive API `'<folder_id>' in parents and trashed = false` 精确复查：Task01 根目录可见7项，含 `versions/` 和 `staging/`，仍**未见 `current.json`**；Gold 主板根目录可见6个子目录，仍**未见 `manifest.json`、`instruments.parquet`、`daily_snapshot.parquet`**。两次检查来自同一连接器视角，不能替代生产 OAuth/rclone 实查。
+- 新增 `tools/mainboard_remote_probe.py`：在 GitHub Runner 使用现有 `GDRIVE_OAUTH_JSON` 和 `GDRIVE_RCLONE_CONFIG_B64` 分别只读列举正式根目录；先校验 Gold 项目根 marker，再检查两侧正式 marker，返回安全状态码，错误不打印 OAuth/rclone 详细信息；始终拒绝生产切换和删除。
+- 新增 `tests/test_mainboard_remote_probe.py`（7项离线测试）和手动、**无 schedule** 的 `.github/workflows/mainboard-dual-drive-probe.yml`；仅将去敏诊断 JSON 作为 Actions artifact 保存14天，不触发 Tushare、无云盘写入。
+- 新代码 CI run `40684693795` 已启动，记录时 `in_progress`。**新工作流还在 PR 分支，未在 main 上手动执行生产凭据检查**。GitHub 连接器不提供直接 workflow_dispatch 操作，不能声称生产检查已完成。
+
+### 下一轮闸门
+先复核 `40684693795` 终态并修复任何失败；通过代码审查后合并仅只读诊断工作流，再在 main 用正式 Secrets 手动执行一次，读取 artifact 确认真实根目录和 marker。未取得两端生产端证据前，不切换策略、不清理数据。
+
+## 2026-10-29 00:02 北京时间第三轮推进
+
+- 复核上轮 CI：Pipeline CI `40684693795` 和 `40684776855` 的 job 均为 `completed/success`，**仅代表离线 CI 成功**。
+- 在 PR #116 的只读诊断 `tools/mainboard_remote_probe.py` 上新增第二层验收：Task01 读取 `current.json`，校验 `validated=true`、版本目录/manifest 的 Drive ID 与父子关系、`production_manifest.json` 的 SHA256、版本/日期/文件数量一致；Gold 只读读取 `manifest.json`，检查 `as_of_date` 与 `primary_keys_unique`、`ohlc_valid`。不会读取或传出行情分区。
+- 新增 `tests/test_mainboard_manifest_contract.py` 的10项离线测试，覆盖SHA损坏、错误目录、指针未验收、版本不一致、Gold 验收失败等。提交：`534a911070d53a4e3916e85e48a7c1164f7956de`、`7c37b91c53802d04ef2185075db5ca2d14b08748`。
+- 新 CI `40722398618` 创建后检查时为 `in_progress`；**尚未验收通过，不得声称成功**。
+- 生产凭据端的只读诊断仍未运行，Drive 两侧正式 marker 仍缺少实测确认；不得停止原下载、删除数据或切换选股。下一轮优先复核新 CI、审查 PR 后使只读工作流在 main 可执行，并取得真实生产端 artifact。
+
+
+## 2026-10-29 04:01 北京时间第四轮：正式 marker 已找到，纠正此前缺失判断
+
+**重要纠正：** 本轮 Google Drive 连接器重新列举与精确读取，Task01 `Ashare_Quant/current.json` 和 Gold `down_data/data/gold/main_board/manifest.json`、`instruments.parquet`、`daily_snapshot.parquet` **均实际存在**。此前“未找到”是当时查询结果，不能再作为当前缺失结论。不能据此推断生产端曾丢失文件。
+
+### 实际读取与核验（只读，不使用生产 Secrets）
+
+- Task01 `current.json`：`validated=true`，`snapshot_as_of=2026-10-24`，`source_run_id=40119936249`，正式版本 `2026-10-24T211915.119571_0000-7c30e07d`，指向 **5406** 个文件、**2,331,724,247** 字节；`critical_history_complete=false`、`full_requested_core_range_complete=false`，不能宣称历史齐全。
+- Task01 版本目录实际存在、其父目录是 `versions/`；`production_manifest.json` 也实际存在且直接位于所指版本目录。下载后计算 SHA256 **`118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`**，与指针一致；manifest `validated=true`、版本和 `snapshot_as_of` 与指针一致，文件数=5406，文件字节和=2,331,724,247，路径及文件 ID 在清单中均唯一。**尚未逐一下载5406个分区核验内容**。
+- Gold `manifest.json`：`as_of_date=2026-10-27`，`primary_keys_unique=true`、`ohlc_valid=true`；`instruments.parquet` **3486行**、`daily_snapshot.parquet` **3189行**（行数来自 manifest）；实际下载这两个 Parquet，SHA256 均与 Gold manifest 声明完全一致。未解析 Parquet 内部行内容，未完成策略回放。
+- **日期不一致：Task01 2026-10-24，Gold 2026-10-27，落后3个自然日**；这不等于3个交易日，必须阻止适配器以旧 Task01 替换新 Gold。即使两端 manifest 验收标志为真，也不能代表今天已更新。
+- GitHub Actions `Task01` run [40119936249](https://github.com/magangwwd/ashare-research-infra/actions/runs/40119936249) 已确认 `completed/success`，与上述指针来源一致。
+- 最新检查到的 Task01 失败 run [40562368344](https://github.com/magangwwd/ashare-research-infra/actions/runs/40562368344) 与 [40598869222](https://github.com/magangwwd/ashare-research-infra/actions/runs/40598869222)：**均在 `Publish accepted snapshot to Drive` 步骤失败，日志均显示 `Drive request failed (410)`**，分别已暂存约1600/6994、2900/7037个文件，旧正式指针未见切换。**410来自哪个请求阶段尚未查明，不可直接断言配额或会话过期**。
+- Task01 run [40748947088](https://github.com/magangwwd/ashare-research-infra/actions/runs/40748947088) 在本轮检查时 `in_progress`，执行到 `Daily update or maintenance`；尚未取得最终结果。Gold run [40576385273](https://github.com/magangwwd/ashare-research-infra/actions/runs/40576385273) `completed/success`，与 Gold 2026-10-27 manifest 及文件修改时间相符。
+- PR #116 新增日期对齐检查：即使两边分别 `PASS`，只要 `as_of` 不相同便返回 `TASK01_BEHIND_GOLD` / `GOLD_BEHIND_TASK01`，禁止误判可影子替换；新离线测试覆盖本次实际日期差异。日期相同也**不等于**可以切换生产。
+
+### 下一轮明确任务
+
+1. 先复核 Task01 run 40748947088 的终态、是否再次报410；若失败，增加不泄露请求 URL/凭据的安全错误阶段分类，定位失败是上传会话、文件读回还是目录操作。
+2. 复核新增日期门禁的 CI 结果，补充主板股票、OHLCV/单位、停复牌、复权及冻结策略差异对比；未完成之前保留双链路。
+3. 不重触发全量下载、不删除 staging 或旧 Gold、不合并生产切换。生产端手动只读 probe 仍待在 main 上可执行后实测。
+
+
+### 410 诊断补丁已独立提交
+
+新建独立草稿 [PR #120](https://github.com/magangwwd/ashare-research-infra/pull/120)：`data_pipeline/drive_publish.py` 的失败日志增加固定操作类别（例如 `resumable_upload`、`read_file_media`、`list_files`），不包含 URL、session ID 或凭据；5项离线测试复现410并检查去敏。**不改变重试、上传、指针或调度行为，也不宣称已修复410。** 新 CI run [40760207733](https://github.com/magangwwd/ashare-research-infra/actions/runs/40760207733) 创建时为 queued；必须检查终态后再考虑合并。PR #116 的日期门禁 CI run [40759865151](https://github.com/magangwwd/ashare-research-infra/actions/runs/40759865151) 已 `completed/success`。
+
+
+### 410 安全诊断补丁已合并主分支
+
+[PR #120](https://github.com/magangwwd/ashare-research-infra/pull/120) 在 CI run [40760207733](https://github.com/magangwwd/ashare-research-infra/actions/runs/40760207733) **completed/success**（日志 `123 passed, 2 skipped`）后已 squash merge 到 main，合并 SHA `e121a48231cc8d35ebcd3d64e88e6f217bd869b6`。**只增强410故障阶段的安全分类日志，不改变上传行为；当前在运行的旧 SHA Task01 不会自动获得该改动，须观察后续基于新 main 的正常计划运行。** 410 的真正根因尚未定位或修复，禁止把本次合并视为生产恢复。
+
+
+## 2026-10-29 08:00 北京时间第五轮：发布耗时与410双重阻塞（已实读 Actions）
+
+- main SHA `e121a48231cc8d35ebcd3d64e88e6f217bd869b6`，PR #116 仍 draft/open。此前 PR #120 的操作类型诊断已在 main；这不等于修复。
+- Task01 run [40748947088](https://github.com/magangwwd/ashare-research-infra/actions/runs/40748947088) **completed/cancelled**，其 task01 job 在 `Publish accepted snapshot to Drive` 步骤被取消；该次 job 总时长约240分钟（workflow `timeout-minutes: 240`）。日志：已通过下载、验收和恢复演练，随后 `staging created files=7046 bytes=2723914251`，报告 `staged files=100/7046`；正式指针成功切换没有证据。**不要把被取消的上传当作成功**。
+- 新 run [40786202732](https://github.com/magangwwd/ashare-research-infra/actions/runs/40786202732) 于 2026-10-28 23:16:38 UTC 创建，检查时仍 `pending`，不能称作正在下载或已经完成。
+- 两次更早失败的 [40562368344](https://github.com/magangwwd/ashare-research-infra/actions/runs/40562368344) 与 [40598869222](https://github.com/magangwwd/ashare-research-infra/actions/runs/40598869222) 分别在 1600/6994、2900/7037 文件处报 HTTP 410。因当时版本没有新操作标签，**尚未确认410是否来自 resumable PUT**。
+- 本轮建立独立**草稿** [PR #121](https://github.com/magangwwd/ashare-research-infra/pull/121)，对 `resumable_upload` 的 410 仅在已确认文件404后使用新ID限重试一次，或在元数据+SHA吻合时复用；其他410、状态不明或再次失效直接阻断。新增5项离线测试。**未合并，未生产验证**；CI run [40791360486](https://github.com/magangwwd/ashare-research-infra/actions/runs/40791360486) 检查时 `in_progress`。
+- **独立阻塞**：现有 Task01 将约2小时数据处理与约7000文件逐项上传/远程校验串在一个240分钟 job 内；仅提高超时不保证解决410或全量发布。后续应优先研究独立发布 job / 可恢复 staging 的设计及容量/配额/时限预算，先在草稿 PR 离线验证，避免重复全量下载。
+- 仍保持 Task01 和 Gold 两条生产链路、旧指针及旧数据不动；没有5交易日影子比对、冻结策略一致性和回滚验收，不得切换/删除。
+
+
+### 同轮 Google Drive 正式入口复核（2026-10-29 08:03 北京时间）
+
+- 直接列举 Task01 根文件夹 `1rkC99Ymgp8mjvAcJNRPJMlOGLdI9_bue`：`current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`，修改时间 `2026-10-25T00:16:56Z`。**实际读取 JSON**：`validated=true`、`snapshot_as_of=2026-10-24`、`source_run_id=40119936249`、`file_count=5406`，历史完整性仍 false。
+- 直接列举 Gold 根文件夹 `1vCz7H5aeePjFapg7xLPu44x-PUSQOX_8`：`manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`，修改时间 `2026-10-28T20:45:24Z`；**实际读取 JSON**：`as_of_date=2026-10-28`、`primary_keys_unique=true`、`ohlc_valid=true`。核心 `instruments.parquet` 与 `daily_snapshot.parquet` 均在正式目录中。
+- **Gold 已推进至10月28日，Task01 仍停留10月24日，落后4个自然日**。本次只重新读取两端正式 JSON，不宣称重新逐文件核验5406个文件或 Gold 全量分区；前轮 Gold 10月27日的日期差异记录已被新事实替代。
+- 因为正式日期不一致，继续禁止统一读取切换及清理旧 Gold。
+
+
+### Task01 正式 Manifest 本轮独立复验
+
+- 通过当前 `current.json.manifest_file_id=1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1` 实际下载 `production_manifest.json`（1,371,895字节），本地重算 SHA256=`118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，与 pointer 中声明完全相同。
+- Manifest `validated=true`、`snapshot_as_of=2026-10-24`、`version=2026-10-24T211915.119571_0000-7c30e07d`、`file_count=5406`、`total_bytes=2331724247`，与 pointer 一致；文件条目声明字节数合计也为 2,331,724,247。
+- 此次仅验证 Manifest 本身和元数据一致性，**没有下载核验5406个底层分区**，也不证明最新数据已发布。
+
+
+## 2026-10-29 12:00 北京时间第六轮：分离240分钟超时与410故障
+
+- main SHA 仍为 `e121a48231cc8d35ebcd3d64e88e6f217bd869b6`；整合 PR #116 为 draft/open。PR #121（410有界恢复）仍为 draft/open，CI `40791360486` 与 `40791381245` 均 completed/success，**不代表真实410已修复**。
+- Task01 run [40748947088](https://github.com/magangwwd/ashare-research-infra/actions/runs/40748947088) 终态 cancelled，重新从完整日志确认：发布于 2026-10-28 21:07 UTC 启动，21:10 创建 staging，22:51 已到 **3600/7046** 文件，22:51:54 被取消；**更正前一轮“仅100文件”的过时进度**。约101分钟完成3500文件上传；结合前置数据处理及全量远端SHA核验，现有240分钟合并job预算明显不足。
+- Task01 新 run [40786202732](https://github.com/magangwwd/ashare-research-infra/actions/runs/40786202732) 截至本轮仍 in_progress；其 `task01` job 已通过更新、验收、恢复演练并产出 `task01-validation-report` artifact，正在 `Publish accepted snapshot to Drive`。未见成功发布凭证；进行中的 job 日志读取返回404，不能臆断上传进度或410操作类型。
+- Google Drive 通过正式文件ID重新下载：Task01 `current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`，as_of=2026-10-24，manifest SHA256仍为 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`；Gold `manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`，as_of=2026-10-28，质量标志均true。**两侧正式日期仍差4个自然日**，且 Task01 历史完整性仍false。
+- 为解决“下载/验收+全量上传共用240分钟job”的独立瓶颈，已新建 **draft [PR #123](https://github.com/magangwwd/ashare-research-infra/pull/123)**：仅当 main 分支 Task01 运行被取消、`task01` job 耗时235–265分钟且同一run同时具有验收和checkpoint artifact时，才允许独立350分钟发布；与原Task01共用并发锁，不重新下载Tushare；拒绝旧于当前正式日期的checkpoint以避免倒退。该草稿未合并/未生产执行，350分钟是否足够仍需实测。PR #123 CI runs [40815247495](https://github.com/magangwwd/ashare-research-infra/actions/runs/40815247495)、[40815261324](https://github.com/magangwwd/ashare-research-infra/actions/runs/40815261324) 启动后尚待最终核验。
+- 下一轮先看 Task01 #40786202732 终态与410操作标签，再审核 #123 的安全边界及CI；若合并前仍无可靠证据，不启用自动发布恢复。保持双下载、旧指针、冻结V1与旧数据不动。
+
+
+## 2026-10-29 16:00 北京时间第七轮：第二次240分钟取消与恢复工件安全加固
+
+- main SHA `e121a48231cc8d35ebcd3d64e88e6f217bd869b6`；整合 PR #116 未合并，Task01 正式发布仍是优先阻塞。
+- Task01 [run 40786202732](https://github.com/magangwwd/ashare-research-infra/actions/runs/40786202732) 已从 in_progress 变为 **completed/cancelled**，`task01` 的更新、验收、恢复演练全部 success，`Publish accepted snapshot to Drive` 为 cancelled。**不是成功发布**。
+- 同一 run 的 `task01-validation-report` artifact ID `12871950683`（459789字节）与 `task01-checkpoint` artifact ID `12878879550`（3424299634字节）均存在，checkpoint ZIP SHA256=`f2526309edea55fe5bcffb9e77ac032f870b63ae6cff5f9addc1d3b2a5ff99bd`，到期时间 `2026-11-01T06:59:59Z`；仅有工件不代表数据已经发布。
+- 重新读取 Drive 正式 JSON：Task01 `current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`，`snapshot_as_of=2026-10-24`；Gold `manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`，`as_of_date=2026-10-28`，质量标志仍 true。Task01 仍落后，不得切换。
+- PR #123 前两轮离线 CI `40815247495`、`40815261324` 和后续 `40815389698` 均 completed/success；本轮进一步更新 PR #123：恢复工件要求 GitHub 提供合法 SHA256 digest 且不超过5GB，下载后对 ZIP 做 SHA256 校验，并在解包 tar 前删除大 ZIP 释放磁盘空间。提交 `de0522719c92f9af7c0bb858735a49e8b54a6fe5`、`4bb7c285af3f91beb2f90788974a2b741a8d93ad`。**新增补丁的 CI 尚待重新确认**，PR 仍为草稿，未在生产启用。
+- 下一轮优先复核新 CI、检查取消 job 的240分钟耗时及完整日志；评估 workflow_run 自动重试的权限、磁盘和计费风险，确认安全后才允许合并。不要为了诊断重复启动大规模全量下载。
+
+
+### 2026-10-29 20:00 CST：第八轮独立核验（只读）
+
+- main 最新 SHA：`19d92f10476bb2c40a2da84a64ffd74194b77685`。
+- Task01 源运行 `40786202732` 的 `task01` job `cancelled`；完整日志最后可确认 **4400/7069** staged files（2026-10-29T06:55:44Z）。本次仍未进入逐文件远端 SHA256 读回与 current pointer 切换。
+- 同源 run 工件：`task01-validation-report` #`12871950683`；`task01-checkpoint` #`12878879550`，3,424,299,634 bytes，SHA256 `f2526309edea55fe5bcffb9e77ac032f870b63ae6cff5f9addc1d3b2a5ff99bd`，过期 `2026-11-01T06:59:59Z`。此SHA是 GitHub 工件ZIP摘要，**不是云盘已发布快照摘要**。
+- Google Drive 实读 `Ashare_Quant/current.json`（file ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`）：`snapshot_as_of=2026-10-24`、`validated=true`、`critical_history_complete=false`；其正式 `production_manifest.json`（file ID `1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1`）实际 SHA256=`118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，与 pointer 相符，5406文件、2,331,724,247字节。
+- Gold 正式 `main_board/manifest.json`（file ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`）：`as_of_date=2026-10-28`，主键与OHLC质量标志true；记录 instruments 3486行、daily_snapshot 3190行。Task01 仍落后，禁止替换。
+- PR #123 上轮 CI #`40838902886` success；本轮补丁 `fcaf77966f99f3025809c4ebda8ca5e10b19c2ea`、`f56b2484f4a470da16a8c1b16057c733bc9652f5` 增加仅在 **已验收且发布步骤取消** 时恢复及tar解压路径/类型白名单；后续测试修正提交 `a3e2eec8a378ee1ff6e33a115812c02a4ffc9aa2`，最新 CI `40870564343`、`40870554595` 均 success；前者157 passed、2 skipped。**仅离线测试通过，尚未合并、未执行真实发布。**
+- 结构性风险：恢复流程 `workflow_run` 不追溯旧run，且当前实现每次重新上传全部文件并再次逐文件下载计算SHA256，350分钟可能仍不足。禁止把独立发布预算当作真正断点续传。下一步优先审查可恢复 staging 或分批上传/验证方案，降低重复开销。保留Gold、Task01及冻结V1原状。
+
+
+## 2026-10-29 23:59 CST 第九轮：真实未完成暂存目录可复用性验证（仍禁止切换）
+
+- 实读 main SHA `19d92f10476bb2c40a2da84a64ffd74194b77685`；PR #116/#121/#123 均未合并，旧生产流程不变。
+- Task01 run `40786202732` 任务已 cancelled；原始 job 日志显示 2026-10-29 03:51:52 UTC 创建 staging ID `1lLB28lNbC3OWZeGx2xctOjQlBlwjSIKM`，计划 7069 文件/2,805,499,976 字节；最后进度 06:55:44 UTC **4400/7069**，06:57:52 UTC 取消；未进入逐文件远端 SHA 验收及正式指针切换。
+- **本轮 Google Drive 实查**：该 staging ID 仍存在，位于 Task01 `staging/`（parent `1oXqyvWAJytdi3EMJRGucUX8U7Lsx4_c1`），其下存在 `data/` 文件夹；这是未完成暂存，不是已验收版本。尚未递归核验全部4400项的远端 SHA。
+- **本轮重新下载两端正式 JSON**：Task01 `current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`，SHA256 `5d712e4c30c5ccc9c70ebd6672ebc401df97ba14f5d46d07e877baf915482926`，as_of `2026-10-24`；其 `production_manifest.json` ID `1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1`，SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，5406项；Gold `manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`，SHA256 `3975dc23a2137c7879aef8c0aec4263c887f260d708f31ca8bd66974903fd480`，as_of `2026-10-28`，两项质量标志 true。**正式日期差4天，禁止切换**。
+- **实际代码工作**：草稿 PR #123 新增可显式指定 `--resume-stage-id` 的只读复核后续传逻辑：必须是当前 staging 的直接子目录，已存在文件按相对路径、字节数和远端 SHA256 与本地已验收清单逐一比对；未知/重复/篡改文件拒绝；仅上传缺失文件，最终仍全量远端 SHA 验收并最后切换指针。默认无该参数时原发布路径不变。代码 commit `ae6b4e4d1c6d6f84c45f53f9e323e5813b57c06e`，5项离线测试 commit `4539bc333910abbb7a06dfaa9821389a856cad81`，CI run `40907575903` 启动后尚待终态。**未在生产启用/运行，不得宣称已恢复发布**。
+- 下一步先看 CI 和代码安全审查，明确源run的验收工件及暂存目录与本地 accepted inventory 一致；在可控独立发布任务中显式传入已核验 staging ID，避免重传4400项，但必须先测算远端 SHA 扫描耗时及剩余工件期限。旧数据、原下载与冻结V1不动。
+
+- 第九轮补充核验：PR #123 最新 CI [40907575903](https://github.com/magangwwd/ashare-research-infra/actions/runs/40907575903) 已 completed/success，离线测试 **162 passed、2 skipped**；只证明代码离线验收，尚未用生产 OAuth 执行 staging 续传或正式指针切换。
+
+
+## 第十轮：2026-10-30 04:00 CST，断点续传剩余配额门禁
+
+- main 最新已读取 SHA `370630f3b7681f60bbcc126982e7ddcaec265fc1`；整合 PR #116、修复 PR #123 仍为 draft，未生产切换。
+- 本轮 Google Drive 只读回查：Task01 `Ashare_Quant/current.json`（ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`）仍指向 `2026-10-24`、5406 文件；正式 manifest ID `1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1`，本轮实际下载 SHA256=`118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，与 pointer 一致。Gold `main_board/manifest.json`（ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`）仍为 `2026-10-28`，`primary_keys_unique` / `ohlc_valid` 均为 true。日期不一致，禁止切换。
+- 取消 run `40786202732` 的未完成 staging ID `1lLB28lNbC3OWZeGx2xctOjQlBlwjSIKM` 本轮仍存在，且是 `staging/` 的直接子目录；仅证明目录存在，**未逐文件验证**其声称的4400个文件。checkpoint artifact `12878879550` 仍未过期，计划 `2026-11-01T06:59:59Z` 到期。
+- 在 PR #123 中修正一个真实续传阻塞：此前配额检查要求剩余空间足以**再上传完整快照**，即使已核验的 staging 文件可复用也会被错误阻止；现在先只读核验显式指定 stage 的父目录、路径、大小和远端 SHA256，再仅按**缺失文件字节数 + 1MiB manifest 余量**检查剩余配额，失败时不上传、不改指针。原始非续传模式仍按全量快照检查。代码 commit `3af09c78d95a7b4ba6c8089f3b1e3b453a57623d`，新增两项低配额离线测试 commit `88c43cdeed256ca8126c4090ddba7967d9d1ee57`，保持既有“非 staging 子目录拒绝”错误契约 commit `e656c49e2907d1af9752e5deb6e4c6c332a2f36a`。
+- 最新 PR #123 CI run `40944992102` 查询时为 `in_progress`；**不能声称通过**，更不能声称生产发布恢复。未执行昂贵的全量上传，也未修改 main / Gold / 冻结 V1。
+- 下轮先检查 run `40944992102` 的终态；再评估 4400 个 staged 文件的真实 SHA 验证成本与 checkpoint 有效期，优先推进安全可控的生产端只读检查和受控续传，而不是重复全量上传。
+
+## 2026-10-30 16:00 CST：最近备份几乎上传完毕，新增受控只读核验入口
+
+- 本轮实读 main SHA `68831d6cd4d2b2f7292a3539b7bb662ef51babe4`，PR #116/#123 仍 draft；Task01 运行 [#40972437556](https://github.com/magangwwd/ashare-research-infra/actions/runs/40972437556) 已 `completed/cancelled`，验收成功、Drive发布步骤取消。完整 job 日志显示新 staging `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN`，计划 **7094项/2,912,130,179字节**，至 2026-10-30T06:41:07Z 已达 **7000/7094**，07:04:42Z 取消；此时仍标注 `remote verification pending`，不能视为发布完成。该 staging 已通过 Drive 元数据核实位于 `staging/` 直接子目录，**未逐文件验 SHA**。
+- 新 checkpoint artifact `12960014331`，3,764,218,991字节，ZIP SHA256 `b264d0851ec2d3c174c9b08016d9b2f1aa20322cfbfd01a23dfb899e278ed3f4`，有效至 `2026-11-02T07:06:43Z`；同 run 验收 artifact `12953020958`。之前 checkpoint 可能已被下一轮清理，不得沿用旧 ID。该工件校验值不等于 Drive 快照校验值。
+- 实际重新读取正式 Drive JSON：Task01 `current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB` 仍为 `2026-10-24`；其 manifest ID `1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1` 的实际 SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 与指针相同；Gold `manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn` 为 `2026-10-29`，质量标志均为 true。**Task01 落后，禁止切换**。
+- 在恢复草稿 PR #123 中增加 **独立手动、仅主分支、只读** `.github/workflows/task01-stage-audit.yml`：明确输入 `source_run_id` 和 `stage_id`，验证来源 run、已验收且发布取消的 job、同 run 未过期工件、ZIP SHA256 和 tar 安全解包，再调用 `--audit-resume-stage-id` 核对远端路径/大小/SHA、输出 `metadata/stage_audit.json`。不设 schedule、不下载 Tushare、不上传 Drive、不切换指针；不能自动选择 staging。代码 commits `628de54c`、`9b17e85e`、`05af987e`，最新 CI [#41023592444](https://github.com/magangwwd/ashare-research-infra/actions/runs/41023592444) 创建时未确认最终结果。**尚未合并 main、尚未真实执行只读审计**；不得因 workflow 文件存在就声称已验证 7000 项。
+- 下一步：检查 CI，审查只读 workflow 安全和磁盘/时间成本；如通过审核，先手动只读验收 stage 和 checkpoint，再决定是否启用受控续传。原下载、旧数据、冻结V1均不动。
+
+## 2026-10-30 19:06 CST：生产双 Manifest 再验及自动恢复成本门禁
+
+- 本轮实读 main 最新提交 `ab88d9a09f41bfd70b1461f7d4c3016b9c21932e`；整合 PR #116、发布修复 PR #123 均为 draft/open。Task01 最近三次生产 run `40935618292`、`40948715414`、`40972437556` 均 `completed/cancelled`，没有新的正式发布成功证据。
+- 从 Drive 重新下载 Task01 正式 `current.json`（ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`）及其 `production_manifest.json`（ID `1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1`），实际计算 SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，与指针相符；`as_of=2026-10-24`、5406项、`critical_history_complete=false`。
+- Gold 正式 `manifest.json`（ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn`）实读 `as_of=2026-10-29`、`primary_keys_unique=true`、`ohlc_valid=true`。本轮实际下载并核验 `instruments.parquet`（ID `1KyHYGngvkUIkqisQFO5qZCTeFxzzBO0q`，SHA256 `4c6e52113f5079453acdbc2d6f82828d2fa08e76b00f2bc377c3fd686d0eada0`）与 `daily_snapshot.parquet`（ID `1rw_0sRymrWSr2kIeOZ5AeS0L9m9qG0eQ`，SHA256 `e0ec6e4b3e502d70fc5a14cd6d172034779c5227a4f3d5217e48fe51dbe0da68`），均与 Gold manifest 相符。**仍相差5个自然日，禁止切换。**
+- Drive `staging/` 下仍存在 run `40972437556` 的暂存文件夹 `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN`；仅核验父目录与根下 `data/docs/metadata` 结构，**未核验7000项远端 SHA**。同 run checkpoint `12960014331` 仍未过期，预计 `2026-11-02T07:06:43Z` 过期。
+- 在 PR #123 发现自动 `workflow_run` 恢复可能在每次240分钟取消后额外触发350分钟上传，存在重复消耗风险；现为恢复 job 加上 `vars.TASK01_TIMEOUT_RECOVERY_ENABLED == 'true'` **显式启用闸门（默认不启用）**，并验证源 run 的精确工作流路径 `.github/workflows/task01.yml`，防止仅凭工作流名接收非目标来源。提交 `b9d04d8648b4bff547832220502b2451b0ebaf34`、测试提交 `e810cfc577246f3bf6ed80eef0ed5e13fd15565c`；提交时新 head CI **尚未确认**。PR 继续草稿，未启用恢复、未运行生产发布。
+- 下一步：先查最新 head CI，安全审核并实测手动只读 `task01-stage-audit.yml`（仍须合并/获准后方可在 main 使用）；审计成功且未修改 pointer 才能评估受控续传。保持原下载、旧数据与冻结V1。
+
+- 本轮后续复核：PR #123 新 head `e810cfc577246f3bf6ed80eef0ed5e13fd15565c` 的 CI [#41045851944](https://github.com/magangwwd/ashare-research-infra/actions/runs/41045851944) **completed/success，178 passed、2 skipped**；仅证明离线代码测试通过。新建手动审计 workflow 曾出现 push run [#41023529395](https://github.com/magangwwd/ashare-research-infra/actions/runs/41023529395)、[#41023552472](https://github.com/magangwwd/ashare-research-infra/actions/runs/41023552472) `failure` 且无 job，需单独排查 GitHub 工作流注册/语义校验；这两次失败**不是**生产暂存数据 SHA 审计结果。
+
+
+## 2026-10-30 19:57 CST：只读暂存审计的生产指针竞态修复（草稿）
+
+- 本轮 GitHub commit search 返回仓库近期提交 `cab18441fe059aa3a04516b371987bef213d26e8`；**该接口不能证明它就是 main HEAD SHA**，因此不将其冒充为已确认的 main HEAD。已读取 main 的两条生产 workflow 内容及 PR #116/#123 状态；PR 均为 draft/open。
+- Task01 正式 `current.json` 实读仍为 `snapshot_as_of=2026-10-24`、`validated=true`、`critical_history_complete=false`；Gold 正式 `manifest.json` 实读为 `as_of_date=2026-10-29`，两项质量标志为 true。两者未对齐，禁止生产切换。
+- Task01 run `40972437556` 的 task01 job `cancelled`，下载更新、生产验收均 success，发布步骤 cancelled；checkpoint artifact `12960014331` 未过期，至 `2026-11-02T07:06:43Z` 到期；正式发布未成功。
+- Drive staging 目录 `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN` 已确认存在，直接父目录是 staging `1oXqyvWAJytdi3EMJRGucUX8U7Lsx4_c1`；**未逐项核验其中的文件**。
+- 发现 PR #123 的只读审计报告原先直接填写 `pointer_unchanged=true`，但完整 SHA 审计可能持续数小时，审计过程中正式指针可能被其他 Task01 运行更新。已在 PR #123 添加结束时再次核对 pointer 文件 ID、原始字节及旧 manifest 字节的只读门禁，变化即拒绝出具通过报告；代码 commit `fb4c59a58f2a95c11cbc8da206c02e2c2f63aa76`，三种并发变更回归测试 commit `7ee479a6f76486c413e3cbc2b290404135469955`。
+- **最新提交 CI/真实生产端审计尚未完成**；此变更仅存在草稿 PR，不是生产修复。不得启用自动恢复变量、合并生产切换、停止旧下载或删除旧数据。
+- 下一轮：查新 CI 终态；确认工作流注册问题；安全评估能否将只读审计最小化部署到 main 并运行一次，保留 stage SHA 报告；仅在报告通过后评估受控续传。
+
+- 19:59后复核：PR #123 commit `7ee479a6f76486c413e3cbc2b290404135469955` 的 Pipeline CI [#41052013279](https://github.com/magangwwd/ashare-research-infra/actions/runs/41052013279) **completed/success，181 passed、2 skipped**。这仅证明离线防护测试通过，仍未执行生产端暂存SHA审计或正式发布。
+
+
+## 2026-10-30 23:59 CST：只读暂存审计证据绑定（未生产执行）
+
+- 实读 main HEAD `cab18441fe059aa3a04516b371987bef213d26e8`；整合 PR #116 与恢复 PR #123 仍为 draft/open。GitHub Task01 最近完成的发布 run `40972437556` 为 cancelled，stage `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN` 只确认位于 `staging/` 直接子目录；未核验约7000个暂存文件。
+- 本轮从 Drive 文件 ID 直接重新下载：Task01 `current.json` ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB` SHA256 `5d712e4c30c5ccc9c70ebd6672ebc401df97ba14f5d46d07e877baf915482926`，`as_of=2026-10-24`、`critical_history_complete=false`；`production_manifest.json` ID `1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1` SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，与指针一致；Gold `manifest.json` ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn` SHA256 `79699efb7c09423450e02b4e1a2a1ca7fb28b1fffca7dd847847a45b13b38291`，`as_of=2026-10-29`、两个质量标志true。只校验这3个 JSON，不代表全量Parquet通过。
+- PR #123 草稿新增只读审计报告证据绑定：`stage_id`、`pointer_sha256`，以及手动审计工作流写入的 `source_run_id`、`checkpoint_sha256`、`audit_run_id`、`audit_commit_sha`。提交 `60b06393`、`0037e0e6`、`4061c6be`、`6af40911`、`6c747895`；最新 CI run `41086147876` 提交时尚未结束，必须核验最终状态。
+- 先前 `task01-stage-audit.yml` push run `41023552472` failure、**jobs=0**，未真正执行任何云盘SHA审计；不能将其视为已校验stage。新工作流仍在草稿分支，不在main，生产手动审计未运行。
+- 来源 checkpoint `12960014331` GitHub 仍标为未过期，预计 `2026-11-02T07:06:43Z` 到期。禁止因时限紧迫而合并自动恢复或跳过安全检查。下一轮优先核验新CI、审计工作流可注册性，再评估受控只读运行与续传。旧数据、双下载、冻结V1不变。
+
+
+## 2026-10-31 04:00 北京时间：独立只读暂存审计 PR #140（尚未部署）
+
+- 实读 main ref SHA `cab18441fe059aa3a04516b371987bef213d26e8`；整合 PR #116、发布恢复 PR #123 均仍 draft，禁止直接合并 #123 启用自动恢复。
+- 本轮实际下载 Task01 `current.json` 和 `production_manifest.json`，`snapshot_as_of=2026-10-24`、5406文件；Manifest 实测 SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 与正式 pointer 相同。Gold 正式 `manifest.json` 实读 `as_of_date=2026-10-29`、`primary_keys_unique=true`、`ohlc_valid=true`；未重验全部 Parquet。**日期不齐，不允许切换。**
+- 确认此前 `.github/workflows/task01-stage-audit.yml` 仅在 #123 草稿分支存在，而 job 又要求 `refs/heads/main`，所以直接从草稿分支手动触发无法运行生产核验；不能放宽 main-only 门禁或直接合并自动恢复工作流。
+- 新建独立 **draft PR #140** `fix/task01-isolated-readonly-stage-audit-20261031`：只从 #123 提取**只读**暂存 SHA 核验逻辑、手动 main-only 工作流及测试；**保留 main 现有 `publish()` 默认上传路径原样不变**，不引入 workflow_run 自动恢复、续传上传、Gold 调度修改。提交 `0eb022aa`、`25df48d5`、`8a06a36e`、`886ed9e8`、`a05e2051`、`7275c924`；尚无新 CI 最终结果、尚未合并、未用生产凭据运行。
+- 来源 Task01 run `40972437556` 的 checkpoint artifact `12960014331` 实查 `expired=false`、SHA256 `b264d0851ec2d3c174c9b08016d9b2f1aa20322cfbfd01a23dfb899e278ed3f4`，预计 `2026-11-02T07:06:43Z` 到期；stage `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN` 仍待生产只读逐文件核验。
+- 下一步先查 PR #140 CI 与代码安全审查，审核通过后才考虑将**独立只读**工作流部署 main，再手动执行 `source_run_id=40972437556`、`stage_id=1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN`；须保存实际 run ID 和 `task01-stage-audit` artifact，不能将草稿 CI 视为云盘核验成功。旧链路、旧数据、冻结 V1 均不变。
+
+
+## 2026-10-31 08:00 CST：只读暂存审计已独立部署，备份工件可用性待核验
+
+- 本轮实读 main 原 SHA `cab18441fe059aa3a04516b371987bef213d26e8`，核验独立 PR #140 head `7275c924dd842a75615a81b6b452c6193d46a17d`，CI [#41120148907](https://github.com/magangwwd/ashare-research-infra/actions/runs/41120148907) test job completed/success（前轮日志记录163 passed、2 skipped）。对比主分支：新增手动 `.github/workflows/task01-stage-audit.yml`、只读SHA审计代码和测试；原 `publish(...)` 默认函数保持不变；不含 schedule、workflow_run、Tushare token 或生产续传写入入口。安全审查后 PR [#140](https://github.com/magangwwd/ashare-research-infra/pull/140) 已 squash 合并，main 新 SHA `4afc2d300dfa328c010ddab4a5f7d9d0421ea747`。**这是审计工具部署，不是云盘审计通过，更不是正式发布成功。**
+- 本轮真实 Google Drive 下载重算：Task01 `Ashare_Quant/current.json` file ID `1Z51dXKxxt2J_4jtcW7NcSqsNt3V3qMdB`，`snapshot_as_of=2026-10-24`、`validated=true`、5406文件、`critical_history_complete=false`；正式 `production_manifest.json` file ID `1RzoGA4-RqdqQQSzmaE6M3wkiSh9-GVG1`，实测 SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8`，与指针一致。
+- Gold 正式 `main_board/manifest.json` file ID `1wO2UFU4-kQsujMLo9G8rQLoUIeSRaCqn` 实读 `as_of_date=2026-10-30`，`primary_keys_unique=true`、`ohlc_valid=true`；`instruments.parquet` ID `1KyHYGngvkUIkqisQFO5qZCTeFxzzBO0q`（3486行）实测 SHA256 `6e06b2f17c6d46384df35b15c558f2fb1c9fe845e0cc7f608eec95d5e0789586`；`daily_snapshot.parquet` ID `1rw_0sRymrWSr2kIeOZ5AeS0L9m9qG0eQ`（3190行）实测 SHA256 `6eb60191b7c9f589b3de9028fe9e55ac7200daa0772846d3da61d1cf7f906f08`；均与Gold manifest一致。只验证这三项SHA，不代表全部历史分区验收。
+- **新发现：备份工件缺失风险。** [Task01 run #40972437556](https://github.com/magangwwd/ashare-research-infra/actions/runs/40972437556) 的 `task01` job `cancelled`，更新/验收成功、发布步骤取消；当前 GitHub `fetch_workflow_run_artifacts` 只返回 `task01-validation-report` artifact `12953020958`，**没有返回**原先记录的 `task01-checkpoint` `12960014331`。该job的日志步骤虽标记“Save recovery checkpoint success”，不能替代当前工件可下载性；可能被后续清理，不得声称可恢复。stage `1GDuiqVqySPIURk-yoeRkBNnb7L-6ChJN` 仍在 Drive staging，但没有逐文件SHA审计结果。下一轮先查最新run与可用checkpoint所属run；只有源run、stage、checkpoint一一匹配且工件未过期，才允许手动只读审计。
+- 当前 GitHub 连接器未提供 `workflow_dispatch` 操作，**本轮没有触发** `task01-stage-audit.yml`；无 `task01-stage-audit` artifact、无生产续传、无新正式指针。PR #123 仍是高成本恢复草稿，不合并、不启用；保持 Gold 下载和冻结V1，5交易日影子验证与回滚均未开始。下一步寻找合法可执行的手动审计入口及有效源工件，不为测试重复全量下载。
+
+
+## 2026-10-31 当前窗口：新备份与暂存目录配对复核
+
+**性质：真实 GitHub/Google Drive 只读核验，未执行生产审计、未恢复发布。**
+
+- main SHA `4afc2d300dfa328c010ddab4a5f7d9d0421ea747`；独立只读审计 PR #140 已合并，主分支有手动 `task01-stage-audit.yml`，不自动触发。
+- GitHub Task01 源 run [41119601566](https://github.com/magangwwd/ashare-research-infra/actions/runs/41119601566)：job `task01` cancelled；更新、验收、恢复演练成功，**发布步骤取消**。日志明确 `SUCCESS staging created folder_id=1CHTuLs2_VS_MGbqlJnpZiJwOinR7ihGf files=7104 bytes=2968021630`；最后进度为 `4200/7104`，尚未做暂存逐文件 SHA 核验。
+- 与该**同一 run** 对应的 GitHub 工件已经直接查询，均未过期：验收报告 `13016738862`（SHA256 `f41b48ac8319187e8202464c8a92c36b5d33cffb3b6479895f1fe0623453ca1a`）；checkpoint `13025260198`（3,823,043,284 bytes，SHA256 `bbecce2be390dc45f2d899c0ae72003e2e5145f8dee2f4e5185b294bd1a188c4`，2026-11-03T01:34:28Z 到期）。此处仅证明 GitHub 工件存在及含官方 digest，**不是已下载验证 checkpoint ZIP**。
+- 另一个 Task01 run [41141750990](https://github.com/magangwwd/ashare-research-infra/actions/runs/41141750990) 核验时仍 in_progress，不能重复启动。现行 `task01.yml` 的失败运行备份修剪只保留**最新1份**，因此 411196 的工件随下一运行结束可能被删除；每次手动审计前都必须重新实查 artifact 是否存在，绝不可凭上段历史编号直接执行。
+- Google Drive 真实读回：Task01 `current.json` 仍 `snapshot_as_of=2026-10-24`，5,406文件、2,331,724,247字节，`critical_history_complete=false`；直接下载生产 manifest 后 SHA256 `118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8` 与指针一致，manifest 的文件数及字节合计也一致。Gold `manifest.json` 为 `2026-10-30`，已直接下载 `instruments.parquet`（180559字节，SHA256 `6e06b2f17c6d46384df35b15c558f2fb1c9fe845e0cc7f608eec95d5e0789586`）和 `daily_snapshot.parquet`（376747字节，SHA256 `6eb60191b7c9f589b3de9028fe9e55ac7200daa0772846d3da61d1cf7f906f08`），均与 Gold manifest 声明一致。**没有完成 Task01 全部5,406分区和 Gold 全历史的验证。**
+- 下一可验证操作（必须重新实查备份仍存在）是只读工作流 `Task 01 read-only staged snapshot audit`，输入 `source_run_id=41119601566`、`stage_id=1CHTuLs2_VS_MGbqlJnpZiJwOinR7ihGf`。GitHub 连接器本轮没有新 workflow_dispatch 工具；**没有调用、没有运行 ID、没有审计工件，不得称已通过**。若 checkpoint 已被修剪，直接标记 BLOCKED 并选用下一次**日志确认 stage 且具备同 run 验收+checkpoint**的取消运行，不得跨 run 拼接。
+- PR #141 的 resumable partial-ACK 修复仍为草稿，仅处理单文件会话已接受部分字节后的安全续传；其离线测试不等于跨 run staging 复用，也不等于生产成功。PR #123 继续草稿，不自动部署大规模重传。
+- **禁止切换：** Task01 比 Gold 落后，Task01 历史完整性为 false；Gold 旧下载、冻结V1、旧数据及当前指针均保持不变。下一轮优先核验 411417 终态、现存最新同run checkpoint/stage 配对，完成只读 SHA 审计，再评估受控续传和五日影子测试。
+
+
+## 2026-10-31 当前窗口：暂存四类分区真实 SHA256 抽验
+
+- 源 Task01 run [41119601566](https://github.com/magangwwd/ashare-research-infra/actions/runs/41119601566)，实下载验收工件 `13016738862`（ZIP 463,617 bytes）。`metadata/acceptance.json` 明确 `passed=true`, `as_of=2026-10-30`；`metadata/history_progress.json` 为 `full_requested_core_range_complete=false`，不能称历史齐全。该验收报告不是 Drive 正式发布报告。
+- 实际 Drive 暂存目录 `1CHTuLs2_VS_MGbqlJnpZiJwOinR7ihGf` 在 `Ashare_Quant/staging/` 的直系目录下；通过 Drive 连接器逐级列目录，下载四个文件并对照**该 run 本身** `metadata/manifest/partitions.json` 的 bytes/SHA256：
+
+| 该 run 验收分区（staging/data 下） | 远端 file_id | 实际 bytes | SHA256 匹配 |
+|---|---|---:|---|
+| `raw/daily/year=2026/month=10/part-000.parquet` | `1LU9s6yAx3Pfh2ov2gC1LSNTvd01oBTtO` | 18,904,000 | `c9c506d8febe04065686b70d00dab83e1993bc7e97df19d29706af1f8f2ee19d` ✅ |
+| `clean/daily/year=2026/month=10/part-000.parquet` | `1hdnhah0gmryHFDfbOhr8FehXkE5Fo-gI` | 3,659,870 | `51b547aa43bc5d08d30445d756ce49ea9fbb94c6042b28509b8d62d4623d0ec5` ✅ |
+| `raw/income/ann_year=2026/ann_month=10/part-000.parquet` | `1q4PNjFEVfQLeOwpxqDYLK5ErCLZm9u8X` | 75,300 | `9bc0740e02cdb7d63299841d804a13fcd861685a109b2c7f2ae4862b439b0596` ✅ |
+| `raw/stk_mins/year=2024/month=01/bucket=00/part-000.parquet` | `17lI5BM-gRZMaQdMO-MJ2aW77mTTgac1g` | 281,281 | `52a2abaf46b1bbf7aa8052a0ad3515e0f9a51c850970abd245c851072f806e08` ✅ |
+
+**限制：** 这是 **4文件抽样**，不是约4,200已暂存文件的完整 SHA audit，更不是所有7,104目标文件完成上传。必须通过全量只读工作流才能为 `--resume-stage-id` 提供足够生产证据。checkpoint `13025260198` 曾确认有效但可能被后续 Task01 checkpoint 清理，每次执行前重新核验。
+
+- 无冲突续传修复 [PR #142](https://github.com/magangwwd/ashare-research-infra/pull/142) 已合并 main `312bac8ecda78abed4ada17d59c9b88d56309549`；最新两套 CI 167 passed/2 skipped。其作用仅是**单文件会话**安全部分 ACK，不解决跨运行重传。
+- 新建隔离草稿 [PR #143](https://github.com/magangwwd/ashare-research-infra/pull/143)：在 #142 后 main 上加显式 `--resume-stage-id`，按路径、字节、SHA 核对并复用，只上传缺失分区；先前独立 CI 180 passed/2 skipped，最新安全校验新增后需重新核验 CI。尚未部署自动恢复，也未执行生产发布。旧 PR #141 因冲突由 #142 替代关闭，PR #123 仍保持草稿。
+- Task01 正式指针此前实读仍为 `2026-10-24`，Gold 正式为 `2026-10-30`。**保留两条下载、冻结 V1、生产指针和所有旧数据。**
