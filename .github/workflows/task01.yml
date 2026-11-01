@@ -123,7 +123,10 @@ jobs:
       (needs.daily-guard.result == 'skipped' || needs.daily-guard.outputs.should_run == 'true') &&
       (github.event_name != 'workflow_dispatch' || (!inputs.verify_drive_auth && !inputs.publish_drive_snapshot))
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    # 2026-11-01: accepted Task01 #41248659151 was cancelled at 240 min
+    # after 8600/8657 staged files; allow SHA audit and pointer commit time.
+    # Preserve task01-data concurrency, all three schedules and fail-closed publishing.
+    timeout-minutes: 330
     env:
       TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
       GH_TOKEN: ${{ github.token }}
