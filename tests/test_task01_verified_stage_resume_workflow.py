@@ -1,5 +1,13 @@
 """Safety and provenance gates for manual-only Task01 verified stage recovery."""
 from pathlib import Path
+import os
+import subprocess
+import sys
+import tarfile
+import tempfile
+import textwrap
+
+import pytest
 
 WF = Path(__file__).resolve().parents[1] / ".github/workflows/task01-verified-stage-resume.yml"
 
@@ -74,3 +82,78 @@ def test_yaml_structure_and_input_contract():
     assert data["concurrency"]["cancel-in-progress"] == "false"
     assert data["jobs"]["audit"]["if"] == "github.ref == 'refs/heads/main'"
     assert data["jobs"]["audit"]["timeout-minutes"] == "350"
+
+
+@pytest.mark.parametrize("member_type", [tarfile.SYMTYPE, tarfile.LNKTYPE])
+def test_restore_script_rejects_checkpoint_links_before_extraction(member_type):
+    """A same-run checkpoint must not plant symlinks/hardlinks during audit."""
+    workflow = WF.read_text(encoding="utf-8")
+    step = workflow.split("      - name: Restore verified checkpoint without network writes\n", 1)[1]
+    script = textwrap.dedent(
+        step.split("          python - <<'PY'\n", 1)[1].split("\n          PY", 1)[0]
+    )
+    with tempfile.TemporaryDirectory() as temp:
+        archive = Path(temp) / "task01-state.tar.gz"
+        with tarfile.open(archive, "w:gz") as tar:
+            member = tarfile.TarInfo("data/current/unsafe-link")
+            member.type = member_type
+            member.linkname = "data/current/acceptance.json"
+            tar.addfile(member)
+        env = {**os.environ, "RUNNER_TEMP": temp}
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=temp,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert result.returncode != 0
+        assert "BLOCKED: unsafe checkpoint member" in result.stderr + result.stdout
+        assert not (Path(temp) / "data").exists()
+
+
+def _run_restore_script_with_archive(archive_bytes):
+    workflow = WF.read_text(encoding="utf-8")
+    step = workflow.split("      - name: Restore verified checkpoint without network writes\n", 1)[1]
+    script = textwrap.dedent(
+        step.split("          python - <<'PY'\n", 1)[1].split("\n          PY", 1)[0]
+    )
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        (root / "task01-state.tar.gz").write_bytes(archive_bytes)
+        env = {**os.environ, "RUNNER_TEMP": temp}
+        outcome = subprocess.run(
+            [sys.executable, "-c", script], cwd=temp, env=env,
+            capture_output=True, text=True, check=False,
+        )
+        return outcome, (root / "data/current/acceptance.json").exists()
+
+
+def test_restore_script_accepts_real_internal_current_version_link(tmp_path):
+    """The audit must be capable of reading a normal Task01 tar checkpoint."""
+    root = tmp_path / "source"
+    version = root / "data/.versions/accepted"
+    version.mkdir(parents=True)
+    (version / "acceptance.json").write_text('{"passed":true}', encoding="utf-8")
+    (root / "data/current").symlink_to(".versions/accepted", target_is_directory=True)
+    archive = tmp_path / "accepted.tar.gz"
+    with tarfile.open(archive, "w:gz") as tf:
+        tf.add(root / "data", arcname="data")
+    result, restored = _run_restore_script_with_archive(archive.read_bytes())
+    assert result.returncode == 0, result.stderr + result.stdout
+    assert restored
+
+
+@pytest.mark.parametrize("linkname", ["../../etc", "/tmp/escape", ".versions/../escape"])
+def test_restore_script_rejects_current_symlink_escaping_version_dir(tmp_path, linkname):
+    archive = tmp_path / "malicious.tar.gz"
+    with tarfile.open(archive, "w:gz") as tf:
+        info = tarfile.TarInfo("data/current")
+        info.type = tarfile.SYMTYPE
+        info.linkname = linkname
+        tf.addfile(info)
+    result, extracted = _run_restore_script_with_archive(archive.read_bytes())
+    assert result.returncode != 0
+    assert "BLOCKED: unsafe checkpoint member" in result.stderr + result.stdout
+    assert not extracted
