@@ -46,3 +46,11 @@
 - 只有后续全量 SHA 与所有文件字节数量、旧 pointer 稳定、同 run 工件已验收且无并发，才评估受控恢复；恢复仍需再验收真实 Drive 指针。
 
 之后依次进行主板 PIT 核验、5交易日影子、冻结 V1 排名一致性、回滚。**继续保留两套现有生产下载、旧数据、冻结 V1 策略和北京时间08:00晨检。**
+
+
+## 2026-11-01 14:20 北京时间补充：该 run 的唯一 staging 已定位
+
+- 从 #41248659151 的 task01 job #124719079710 **实际日志第734行**读取：\`SUCCESS staging created folder_id=1Twq0EP00oq6xYjojhTmiTdnAkM1Y7cik files=8657 bytes=3096760067; current pointer unchanged\`。
+- 最后一个可见分批上传确认：\`SUCCESS staged files=8600/8657; remote verification pending\`；**还有57项未得到日志确认**，不能将 8600 项视为全量 SHA 通过；随后 \`The operation was canceled\`。
+- 同源 checkpoint 工件 #13072181704 存在但此处尚未实际下载/解包核验，不能据其存在就启动受控 resume。
+- 下轮仅在无 Task01 生产并发、两份同源工件未过期且安全审计条件满足的情况下，按**精确源 run #41248659151 + 精确 stage ID 1Twq0EP00oq6xYjojhTmiTdnAkM1Y7cik**核验只读 SHA 审计输入；旧中转分支不再启用。不要把当前 8600/8657 当成可直接补57项的许可。
