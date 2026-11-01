@@ -48,6 +48,15 @@
 - 唯一隔离触发分支 `ops/one-shot-mainboard-float-parity-20261101` 在生成run后已通过 `c969b492d6eddb1ec502b8c7a071465d4c2adcdf` 禁用 `push`；没有创建 schedule、没有 Drive 上传、没有修改冻结V1。
 
 
+## 第三次实证：上市／退市日窗口一致性（2026-11-01）
+
+- Gold 官方 SHA 校验的 `instruments.parquet` 包含 `list_date` 和 `delist_date`，此次对比扩展了逐证券上市／退市日期窗口；缺日期不作默认通过，退市之后行情不直接视为正常主板记录。
+- 代码 `bf5de0b2a15d0c9638f897d30d2a4248d9243278` 与5项测试 `b18095087afeac5e016c554a25d25c415b10adac`，CI [#41261860421](https://github.com/magangwwd/ashare-research-infra/actions/runs/41261860421) `completed/success`，**299 passed、2 skipped、9 subtests**。
+- 受限一次性只读真实运行 [#41261928673](https://github.com/magangwwd/ashare-research-infra/actions/runs/41261928673) `completed/success`，artifact `mainboard-listing-window-report` **#13065647309**（ZIP digest `sha256:6488b574be851e1308c802a1479f9e381dd8b0aae9c487d8549ef7e189445982`），6份云盘输入固定SHA检查通过。
+- **实际结果**：Gold当前认证主板证券数 `3486`，**缺上市日期证券0**；Task01、Gold各自按日期窗口检查的行，**未知上市日期0**、**上市前或退市后行情0**。此前共同主板键 `38265`、无主板键差/开高低收或成交量差、成交额旧Gold浮点转换全部复现的结论保持不变。
+- 分支 `ops/one-shot-mainboard-listing-window-20261101` 在唯一run创建后 commit `b385dd0b81884e9fb836ea30b626eaf4e66b4f70` 立即关闭 `push`。无第二次调用、无生产Drive写入。
+- **限制**：当前Gold名录的上市/退市日期窗口通过不能独立证明历史 `market=主板` 随时间的实际板块归属、转板处理、停复牌、复权、财务与冻结V1重放。仍 `gold_historical_pit_universe_verified=false`、`production_switch_allowed=false`，尚未完成5个交易日真实前瞻影子和回滚。
+
 ## 保留闸门
 
 - 使用的是 Gold 在 `2026-10-30` 的正式名录，对 10月8日至23日历史证券范围的逐日**point-in-time归属仍未独立验收**。对板块变动、退市、停牌等事件需时点复核；不能声称所有历史日均无差异。
