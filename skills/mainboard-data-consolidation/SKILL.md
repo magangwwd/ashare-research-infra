@@ -191,3 +191,12 @@ PR #123 的暂存审计可能耗时数小时。审计开始时记录正式 `curr
 - 中转分支已在成功触发后更新为不接受 push 的 `workflow_dispatch` 事件：提交 `28f6f0a88fe14d3020887f9c4da6d99b0fe61b3d`。实查该分支仅一次启动，**不可重复沿用**。
 - 具体安全方法及限制合并主分支 `docs/task01-actions-start-method.md`（PR #145，合并 SHA `3958a844042b99daf74dbe45f6d04117ee640d7c`）。这不是特权绕过，用户须已授权，GitHub Actions 正规权限缺失时立即停止，不写明文密钥，不建立长期调度，不修改正式工作流安全门禁。仅针对核实来源的**一次性、无副作用只读审计**使用该回退方案。
 - 每4小时自动接续任务 `6ae1d4406dc88191ad3acdcd168c3afc` 已更新接续锚点：每轮先实读 #41160259395 的 jobs/artifact。若任务仍运行，**不得再起一个相同审计**；若失败按日志定位而非盲重试。审计全量通过且源同run checkpoint仍有效、生产未并发后，再按独立安全审核决定是否启动 main `task01-verified-stage-resume.yml` 受控发布。保留旧指针、Gold、冻结 V1。
+
+
+## 2026-11-01 12:00 历史主板PIT保守分类门禁（关联 PR #149）
+
+- **最新优先级**：只交付沪深 A 股主板，包含已退市/暂停上市证券的有效历史。Tushare `stock_basic.market=主板` 与正式 Gold SHA 验证的 `instruments.parquet` 是证券范围证据；二者的**当前快照**均不自动证明任意历史日期的板块归属。需另外获得带生效日期的板块变更/PIT资料，才可完成历史主板验收。
+- PR #149 `tools/mainboard_real_parquet_shadow.py` 的保守处理：先按 Gold 官方 `instruments.parquet` SHA 校验当前主板集合；匹配当前名录的记录仅作历史**诊断**。不在该名录中的历史 Task01 SSE/SZSE 行（即使代码以 300/301/302/688/689 开头）暂记 `unclassified_historical_rows`，**不得凭前缀或缺席当前名录认定非主板**，也不得算作 `only_in_gold`/Gold缺失；其状态 `UNCLASSIFIED_HISTORICAL_UNIVERSE` 必须阻止影子验收。
+- `excluded_non_mainboard_rows` 只统计能由交易所标识独立排除的 `.BJ` 记录；`task_non_mainboard_rows_excluded` 为兼容别名。待有可核验的历史 PIT 证券归属后，按同一交易日确定主板/非主板，补齐 `excluded_non_mainboard_rows` 和保留/退市/转板记录。不能把现时 `stock_basic` 的板块字段冒充历史 PIT。
+- 旧真实 Parquet 差异审计的“Task01额外28510键”属于旧诊断口径；**不能直接视为 Gold 缺失，也不能直接视为全部非主板**。应在新报告中单列已证实非主板排除、历史未知和主板真正缺口。
+- 此轮不重触发任何一次性 Runner；待 PR #149 CI 真实通过后才采用新报告口径。继续等待 Task01 生产上传完成并核对正式 Drive `current.json`；历史 PIT、5交易日冻结 V1 一致性、回滚演练全部通过前，`production_switch_allowed=false`，两套下载、旧 Raw/Clean、冻结 V1 不变。
