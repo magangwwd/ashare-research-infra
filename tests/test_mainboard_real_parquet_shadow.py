@@ -284,7 +284,9 @@ def test_bad_pointer_version_rejected(tmp_path):
 def test_no_overlapping_keys_is_not_success(tmp_path):
     p, m, gold, t, g = _make(tmp_path)
     rows = pq.read_table(g).to_pylist()
-    rows[0]["vendor_symbol"] = "600000.SH"
+    # Use the same authenticated main-board security, but a different date.
+    # Changing the symbol would correctly fail the stronger universe gate first.
+    rows[0]["trade_date"] = date(2026, 10, 22)
     pq.write_table(pa.Table.from_pylist(rows), g)
     with pytest.raises(ValueError, match="no overlapping"):
         diagnose(p, m, gold, t, g, task_relative_path=REL, gold_instruments_path=t.parent / "instruments.parquet")
