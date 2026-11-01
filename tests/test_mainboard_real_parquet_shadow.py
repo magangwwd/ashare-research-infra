@@ -137,7 +137,52 @@ def test_half_yuan_tie_separates_half_even_from_half_up(tmp_path):
     assert report["turnover_absolute_difference_le_half_yuan"] == 1
     assert report["turnover_absolute_difference_gt_half_yuan"] == 0
     assert report["turnover_exact_half_yuan_difference_count"] == 1
+    exception = report["turnover_half_even_incompatible_examples"][0]
+    assert exception["vendor_symbol"] == "600031.SH"
+    assert exception["trade_date"] == "2026-10-23"
+    assert exception["task01_turnover_cny"] == "67890.5000"
+    assert exception["gold_turnover_cny"] == "67890"
+    assert exception["half_up_yuan"] == "67891"
+    assert exception["half_even_yuan"] == "67890"
+    assert exception["absolute_difference_cny"] == "0.5000"
     assert not report["production_switch_allowed"]
+
+
+def test_turnover_incompatible_examples_are_bounded_by_sample_limit(tmp_path):
+    p, m, gold, t, g = _make(tmp_path)
+    task_rows = pq.read_table(t).to_pylist()
+    gold_rows = pq.read_table(g).to_pylist()
+    # Gold stores HALF_UP rather than HALF_EVEN at exactly half-yuan ties.
+    for i in range(2):
+        task_rows.append(dict(task_rows[0], ts_code=f"60003{i+2}.SH", amount=67.8905))
+        gold_rows.append(dict(gold_rows[0], vendor_symbol=f"60003{i+2}.SH", turnover_cny=67891))
+    task_rows[0]["amount"] = 67.8905
+    gold_rows[0]["turnover_cny"] = 67891
+    pq.write_table(pa.Table.from_pylist(task_rows), t)
+    pq.write_table(pa.Table.from_pylist(gold_rows), g)
+    inst = t.parent / "instruments.parquet"
+    inst_rows = pq.read_table(inst).to_pylist()
+    for i in range(2):
+        symbol=f"60003{i+2}.SH"
+        inst_rows.append(dict(inst_rows[0], vendor_symbol=symbol, instrument_id="CN.XSHG."+symbol[:6]))
+    pq.write_table(pa.Table.from_pylist(inst_rows), inst)
+    gold["files"]["instruments.parquet"]["rows"] = len(inst_rows)
+    gold["files"]["instruments.parquet"]["sha256"] = hashlib.sha256(inst.read_bytes()).hexdigest()
+    item = {"path": REL, "bytes": t.stat().st_size,
+            "sha256": hashlib.sha256(t.read_bytes()).hexdigest()}
+    doc = json.loads(m)
+    doc["files"] = [item]
+    doc["total_bytes"] = item["bytes"]
+    m = json.dumps(doc).encode()
+    p["total_bytes"] = item["bytes"]
+    p["manifest_sha256"] = hashlib.sha256(m).hexdigest()
+    report = diagnose(p, m, gold, t, g, task_relative_path=REL,
+                      gold_instruments_path=inst, max_examples=1)
+    assert report["turnover_nearest_yuan_half_even_compatible_differences"] == 0
+    assert report["numeric_field_difference_count"] == 3
+    assert len(report["turnover_half_even_incompatible_examples"]) == 1
+    assert report["turnover_half_even_incompatible_examples"][0]["vendor_symbol"] == "600031.SH"
+    assert report["production_switch_allowed"] is False
 
 
 def test_material_turnover_discrepancy_not_explained_by_rounding(tmp_path):
