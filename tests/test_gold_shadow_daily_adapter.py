@@ -36,7 +36,7 @@ class GoldShadowDailyAdapterTests(unittest.TestCase):
         rows, audit = self.adapt([dict(self.row, amount="67.8904")])
         self.assertEqual(rows[0]["turnover_cny"], 67890)
         self.assertEqual(audit["turnover_cny_precision_loss_rows"], 1)
-        self.assertEqual(audit["turnover_cny_shadow_rounding_rule"], "DECIMAL_HALF_EVEN_UNVERIFIED")
+        self.assertEqual(audit["turnover_cny_shadow_rounding_rule"], "FLOAT64_RINT_EMULATES_GOLD_PANDAS_SOURCE_UNVERIFIED")
         self.assertFalse(audit["turnover_cny_rounding_contract_verified_against_gold"])
         self.assertFalse(rows[0]["is_quality_valid"])
         self.assertFalse(audit["production_switch_allowed"])
@@ -48,6 +48,20 @@ class GoldShadowDailyAdapterTests(unittest.TestCase):
         rows, audit = self.adapt([dict(self.row, amount="67.8915")])
         self.assertEqual(rows[0]["turnover_cny"], 67892)
         self.assertFalse(audit["quality_validation_complete"])
+
+    def test_turnover_matches_observed_gold_pandas_round_recipe(self):
+        import pandas as pd
+        values = ["67.8904", "67.8905", "67.8915", "1670253.5515", "1743402.5104"]
+        expected = (pd.to_numeric(pd.Series(values), errors="coerce") * 1000).round().astype("Int64")
+        for src, target in zip(values, expected):
+            with self.subTest(src=src):
+                rows, audit = self.adapt([dict(self.row, amount=src)])
+                self.assertEqual(rows[0]["turnover_cny"], int(target))
+                self.assertFalse(audit["production_switch_allowed"])
+
+    def test_float64_rounding_at_int64_boundary_fails_closed(self):
+        with self.assertRaisesRegex(ValueError, "overflowing"):
+            self.adapt([dict(self.row, amount="9223372036854775.8")])
 
     def test_negative_turnover_is_rejected_even_in_shadow(self):
         with self.assertRaisesRegex(ValueError, "amount: negative"):
