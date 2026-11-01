@@ -1,0 +1,81 @@
+name: One-shot Task01 read-only stage audit dispatch (2026-11-02)
+
+on:
+  push:
+    branches:
+      - ops/one-shot-task01-stage-audit-20261102
+    paths:
+      - .github/workflows/task01-one-shot-audit-20261102.yml
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    if: >-
+      github.repository == 'magangwwd/ashare-research-infra' &&
+      github.ref == 'refs/heads/ops/one-shot-task01-stage-audit-20261102' &&
+      github.event.head_commit.message == 'ops(task01): one-shot readonly audit dispatch 20261102'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Strict deduplication, source identity and immutable main checks
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/task01-stage-audit.yml/runs?per_page=100" > "$RUNNER_TEMP/audit-runs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/task01.yml/runs?per_page=100" > "$RUNNER_TEMP/task-runs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/41248659151" > "$RUNNER_TEMP/source-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/41248659151/artifacts?per_page=100" > "$RUNNER_TEMP/source-artifacts.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/refs/heads/main" >/dev/null 2>&1 || true
+          gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha' > "$RUNNER_TEMP/main-sha.txt"
+          gh api "repos/$GITHUB_REPOSITORY/contents/.github/workflows/task01-stage-audit.yml?ref=main" --jq '.sha' > "$RUNNER_TEMP/audit-blob.txt"
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          main=(root/"main-sha.txt").read_text().strip()
+          audit_blob=(root/"audit-blob.txt").read_text().strip()
+          if main!="a0bd413e69cf09b3d739323270cf23066363bce7" or audit_blob!="518b9657c6c03b62d3181b31d10e03e953eef009":
+              raise SystemExit("BLOCKED: main SHA or audit workflow changed")
+          active={"queued","in_progress","waiting","requested","pending"}
+          audits=json.loads((root/"audit-runs.json").read_text()).get("workflow_runs",[])
+          tasks=json.loads((root/"task-runs.json").read_text()).get("workflow_runs",[])
+          if not audits or int(audits[0]["id"])!=41287586055 or audits[0].get("conclusion")!="failure":
+              raise SystemExit("BLOCKED: a newer or unexpected audit run exists")
+          if audits[0].get("head_sha")==main:
+              raise SystemExit("BLOCKED: no new audit code since last failed run")
+          if any(r.get("status") in active for r in audits+tasks):
+              raise SystemExit("BLOCKED: an audit or Task01 producer is active")
+          source=json.loads((root/"source-run.json").read_text())
+          if source.get("conclusion")!="cancelled" or source.get("path")!=".github/workflows/task01.yml" or source.get("head_branch")!="main":
+              raise SystemExit("BLOCKED: source run identity mismatch")
+          artifacts=json.loads((root/"source-artifacts.json").read_text()).get("artifacts",[])
+          def unique(name):
+              matches=[a for a in artifacts if a.get("name")==name and not a.get("expired")]
+              if len(matches)!=1:
+                  raise SystemExit("BLOCKED: source artifact missing or ambiguous")
+              return matches[0]
+          unique("task01-validation-report")
+          ck=unique("task01-checkpoint")
+          if int(ck["id"])!=13072181704 or int(ck.get("size_in_bytes",0))!=3936680028 or ck.get("digest")!="sha256:b18cf6fe55874e5615e9d24129761cbea71f7ac5b98593d999079ca8708602bc":
+              raise SystemExit("BLOCKED: checkpoint ID/size/digest mismatch")
+          expiry=datetime.fromisoformat(ck["expires_at"].replace("Z","+00:00"))
+          if expiry <= datetime.now(timezone.utc):
+              raise SystemExit("BLOCKED: checkpoint expired")
+          print("PASS: exact main audit code, same-run source, no active runs and no newer audit; dispatch once")
+          PY
+      - name: Dispatch main read-only SHA audit once
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/task01-stage-audit.yml/dispatches" --input - <<'JSON'
+          {"ref":"main","inputs":{"source_run_id":"41248659151","stage_id":"1Twq0EP00oq6xYjojhTmiTdnAkM1Y7cik"}}
+          JSON
+          echo "PASS: read-only stage audit dispatch accepted; verify target Run ID and report separately"
