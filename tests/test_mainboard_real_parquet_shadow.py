@@ -80,6 +80,59 @@ def test_extra_gold_future_rows_not_counted_as_missing(tmp_path):
     assert report["common_cutoff"] == "2026-10-24"
 
 
+def test_turnover_nearest_yuan_attribution_does_not_erase_difference(tmp_path):
+    p, m, gold, t, g = _make(tmp_path)
+    rows = pq.read_table(t).to_pylist()
+    rows[0]["amount"] = 67.8904
+    pq.write_table(pa.Table.from_pylist(rows), t)
+    item = {"path": REL, "bytes": t.stat().st_size,
+            "sha256": hashlib.sha256(t.read_bytes()).hexdigest()}
+    doc = json.loads(m)
+    doc["files"] = [item]
+    doc["total_bytes"] = item["bytes"]
+    m = json.dumps(doc).encode()
+    p["total_bytes"] = item["bytes"]
+    p["manifest_sha256"] = hashlib.sha256(m).hexdigest()
+    report = diagnose(p, m, gold, t, g, task_relative_path=REL)
+    assert report["numeric_field_difference_count"] == 1
+    assert report["field_difference_counts"]["turnover_cny"] == 1
+    assert report["field_difference_counts"]["close"] == 0
+    assert report["turnover_nearest_yuan_compatible_differences"] == 1
+    assert report["turnover_nearest_yuan_incompatible_differences"] == 0
+    assert report["status"] == "DIFFERENCES_FOUND"
+    assert not report["production_switch_allowed"]
+
+
+def test_material_turnover_discrepancy_not_explained_by_rounding(tmp_path):
+    p, m, gold, t, g = _make(tmp_path)
+    rows = pq.read_table(g).to_pylist()
+    rows[0]["turnover_cny"] = 67892
+    pq.write_table(pa.Table.from_pylist(rows), g)
+    report = diagnose(p, m, gold, t, g, task_relative_path=REL)
+    assert report["field_difference_counts"]["turnover_cny"] == 1
+    assert report["turnover_nearest_yuan_incompatible_differences"] == 1
+    assert report["turnover_nearest_yuan_compatible_differences"] == 0
+
+
+def test_task_only_prefix_breakdown_does_not_certify_missing_gold(tmp_path):
+    p, m, gold, t, g = _make(tmp_path)
+    rows = pq.read_table(t).to_pylist()
+    rows.append(dict(rows[0], ts_code="300001.SZ"))
+    pq.write_table(pa.Table.from_pylist(rows), t)
+    item = {"path": REL, "bytes": t.stat().st_size,
+            "sha256": hashlib.sha256(t.read_bytes()).hexdigest()}
+    doc = json.loads(m)
+    doc["files"] = [item]
+    doc["total_bytes"] = item["bytes"]
+    m = json.dumps(doc).encode()
+    p["total_bytes"] = item["bytes"]
+    p["manifest_sha256"] = hashlib.sha256(m).hexdigest()
+    report = diagnose(p, m, gold, t, g, task_relative_path=REL)
+    assert report["only_in_task01"] == 1
+    assert report["only_in_task01_by_symbol_prefix"]["300.SZ"] == 1
+    assert not report["gold_historical_pit_universe_verified"]
+
+
 def test_duplicate_gold_primary_key_fails_closed(tmp_path):
     with pytest.raises(ValueError, match="duplicate symbol/date"):
         run(tmp_path, gold_duplicate=True)
