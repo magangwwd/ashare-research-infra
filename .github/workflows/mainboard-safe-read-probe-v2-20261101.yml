@@ -1,7 +1,11 @@
 name: Mainboard Safe Read Probe v2 (one-shot)
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - ops/one-shot-mainboard-probe-v2-20261101
+    paths:
+      - .github/workflows/mainboard-safe-read-probe-v2-20261101.yml
 
 permissions:
   contents: read
