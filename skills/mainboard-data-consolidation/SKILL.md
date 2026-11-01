@@ -5,6 +5,15 @@ description: 审核并逐步整合 GitHub Task01 A股主板基础数据与 Gold 
 
 # A股主板数据整合 Skill
 
+## 最新任务范围（用户 2026-11-01 确认）
+
+**唯一目标：沪深A股主板股票数据**。证券集合以真实来源 Tushare `stock_basic.market=主板`，以及 Gold 正式 `instruments.parquet` 中 `board=MAIN_BOARD`、`exchange=SSE/SZSE`、`currency=CNY` 的签名验证名录为依据，覆盖上市、停牌、退市的有效历史；不可仅凭代码前缀判断上市板块或删除退市历史。
+- 300/301/302 创业板、688/689 科创板、920 北交所等**不纳入主板兼容数据、质量缺口、影子策略及交付验收**。Task01 现有全市场 Raw/Clean 文件仍必须保留，生产转换尚未验收之前不得改动下载、删除历史数据或停止原 Gold 运行。
+- Task01 与 Gold 的历史行情对比，先核验 Gold 官方 manifest 对 `instruments.parquet` 的 SHA，再过滤 Task01 非主板记录，统计 `task_non_mainboard_rows_excluded`；被排除行**不能当作 Gold 缺失**。
+- Gold 当期官方股票名录并非历史 point-in-time（PIT）证券归属证明。退市、转板和历史边界须另外核验；在此之前标注 PIT 未通过、生产切换禁止。
+- 仅缩小**证券范围**，不取消主板日线、15分钟、估值、复权、财务、停牌状态等项目既定验证；不修改冻结选股策略或5交易日影子/回滚门槛。
+
+
 适用仓库：`magangwwd/ashare-research-infra`。运行前先读 `docs/mainboard-data-consolidation-plan-20261028.md`、`docs/MAINBOARD_UNIFIED_OPERATIONS.md`、`docs/drive-phase2.md`、`astock-quant/stock_state_strategy/DRIVE_ACTIONS_OPERATIONS.md`。
 
 ## 执行规程
