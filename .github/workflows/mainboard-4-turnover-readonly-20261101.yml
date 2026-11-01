@@ -1,0 +1,83 @@
+name: Mainboard 4 Turnover Exceptions (one-shot)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mainboard-4-turnover-exceptions-20261101
+  cancel-in-progress: false
+
+jobs:
+  attributed-diagnostic:
+    if: >-
+      github.repository == 'magangwwd/ashare-research-infra' &&
+      github.ref == 'refs/heads/ops/one-shot-mainboard-4-turnover-20261101' &&
+      github.event.head_commit.message == 'audit(mainboard): one-shot four half-yuan turnover exceptions'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Read pinned Drive files and disclose only safe failure stage
+        env:
+          GDRIVE_OAUTH_JSON: ${{ secrets.GDRIVE_OAUTH_JSON }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m data_pipeline.gold_shadow_drive_probe --output-dir "$RUNNER_TEMP/mainboard-shadow-read"
+      - name: Read-only Parquet comparison; no production authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/mainboard-shadow-read"
+          set +e
+          python -m tools.mainboard_real_parquet_shadow \
+            --pointer "$ROOT/current.json" \
+            --task-manifest "$ROOT/production_manifest.json" \
+            --gold-manifest "$ROOT/gold_manifest.json" \
+            --task-daily "$ROOT/task_oct.parquet" \
+            --gold-daily "$ROOT/gold_oct.parquet" \
+            --gold-instruments "$ROOT/instruments.parquet" \
+            --task-relative-path data/clean/daily/year=2026/month=10/part-000.parquet \
+            --output metadata/mainboard_real_parquet_diff.json
+          ret=$?
+          set -e
+          if [ "$ret" != "0" ] && [ "$ret" != "2" ]; then
+            echo "BLOCKED diagnostic command failed"
+            exit 1
+          fi
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          p=Path("metadata/mainboard_real_parquet_diff.json")
+          if not p.is_file():
+              raise SystemExit("BLOCKED missing read-only receipt")
+          x=json.loads(p.read_text())
+          if (x.get("universe_scope") != "SSE_SZSE_A_SHARE_MAIN_BOARD_ONLY" or
+              x.get("gold_instruments_file_verified") is not True or
+              x.get("production_switch_allowed") is not False or
+              x.get("five_trading_days_shadow_verified") is not False or
+              x.get("task01_file_sha256_verified_against_official_manifest") is not True or
+              x.get("gold_history_month_sha256_verified_against_official_manifest") is not False):
+              raise SystemExit("BLOCKED diagnostic must not certify production")
+          print("READONLY_REPORT", x["status"], "common", x["common_keys"],
+                "field_differences", x["numeric_field_difference_count"],
+                "missing_task", x["only_in_task01"], "missing_gold", x["only_in_gold"])
+          PY
+      - name: Retain only sanitized diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mainboard-four-turnover-exceptions
+          path: metadata/mainboard_real_parquet_diff.json
+          retention-days: 30
+          if-no-files-found: ignore
