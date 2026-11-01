@@ -116,7 +116,11 @@ def test_restore_script_rejects_checkpoint_links_before_extraction(member_type):
             check=False,
         )
         assert result.returncode != 0
-        assert "BLOCKED: unsafe checkpoint member" in result.stderr + result.stdout
+        diagnostic = result.stderr + result.stdout
+        assert "BLOCKED: unsafe checkpoint member" in diagnostic
+        assert "type=" in diagnostic
+        assert "path='data/current/unsafe-link'" in diagnostic
+        assert "link='data/current/acceptance.json'" in diagnostic
         assert not (Path(temp) / "data").exists()
 
 
