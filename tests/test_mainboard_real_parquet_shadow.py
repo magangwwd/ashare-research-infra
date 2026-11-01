@@ -10,7 +10,7 @@ import pytest
 
 pa = pytest.importorskip("pyarrow")
 pq = pytest.importorskip("pyarrow.parquet")
-from tools.mainboard_real_parquet_shadow import diagnose
+from tools.mainboard_real_parquet_shadow import diagnose, reproduce_legacy_gold_turnover_cny
 
 
 REL = "data/clean/daily/year=2026/month=10/part-000.parquet"
@@ -183,6 +183,42 @@ def test_turnover_incompatible_examples_are_bounded_by_sample_limit(tmp_path):
         "absolute_difference_cny": "0.5000",
     }
     assert report["production_switch_allowed"] is False
+
+
+def test_four_real_half_yuan_ties_reproduce_gold_float64_rule():
+    # Real values from SHA-verified GitHub artifact #13065516697,
+    # run #41261404901. The four directions vary due to floating conversion.
+    observations = [
+        ("000698.SZ", "8321273.5000", "8321273"),
+        ("002293.SZ", "66806632.5000", "66806633"),
+        ("002422.SZ", "1050605834.5000", "1050605835"),
+        ("002695.SZ", "133873966.5000", "133873967"),
+    ]
+    for symbol, task_value, gold_value in observations:
+        assert reproduce_legacy_gold_turnover_cny(task_value) == int(gold_value), symbol
+
+
+def test_legacy_float_rule_does_not_make_strict_differences_disappear(tmp_path):
+    p, m, gold, t, g = _make(tmp_path)
+    rows = pq.read_table(t).to_pylist()
+    rows[0]["amount"] = 67.8905
+    pq.write_table(pa.Table.from_pylist(rows), t)
+    item = {"path": REL, "bytes": t.stat().st_size,
+            "sha256": hashlib.sha256(t.read_bytes()).hexdigest()}
+    doc = json.loads(m)
+    doc["files"] = [item]
+    doc["total_bytes"] = item["bytes"]
+    m = json.dumps(doc).encode()
+    p["total_bytes"] = item["bytes"]
+    p["manifest_sha256"] = hashlib.sha256(m).hexdigest()
+    report = diagnose(p, m, gold, t, g, task_relative_path=REL,
+                      gold_instruments_path=t.parent / "instruments.parquet")
+    assert report["numeric_field_difference_count"] == 1
+    assert report["turnover_legacy_float_rule_compatible_differences"] == 1
+    assert report["turnover_legacy_float_rule_incompatible_count"] == 0
+    assert report["status"] == "DIFFERENCES_FOUND"
+    assert report["turnover_legacy_float_rule_is_diagnostic_only"]
+    assert not report["production_switch_allowed"]
 
 
 def test_material_turnover_discrepancy_not_explained_by_rounding(tmp_path):
