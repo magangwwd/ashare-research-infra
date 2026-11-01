@@ -194,6 +194,7 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
     turnover_within_half_yuan = 0
     turnover_beyond_half_yuan = 0
     turnover_exact_half_yuan_ties = 0
+    turnover_half_even_incompatible_examples = []
     for key in common:
         for field in _FIELDS:
             if t[key][field] != g[key][field]:
@@ -211,6 +212,15 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
                     )
                     if g[key][field] == even_nearest:
                         nearest_yuan_half_even_compatible += 1
+                    elif len(turnover_half_even_incompatible_examples) < max_examples:
+                        turnover_half_even_incompatible_examples.append({
+                            "vendor_symbol": key[0], "trade_date": key[1],
+                            "task01_turnover_cny": str(t[key][field]),
+                            "gold_turnover_cny": str(g[key][field]),
+                            "half_up_yuan": str(nearest),
+                            "half_even_yuan": str(even_nearest),
+                            "absolute_difference_cny": str(abs(t[key][field] - g[key][field])),
+                        })
                     absolute_difference = abs(t[key][field] - g[key][field])
                     if absolute_difference <= Decimal("0.5"):
                         turnover_within_half_yuan += 1
@@ -251,6 +261,7 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
         "turnover_absolute_difference_le_half_yuan": turnover_within_half_yuan,
         "turnover_absolute_difference_gt_half_yuan": turnover_beyond_half_yuan,
         "turnover_exact_half_yuan_difference_count": turnover_exact_half_yuan_ties,
+        "turnover_half_even_incompatible_examples": turnover_half_even_incompatible_examples,
         "only_in_task01_by_symbol_prefix": dict(sorted(Counter(
             sym.split(".")[0][:3] + "." + sym.split(".")[-1] for sym, day in only_task
         ).items())),
