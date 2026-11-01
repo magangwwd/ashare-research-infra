@@ -174,12 +174,8 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
         for r in rows:
             if label == "task":
                 sym = r["ts_code"]
-                vol = _num(r["vol"], "vol") * 100
-                amount = _num(r["amount"], "amount") * 1000
             else:
                 sym = r["vendor_symbol"]
-                vol = _num(r["volume_shares"], "volume_shares")
-                amount = _num(r["turnover_cny"], "turnover_cny")
             if not isinstance(sym, str) or not sym:
                 raise ValueError(f"{label}: invalid symbol")
             day = _day(r["trade_date"])
@@ -202,6 +198,15 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
                     # board evidence establishes their historical status.
                     unclassified[prefix] += 1
                 continue
+            # Only validate numeric fields after scope classification. A raw
+            # excluded/unclassified row must not contaminate main-board
+            # OHLCV parity or be reported as a missing Gold observation.
+            if label == "task":
+                vol = _num(r["vol"], "vol") * 100
+                amount = _num(r["amount"], "amount") * 1000
+            else:
+                vol = _num(r["volume_shares"], "volume_shares")
+                amount = _num(r["turnover_cny"], "turnover_cny")
             start, end = listing_windows[sym]
             if start is None:
                 listing_unknown += 1
