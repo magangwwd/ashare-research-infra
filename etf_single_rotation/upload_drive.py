@@ -106,7 +106,14 @@ def _remote_metadata(session, file_id):
         raise SystemExit("Drive metadata readback unavailable; refusing unsafe reuse.") from exc
     if response.status_code != 200:
         raise SystemExit(f"Drive metadata readback failed: HTTP {response.status_code}")
-    return response.json()
+    try:
+        item = response.json()
+    except (ValueError, TypeError) as exc:
+        raise SystemExit("Drive metadata malformed JSON; refusing unsafe reuse.") from exc
+    # The by-ID readback must identify the exact object being credited.
+    if not isinstance(item, dict) or item.get("id") != file_id:
+        raise SystemExit("Drive metadata ID mismatch or malformed payload; no reuse.")
+    return item
 
 
 def _verify_metadata(item, path, expected_name):
