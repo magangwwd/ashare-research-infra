@@ -44,12 +44,22 @@ def _index(rows, label, cutoff):
     if not isinstance(rows, list):
         raise ValueError(f"{label}: rows must be a list")
     result = {}
+    symbol_ids, id_symbols = {}, {}
     for row in rows:
         if not isinstance(row, dict):
             raise ValueError(f"{label}: invalid row")
         symbol = row.get("vendor_symbol")
         if not isinstance(symbol, str) or not symbol:
             raise ValueError(f"{label}: invalid vendor_symbol")
+        instrument_id = row.get("instrument_id")
+        if not isinstance(instrument_id, str) or not instrument_id:
+            raise ValueError(f"{label}: missing or invalid instrument_id")
+        if symbol in symbol_ids and symbol_ids[symbol] != instrument_id:
+            raise ValueError(f"{label}: conflicting instrument_id for vendor_symbol")
+        if instrument_id in id_symbols and id_symbols[instrument_id] != symbol:
+            raise ValueError(f"{label}: instrument_id reused by different symbols")
+        symbol_ids[symbol] = instrument_id
+        id_symbols[instrument_id] = symbol
         day = _date(row.get("trade_date"))
         if day > cutoff:
             raise ValueError(f"{label}: future row beyond as_of")
@@ -67,7 +77,7 @@ def _index(rows, label, cutoff):
             raise ValueError(f"{label}: negative volume or turnover")
         if row.get("is_quality_valid") not in (True, False) or not isinstance(row.get("is_quality_valid"), bool):
             raise ValueError(f"{label}: quality flag must be boolean")
-        result[key] = (values, row["is_quality_valid"])
+        result[key] = (values, row["is_quality_valid"], instrument_id)
     return result
 
 
@@ -88,9 +98,18 @@ def compare_shadow_daily(candidate_rows, gold_rows, *, as_of_date, sample_limit=
     missing_task = sorted(gold_keys - task_keys)
     differences = []
     difference_count = 0
+    instrument_id_difference_count = 0
+    instrument_id_difference_examples = []
     for key in common:
-        task_values, _ = candidate[key]
-        gold_values, _ = gold[key]
+        task_values, _, task_id = candidate[key]
+        gold_values, _, gold_id = gold[key]
+        if task_id != gold_id:
+            instrument_id_difference_count += 1
+            if len(instrument_id_difference_examples) < sample_limit:
+                instrument_id_difference_examples.append({
+                    "vendor_symbol": key[0], "trade_date": key[1],
+                    "task01_instrument_id": task_id, "gold_instrument_id": gold_id,
+                })
         for field in _FIELDS:
             if task_values[field] != gold_values[field]:
                 difference_count += 1
@@ -100,9 +119,10 @@ def compare_shadow_daily(candidate_rows, gold_rows, *, as_of_date, sample_limit=
                         "field": field, "task01": str(task_values[field]),
                         "gold": str(gold_values[field]),
                     })
-    gold_invalid = sum(not flag for _, flag in gold.values())
-    unvalidated_shadow = sum(not flag for _, flag in candidate.values())
-    has_differences = bool(missing_gold or missing_task or difference_count or gold_invalid or not common)
+    gold_invalid = sum(not flag for _, flag, _ in gold.values())
+    unvalidated_shadow = sum(not flag for _, flag, _ in candidate.values())
+    has_differences = bool(missing_gold or missing_task or difference_count
+                           or instrument_id_difference_count or gold_invalid or not common)
     # The adapter deliberately marks every shadow row as unvalidated. A price
     # match is not a quality pass: expose that state instead of a green match.
     status = ("DIFFERENCES_FOUND" if has_differences else
@@ -119,6 +139,8 @@ def compare_shadow_daily(candidate_rows, gold_rows, *, as_of_date, sample_limit=
         "missing_in_task01_examples": [list(k) for k in missing_task[:sample_limit]],
         "field_difference_count": difference_count,
         "field_difference_examples": differences,
+        "instrument_id_difference_count": instrument_id_difference_count,
+        "instrument_id_difference_examples": instrument_id_difference_examples,
         "gold_invalid_quality_rows": gold_invalid,
         "shadow_unvalidated_rows": unvalidated_shadow,
         "numeric_comparison": "EXACT_DECIMAL_NO_TOLERANCE",
