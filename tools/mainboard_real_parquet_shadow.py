@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from datetime import date, datetime
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 import hashlib
 import json
 from pathlib import Path
@@ -140,10 +140,21 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
     only_task = sorted(t.keys() - g.keys())
     only_gold = sorted(g.keys() - t.keys())
     mismatches, diffs, per_day = 0, [], {}
+    field_counts = Counter({name: 0 for name in _FIELDS})
+    nearest_yuan_compatible = 0
+    nearest_yuan_incompatible = 0
     for key in common:
         for field in _FIELDS:
             if t[key][field] != g[key][field]:
                 mismatches += 1
+                field_counts[field] += 1
+                if field == "turnover_cny":
+                    # Precision hypothesis only; this does not convert or certify a match.
+                    nearest = t[key][field].quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+                    if g[key][field] == nearest:
+                        nearest_yuan_compatible += 1
+                    else:
+                        nearest_yuan_incompatible += 1
                 if len(diffs) < max_examples:
                     diffs.append({
                         "symbol": key[0], "date": key[1], "field": field,
@@ -165,6 +176,13 @@ def diagnose(pointer, task_manifest_bytes, gold_manifest, task_daily_path,
         "task_rows_at_or_before_cutoff": len(t), "gold_rows_at_or_before_cutoff": len(g),
         "common_keys": len(common), "only_in_task01": len(only_task),
         "only_in_gold": len(only_gold), "numeric_field_difference_count": mismatches,
+        "field_difference_counts": dict(field_counts),
+        "turnover_nearest_yuan_compatible_differences": nearest_yuan_compatible,
+        "turnover_nearest_yuan_incompatible_differences": nearest_yuan_incompatible,
+        "only_in_task01_by_symbol_prefix": dict(sorted(Counter(
+            sym.split(".")[0][:3] + "." + sym.split(".")[-1] for sym, day in only_task
+        ).items())),
+        "turnover_precision_is_only_a_diagnostic": True,
         "numeric_field_differences": diffs,
         "only_in_task01_examples": [list(k) for k in only_task[:max_examples]],
         "only_in_gold_examples": [list(k) for k in only_gold[:max_examples]],
