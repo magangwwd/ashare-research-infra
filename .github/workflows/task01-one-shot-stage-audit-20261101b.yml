@@ -1,10 +1,6 @@
 name: One-shot Task01 same-run staged SHA audit dispatch (2026-11-01b)
 on:
-  push:
-    branches:
-      - ops/one-shot-task01-stage-audit-20261101b
-    paths:
-      - .github/workflows/task01-one-shot-stage-audit-20261101b.yml
+  workflow_dispatch:
 permissions:
   contents: read
   actions: write
@@ -14,6 +10,7 @@ concurrency:
 jobs:
   request_readonly_audit:
     if: >-
+      github.event_name == 'push' &&
       github.repository == 'magangwwd/ashare-research-infra' &&
       github.ref == 'refs/heads/ops/one-shot-task01-stage-audit-20261101b' &&
       github.event.head_commit.message == 'ops(task01): dispatch one new-source read-only stage audit 20261101b'
