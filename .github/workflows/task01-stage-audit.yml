@@ -122,7 +122,8 @@ jobs:
                   if (not path.parts or path.is_absolute() or ".." in path.parts
                           or path.parts[0] not in ("data", "metadata")
                           or not (member.isfile() or member.isdir() or safe_current_link)):
-                      raise SystemExit("BLOCKED: unsafe checkpoint member")
+                      raise SystemExit("BLOCKED: unsafe checkpoint member"
+                                       + f" type={member.type!r} path={member.name[:160]!r} link={member.linkname[:160]!r}")
               tf.extractall(".", filter="data")
           accepted = Path("data/current/acceptance.json")
           if not accepted.is_file() or not json.loads(accepted.read_text()).get("passed"):
