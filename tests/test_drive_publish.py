@@ -341,6 +341,41 @@ def test_read_only_stage_audit_sha_checks_and_never_writes(tmp_path):
     assert file_id in drive.files
 
 
+@pytest.mark.parametrize("fault,expected_kind", [
+    ("sha", "downloaded_sha256"),
+    ("downloaded_size", "downloaded_size"),
+    ("metadata_size", "metadata_size"),
+])
+def test_read_only_stage_audit_mismatch_fingerprint_is_safe_and_fail_closed(tmp_path, fault, expected_kind):
+    drive = MemoryDrive()
+    items = snapshot(tmp_path)
+    stage, file_id = _seed_cancelled_stage(drive, items[0])
+    _seed_audit_pointer(drive)
+    if fault == "sha":
+        body = drive.files[file_id]["body"]
+        drive.files[file_id]["body"] = bytes([body[0] ^ 1]) + body[1:]
+    elif fault == "downloaded_size":
+        drive.files[file_id]["body"] += b"extra"
+    else:
+        drive.files[file_id]["size"] = str(int(drive.files[file_id]["size"]) + 1)
+    before = copy.deepcopy(drive.files)
+    uploads = drive.upload_count
+    with pytest.raises(dp.PublishError) as caught:
+        dp.audit_resume_stage(
+            drive, "root", items, {"passed": True, "as_of": "2026-10-29"},
+            {"remaining_bytes": 10_000_000}, stage)
+    message = str(caught.value)
+    expected_fingerprint = hashlib.sha256(items[0]["path"].encode("utf-8")).hexdigest()[:16]
+    assert f"audit_failure={expected_kind}" in message
+    assert f"path_fingerprint={expected_fingerprint}" in message
+    assert "verified_before_failure=0" in message
+    assert items[0]["path"] not in message
+    assert file_id not in message
+    assert drive.files == before
+    assert drive.upload_count == uploads
+    assert drive.read("pointer") == before["pointer"]["body"]
+
+
 @pytest.mark.parametrize("fault", ["stale", "tampered", "manifest", "quota", "foreign"])
 def test_read_only_stage_audit_fail_closed_no_mutations(tmp_path, fault):
     drive = MemoryDrive()
