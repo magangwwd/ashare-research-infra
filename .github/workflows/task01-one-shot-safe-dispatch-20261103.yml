@@ -1,0 +1,59 @@
+name: One-shot Task01 safe dispatch 20261103
+run-name: One-shot Task01 safe dispatch 20261103
+
+on:
+  push:
+    branches:
+      - ops/one-shot-task01-safe-dispatch-20261103
+    paths:
+      - .github/workflows/task01-one-shot-safe-dispatch-20261103.yml
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    if: >-
+      github.repository == 'magangwwd/ashare-research-infra' &&
+      github.ref == 'refs/heads/ops/one-shot-task01-safe-dispatch-20261103' &&
+      github.event.head_commit.message == 'ops: one-shot safe Task01 dispatch 20261103'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify main SHA, Task01 producer inactivity and session idempotency
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          expected_main='b6f7e06fbe6b3985fde04ad41457a8560d3620aa'
+          actual_main="$(gh api repos/magangwwd/ashare-research-infra/branches/main --jq '.commit.sha')"
+          if [ "$actual_main" != "$expected_main" ]; then
+            echo 'STOP: main SHA changed; do not dispatch without fresh review'
+            exit 1
+          fi
+          gh api 'repos/magangwwd/ashare-research-infra/actions/workflows/task01.yml/runs?per_page=100' > /tmp/task01-runs.json
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          runs = json.load(open('/tmp/task01-runs.json', encoding='utf-8')).get('workflow_runs', [])
+          session_start = datetime.fromisoformat('2026-11-02T13:17:00+00:00')
+          active = [r for r in runs if r.get('status') != 'completed']
+          in_session = [r for r in runs if datetime.fromisoformat(r['created_at'].replace('Z', '+00:00')) >= session_start]
+          if active or in_session:
+              print('STOP: Task01 active or already created for this data session; no duplicate dispatch')
+              print('active_ids:', [r['id'] for r in active])
+              print('session_ids:', [r['id'] for r in in_session])
+              raise SystemExit(1)
+          print('PASS: main SHA pinned, no active Task01 and no run for 2026-11-02 21:17 CST data session')
+          PY
+      - name: Dispatch existing main Task01 with its original fail-closed daily guard
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          printf '%s' '{"ref":"main","inputs":{"watchdog_trigger":true,"verify_drive_auth":false,"publish_drive_snapshot":false,"force_drive_restore":false}}' \
+            | gh api --method POST 'repos/magangwwd/ashare-research-infra/actions/workflows/task01.yml/dispatches' --input -
+          echo 'DISPATCH_REQUEST_ACCEPTED: verify actual Task01 workflow_dispatch run and its logs separately'
