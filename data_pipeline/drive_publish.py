@@ -260,6 +260,24 @@ class Drive:
         return pointer_id
 
 
+def preserve_accepted_report_timestamp(fresh: dict, saved_path: Path) -> dict:
+    """Reuse a frozen observation timestamp only for byte-equivalent report facts.
+
+    Task01 validates before publication. Re-running validation for the same
+    accepted snapshot changes checked_at but not the observed facts, making a
+    cancelled stage fail strict SHA reconciliation on resume. Never ignore
+    changes to any other report field; they must retain a different digest.
+    """
+    frozen = read_json(saved_path, {})
+    if (not isinstance(frozen, dict) or not isinstance(frozen.get("checked_at"), str)
+            or not isinstance(fresh, dict) or not isinstance(fresh.get("checked_at"), str)):
+        return fresh
+    without_time = lambda value: {k: v for k, v in value.items() if k != "checked_at"}
+    if without_time(frozen) != without_time(fresh):
+        return fresh
+    return {**fresh, "checked_at": frozen["checked_at"]}
+
+
 def inventory(root: Path, config: dict, prepared: Path) -> tuple[list[dict], dict, dict]:
     """Only published layers and explicit safe metadata paths may leave the Runner."""
     current = root / "data/current"
@@ -274,6 +292,11 @@ def inventory(root: Path, config: dict, prepared: Path) -> tuple[list[dict], dic
     if not acceptance["passed"]:
         raise PublishError("Local Critical acceptance failed; upload blocked.")
     progress = history_progress(current, root / "metadata", config, as_of, acceptance)
+    # Reuse timestamps from the accepted snapshot's persisted evidence when
+    # every other field still matches fresh validation. The same checkpoint
+    # must yield the same inventory bytes during a later read-only stage audit.
+    acceptance = preserve_accepted_report_timestamp(acceptance, root / "metadata/acceptance.json")
+    progress = preserve_accepted_report_timestamp(progress, root / "metadata/history_progress.json")
     atomic_json(prepared / "metadata/acceptance.json", acceptance)
     atomic_json(prepared / "metadata/history_progress.json", progress)
     (prepared / "metadata/history_progress.md").write_text(progress_markdown(progress), encoding="utf-8")
