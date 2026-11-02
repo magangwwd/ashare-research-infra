@@ -119,5 +119,24 @@ class AuxiliaryShadowAdapterTests(unittest.TestCase):
         self.assertFalse(audit["point_in_time_membership_verified"])
 
 
+    def test_historical_symbol_in_current_gold_is_not_pit_certified(self):
+        # A present-day Gold mapping cannot prove membership on an older day.
+        historical = dict(self.adjust, trade_date="2020-01-02")
+        rows, audit = self.adj_adapt([historical])
+        self.assertEqual(rows[0]["trade_date"], "2020-01-02")
+        self.assertFalse(audit["point_in_time_membership_verified"])
+        self.assertFalse(audit["production_switch_allowed"])
+
+    def test_current_gold_absence_does_not_certify_historical_non_mainboard(self):
+        # The exclusion counter is a mapping gap, not historical PIT evidence.
+        historical = dict(self.adjust, ts_code="600999.SH",
+                          security_id="historical-task-id", trade_date="2019-06-03")
+        rows, audit = self.adj_adapt([self.adjust, historical])
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(audit["excluded_outside_explicit_gold_universe"], 1)
+        self.assertFalse(audit["point_in_time_membership_verified"])
+        self.assertFalse(audit["production_switch_allowed"])
+
+
 if __name__ == "__main__":
     unittest.main()
