@@ -86,3 +86,24 @@ test("23:30 and next-day 03:23 share one primary session", () => {
                "2026-10-06T13:17:00.000Z");
   assert.equal(decideWatchdog([run()], new Date("2026-10-06T19:23:00Z")).action, "done");
 });
+
+// Regression for the actual post-midnight fallback windows (2026-11-03).
+// Other repositories/workflows may have scheduled runs; only Task01 managed
+// runs in the current 21:17-to-next-day session may suppress dispatch.
+test("post-midnight fallback checks dispatch if the Task01 primary and backup were absent", () => {
+  const previousSession = run({
+    id: 41359343597,
+    created_at: "2026-11-01T22:53:05Z",
+    conclusion: "cancelled",
+  });
+  for (const utc of [
+    "2026-11-02T16:20:00Z", // Nov 3 00:20 Beijing
+    "2026-11-02T17:20:00Z", // Nov 3 01:20 Beijing
+    "2026-11-02T18:20:00Z", // Nov 3 02:20 Beijing
+    "2026-11-02T22:20:00Z", // Nov 3 06:20 Beijing
+  ]) {
+    const decision = decideWatchdog([previousSession], new Date(utc));
+    assert.equal(decision.action, "dispatch", utc);
+    assert.equal(lastScheduledSlot(new Date(utc)).toISOString(), "2026-11-02T13:17:00.000Z");
+  }
+});
