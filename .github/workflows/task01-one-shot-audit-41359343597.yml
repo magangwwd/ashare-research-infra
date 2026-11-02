@@ -1,106 +1,11 @@
-name: One-shot Task01 read-only audit for cancelled 41359343597
-
+name: Archived one-shot Task01 audit relay (ANSI log incompatibility)
 on:
-  push:
-    branches:
-      - ops/one-shot-task01-audit-41359343597
-    paths:
-      - .github/workflows/task01-one-shot-audit-41359343597.yml
-
+  workflow_dispatch:
 permissions:
   contents: read
-  actions: write
-
 jobs:
-  dispatch:
-    if: >-
-      github.repository == 'magangwwd/ashare-research-infra' &&
-      github.ref == 'refs/heads/ops/one-shot-task01-audit-41359343597' &&
-      github.event.head_commit.message == 'ops(task01): one-shot audit new checkpoint 41359343597'
+  disabled:
+    if: false
     runs-on: ubuntu-latest
-    timeout-minutes: 8
     steps:
-      - name: Fail-closed identity, provenance, expiry and concurrency checks
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha' > "$RUNNER_TEMP/main.txt"
-          gh api "repos/$GITHUB_REPOSITORY/contents/.github/workflows/task01-stage-audit.yml?ref=main" --jq '.sha' > "$RUNNER_TEMP/audit-blob.txt"
-          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/task01-stage-audit.yml/runs?per_page=100" > "$RUNNER_TEMP/audits.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/task01.yml/runs?per_page=100" > "$RUNNER_TEMP/tasks.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/41359343597" > "$RUNNER_TEMP/source.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/41359343597/jobs?per_page=100" > "$RUNNER_TEMP/jobs.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/41359343597/artifacts?per_page=100" > "$RUNNER_TEMP/artifacts.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/jobs/125006181916/logs" > "$RUNNER_TEMP/source-job.log"
-          python - <<'PY'
-          import json, os, re
-          from pathlib import Path
-          from datetime import datetime, timezone
-          root = Path(os.environ["RUNNER_TEMP"])
-          read = lambda name: json.loads((root / name).read_text())
-          if (root/"main.txt").read_text().strip() != "a0bd413e69cf09b3d739323270cf23066363bce7":
-              raise SystemExit("BLOCKED: main SHA changed")
-          if (root/"audit-blob.txt").read_text().strip() != "518b9657c6c03b62d3181b31d10e03e953eef009":
-              raise SystemExit("BLOCKED: audit workflow blob changed")
-          audits = read("audits.json").get("workflow_runs", [])
-          tasks = read("tasks.json").get("workflow_runs", [])
-          active = {"queued", "in_progress", "waiting", "requested", "pending"}
-          if not audits or int(audits[0]["id"]) != 41334890992 or audits[0].get("conclusion") != "failure":
-              raise SystemExit("BLOCKED: newer or unexpected audit exists")
-          if any(x.get("status") in active for x in audits + tasks):
-              raise SystemExit("BLOCKED: active audit or Task01 producer")
-          source = read("source.json")
-          if (source.get("id") != 41359343597 or source.get("conclusion") != "cancelled"
-              or source.get("path") != ".github/workflows/task01.yml"
-              or source.get("head_branch") != "main"
-              or source.get("head_sha") != "a0bd413e69cf09b3d739323270cf23066363bce7"
-              or source.get("event") != "schedule"
-              or (source.get("head_repository") or {}).get("full_name") != os.environ["GITHUB_REPOSITORY"]):
-              raise SystemExit("BLOCKED: source run identity mismatch")
-          jobs = read("jobs.json").get("jobs", [])
-          matches = [j for j in jobs if j.get("id") == 125006181916 and j.get("name") == "task01" and j.get("conclusion") == "cancelled"]
-          if len(matches) != 1:
-              raise SystemExit("BLOCKED: source job mismatch")
-          steps = matches[0].get("steps") or []
-          for name, expected in [
-              ("Daily update or maintenance", "success"),
-              ("Production acceptance", "success"),
-              ("Publish accepted snapshot to Drive", "cancelled"),
-              ("Save recovery checkpoint", "success")
-          ]:
-              actual = [s.get("conclusion") for s in steps if s.get("name") == name]
-              if actual != [expected]:
-                  raise SystemExit("BLOCKED: source job step contract mismatch")
-          artifacts = read("artifacts.json").get("artifacts", [])
-          def one(name):
-              a = [x for x in artifacts if x.get("name") == name and not x.get("expired")]
-              if len(a) != 1:
-                  raise SystemExit("BLOCKED: source artifact missing or ambiguous")
-              return a[0]
-          one("task01-validation-report")
-          checkpoint = one("task01-checkpoint")
-          if (checkpoint.get("id") != 13116312860
-              or checkpoint.get("size_in_bytes") != 3962713689
-              or checkpoint.get("digest") != "sha256:9fab53d721d2c20a2100b5df44e93a3d59094a7733cff5f72d06fc64114527ee"):
-              raise SystemExit("BLOCKED: checkpoint identity/size/SHA mismatch")
-          expiry = datetime.fromisoformat(checkpoint["expires_at"].replace("Z","+00:00"))
-          if expiry <= datetime.now(timezone.utc):
-              raise SystemExit("BLOCKED: checkpoint expired")
-          log = (root/"source-job.log").read_text(errors="replace")
-          matches = re.findall(r"SUCCESS staging created folder_id=([A-Za-z0-9_-]{10,100}) files=(\d+) bytes=(\d+)", log)
-          if matches != [("1l43dDu1jY3hsJ_K8dkAV12ld_xPz-95r", "8663", "3124179870")]:
-              raise SystemExit("BLOCKED: stage ID/count/bytes not uniquely witnessed")
-          print("PASS: exact source, checkpoint, stage, audit code and no producer concurrency")
-          PY
-      - name: Dispatch main read-only audit exactly once
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/task01-stage-audit.yml/dispatches" --input - <<'JSON'
-          {"ref":"main","inputs":{"source_run_id":"41359343597","stage_id":"1l43dDu1jY3hsJ_K8dkAV12ld_xPz-95r"}}
-          JSON
-          echo "PASS: read-only audit dispatch accepted; target Run and report require separate verification"
+      - run: echo 'Archived; dispatch disabled'
