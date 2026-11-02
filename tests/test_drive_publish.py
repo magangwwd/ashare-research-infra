@@ -195,6 +195,45 @@ def test_uploaded_inventory_uses_current_layers_not_unfinished_stage(tmp_path, m
     assert not any("failed" in i["local_path"] or "credentials" in i["path"] for i in items)
 
 
+def test_inventory_freezes_only_checked_at_when_snapshot_facts_match(tmp_path, monkeypatch):
+    current = tmp_path / "data/current"
+    (current / "raw/daily").mkdir(parents=True)
+    (current / "raw/daily/part-000.parquet").write_bytes(b"accepted")
+    (current / "acceptance.json").write_text('{"passed":true,"as_of":"2026-11-01"}')
+    metadata = tmp_path / "metadata"
+    metadata.mkdir()
+    old = "2026-11-01T23:38:48+00:00"
+    state = {"timestamp": "2026-11-02T06:13:00+00:00", "complete": False}
+    frozen_acceptance = {"passed": True, "as_of": "2026-11-01", "checked_at": old}
+    frozen_progress = {"as_of": "2026-11-01", "checked_at": old,
+                       "core_observed_range_complete": False}
+    (metadata / "acceptance.json").write_text(json.dumps(frozen_acceptance))
+    (metadata / "history_progress.json").write_text(json.dumps(frozen_progress))
+    monkeypatch.setattr(dp, "validate_task01",
+                        lambda *a: {**frozen_acceptance, "checked_at": state["timestamp"]})
+    monkeypatch.setattr(dp, "history_progress",
+                        lambda *a: {**frozen_progress, "checked_at": state["timestamp"],
+                                    "core_observed_range_complete": state["complete"]})
+    monkeypatch.setattr(dp, "progress_markdown", lambda *a: "same facts")
+    def inventory_hashes():
+        prepared = tmp_path / ("prepared-" + state["timestamp"].replace(":", "-"))
+        prepared.mkdir()
+        items, acceptance, _ = dp.inventory(tmp_path, {}, prepared)
+        return ({i["path"]: i["sha256"] for i in items}, acceptance,
+                json.loads((prepared / "metadata/history_progress.json").read_text()))
+    first, accepted, progress = inventory_hashes()
+    assert accepted["checked_at"] == old
+    assert progress["checked_at"] == old
+    state["timestamp"] = "2026-11-02T07:13:00+00:00"
+    second, _, _ = inventory_hashes()
+    assert first == second  # byte-identical source and resumed audit inventory
+    state["timestamp"] = "2026-11-02T08:13:00+00:00"
+    state["complete"] = True
+    third, _, changed = inventory_hashes()
+    assert third["metadata/history_progress.json"] != first["metadata/history_progress.json"]
+    assert changed["checked_at"] == state["timestamp"]  # material changes never bypass SHA
+
+
 def test_resumable_upload_transfers_exact_chunks_and_preallocated_id(tmp_path):
     path = tmp_path / "test.parquet"
     path.write_bytes(b"a" * (8 * 1024 * 1024) + b"remaining bytes")
