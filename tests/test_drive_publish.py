@@ -232,6 +232,25 @@ def test_inventory_freezes_only_checked_at_when_snapshot_facts_match(tmp_path, m
     third, _, changed = inventory_hashes()
     assert third["metadata/history_progress.json"] != first["metadata/history_progress.json"]
     assert changed["checked_at"] == state["timestamp"]  # material changes never bypass SHA
+    # A changed accepted fact must not inherit a previous timestamp or digest.
+    state["complete"] = False
+    state["timestamp"] = "2026-11-02T09:13:00+00:00"
+    monkeypatch.setattr(dp, "validate_task01",
+                        lambda *a: {**frozen_acceptance, "checked_at": state["timestamp"],
+                                    "validated_rows": 1})
+    changed_acceptance, accepted_new, _ = inventory_hashes()
+    assert changed_acceptance["metadata/acceptance.json"] != first["metadata/acceptance.json"]
+    assert accepted_new["checked_at"] == state["timestamp"]
+
+    # Missing frozen evidence must fail closed to a fresh checked_at.
+    (metadata / "acceptance.json").unlink()
+    state["timestamp"] = "2026-11-02T10:13:00+00:00"
+    monkeypatch.setattr(dp, "validate_task01",
+                        lambda *a: {**frozen_acceptance, "checked_at": state["timestamp"]})
+    missing_evidence, accepted_missing, _ = inventory_hashes()
+    assert missing_evidence["metadata/acceptance.json"] != first["metadata/acceptance.json"]
+    assert accepted_missing["checked_at"] == state["timestamp"]
+
 
 
 def test_resumable_upload_transfers_exact_chunks_and_preallocated_id(tmp_path):
