@@ -7,5 +7,6 @@ scikit-learn>=1.9,<2
 lightgbm>=4.6,<5
 joblib>=1.5,<2
 tushare>=1.4.29
+six>=1.16,<2
 tabulate>=0.9
 pytest>=9.0,<10
