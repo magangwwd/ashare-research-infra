@@ -1,12 +1,9 @@
 name: One-shot Task01 safe dispatch 20261103
 run-name: One-shot Task01 safe dispatch 20261103
 
+# One-shot dispatch has been executed. Push trigger permanently disabled.
 on:
-  push:
-    branches:
-      - ops/one-shot-task01-safe-dispatch-20261103
-    paths:
-      - .github/workflows/task01-one-shot-safe-dispatch-20261103.yml
+  workflow_dispatch:
 
 permissions:
   contents: read
