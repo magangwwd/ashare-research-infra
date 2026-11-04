@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "description": "Public announcements independently explain five source-missing ETF trading sessions; absence of a bar must never be imputed into tradeable data.",
+  "legal_note": "A trading halt notice is distinct from proof that fund_adj reflects share consolidations, dividend cash flows and investable total return.",
+  "evidence": [
+    {
+      "symbol": "159915.SZ",
+      "date": "2021-02-08",
+      "announcement_reason": "Fund unitholder meeting ballot counting; halted before market opens, resumed on 2021-02-09 10:30",
+      "source_type": "ISSUER_SIGNED_NOTICE_AND_BROKER_RESUMPTION",
+      "issuer": "易方达基金",
+      "source_url": "https://pdf.dfcfw.com/pdf/H2_AN202102081459963456_1.pdf?1612777675000.pdf=",
+      "supporting_url": "https://www.cindasc.com/osoa/views/a/20210209/42396.html",
+      "resumed": "2021-02-09T10:30:00",
+      "notes": "Signed issuer notice reproduced by Eastmoney + broker derived from exchange information."
+    },
+    {
+      "symbol": "510500.SH",
+      "date": "2015-04-13",
+      "announcement_reason": "Share unit adjustment entitlement registration, full-day halt",
+      "source_type": "EXCHANGE_PUBLISHED_ISSUER_NOTICE",
+      "issuer": "南方基金",
+      "source_url": "https://www.sse.com.cn/disclosure/fund/announcement/c/2015-04-12/510500_20150413_1.pdf",
+      "resumed": "2015-04-15",
+      "notes": "The same official 2015 notice covers both 2015-04-13 and 2015-04-14."
+    },
+    {
+      "symbol": "510500.SH",
+      "date": "2015-04-14",
+      "announcement_reason": "Share-unit adjustment ex-rights date, full-day halt",
+      "source_type": "EXCHANGE_PUBLISHED_ISSUER_NOTICE",
+      "issuer": "南方基金",
+      "source_url": "https://www.sse.com.cn/disclosure/fund/announcement/c/2015-04-12/510500_20150413_1.pdf",
+      "resumed": "2015-04-15",
+      "notes": "Share conversion ratio must be audited separately."
+    },
+    {
+      "symbol": "512100.SH",
+      "date": "2022-09-02",
+      "announcement_reason": "ETF unit consolidation date, halted all sessions",
+      "source_type": "EXCHANGE_PUBLISHED_ISSUER_NOTICE",
+      "issuer": "南方基金",
+      "source_url": "https://www.sse.com.cn/disclosure/fund/announcement/c/new/2022-09-01/512100_20220901_1_3EvmduvU.pdf",
+      "resumed": "2022-09-05",
+      "notes": "Consolidation factor 0.36555 per issuer exchange-hosted notice; price adjustment still requires independent audit."
+    },
+    {
+      "symbol": "512690.SH",
+      "date": "2021-05-14",
+      "announcement_reason": "ETF 1-to-2 unit split date, halted all sessions",
+      "source_type": "BROKER_NOTICE_REFERRING_TO_EXCHANGE_AND_ISSUER",
+      "issuer": "鹏华基金",
+      "source_url": "https://www.wkzq.com.cn/plat_files/upload/20210510/202105101620634429357.pdf",
+      "supporting_url": "https://www.hongtastock.com/htyw/xyyw/rzrjggxx/rcgg/202105/20210507_23481.html",
+      "resumed": "2021-05-17",
+      "notes": "Two separate securities firms describe suspension on exchange notice; split price adjustment separately unverified."
+    }
+  ],
+  "created_utc": "2026-10-21T12:21:00Z"
+}
