@@ -5,6 +5,8 @@ on:
     - cron: '41 2 * * *' # 10:41 Beijing; next day's completed UTC daily archive
   workflow_dispatch:
   push:
+    # Production data and Drive credentials are restricted to reviewed main.
+    branches: [main]
     paths:
       - '.github/workflows/btc-v3-forward.yml'
 
@@ -18,6 +20,8 @@ concurrency:
 
 jobs:
   frozen-forward:
+    # Prevent manual dispatch on an unreviewed ref from reaching Drive secrets.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 70
     env:

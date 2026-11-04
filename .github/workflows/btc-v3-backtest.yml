@@ -2,6 +2,8 @@ name: BTC V3 third-round backtest (research only)
 
 on:
   push:
+    # Production data and Drive credentials are restricted to reviewed main.
+    branches: [main]
     paths:
       - '.github/workflows/btc-v3-backtest.yml'
   workflow_dispatch:
@@ -15,6 +17,8 @@ concurrency:
 
 jobs:
   historical-backtest:
+    # Prevent manual dispatch on an unreviewed ref from reaching Drive secrets.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 100
     env:
