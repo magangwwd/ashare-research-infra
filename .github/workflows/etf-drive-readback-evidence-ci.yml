@@ -1,0 +1,28 @@
+name: ETF historical Drive readback evidence (offline, no backtest)
+on:
+  pull_request:
+    branches:
+      - feature/etf-single-rotation-v1
+    paths:
+      - 'etf_single_rotation/metadata/ETF_DRIVE_39599580852_48of48_readback_20261028.json'
+      - 'etf_single_rotation/research_receipts/ETF-DIV-004_drive_48of48_readback_20261028.json'
+      - 'etf_single_rotation/experiments/test_drive_readback_39599580852.py'
+      - '.github/workflows/etf-drive-readback-evidence-ci.yml'
+permissions:
+  contents: read
+concurrency:
+  group: etf-drive-readback-evidence-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  offline-evidence-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check evidence/receipt structure only (not Drive bytes)
+        run: python -m unittest discover -s etf_single_rotation/experiments -p 'test_drive_readback_39599580852.py' -v

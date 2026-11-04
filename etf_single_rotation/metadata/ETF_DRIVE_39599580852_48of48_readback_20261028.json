@@ -1,0 +1,175 @@
+{
+  "schema_version": "ETF_HISTORICAL_DRIVE_READBACK_EVIDENCE_V1",
+  "project": "ETF_SINGLE_ROTATION",
+  "task_id": "ETF-DIV-004",
+  "status": "REVIEW_REQUIRED",
+  "trading_status": "NOT_FOR_TRADING",
+  "observed_at_utc": "2026-10-27T16:02:10.470Z",
+  "historical_run_id": 39599580852,
+  "historical_job_id": 119220366735,
+  "historical_research_checkout_sha": "6b23db083817085d1ac88c82ade91befc2a23ae1",
+  "artifact_id": 12345747366,
+  "drive_folder_id": "18K9qbd2dj10fDmNR0PqJmuEmvEw_BWHD",
+  "historical_checkpoint_file_id": "1iWGwIB3UsUBFwzLsOF5m8HRFLnWF7DNr",
+  "historical_checkpoint_sha256": "b0aa99276620893756c7be77fa6353437be8495fc66c7a24ccc142f2a7a14304",
+  "method": "Downloaded actual original Drive file bytes into local runtime, computed hashlib.sha256 for each, compared with 12-hex SHA256 suffix in immutable archived filename; five additional exact full SHA256 matches to separately downloaded historical checkpoint.",
+  "previous_distinct_verified_from_comments": 29,
+  "previously_reported_distinct": 28,
+  "previous_count_correction": "A distinct walk_forward_portfolio_equity file was already downloaded and hashed in PR #92 comment 6433404889 (both duplicate Drive objects), but excluded from prior running total; 29 unique historical names were already checked, not 28.",
+  "previous_evidence_comment_ids": [
+    6430249389,
+    6433404889,
+    6435873053,
+    6436764764,
+    6437762247,
+    6438834832
+  ],
+  "new_distinct_verified": 19,
+  "verified_unique_archived_filenames_total": 48,
+  "expected_unique_archived_filenames": 48,
+  "drive_objects_with_run_id": 49,
+  "duplicate_name_objects": 1,
+  "remaining_unique_unverified": 0,
+  "new_byte_hash_mismatches": 0,
+  "new_files": [
+    {
+      "filename": "benchmark_self_financing_equity_39599580852_efdcda0_7c257577508e.csv",
+      "drive_file_id": "1VrSJuFxbnSlyw-FHSmYUuaMFXQiTCWQR",
+      "bytes": 263610,
+      "sha256": "7c257577508ebb00d03555a5ff929e18f71439b03ab0c804cb0c338785c749d0",
+      "comparison": "FULL_CHECKPOINT_SHA256"
+    },
+    {
+      "filename": "data_quality_39599580852_0fd7c6b_43b1ab4eaeef.csv",
+      "drive_file_id": "1NQfiOJxclAhxFGSSo-dc6mhw-QfbEykO",
+      "bytes": 908,
+      "sha256": "43b1ab4eaeef5f820beabc5fa625f59fa26a2aeccc966f95726a2fe9d0589138",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    },
+    {
+      "filename": "data_quality_gaps_39599580852_ee8375e_e80e38aa5a67.csv",
+      "drive_file_id": "1HUSCrVZmQqDB6OyztFprtH2HYxWIcefn",
+      "bytes": 855,
+      "sha256": "e80e38aa5a674ed4561e985d28eeeceea15b22b2191e0e65213767c4204b3f36",
+      "comparison": "FULL_CHECKPOINT_SHA256"
+    },
+    {
+      "filename": "equity_curve_39599580852_2ac5f5c_f2d39cf0b670.csv",
+      "drive_file_id": "1bG-A7Li2vXfTTdLQySQUGAHO-DskHXIJ",
+      "bytes": 230832,
+      "sha256": "f2d39cf0b67078d6dc63fc78077ab9c83562673f945678797cd41fb156df8140",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    },
+    {
+      "filename": "executable_walk_forward_ledger_39599580852_097ab7c_51359d749f9b.csv",
+      "drive_file_id": "1ZOs9Ggxg5ZkhB7neaK_wACv-LlJ0rKpf",
+      "bytes": 293760,
+      "sha256": "51359d749f9be0497ffd5dabd30970b1427371b047b1355c2d311edd86d53f58",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    },
+    {
+      "filename": "execution_accounting_implicit_turnover_39599580852_d0c76e2_22b0d0f0bc71.csv",
+      "drive_file_id": "11HovJuGcXgOJSXUqeoV73HdqdS5L3-jQ",
+      "bytes": 1944277,
+      "sha256": "22b0d0f0bc7175a862e73982bc1a1ea3598cbf713900d5e070683bacf6876a54",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    },
+    {
+      "filename": "self_financing_daily_ledger_39599580852_b1de3a3_3a06b1d20127.csv",
+      "drive_file_id": "18Nhye7mm0w331RauUfuwiM38bbZeDkbj",
+      "bytes": 5702507,
+      "sha256": "3a06b1d201273d2210c5661fcc40a3efe2f8ca702dd821dd1569495e8ac1da1e",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    },
+    {
+      "filename": "self_financing_equity_curves_39599580852_7f233b1_cd0b1723f0f2.csv",
+      "drive_file_id": "16LIxQHKo2WntzvsRTEICm2nA8VqEBptO",
+      "bytes": 1666174,
+      "sha256": "cd0b1723f0f29d15e5b0d44bb2f35045f028e135968d784a02b7c17ae5edac35",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    },
+    {
+      "filename": "self_financing_trades_39599580852_8307698_c1347540e0ae.csv",
+      "drive_file_id": "1nTjhQ4ZGrKnA3ER0m5EVe35wo-mxBvf2",
+      "bytes": 190039,
+      "sha256": "c1347540e0ae9694d091f37b52e03425c32c32ec895a53df36dd2528ab426dc5",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    },
+    {
+      "filename": "strategy_daily_weights_39599580852_903b445_688dbc5d47d8.csv",
+      "drive_file_id": "1IocZMaH4vbp9Iclm3aoSzEmDgo-Ah_Tn",
+      "bytes": 2392533,
+      "sha256": "688dbc5d47d85d2311747cf0ba9fa6f2167387f095e6632acae29bfee3e8284e",
+      "comparison": "FULL_CHECKPOINT_SHA256"
+    },
+    {
+      "filename": "strategy_equity_curves_39599580852_344d2e2_9c7adb41c1ab.csv",
+      "drive_file_id": "1wW7n87ngQxgtgOuT9usTRj2RlWF5F67c",
+      "bytes": 1665954,
+      "sha256": "9c7adb41c1ab4a2b644c327be3a1e66d9c49bd8234fdeed63cd0643200918aa7",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    },
+    {
+      "filename": "summary_39599580852_ac2993e_a492fb9e32cc.json",
+      "drive_file_id": "1dNcvdvud1MpUuqfRkBtjmZnWZDM-P6aS",
+      "bytes": 1157,
+      "sha256": "a492fb9e32cc951c42af0d396b3e4eec44e82309dd2c38e09b89b8b732f9a9af",
+      "comparison": "FULL_CHECKPOINT_SHA256"
+    },
+    {
+      "filename": "trade_calendar_39599580852_a3b5bfc_613e88a01ea4.csv",
+      "drive_file_id": "1Qu5UPccB-qOomvsFrPQ3yTaf9EwiA6fx",
+      "bytes": 100297,
+      "sha256": "613e88a01ea4690d0aa8b4b27058a1d8a498bd3509ecef53987240071daaeb19",
+      "comparison": "FULL_CHECKPOINT_SHA256"
+    },
+    {
+      "filename": "trades_39599580852_a37cd3e_e12bcbab55b3.csv",
+      "drive_file_id": "1wMwRs2j-dp-LLb1wwEy4sT7V0UN6ze9K",
+      "bytes": 4234,
+      "sha256": "e12bcbab55b324e8a8f5d0be54790016bed0feeb91204e47c3d73fe80e7fe801",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    },
+    {
+      "filename": "walk_forward_folds_39599580852_02c8a07_f1acc83f082b.csv",
+      "drive_file_id": "1ZaxQYg5qh6MQexJwBxeCnVhXLBLwSQJ8",
+      "bytes": 565,
+      "sha256": "f1acc83f082ba1e41fcb210c7cb7d7bd68acc78d31aa276131ecca2cd7c96753",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    },
+    {
+      "filename": "walk_forward_oos_comparison_39599580852_e4ee8df_f2a623a0e4b7.csv",
+      "drive_file_id": "1wzzIga9jP94s8zo0d6bMrWT-qJrtuA7t",
+      "bytes": 5916,
+      "sha256": "f2a623a0e4b79d6d1121d52ee5c19c3310788fef19ca72ba5f658e0e7fee2b2e",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    },
+    {
+      "filename": "walk_forward_portfolio_equity_39599580852_79d6939_492c0bece9d8.csv",
+      "drive_file_id": "1grC9sdCdtB1wUtIKroGs6XYsmgf-aEtT",
+      "bytes": 138977,
+      "sha256": "492c0bece9d8e0d606c8a1718b386da3cda11c404f40e80b27b74e262bb8d54c",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    },
+    {
+      "filename": "walk_forward_summary_39599580852_9a948fa_02eea15103dd.json",
+      "drive_file_id": "1cTgardEPcvxqkWz2RWq3T6HCzboC_oTm",
+      "bytes": 2059,
+      "sha256": "02eea15103dd388bdf018059f319eda2b896b39720db630353b3cda265db7165",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    },
+    {
+      "filename": "walk_forward_training_scores_39599580852_70128ac_f6e2e75a73d4.csv",
+      "drive_file_id": "1gQ268kStsNr-ZRcu3z_K3wJtV2Eq_K47",
+      "bytes": 2361,
+      "sha256": "f6e2e75a73d46a9a3ec0c87075e5d1db0306c5bf3f252da9d60f40cc6185218c",
+      "comparison": "ARCHIVED_FILENAME_SHA256_PREFIX_12"
+    }
+  ],
+  "scope_limits": [
+    "Only stored-file byte integrity; filename 12-hex prefix is not a full independently archived 64-hex reference for all files",
+    "Does not verify original issuer dividends, economic total return, fund_adj, brokerage cash settlement, future paper account or trading",
+    "Historical checkpoint was a mid-upload snapshot, not an active job",
+    "This is a review evidence note, not DIV-004 VERIFIED_DONE or trading approval"
+  ]
+}
