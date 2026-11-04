@@ -1,12 +1,6 @@
 name: BTC OKX official 400-level L2 ONE-day bounded archive pilot
 
 on:
-  push:
-    branches: [feature/okx-official-l2-catalog-20261020]
-    paths:
-      - '.github/workflows/btc-okx-official-l2-pilot.yml'
-      - 'btc-quant/data/okx_official_l2_download.py'
-      - 'btc-quant/tests/test_okx_official_l2_download.py'
   workflow_dispatch:
 
 permissions:
@@ -18,6 +12,7 @@ concurrency:
 
 jobs:
   archive-one-day:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:

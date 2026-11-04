@@ -2,7 +2,7 @@ name: BTC OKX official historical L2 metadata probe (read only)
 
 on:
   push:
-    branches: [main, feature/okx-official-l2-catalog-20261020]
+    branches: [main]
     paths:
       - '.github/workflows/btc-okx-official-catalog.yml'
       - 'btc-quant/data/okx_official_catalog.py'
@@ -18,6 +18,7 @@ concurrency:
 
 jobs:
   probe:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
