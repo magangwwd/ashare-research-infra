@@ -26,7 +26,12 @@ FOLDER = "application/vnd.google-apps.folder"
 
 
 class PublishError(Exception):
-    """Predefined safe errors; never expose HTTP bodies or credential exceptions."""
+    """Safe errors with structured HTTP status; never expose response bodies or tokens."""
+
+    def __init__(self, message, *, status_code=None, operation=None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.operation = operation
 
 
 def digest(path: Path) -> tuple[int, str]:
@@ -79,7 +84,7 @@ class Drive:
             retryable = response is None or response.status_code in (429, 500, 502, 503, 504)
             if method not in ("GET", "PUT", "PATCH") or not retryable or attempt == 2:
                 status = response.status_code if response is not None else "network"
-                raise PublishError(f"Drive request failed ({status}); operation={safe_request_operation(method, url, kwargs)}; inspect the current pointer before retrying.") from None
+                raise PublishError(f"Drive request failed ({status}); operation={safe_request_operation(method, url, kwargs)}; inspect the current pointer before retrying.", status_code=status, operation=safe_request_operation(method, url, kwargs)) from None
             time.sleep(2 ** attempt)
         raise PublishError("Drive request failed.")
 
@@ -123,8 +128,45 @@ class Drive:
         return existing[0]["id"] if existing else self.create_folder(parent, name)
 
     def upload(self, parent, name, path):
-        size, _ = digest(path)
-        file_id = self.new_id()
+        """Retry an expired resumable session once, without trusting an unknown commit.
+
+        A 410 on a PUT may mean that the upload session is gone, not that a
+        file was committed. Reconcile the preallocated file ID first. Only a
+        confirmed 404 permits a new ID/session. All files are still verified
+        by publish() before any production pointer changes.
+        """
+        size, sha = digest(path)
+        mime = ("application/json" if path.suffix == ".json" else
+                "text/markdown" if path.suffix == ".md" else "application/octet-stream")
+        for attempt in range(2):
+            if digest(path) != (size, sha):
+                raise PublishError("Local file changed during upload retry; production pointer unchanged.")
+            file_id = self.new_id()
+            try:
+                return self._upload_once(parent, name, path, file_id, size)
+            except PublishError as error:
+                if error.status_code != 410 or error.operation != "resumable_upload":
+                    raise
+                response = self.request(
+                    "GET", f"{API}/{file_id}", expected=(200, 404),
+                    params={"fields": "id,name,mimeType,size,parents,trashed",
+                            "supportsAllDrives": "true"})
+                if response.status_code == 200:
+                    info = response.json()
+                    if (info.get("id") == file_id and info.get("name") == name
+                            and info.get("mimeType") == mime
+                            and not info.get("trashed")
+                            and parent in info.get("parents", [])
+                            and int(info.get("size", -1)) == size
+                            and self.remote_digest(file_id) == (size, sha)):
+                        return file_id
+                    raise PublishError("Expired upload session left an unverified file; production pointer unchanged.") from None
+                if attempt:
+                    raise PublishError("Resumable session expired twice; production pointer unchanged.") from None
+                print("WARNING expired resumable upload session; retrying staged file with a fresh ID")
+        raise PublishError("Upload session retry exhausted; production pointer unchanged.")
+
+    def _upload_once(self, parent, name, path, file_id, size):
         mime = "application/json" if path.suffix == ".json" else "text/markdown" if path.suffix == ".md" else "application/octet-stream"
         response = self.request("POST", UPLOAD, expected=(200,),
                                 params={"uploadType": "resumable", "supportsAllDrives": "true"},
