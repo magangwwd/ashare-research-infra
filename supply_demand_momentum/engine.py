@@ -223,9 +223,9 @@ def step(state, day, bars, signals, cfg):
     known={s['event_id'] for s in state['events']}
     new=[s for s in signals if s['event_id'] not in known]
     state['events'].extend(new)
-    state['pending']=new
+    state['pending']=[s for s in new if s.get('action_status','PENDING')=='PENDING']
     for s in new:
-        alerts.append(dict(kind='BUY_WATCH',code=s['code'],event_id=s['event_id'],date=day,
+        alerts.append(dict(kind='BUY_WATCH' if s.get('action_status','PENDING')=='PENDING' else 'EXPIRED_SIGNAL',code=s['code'],event_id=s['event_id'],date=day,
                            entry_limit=s['entry_limit'],stop=s['stop'],target=s['target'],score=s['score'],
                            reason='NEXT_SESSION_CONDITIONAL_PAPER_SIGNAL',mode=cfg['mode']))
     for p in state['positions']:

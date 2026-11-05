@@ -8,7 +8,9 @@ import pandas as pd
 
 from supply_demand_momentum.engine import initial_state,step,fee,zones,signal_for_stock
 from supply_demand_momentum.data import track_events
-from supply_demand_momentum.run import canonical
+from supply_demand_momentum.run import canonical,annotate_signals
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 CFG=json.loads((Path(__file__).parents[1]/'config.json').read_text())
 
@@ -119,6 +121,18 @@ class PaperTests(unittest.TestCase):
         r=track_events([e],df,cal,'2026-11-03')[0]
         self.assertAlmostEqual(r['1_session']['return_pct'],10.)
         self.assertEqual(r['3_session']['status'],'NOT_MATURED')
+
+    def test_late_run_never_backfills_opening_order(self):
+        cal=pd.Series(pd.bdate_range('2026-11-02',periods=5))
+        signals=annotate_signals([signal()],cal,'2026-11-02',datetime(2026,11,3,10,0,tzinfo=ZoneInfo('Asia/Shanghai')))
+        s,a=step(initial_state(CFG),'2026-11-02',{},signals,CFG)
+        self.assertEqual(s['pending'],[])
+        self.assertEqual(a[0]['kind'],'EXPIRED_SIGNAL')
+
+    def test_preopen_run_can_schedule_next_session(self):
+        cal=pd.Series(pd.bdate_range('2026-11-02',periods=5))
+        signals=annotate_signals([signal()],cal,'2026-11-02',datetime(2026,11,3,8,0,tzinfo=ZoneInfo('Asia/Shanghai')))
+        self.assertEqual(signals[0]['action_status'],'PENDING')
 
 
 class SignalTests(unittest.TestCase):

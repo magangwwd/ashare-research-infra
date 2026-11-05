@@ -24,7 +24,8 @@ def partition(root, name, start):
     if not paths:
         raise ValueError('missing_partition_'+name)
     df=pd.concat([pd.read_parquet(p) for p in paths],ignore_index=True)
-    df['trade_date']=pd.to_datetime(df['trade_date'])
+    df['trade_date']=pd.to_datetime(df['trade_date']).astype('datetime64[ns]')
+    df['instrument_id']=df['instrument_id'].astype(str)
     if df.duplicated(['instrument_id','trade_date']).any():
         raise ValueError('duplicate_keys_'+name)
     return df
@@ -41,7 +42,7 @@ def load_gold(root, cfg, now=None):
         if meta.get('sha256') and sha(root/name)!=meta['sha256']:
             raise ValueError('gold_manifest_hash_mismatch')
     calendar=pd.read_parquet(root/'trading_calendar.parquet')
-    calendar['calendar_date']=pd.to_datetime(calendar['calendar_date'])
+    calendar['calendar_date']=pd.to_datetime(calendar['calendar_date']).astype('datetime64[ns]')
     calendar=calendar[calendar['exchange']=='SSE'].sort_values('calendar_date')
     now=now or datetime.now(ZoneInfo('Asia/Shanghai'))
     cutoff=pd.Timestamp(now.date() if now.hour>=17 else now.date()-timedelta(days=1))
@@ -56,7 +57,9 @@ def load_gold(root, cfg, now=None):
     names=pd.read_parquet(root/'name_history.parquet')
     if instruments['instrument_id'].duplicated().any():
         raise ValueError('duplicate_instruments')
-    names['effective_date']=pd.to_datetime(names['effective_date'])
+    names['effective_date']=pd.to_datetime(names['effective_date']).astype('datetime64[ns]')
+    names['instrument_id']=names['instrument_id'].astype(str)
+    instruments['instrument_id']=instruments['instrument_id'].astype(str)
     if names['effective_date'].isna().any() or names.duplicated(['instrument_id','effective_date']).any():
         raise ValueError('invalid_name_history')
     prices=partition(root,'daily_prices',cfg['history_start'])

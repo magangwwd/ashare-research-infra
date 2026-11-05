@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 import subprocess
 import tempfile
+from zoneinfo import ZoneInfo
 
 from .data import load_gold, scan, day_bars, track_events, sha
 from .engine import initial_state, step, digest
@@ -81,7 +82,7 @@ def render_report(bundle):
     if not bundle['signals']:
         lines.append('无合适新候选，继续持有现金或跟踪已有模拟持仓。')
     for s in bundle['signals']:
-        lines.append(f"- {s['code']} {s['name']}：{s['score']}分；下一交易日开盘条件限价≤{s['entry_limit']:.2f}，止损参考{s['stop']:.2f}，止盈参考{s['target']:.2f}；每仓费用合计≤30000元，满3仓跳过。")
+        lines.append(f"- {s['code']} {s['name']}：{s['score']}分；适用日{s['execution_date']}；状态{s['action_status']}；开盘条件限价≤{s['entry_limit']:.2f}，止损参考{s['stop']:.2f}，止盈参考{s['target']:.2f}；每仓费用合计≤30000元，满3仓跳过。")
     lines+=['','买入提醒仅在新信号出现时发送；卖出提醒依据模拟持仓。真实买入后需另行提供实际成交，系统不会把提醒当成交。',
             '采用日线收盘后跟踪，盘中触价不会即时推送；无法成交则保留风险，绝不假称第5日强制成交。',
             '',f"代码：{bundle['github_sha']}；运行：{bundle['run_id']}；规则：{bundle['config_sha256']}。"]
@@ -122,6 +123,22 @@ def publish(bundle,previous_pointer,work,cfg):
     return pointer
 
 
+def annotate_signals(signals,opens,asof,now=None):
+    import pandas as pd
+    now=now or datetime.now(ZoneInfo('Asia/Shanghai'))
+    future=opens[opens>pd.Timestamp(asof)]
+    if len(future)==0:
+        raise ValueError('next_session_calendar_missing')
+    next_day=future.iloc[0].date()
+    for s in signals:
+        s['execution_date']=str(next_day)
+        s['generated_at']=now.isoformat()
+        # Open-auction checks must be ready BEFORE 09:25 on that session.
+        expired=next_day<now.date() or (next_day==now.date() and (now.hour,now.minute)>=(9,25))
+        s['action_status']='EXPIRED_BEFORE_GENERATION' if expired else 'PENDING'
+    return signals
+
+
 def execute(work,cfg,previous=None,gold=None):
     import pandas as pd
     root=Path(gold) if gold else work/'gold'
@@ -137,7 +154,7 @@ def execute(work,cfg,previous=None,gold=None):
     # No fabricated history: first activation starts at the current close.
     days=opens[(opens>pd.Timestamp(state['last_date'])) & (opens<=pd.Timestamp(asof))] if state['last_date'] else [pd.Timestamp(asof)]
     alerts=[]
-    signals=scan(prices,asof,cfg)
+    signals=annotate_signals(scan(prices,asof,cfg),opens,asof)
     for d in days:
         day=str(d.date())
         bars=day_bars(prices,day,[p['code'] for p in state['positions']])
