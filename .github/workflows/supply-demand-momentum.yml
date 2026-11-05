@@ -1,19 +1,8 @@
 name: Supply demand momentum - Drive paper tracking
 
 on:
+  # Paused by user on 2026-11-05. No scheduled or push runs.
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'supply_demand_momentum/**'
-      - '.github/workflows/supply-demand-momentum.yml'
-  pull_request:
-    paths:
-      - 'supply_demand_momentum/**'
-      - '.github/workflows/supply-demand-momentum.yml'
-  schedule:
-    # Beijing 06:47; existing Gold updater starts at 23:50.
-    - cron: '47 22 * * *'
 
 permissions:
   contents: read
@@ -33,7 +22,7 @@ jobs:
       - run: python -m unittest discover -s supply_demand_momentum/tests -v
   daily:
     needs: tests
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    if: ${{ false }} # User paused production execution
     runs-on: ubuntu-latest
     timeout-minutes: 90
     # Same group as Gold writer: never copy while that writer is active.
