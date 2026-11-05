@@ -1,7 +1,0 @@
-__pycache__/
-*.pyc
-*.pkl
-*.parquet
-*.csv
-current_actions.json
-actions_snapshot_*.json
