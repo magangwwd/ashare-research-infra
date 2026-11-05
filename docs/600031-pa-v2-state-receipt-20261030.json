@@ -1,0 +1,63 @@
+{
+  "schema_version": "600031-pa-v2-receipt/1.0",
+  "stage": "C_state_machine_implementation",
+  "status": "tests_passed_only",
+  "evidence_stage": "E0",
+  "implementation_commit_sha": "59b76a31337896b11d512e3429cc67fe846af2ee",
+  "code_blob_sha1": "8d4572b062d2207a45206f49a5e83682026916de",
+  "test_blob_sha1": "ff5f3b899c25868a459c445db0ff0a65c358c6d1",
+  "rule_hash_git_blob_sha1": "9f4dba53d97000c23691ec014230c5a2dce47456",
+  "snapshot_id": "2026-10-24T211915.119571_0000-7c30e07d",
+  "snapshot_validated": true,
+  "critical_history_complete": false,
+  "current_json_sha256": "5d712e4c30c5ccc9c70ebd6672ebc401df97ba14f5d46d07e877baf915482926",
+  "manifest_sha256": "118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8",
+  "software_tests": {
+    "run_id": 40908344282,
+    "job_id": 123569160331,
+    "conclusion": "success",
+    "passed": 248,
+    "skipped": 2,
+    "new_synthetic_tests": 15,
+    "scope": "offline software tests only",
+    "first_failed_run_id": 40908012312,
+    "first_failure": "test assertion excluded_cooldown 6 instead of actual 7; corrected and reran"
+  },
+  "real_data_run_verified": false,
+  "runner_deployed": false,
+  "new_pa_v2_historical_candidates": null,
+  "new_pa_v2_forward_candidates": null,
+  "coverage": {
+    "daily_historical": "prior E1 five stocks 755 days each; not recomputed this run",
+    "adj_factor_full_history": false,
+    "stk_limit_full_history": false,
+    "suspend_d_full_history": false,
+    "corporate_actions_full_history": false,
+    "minute_coverage": "prior 9 days / 153 bars; not expanded"
+  },
+  "artifacts": [
+    {
+      "path": "research/price_action_v2_state.py",
+      "git_blob_sha1": "8d4572b062d2207a45206f49a5e83682026916de",
+      "drive_archived": false
+    },
+    {
+      "path": "tests/test_price_action_v2_state.py",
+      "git_blob_sha1": "ff5f3b899c25868a459c445db0ff0a65c358c6d1",
+      "drive_archived": false
+    }
+  ],
+  "limitations": [
+    "input features must be independently verified as-of and converted to candidate-date scale",
+    "full exchange-calendar session completeness not internally checked",
+    "software tests do not validate real events, returns, fillability or future edge",
+    "no separate real-data GitHub runner or CI artifacts"
+  ],
+  "pending_archive": {
+    "v15_zip": "600031_股票性格研究_v1.5_日线除息核验复算包.zip",
+    "local_sha256": "2e3fa3e257fae154a9ccd5f147fbbeffdc8c5092111e2008a2b407597d3da72c",
+    "zip_integrity": "local_unzip_test_passed",
+    "drive_verified": false
+  },
+  "next_action": "Build and test causal as-of daily feature preparation with explicit official calendar, adjustment-factor and audit flags; do not run PA-v2 real history until full data provenance/coverage and immutable run receipt are established. Preserve all old four patterns/60 trades, draft PR #118, read-only production."
+}

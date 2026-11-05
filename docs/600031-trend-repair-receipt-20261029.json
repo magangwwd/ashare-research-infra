@@ -1,0 +1,73 @@
+{
+  "schema": "personality-batch-receipt-1",
+  "batch": "600031-trend-chop-drawdown-repair-20261029",
+  "stage": "E1_descriptive_trend_repair",
+  "status": "local_real_data_run_verified_and_software_tests_passed; NOT_E2_or_E3",
+  "snapshot_id": "2026-10-24T211915.119571_0000-7c30e07d",
+  "snapshot_validated": true,
+  "critical_history_complete": false,
+  "production_manifest_sha256": "118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8",
+  "input_archive_v14_sha256": "595a8bfe08a52f02684fa95cb6d47193e6113c3f37c7af4ad8f24226a4cb8780",
+  "rule_hash": "9a2275f04e7b8296ca20bc85b8b3174f68db8e1cf1a0f8db59a2adb22576e9de",
+  "rule_text": "nonzero adjacent daily sign persistence; rolling 5/20 reference log-return directional efficiency; reference-linked peak-to-recovery episodes; missing reference breaks and right-censors",
+  "local_runner_sha256": "692ad78408afdb52c64396b000e6c29deb22541ebe2bce94c79645cb64dbf3b7",
+  "github_code_blob_sha": "b273aa2da7001effff04714dcc20748bbb4de73a",
+  "github_tests_blob_sha": "97c348d1f476acab3d2841f3b848b1777f843780",
+  "software_ci": {
+    "commit_sha": "a6d599d05641f25cd285ebc7b077066808fa8869",
+    "run_id": 40815071327,
+    "job_id": 123254109678,
+    "status": "success",
+    "passed": 209,
+    "skipped": 2,
+    "warnings": 134,
+    "meaning": "software tests only; no real data run on GitHub"
+  },
+  "local_synthetic_tests": {
+    "passed": 7,
+    "status": "success"
+  },
+  "real_data_run": {
+    "environment": "local container",
+    "run_id": null,
+    "status": "success",
+    "rows": 3775,
+    "sessions_per_stock": 755,
+    "stocks": 5,
+    "reference_missing_date": "2026-09-30",
+    "trend_sign_pairs": 732,
+    "trend_20d_windows": 723,
+    "drawdown_episodes": 17,
+    "recovered": 16,
+    "censored": 1
+  },
+  "artifacts": [
+    {
+      "name": "trend_repair_results.json",
+      "sha256": "f6784ba23d6d77ad27ea92705c98c9200c193f420a09e6a71040534ff46a1c62",
+      "storage": "local_archive_zip"
+    },
+    {
+      "name": "drawdown_episodes.csv",
+      "sha256": "fc84a85af97e2dafc9899a988ff581cb99aac53d7aa83f8fdedead06b7519a4c",
+      "storage": "local_archive_zip"
+    },
+    {
+      "name": "600031_趋势震荡回调修复_20261029_E1_复算包.zip",
+      "sha256": "d4cf09cc1bff971abb328869743cae9e189338ac4ed90ae754354da38f0dec4e",
+      "bytes": 13893,
+      "storage": "local_only_cloud_pending"
+    },
+    {
+      "name": "Google_Drive_report",
+      "url": "https://docs.google.com/document/d/1De_WYCgW3guUUUWfyVR6t31hPIYy549MIpRhLKVGgzA/edit",
+      "storage": "verified_in_target_folder"
+    }
+  ],
+  "errors": [
+    "Generated ZIP not uploaded to Drive: available Drive upload action requires a connector file_uri, not a container path; do not claim cloud archival of ZIP.",
+    "Full corporate-action, limits, suspension and fill audits remain incomplete."
+  ],
+  "next_action": "Pre-register exactly three PA-v2 event definitions (breakout-retest, rising-structure-pullback, breakdown-reclaim) with causal candidate/confirmation/failure/timeout/dedup/time windows and future E2/E3 boundaries before historical event runs.",
+  "do_not_repeat": "Do not rerun same input manifest+rule+code+stage+params if already succeeded; retain four frozen legacy patterns and 60 trades unchanged."
+}
