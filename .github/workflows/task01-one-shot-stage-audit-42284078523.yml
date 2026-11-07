@@ -1,11 +1,7 @@
 name: One-shot Task01 read-only stage audit for source 42284078523
 
 on:
-  push:
-    branches:
-      - ops/one-shot-task01-stage-audit-42284078523
-    paths:
-      - '.github/workflows/task01-one-shot-stage-audit-42284078523.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
