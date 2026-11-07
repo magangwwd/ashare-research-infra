@@ -15,6 +15,8 @@ for f in weekly_panel.parquet daily_sim.parquet; do
  rclone --config "$cfg" copyto "${proj}cache/$f" "$base/live/cache/$f" --retries 3
 done
 rclone --config "$cfg" copyto "${proj}cache/predictions.parquet" "$base/cache/predictions.parquet" --retries 3
+# core.calibration() reads project-root cache, while the forward script reads LIVE/cache.
+ln -s "$base/live/cache/weekly_panel.parquet" "$base/cache/weekly_panel.parquet"
 export PROB_GOLD_ROOT="$base/gold"
 export V7_LIVE_DIR="$base/live"
 export PROB_REQUIRE_OFFICIAL_CALENDAR="0"
