@@ -1,5 +1,8 @@
 name: Mainboard V7 migration checks (read-only)
 on:
+  push:
+    branches:
+      - chatgpt/mainboard-prob-migration-20261107
   pull_request:
     paths:
       - 'astock-quant/mainboard_prob_selection/**'
@@ -35,7 +38,7 @@ jobs:
           python -m pip install pytest
           python -m pytest -q astock-quant/mainboard_prob_selection/tests
   drive-read:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     needs: static
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -59,7 +62,7 @@ jobs:
       - name: Verify authenticated source and optionally replay
         working-directory: astock-quant/mainboard_prob_selection
         env:
-          MODE: ${{ inputs.mode }}
+          MODE: ${{ github.event_name == 'push' && 'preflight' || inputs.mode }}
         run: bash scripts/drive_readonly.sh "$MODE"
       - name: Publish safe gate evidence
         if: always()
