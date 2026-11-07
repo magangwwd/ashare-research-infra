@@ -38,7 +38,7 @@ jobs:
           python -m pip install pytest
           python -m pytest -q astock-quant/mainboard_prob_selection/tests
   drive-read:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chatgpt/mainboard-prob-migration-20261107')
     needs: static
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -62,7 +62,7 @@ jobs:
       - name: Verify authenticated source and optionally replay
         working-directory: astock-quant/mainboard_prob_selection
         env:
-          MODE: ${{ github.event_name == 'push' && 'preflight' || inputs.mode }}
+          MODE: ${{ github.event_name != 'workflow_dispatch' && 'preflight' || inputs.mode }}
         run: bash scripts/drive_readonly.sh "$MODE"
       - name: Publish safe gate evidence
         if: always()
