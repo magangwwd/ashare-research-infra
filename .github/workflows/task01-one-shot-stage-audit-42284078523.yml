@@ -1,0 +1,56 @@
+name: One-shot Task01 read-only stage audit for source 42284078523
+
+on:
+  push:
+    branches:
+      - ops/one-shot-task01-stage-audit-42284078523
+    paths:
+      - '.github/workflows/task01-one-shot-stage-audit-42284078523.yml'
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: one-shot-stage-audit-42284078523
+  cancel-in-progress: false
+
+jobs:
+  dispatch_readonly_audit:
+    if: >-
+      github.repository == 'magangwwd/ashare-research-infra' &&
+      github.ref == 'refs/heads/ops/one-shot-task01-stage-audit-42284078523' &&
+      github.event.head_commit.message == 'ops(task01): one-shot stage audit source 42284078523'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail-closed source and concurrency checks
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repository="$GITHUB_REPOSITORY"
+          source_run="42284078523"
+          stage_id="1haAUxkoov2NdXrwx7H5FMeaQtpSJredb"
+          [[ "$repository" == "magangwwd/ashare-research-infra" ]] || exit 1
+          [[ "$(gh api "repos/$repository/actions/runs/$source_run" --jq '.conclusion')" == "cancelled" ]] || { echo 'BLOCKED: source must be cancelled'; exit 1; }
+          [[ "$(gh api "repos/$repository/actions/runs/$source_run" --jq '.path')" == ".github/workflows/task01.yml" ]] || { echo 'BLOCKED: source path mismatch'; exit 1; }
+          [[ "$(gh api "repos/$repository/actions/runs/$source_run" --jq '.head_branch')" == "main" ]] || { echo 'BLOCKED: source not main'; exit 1; }
+          artifact_count="$(gh api "repos/$repository/actions/runs/$source_run/artifacts?per_page=100" --jq '[.artifacts[] | select(.expired == false and (.name == "task01-checkpoint" or .name == "task01-validation-report"))] | length')"
+          [[ "$artifact_count" == "2" ]] || { echo 'BLOCKED: source artifacts unavailable or ambiguous'; exit 1; }
+          active_audits="$(gh api "repos/$repository/actions/workflows/task01-stage-audit.yml/runs?per_page=100" --jq '[.workflow_runs[] | select(.status != "completed")] | length')"
+          [[ "$active_audits" == "0" ]] || { echo 'BLOCKED: a stage audit is already active'; exit 1; }
+          active_producers="$(gh api "repos/$repository/actions/runs?status=in_progress&per_page=100" --jq '[.workflow_runs[] | select(.path == ".github/workflows/task01.yml" or .path == ".github/workflows/task01-verified-stage-resume.yml")] | length')"
+          queued_producers="$(gh api "repos/$repository/actions/runs?status=queued&per_page=100" --jq '[.workflow_runs[] | select(.path == ".github/workflows/task01.yml" or .path == ".github/workflows/task01-verified-stage-resume.yml")] | length')"
+          [[ "$active_producers" == "0" && "$queued_producers" == "0" ]] || { echo 'BLOCKED: a producer is running or queued'; exit 1; }
+          echo 'PASS: exact cancelled main source and both unexpired artifacts; no producer or audit concurrency'
+      - name: Dispatch single read-only audit on main (never publish)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' '{"ref":"main","inputs":{"source_run_id":"42284078523","stage_id":"1haAUxkoov2NdXrwx7H5FMeaQtpSJredb"}}' > "$RUNNER_TEMP/task01-readonly-audit-dispatch.json"
+          gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/task01-stage-audit.yml/dispatches" --input "$RUNNER_TEMP/task01-readonly-audit-dispatch.json"
+          echo 'SUCCESS: exactly one read-only stage audit requested; no publication or pointer write'
