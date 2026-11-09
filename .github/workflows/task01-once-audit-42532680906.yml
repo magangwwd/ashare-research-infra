@@ -26,7 +26,7 @@ jobs:
           gh api "repos/$repo/actions/runs/42532680906" > "$RUNNER_TEMP/source.json"
           gh api "repos/$repo/actions/runs/42532680906/jobs?per_page=100" > "$RUNNER_TEMP/jobs.json"
           gh api "repos/$repo/actions/runs/42532680906/artifacts?per_page=100" > "$RUNNER_TEMP/artifacts.json"
-          gh api "repos/$repo/actions/jobs/128904458589/logs" > "$RUNNER_TEMP/source.log"
+          gh api --allow-escape-sequences "repos/$repo/actions/jobs/128904458589/logs" > "$RUNNER_TEMP/source.log"
           gh api "repos/$repo/actions/workflows/task01-stage-audit.yml/runs?per_page=100" > "$RUNNER_TEMP/audits.json"
           for status in queued in_progress waiting requested pending; do
             gh api "repos/$repo/actions/workflows/task01.yml/runs?status=$status&per_page=10" > "$RUNNER_TEMP/task01-$status.json"
