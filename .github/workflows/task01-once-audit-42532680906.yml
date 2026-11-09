@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Fail-closed source, stage, artifact, duplicate and concurrency gates
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
@@ -74,7 +74,7 @@ jobs:
           PY
       - name: Dispatch exactly one existing main read-only audit
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
