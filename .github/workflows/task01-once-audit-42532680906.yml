@@ -1,0 +1,85 @@
+name: One-shot Task01 42532680906 read-only audit dispatcher
+on:
+  push:
+    branches:
+      - ops/one-shot-task01-stage-audit-42532680906
+    paths:
+      - .github/workflows/task01-once-audit-42532680906.yml
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch-once:
+    if: github.repository == 'magangwwd/ashare-research-infra' && github.ref == 'refs/heads/ops/one-shot-task01-stage-audit-42532680906' && github.event.head_commit.message == 'ops: dispatch Task01 source 42532680906 read-only audit once'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Fail-closed source, stage, artifact, duplicate and concurrency gates
+        env:
+          GH_TOKEN: \${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          gh api "repos/$repo/actions/runs/42532680906" > "$RUNNER_TEMP/source.json"
+          gh api "repos/$repo/actions/runs/42532680906/jobs?per_page=100" > "$RUNNER_TEMP/jobs.json"
+          gh api "repos/$repo/actions/runs/42532680906/artifacts?per_page=100" > "$RUNNER_TEMP/artifacts.json"
+          gh api "repos/$repo/actions/jobs/128904458589/logs" > "$RUNNER_TEMP/source.log"
+          gh api "repos/$repo/actions/workflows/task01-stage-audit.yml/runs?per_page=100" > "$RUNNER_TEMP/audits.json"
+          for status in queued in_progress waiting requested pending; do
+            gh api "repos/$repo/actions/workflows/task01.yml/runs?status=$status&per_page=10" > "$RUNNER_TEMP/task01-$status.json"
+          done
+          python - <<'PY'
+          import json, os, pathlib, re
+          p = pathlib.Path(os.environ["RUNNER_TEMP"])
+          read = lambda name: json.loads((p / name).read_text())
+          src, jobs, arts, audits = (read(n) for n in
+              ("source.json", "jobs.json", "artifacts.json", "audits.json"))
+          if not (src.get("status") == "completed" and src.get("conclusion") == "cancelled"
+                  and src.get("head_branch") == "main"
+                  and src.get("path") == ".github/workflows/task01.yml"):
+              raise SystemExit("BLOCKED: source run not a completed cancelled Task01 main run")
+          job = [j for j in jobs.get("jobs", []) if j.get("name") == "task01"]
+          if len(job) != 1 or job[0].get("id") != 128904458589:
+              raise SystemExit("BLOCKED: source task01 job mismatch")
+          step = {s["name"]: s.get("conclusion") for s in job[0].get("steps", [])}
+          for n, v in (
+              ("Daily update or maintenance", "success"),
+              ("Production acceptance", "success"),
+              ("Publish accepted snapshot to Drive", "cancelled")):
+              if step.get(n) != v:
+                  raise SystemExit("BLOCKED: source acceptance/publish step mismatch")
+          a = arts.get("artifacts", [])
+          check = [v for v in a if v.get("name") == "task01-checkpoint" and not v.get("expired")]
+          valid = [v for v in a if v.get("name") == "task01-validation-report" and not v.get("expired")]
+          if (len(check) != 1 or len(valid) != 1
+                  or check[0].get("id") != 13651587587
+                  or check[0].get("size_in_bytes") != 4320422958
+                  or check[0].get("digest") != "sha256:60b032f15704ec2a7ade4305449543160782978475df3df35ec321042d32111a"):
+              raise SystemExit("BLOCKED: source artifact identity/digest mismatch")
+          log = (p / "source.log").read_text(errors="replace")
+          stage = re.findall(r"SUCCESS staging created folder_id=([A-Za-z0-9_-]{10,100}) files=\d+ bytes=\d+", log)
+          if stage != ["1KjU-SAKJda-1c3VKZJUlfSftjve5kuoP"]:
+              raise SystemExit("BLOCKED: source job stage ID is not unique and exact")
+          for status in ("queued", "in_progress", "waiting", "requested", "pending"):
+              if read(f"task01-{status}.json").get("total_count", 0):
+                  raise SystemExit("BLOCKED: active Task01 producer; no read-only dispatch")
+          if any(a.get("status") != "completed" or
+                 a.get("created_at", "") >= src.get("created_at", "")
+                 for a in audits.get("workflow_runs", [])):
+              raise SystemExit("BLOCKED: another ongoing/newer stage audit may already exist")
+          print("PASS: same-run SHA-backed checkpoint, exact stage, no active producer, no duplicate audit")
+          PY
+      - name: Dispatch exactly one existing main read-only audit
+        env:
+          GH_TOKEN: \${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/task01-stage-audit.yml/dispatches" \
+            -f ref=main \
+            -f 'inputs[source_run_id]=42532680906' \
+            -f 'inputs[stage_id]=1KjU-SAKJda-1c3VKZJUlfSftjve5kuoP'
+          echo 'SUCCESS: posted one main read-only audit dispatch; production pointer untouched'
