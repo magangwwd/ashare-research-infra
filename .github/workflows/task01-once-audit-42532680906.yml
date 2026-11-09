@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   dispatch-once:
-    if: github.repository == 'magangwwd/ashare-research-infra' && github.ref == 'refs/heads/ops/one-shot-task01-stage-audit-42532680906' && github.event.head_commit.message == 'ops: dispatch Task01 source 42532680906 read-only audit once'
+    if: "github.repository == 'magangwwd/ashare-research-infra' && github.ref == 'refs/heads/ops/one-shot-task01-stage-audit-42532680906' && github.event.head_commit.message == 'ops: dispatch Task01 source 42532680906 read-only audit once'"
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
