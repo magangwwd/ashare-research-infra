@@ -792,3 +792,17 @@ def test_parallel_worker_configuration_fails_before_remote_mutation(tmp_path):
                    {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path,
                    parallel_workers=5, worker_factory=lambda: drive)
     assert drive.files == existing
+
+
+def test_parallel_publish_root_level_file_uses_stage_folder(tmp_path):
+    """Root-level accepted files must resolve to the staging folder, not '.'."""
+    drive = MemoryDrive()
+    source = tmp_path / "root-level.parquet"
+    source.write_bytes(b"root level verified content")
+    items = [{"path": "root-level.parquet", "local_path": str(source),
+              "bytes": dp.digest(source)[0], "sha256": dp.digest(source)[1]}]
+    report = dp.publish(drive, "root", items, {"passed": True, "as_of": "2026-11-10"},
+                        {}, tmp_path, parallel_workers=4, worker_factory=lambda: drive)
+    assert report["passed"] is True
+    assert report["previous_version_recovery_verified"] is True
+    assert json.loads(drive.read("pointer"))["version"] == report["version"]
