@@ -744,3 +744,51 @@ def test_resume_stage_rejects_unsafe_folder_name_without_pointer_change(tmp_path
                    {}, tmp_path, resume_stage_id=stage)
     assert drive.files == before
     assert drive.upload_count == upload_count
+
+
+@pytest.mark.parametrize("fault", [None, "checksum", "interrupted"])
+def test_bounded_parallel_publish_preserves_pointer_gate(tmp_path, fault):
+    """Four worker sessions may stage data; only complete SHA verification commits."""
+    import threading
+
+    drive = MemoryDrive(fault)
+    old_pointer = drive.read("pointer")
+    lock = threading.Lock()
+    seen_threads = set()
+
+    class IsolatedWorker:
+        def upload(self, parent, name, path):
+            with lock:
+                seen_threads.add(threading.get_ident())
+                return drive.upload(parent, name, path)
+
+        def remote_digest(self, ident):
+            return drive.remote_digest(ident)
+
+    def worker_factory():
+        return IsolatedWorker()
+
+    if fault is None:
+        report = dp.publish(drive, "root", snapshot(tmp_path),
+                            {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path,
+                            parallel_workers=4, worker_factory=worker_factory)
+        assert report["passed"] is True
+        assert report["previous_version_recovery_verified"] is True
+        assert json.loads(drive.read("pointer"))["version"] == report["version"]
+        assert seen_threads
+    else:
+        with pytest.raises(dp.PublishError):
+            dp.publish(drive, "root", snapshot(tmp_path),
+                       {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path,
+                       parallel_workers=4, worker_factory=worker_factory)
+        assert drive.read("pointer") == old_pointer
+
+
+def test_parallel_worker_configuration_fails_before_remote_mutation(tmp_path):
+    drive = MemoryDrive()
+    existing = copy.deepcopy(drive.files)
+    with pytest.raises(dp.PublishError, match="worker"):
+        dp.publish(drive, "root", snapshot(tmp_path),
+                   {"passed": True, "as_of": "2026-10-03"}, {}, tmp_path,
+                   parallel_workers=5, worker_factory=lambda: drive)
+    assert drive.files == existing
