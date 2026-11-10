@@ -549,7 +549,7 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None, re
             raise PublishError("Local snapshot changed during upload.")
         file_id = reused.get(item["path"])
         if file_id is None:
-            file_id = client().upload(directories[path.parent.as_posix()], path.name, source)
+            file_id = client().upload(directories[path.parent.as_posix() if path.parent.parts else ""], path.name, source)
         with progress_lock:
             staged += 1
             if staged % 100 == 0:
