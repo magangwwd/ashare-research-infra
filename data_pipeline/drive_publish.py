@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
+import threading
 from datetime import date
 import hashlib
 import json
@@ -27,6 +29,21 @@ FOLDER = "application/vnd.google-apps.folder"
 
 class PublishError(Exception):
     """Predefined safe errors; never expose HTTP bodies or credential exceptions."""
+
+
+def run_bounded(items, task, workers):
+    """Run bounded parallel network I/O, cancelling queued work after failure."""
+    if workers == 1:
+        return [task(item) for item in items]
+    with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="task01-drive") as pool:
+        futures = [pool.submit(task, item) for item in items]
+        try:
+            return [future.result() for future in futures]
+        except BaseException:
+            # In-flight tasks may finish in staging, never in production.
+            for future in futures:
+                future.cancel()
+            raise
 
 
 def digest(path: Path) -> tuple[int, str]:
@@ -432,7 +449,22 @@ def verified_stage_reuse(drive, staging_id, stage_id, items, *, audit_diagnostic
     return info["name"], reused
 
 
-def publish(drive, target, items, acceptance, progress, prepared, quota=None, resume_stage_id=None):
+def publish(drive, target, items, acceptance, progress, prepared, quota=None, resume_stage_id=None,
+            *, parallel_workers=1, worker_factory=None):
+    if not 1 <= parallel_workers <= 4 or (parallel_workers > 1 and worker_factory is None):
+        raise PublishError("Invalid bounded Drive worker configuration; pointer unchanged.")
+    parallel = parallel_workers > 1
+    local = threading.local()
+    progress_lock = threading.Lock()
+
+    def client():
+        # Separate HTTP session and mutable OAuth credentials per worker.
+        if not parallel:
+            return drive
+        if not hasattr(local, "drive"):
+            local.drive = worker_factory()
+        return local.drive
+
     if not acceptance.get("passed"):
         raise PublishError("Acceptance is required before publication.")
     total = sum(i["bytes"] for i in items)
@@ -494,8 +526,8 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None, re
         stage = drive.create_folder(staging, version)
         print(f"SUCCESS staging created folder_id={stage} files={len(items)} bytes={total}; current pointer unchanged")
     versions = drive.folder(target, "versions")
+    # Create parent folders serially to avoid duplicate Drive directories.
     directories = {"": stage}
-    files = []
     for item in items:
         path = Path(item["path"])
         parts = path.parent.parts
@@ -506,26 +538,45 @@ def publish(drive, target, items, acceptance, progress, prepared, quota=None, re
                 directories[relative] = (drive.folder(directories[parent], parts[count - 1])
                                          if resume_stage_id is not None
                                          else drive.create_folder(directories[parent], parts[count - 1]))
+
+    staged = 0
+
+    def upload_one(item):
+        nonlocal staged
+        path = Path(item["path"])
         source = Path(item["local_path"])
         if digest(source) != (item["bytes"], item["sha256"]):
             raise PublishError("Local snapshot changed during upload.")
         file_id = reused.get(item["path"])
         if file_id is None:
-            file_id = drive.upload(directories[path.parent.as_posix() if parts else ""], path.name, source)
-        files.append({k: v for k, v in item.items() if k != "local_path"} | {"file_id": file_id})
-        if len(files) % 100 == 0:
-            print(f"SUCCESS staged files={len(files)}/{len(items)}; remote verification pending")
+            file_id = client().upload(directories[path.parent.as_posix()], path.name, source)
+        with progress_lock:
+            staged += 1
+            if staged % 100 == 0:
+                print(f"SUCCESS staged files={staged}/{len(items)}; remote verification pending")
+        return {k: v for k, v in item.items() if k != "local_path"} | {"file_id": file_id}
+
+    files = run_bounded(items, upload_one, parallel_workers)
     observed = remote_inventory(drive, stage)
     if set(observed) != {i["path"] for i in files}:
         raise PublishError("Remote file inventory does not match the accepted local snapshot.")
-    for count, item in enumerate(files, 1):
+
+    verified = 0
+
+    def verify_one(item):
+        nonlocal verified
         remote = observed[item["path"]]
         if remote["id"] != item["file_id"] or int(remote.get("size", -1)) != item["bytes"]:
             raise PublishError("Remote file identity or size mismatch.")
-        if drive.remote_digest(item["file_id"]) != (item["bytes"], item["sha256"]):
+        if client().remote_digest(item["file_id"]) != (item["bytes"], item["sha256"]):
             raise PublishError("Remote SHA256 verification failed; publication blocked.")
-        if count % 100 == 0:
-            print(f"SUCCESS remote SHA256 verified files={count}/{len(files)}; current pointer unchanged")
+        with progress_lock:
+            verified += 1
+            if verified % 100 == 0:
+                print(f"SUCCESS remote SHA256 verified files={verified}/{len(files)}; current pointer unchanged")
+        return True
+
+    run_bounded(files, verify_one, parallel_workers)
     manifest = {"schema_version": "1.0.0", "version": version, "validated": True,
                 "snapshot_as_of": acceptance["as_of"], "published_at": utcnow(),
                 "source_run_id": os.environ.get("GITHUB_RUN_ID"), "files": files,
@@ -664,8 +715,15 @@ def main(argv=None):
                     report = audit_resume_stage(Drive(session), target, items, acceptance,
                                                 quota, args.audit_resume_stage_id)
                 else:
+                    def separate_drive_client():
+                        # Neither requests.Session nor mutable OAuth state is shared.
+                        worker_credentials = parse_credentials(secret)
+                        worker_credentials.refresh(Request())
+                        return Drive(AuthorizedSession(worker_credentials))
+
                     report = publish(Drive(session), target, items, acceptance, progress, prepared,
-                                     quota, resume_stage_id=args.resume_stage_id)
+                                     quota, resume_stage_id=args.resume_stage_id,
+                                     parallel_workers=4, worker_factory=separate_drive_client)
         atomic_json(args.report, report)
         if os.environ.get("GITHUB_ACTIONS") == "true":
             print("::notice title=Drive stage audit::" + json.dumps(report) if report.get("audit_only")
