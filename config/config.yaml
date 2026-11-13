@@ -18,7 +18,10 @@ download:
   requests_per_minute: 100
   page_size: 2000
   max_pages: 1000
-  history_start: '19900101'
+  # Project research boundary: only history from 2020 onward is required.
+  # Provider responses may still contain non-mainboard rows; retain them as
+  # harmless source data, but mainboard coverage is the acceptance target.
+  history_start: '20200101'
   history_requests_per_run: 120
   maintenance_history_requests_per_run: 240
   backfill_history_requests_per_run: 600
@@ -39,7 +42,8 @@ intraday:
   dataset: stk_mins
   freq: 15min
   universe: mainboard  # only SSE/SZSE MAIN A shares, per provider board metadata
-  history_start: '20200101'
+  # Intraday research begins in 2026 and remains SSE/SZSE mainboard-only.
+  history_start: '20260101'
   recent_requests_per_run: 6000
   history_requests_per_run: 240
   backfill_history_requests_per_run: 600
