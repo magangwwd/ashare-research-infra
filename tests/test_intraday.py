@@ -219,6 +219,10 @@ def test_mainboard_feed_skips_non_mainboard_stocks(tmp_path, config, client, pro
 
 
 def test_mainboard_historical_delisted_is_included_only_in_its_listing_window(tmp_path, config, client, provider, as_of):
+    # This unit test exercises a historical window that includes the 2025
+    # delisting. Production may choose a later research boundary (currently
+    # 2026), in which case the security is correctly outside the request set.
+    config["intraday"]["history_start"] = "20200101"
     row = provider.stocks.iloc[0].copy()
     row["ts_code"] = "600999.SH"
     row["symbol"] = "600999"
