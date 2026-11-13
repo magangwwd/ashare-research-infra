@@ -27,3 +27,10 @@
 - [ ] 连续多轮稳定运行；Skill 同步 Drive 并保存可追溯链接
 
 > 本文是候选操作指南，不代表代码修复、生产恢复或云盘同步已经完成。
+
+## 2026-11-13 13:04 北京时间复核收据
+- 旧审计 #41287586055：job 在 Restore verified checkpoint without network writes 失败，不能复用或再次派发。
+- 同源只读审计 #42367840442：真实日志通过；7507 文件中 SHA 核验 6553、缺 954（374906452 字节），pointer_unchanged=true、production_switch_allowed=false。**该审计属于 11月7日旧源，checkpoint 已过期，不得用来恢复 11月13日的新源。**
+- 新源 #43303877396：11月13日约10:18北京时间命中 330 分钟限制，staged 6400/8323；checkpoint artifact #14003857374 有效期至 11月16日10:20北京时间，尚未做新源 stage 的同源全量 SHA 审计。
+- Drive 正式 Task01 current.json 读取结果：as_of=2026-11-11、8321 文件、critical_history_complete=false；Gold 正式 manifest as_of_date=2026-11-12。正式 production_manifest 的内容 SHA 与所有文件 SHA 本轮未完成二次核验，不可宣称完整发布或去重切换。
+- 现有草稿 PR #123 已包含超时后独立恢复的设计，但其 235–265 分钟判定来自旧 240 分钟上限；现行 Task01 上限 330 分钟，必须更新触发条件并重新进行安全测试，**不可直接合并或启用**。
