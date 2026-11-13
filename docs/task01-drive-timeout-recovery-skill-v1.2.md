@@ -34,3 +34,11 @@
 - 新源 #43303877396：11月13日约10:18北京时间命中 330 分钟限制，staged 6400/8323；checkpoint artifact #14003857374 有效期至 11月16日10:20北京时间，尚未做新源 stage 的同源全量 SHA 审计。
 - Drive 正式 Task01 current.json 读取结果：as_of=2026-11-11、8321 文件、critical_history_complete=false；Gold 正式 manifest as_of_date=2026-11-12。正式 production_manifest 的内容 SHA 与所有文件 SHA 本轮未完成二次核验，不可宣称完整发布或去重切换。
 - 现有草稿 PR #123 已包含超时后独立恢复的设计，但其 235–265 分钟判定来自旧 240 分钟上限；现行 Task01 上限 330 分钟，必须更新触发条件并重新进行安全测试，**不可直接合并或启用**。
+
+## 2026-11-13 15:02 北京时间：新生产版本读回证据
+- [Task01 Run #43337789808](https://github.com/magangwwd/ashare-research-infra/actions/runs/43337789808) task01 job completed/success；发布报告 artifact 14012724260 存在。此事实取代旧版“仍未发布”的状态。
+- Drive 正式 current.json 实读：snapshot_as_of=2026-11-12，source_run_id=43337789808，file_count=8325，total_bytes=3528594371，critical_history_complete=false。
+- 按 pointer 中 manifest_file_id 实际下载 production_manifest.json（2117868 字节），计算其 SHA256 与 pointer.manifest_sha256 完全一致；清单内 8325 条、总字节 3528594371、version 与 pointer 一致。
+- Gold 独立正式 manifest 实读 as_of_date=2026-11-12；instruments 3487 行、daily_snapshot 3191 行。此处仅验证 Gold manifest 元数据，未重新下载两个 Parquet 验证其实体 SHA。
+- 本次已验证“正式发布与清单一致”，**不等于**历史补齐、Gold 实体 SHA、五交易日影子、冻结 V1 或回滚演练全部通过；不得生产去重切换。
+- 既有 #123 为 timeout-only 恢复草稿；当前生产已成功发布，**禁止**为旧失败暂存区无必要地重复派发恢复。后续优化应以可重复的单元/集成测试证明去重、断点续传和失败安全性。
