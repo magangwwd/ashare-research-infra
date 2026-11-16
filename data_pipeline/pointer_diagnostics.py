@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 
 from google.auth.transport.requests import AuthorizedSession, Request
@@ -24,6 +25,20 @@ class PointerDiagnosticError(Exception):
 
 def _drive_failure(exc: Exception, operation: str) -> PointerDiagnosticError:
     """Classify transport errors without exposing IDs, URLs or credentials."""
+    if isinstance(exc, PublishError):
+        # Drive.request wraps transport failures in a sanitized PublishError.
+        # Parse only the bounded status token, never echo its exception text.
+        match = re.match(r"^Drive request failed \((401|403|404|429|500|502|503|504|network)\); operation=", str(exc))
+        if match:
+            status = match.group(1)
+            if status == "404":
+                return PointerDiagnosticError(f"{operation}_not_found_or_hidden: 404 does not prove deletion")
+            if status in ("401", "403"):
+                return PointerDiagnosticError(f"{operation}_permission_denied")
+            if status == "network":
+                return PointerDiagnosticError(f"{operation}_network_unavailable")
+            return PointerDiagnosticError(f"{operation}_service_unavailable")
+        return PointerDiagnosticError(f"{operation}_unexpected_error")
     if isinstance(exc, HTTPError):
         response = getattr(exc, "response", None)
         status = getattr(response, "status_code", None)
