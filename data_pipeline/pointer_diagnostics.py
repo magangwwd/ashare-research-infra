@@ -12,7 +12,7 @@ from pathlib import Path
 
 from google.auth.transport.requests import AuthorizedSession, Request
 
-from .drive_auth import SECRET_NAME, SetupError, folder_id, parse_credentials, verify_folder
+from .drive_auth import SECRET_NAME, SetupError, folder_id, parse_credentials
 from .drive_publish import Drive, PublishError
 from .drive_restore import RecoveryError, load_pointer
 
@@ -74,7 +74,6 @@ def main() -> int:
         credentials = parse_credentials(secret)
         credentials.refresh(Request())
         with AuthorizedSession(credentials) as session:
-            verify_folder(session, root_id)
             result = inspect(Drive(session), root_id)
         print(json.dumps(result, sort_keys=True))
         return 0

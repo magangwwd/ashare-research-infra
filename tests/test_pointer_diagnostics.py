@@ -75,3 +75,9 @@ def test_manifest_checksum_mismatch_fails_closed():
     drive.pointer["manifest_sha256"] = "0" * 64
     with pytest.raises(PointerDiagnosticError, match="sha256_mismatch"):
         inspect(drive, "root")
+
+
+def test_read_only_entrypoint_does_not_require_write_access():
+    from pathlib import Path
+    source = (Path(__file__).parents[1] / "data_pipeline" / "pointer_diagnostics.py").read_text(encoding="utf-8")
+    assert "verify_folder(" not in source
