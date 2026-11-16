@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 
 from google.auth.transport.requests import AuthorizedSession, Request
+from requests.exceptions import ConnectionError, HTTPError, Timeout
 
 from .drive_auth import SECRET_NAME, SetupError, folder_id, parse_credentials
 from .drive_publish import Drive, PublishError
@@ -21,6 +22,23 @@ class PointerDiagnosticError(Exception):
     """Safe, non-sensitive failure category."""
 
 
+def _drive_failure(exc: Exception, operation: str) -> PointerDiagnosticError:
+    """Classify transport errors without exposing IDs, URLs or credentials."""
+    if isinstance(exc, HTTPError):
+        response = getattr(exc, "response", None)
+        status = getattr(response, "status_code", None)
+        if status == 404:
+            return PointerDiagnosticError(f"{operation}_not_found_or_hidden: 404 does not prove deletion")
+        if status in (401, 403):
+            return PointerDiagnosticError(f"{operation}_permission_denied: HTTP {status}")
+        if status == 429 or (isinstance(status, int) and status >= 500):
+            return PointerDiagnosticError(f"{operation}_service_unavailable: HTTP {status}")
+        return PointerDiagnosticError(f"{operation}_http_error")
+    if isinstance(exc, (Timeout, ConnectionError)):
+        return PointerDiagnosticError(f"{operation}_network_unavailable")
+    return PointerDiagnosticError(f"{operation}_unexpected_error")
+
+
 def inspect(drive, root_id: str) -> dict:
     pointer, pointer_id = load_pointer(drive, root_id)
     # IDs are used directly from parsed JSON, never copied or reconstructed.
@@ -29,11 +47,8 @@ def inspect(drive, root_id: str) -> dict:
     try:
         folder = drive.metadata(folder_id_value)
         manifest = drive.metadata(manifest_id)
-    except Exception:
-        raise PointerDiagnosticError(
-            "referenced_file_not_accessible: check exact pointer IDs, Drive account, "
-            "trash and permissions; 404 alone does not prove deletion."
-        ) from None
+    except Exception as exc:
+        raise _drive_failure(exc, "referenced_file_metadata") from None
     if folder.get("id") != folder_id_value or folder.get("mimeType") != "application/vnd.google-apps.folder" or folder.get("trashed"):
         raise PointerDiagnosticError("version_folder_identity_mismatch")
     if (manifest.get("id") != manifest_id
@@ -43,8 +58,8 @@ def inspect(drive, root_id: str) -> dict:
         raise PointerDiagnosticError("manifest_identity_or_parent_mismatch")
     try:
         body = drive.read(manifest_id)
-    except Exception:
-        raise PointerDiagnosticError("manifest_content_unavailable") from None
+    except Exception as exc:
+        raise _drive_failure(exc, "manifest_content") from None
     if hashlib.sha256(body).hexdigest() != pointer["manifest_sha256"]:
         raise PointerDiagnosticError("manifest_sha256_mismatch")
     try:
