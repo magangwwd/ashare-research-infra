@@ -109,3 +109,43 @@ def test_metadata_and_manifest_network_fail_closed():
     drive.read = lambda ident: (_ for _ in ()).throw(Timeout("secret")) if ident != "current" else json.dumps(drive.pointer).encode()
     with pytest.raises(PointerDiagnosticError, match="manifest_content_network_unavailable"):
         inspect(drive, "root")
+
+
+@pytest.mark.parametrize("token,category", [
+    ("401", "permission_denied"), ("403", "permission_denied"),
+    ("404", "not_found_or_hidden"), ("429", "service_unavailable"),
+    ("500", "service_unavailable"), ("503", "service_unavailable"),
+    ("network", "network_unavailable"),
+])
+@pytest.mark.parametrize("operation", ["metadata", "manifest"])
+def test_real_adapter_publisherror_classification(token, category, operation):
+    from data_pipeline.drive_publish import PublishError
+    drive = FakeDrive()
+    secret = "secret-drive-id"
+    error = PublishError(f"Drive request failed ({token}); operation=files.get; {secret}")
+    def fail(*args):
+        raise error
+    if operation == "metadata":
+        drive.metadata = fail
+        expected = "referenced_file_metadata_"
+    else:
+        original = drive.read
+        drive.read = lambda ident: original(ident) if ident == "current" else fail(ident)
+        expected = "manifest_content_"
+    with pytest.raises(PointerDiagnosticError) as caught:
+        inspect(drive, "root")
+    assert expected + category in str(caught.value)
+    assert secret not in str(caught.value)
+
+
+def test_unknown_publisherror_and_malformed_pointer_fail_closed():
+    from data_pipeline.drive_publish import PublishError
+    drive = FakeDrive()
+    drive.metadata = lambda ident: (_ for _ in ()).throw(PublishError("unrecognized secret-id"))
+    with pytest.raises(PointerDiagnosticError, match="unexpected_error") as caught:
+        inspect(drive, "root")
+    assert "secret-id" not in str(caught.value)
+    drive = FakeDrive()
+    drive.pointer["manifest_sha256"] = "0" * 64
+    with pytest.raises(PointerDiagnosticError, match="sha256_mismatch"):
+        inspect(drive, "root")
