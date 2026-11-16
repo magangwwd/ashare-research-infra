@@ -53,7 +53,7 @@ def test_missing_id_is_not_misreported_as_deleted():
             raise KeyError(ident)
         return original(ident)
     drive.metadata = missing
-    with pytest.raises(PointerDiagnosticError, match="404 alone does not prove deletion"):
+    with pytest.raises(PointerDiagnosticError, match="unexpected_error"):
         inspect(drive, "root")
 
 
@@ -81,3 +81,31 @@ def test_read_only_entrypoint_does_not_require_write_access():
     from pathlib import Path
     source = (Path(__file__).parents[1] / "data_pipeline" / "pointer_diagnostics.py").read_text(encoding="utf-8")
     assert "verify_folder(" not in source
+
+def test_http_errors_are_distinguished_without_leaking_identifiers():
+    from requests import Response
+    from requests.exceptions import HTTPError, Timeout
+    from data_pipeline.pointer_diagnostics import _drive_failure
+
+    for status, category in [(404, "not_found_or_hidden"), (403, "permission_denied"),
+                             (401, "permission_denied"), (429, "service_unavailable"),
+                             (503, "service_unavailable")]:
+        response = Response()
+        response.status_code = status
+        error = HTTPError("secret-id", response=response)
+        message = str(_drive_failure(error, "metadata"))
+        assert category in message
+        assert "secret-id" not in message
+    assert "network_unavailable" in str(_drive_failure(Timeout("secret-id"), "metadata"))
+
+
+def test_metadata_and_manifest_network_fail_closed():
+    from requests.exceptions import Timeout
+    drive = FakeDrive()
+    drive.metadata = lambda ident: (_ for _ in ()).throw(Timeout("secret"))
+    with pytest.raises(PointerDiagnosticError, match="metadata_network_unavailable"):
+        inspect(drive, "root")
+    drive = FakeDrive()
+    drive.read = lambda ident: (_ for _ in ()).throw(Timeout("secret")) if ident != "current" else json.dumps(drive.pointer).encode()
+    with pytest.raises(PointerDiagnosticError, match="manifest_content_network_unavailable"):
+        inspect(drive, "root")
