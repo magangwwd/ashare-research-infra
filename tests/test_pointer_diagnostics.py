@@ -29,7 +29,7 @@ class FakeDrive:
     def metadata(self, ident):
         self.lookups.append(("metadata", ident))
         if ident == self.pointer["version_folder_id"]:
-            return {"id": ident, "mimeType": "application/vnd.google-apps.folder"}
+            return {"id": ident, "mimeType": "application/vnd.google-apps.folder", "parents": ["root"]}
         if ident == self.pointer["manifest_file_id"]:
             return {"id": ident, "name": "production_manifest.json",
                     "parents": [self.pointer["version_folder_id"]]}
@@ -148,4 +148,35 @@ def test_unknown_publisherror_and_malformed_pointer_fail_closed():
     drive = FakeDrive()
     drive.pointer["manifest_sha256"] = "0" * 64
     with pytest.raises(PointerDiagnosticError, match="sha256_mismatch"):
+        inspect(drive, "root")
+
+
+@pytest.mark.parametrize("status,category", [("403","permission_denied"),("404","not_found_or_hidden"),("429","service_unavailable"),("network","network_unavailable")])
+@pytest.mark.parametrize("phase", ["children", "pointer_read"])
+def test_current_pointer_adapter_errors_fail_closed(status, category, phase):
+    from data_pipeline.drive_publish import PublishError
+    drive = FakeDrive()
+    error = PublishError(f"Drive request failed ({status}); operation=files.list; secret-id")
+    def fail(*args):
+        raise error
+    if phase == "children":
+        drive.children = fail
+    else:
+        original = drive.read
+        drive.read = lambda ident: fail(ident) if ident == "current" else original(ident)
+    with pytest.raises(PointerDiagnosticError, match="current_pointer_" + category) as caught:
+        inspect(drive, "root")
+    assert "secret-id" not in str(caught.value)
+
+
+def test_version_folder_wrong_root_fails_closed():
+    drive = FakeDrive()
+    original = drive.metadata
+    def wrong_root(ident):
+        item = original(ident)
+        if ident == drive.pointer["version_folder_id"]:
+            item["parents"] = ["other-root"]
+        return item
+    drive.metadata = wrong_root
+    with pytest.raises(PointerDiagnosticError, match="version_folder_identity_mismatch"):
         inspect(drive, "root")
