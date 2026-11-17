@@ -113,8 +113,12 @@ def main() -> int:
             result = inspect(Drive(session), root_id)
         print(json.dumps(result, sort_keys=True))
         return 0
-    except (PointerDiagnosticError, RecoveryError, PublishError, SetupError) as exc:
+    except PointerDiagnosticError as exc:
+        # Only this locally constructed category has a bounded, safe message.
         print("FAILED " + str(exc))
+    except (RecoveryError, PublishError, SetupError):
+        # Upstream exceptions can contain IDs, URLs, tokens or raw HTTP bodies.
+        print("FAILED pointer inspection unavailable; production unchanged")
     except Exception:
         print("FAILED pointer inspection unavailable; production unchanged")
     return 1
