@@ -55,7 +55,10 @@ def _drive_failure(exc: Exception, operation: str) -> PointerDiagnosticError:
 
 
 def inspect(drive, root_id: str) -> dict:
-    pointer, pointer_id = load_pointer(drive, root_id)
+    try:
+        pointer, pointer_id = load_pointer(drive, root_id)
+    except (PublishError, HTTPError, Timeout, ConnectionError) as exc:
+        raise _drive_failure(exc, "current_pointer") from None
     # IDs are used directly from parsed JSON, never copied or reconstructed.
     folder_id_value = pointer["version_folder_id"]
     manifest_id = pointer["manifest_file_id"]
@@ -64,7 +67,10 @@ def inspect(drive, root_id: str) -> dict:
         manifest = drive.metadata(manifest_id)
     except Exception as exc:
         raise _drive_failure(exc, "referenced_file_metadata") from None
-    if folder.get("id") != folder_id_value or folder.get("mimeType") != "application/vnd.google-apps.folder" or folder.get("trashed"):
+    if (folder.get("id") != folder_id_value
+            or folder.get("mimeType") != "application/vnd.google-apps.folder"
+            or folder.get("parents") != [root_id]
+            or folder.get("trashed")):
         raise PointerDiagnosticError("version_folder_identity_mismatch")
     if (manifest.get("id") != manifest_id
             or manifest.get("name") != "production_manifest.json"
