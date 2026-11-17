@@ -180,3 +180,25 @@ def test_version_folder_wrong_root_fails_closed():
     drive.metadata = wrong_root
     with pytest.raises(PointerDiagnosticError, match="version_folder_identity_mismatch"):
         inspect(drive, "root")
+
+
+
+@pytest.mark.parametrize("error_type", ["RecoveryError", "PublishError", "SetupError"])
+def test_cli_redacts_upstream_exception_text(monkeypatch, capsys, error_type):
+    """No raw upstream exception text may reach CLI output."""
+    from data_pipeline import pointer_diagnostics as diag
+    from data_pipeline.drive_restore import RecoveryError
+    from data_pipeline.drive_publish import PublishError
+    from data_pipeline.drive_auth import SetupError
+
+    errors = {"RecoveryError": RecoveryError,
+              "PublishError": PublishError, "SetupError": SetupError}
+    secret = "private-drive-id-and-access-token"
+    monkeypatch.setattr(diag, "folder_id", lambda config: "root")
+    monkeypatch.setenv(diag.SECRET_NAME, "configured")
+    monkeypatch.setattr(diag, "parse_credentials",
+                        lambda value: (_ for _ in ()).throw(errors[error_type](secret)))
+    assert diag.main() == 1
+    output = capsys.readouterr().out
+    assert secret not in output
+    assert output == "FAILED pointer inspection unavailable; production unchanged\n"
