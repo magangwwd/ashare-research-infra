@@ -56,7 +56,8 @@ def plan_batches(items, *, batch_size=500):
     }
 
 
-def reconcile_verified_batches(items, receipts, *, expected_inventory_sha256, batch_size=500):
+def reconcile_verified_batches(items, receipts, *, expected_inventory_sha256,
+                               expected_stage_id, expected_source_run_id, batch_size=500):
     """Plan missing uploads using independently verified remote SHA receipts.
 
     Receipts MUST come from fresh Drive media reads of the exact stage and
@@ -66,6 +67,8 @@ def reconcile_verified_batches(items, receipts, *, expected_inventory_sha256, ba
     plan = plan_batches(items, batch_size=batch_size)
     if expected_inventory_sha256 != plan["inventory_sha256"]:
         raise BatchPlanError("inventory fingerprint changed; do not resume")
+    if not isinstance(expected_stage_id, str) or not expected_stage_id or not isinstance(expected_source_run_id, str) or not expected_source_run_id:
+        raise BatchPlanError("missing stage or source identity")
     if not isinstance(receipts, list):
         raise BatchPlanError("remote receipts must be a list")
     expected = {i["path"]: i for i in items}
@@ -74,6 +77,9 @@ def reconcile_verified_batches(items, receipts, *, expected_inventory_sha256, ba
         if not isinstance(receipt, dict):
             raise BatchPlanError("invalid remote receipt")
         path = receipt.get("path")
+        if (receipt.get("stage_id") != expected_stage_id or
+                receipt.get("source_run_id") != expected_source_run_id):
+            raise BatchPlanError("receipt source or stage mismatch")
         if path not in expected or path in verified:
             raise BatchPlanError("unknown or duplicate remote receipt")
         item = expected[path]
