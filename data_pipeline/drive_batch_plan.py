@@ -238,3 +238,52 @@ def plan_resume_from_ledger(items, ledger, fresh_remote_receipts, *,
     result["fresh_remote_sha_verified_count"] = len(fresh_remote_receipts)
     result["production_switch_allowed"] = False
     return result
+
+def persist_local_ledger_exclusive(path, ledger, *, inventory_sha256, stage_id,
+                                   source_run_id, pointer_sha256):
+    """Atomically persist a LOCAL snapshot under an exclusive nonblocking lock.
+
+    This is a runner-local safety primitive, NOT cross-run durability or a
+    distributed Drive lease. Never use it to authorize production publication.
+    """
+    import os
+    import tempfile
+    from pathlib import Path
+
+    validate_persisted_receipt_ledger(
+        ledger, inventory_sha256=inventory_sha256, stage_id=stage_id,
+        source_run_id=source_run_id, pointer_sha256=pointer_sha256)
+    target = Path(path)
+    if not target.parent.is_dir() or target.is_symlink():
+        raise BatchPlanError("unsafe local ledger destination")
+    lock_path = target.with_name(target.name + ".lock")
+    try:
+        lock_fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError as exc:
+        raise BatchPlanError("ledger writer already active; fail closed") from exc
+    temporary = None
+    try:
+        with os.fdopen(lock_fd, "w") as lock:
+            lock.write(str(os.getpid()))
+            lock.flush()
+            os.fsync(lock.fileno())
+        fd, temporary = tempfile.mkstemp(prefix=".ledger-", dir=str(target.parent))
+        with os.fdopen(fd, "w", encoding="utf-8") as output:
+            json.dump(ledger, output, sort_keys=True, separators=(",", ":"))
+            output.flush()
+            os.fsync(output.fileno())
+        if target.is_symlink():
+            raise BatchPlanError("ledger destination changed to symlink")
+        os.replace(temporary, target)
+        temporary = None
+        directory_fd = os.open(str(target.parent), os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    finally:
+        if temporary is not None:
+            os.unlink(temporary)
+        os.unlink(lock_path)
+    return {"local_snapshot_written": True, "cross_run_durable": False,
+            "production_switch_allowed": False}
