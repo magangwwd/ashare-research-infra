@@ -96,3 +96,32 @@ def reconcile_verified_batches(items, receipts, *, expected_inventory_sha256,
     result["missing_file_count"] = len(missing)
     result["production_switch_allowed"] = False
     return result
+
+
+def validate_resume_checkpoint(checkpoint, *, inventory_sha256, stage_id,
+                               source_run_id, now_epoch):
+    """Fail-closed validation of persisted metadata; never treat it as SHA proof.
+
+    Caller must still re-read every remote file and verify its bytes/SHA256.
+    No production pointer is ever authorized by this validation.
+    """
+    if not isinstance(checkpoint, dict) or checkpoint.get("schema_version") != 1:
+        raise BatchPlanError("unsupported checkpoint schema")
+    if (not isinstance(inventory_sha256, str) or len(inventory_sha256) != 64 or
+            any(c not in "0123456789abcdef" for c in inventory_sha256)):
+        raise BatchPlanError("invalid expected inventory SHA")
+    if not isinstance(stage_id, str) or not stage_id or not isinstance(source_run_id, str) or not source_run_id:
+        raise BatchPlanError("invalid expected stage/source")
+    if (checkpoint.get("inventory_sha256") != inventory_sha256 or
+            checkpoint.get("stage_id") != stage_id or
+            checkpoint.get("source_run_id") != source_run_id):
+        raise BatchPlanError("checkpoint identity mismatch")
+    expiry = checkpoint.get("expires_at_epoch")
+    if (not isinstance(now_epoch, (int, float)) or isinstance(now_epoch, bool) or
+            not isinstance(expiry, (int, float)) or isinstance(expiry, bool) or
+            not now_epoch < expiry):
+        raise BatchPlanError("checkpoint expired or time invalid")
+    if checkpoint.get("production_switch_allowed") is not False:
+        raise BatchPlanError("checkpoint must prohibit production switch")
+    return {"checkpoint_valid": True, "remote_sha_revalidation_required": True,
+            "production_switch_allowed": False}
