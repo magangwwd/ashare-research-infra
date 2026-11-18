@@ -54,3 +54,39 @@ def plan_batches(items, *, batch_size=500):
         ],
         "production_switch_allowed": False,
     }
+
+
+def reconcile_verified_batches(items, receipts, *, expected_inventory_sha256, batch_size=500):
+    """Plan missing uploads using independently verified remote SHA receipts.
+
+    Receipts MUST come from fresh Drive media reads of the exact stage and
+    source snapshot, not an untrusted local checkpoint or filename match.
+    This is read-only: it does not upload or authorize a pointer commit.
+    """
+    plan = plan_batches(items, batch_size=batch_size)
+    if expected_inventory_sha256 != plan["inventory_sha256"]:
+        raise BatchPlanError("inventory fingerprint changed; do not resume")
+    if not isinstance(receipts, list):
+        raise BatchPlanError("remote receipts must be a list")
+    expected = {i["path"]: i for i in items}
+    verified = set()
+    for receipt in receipts:
+        if not isinstance(receipt, dict):
+            raise BatchPlanError("invalid remote receipt")
+        path = receipt.get("path")
+        if path not in expected or path in verified:
+            raise BatchPlanError("unknown or duplicate remote receipt")
+        item = expected[path]
+        if (receipt.get("bytes") != item["bytes"] or
+                receipt.get("sha256") != item["sha256"] or
+                not isinstance(receipt.get("file_id"), str) or
+                not receipt["file_id"]):
+            raise BatchPlanError("remote receipt mismatch; do not resume")
+        verified.add(path)
+    missing = [i for i in items if i["path"] not in verified]
+    result = plan_batches(missing, batch_size=batch_size)
+    result["source_inventory_sha256"] = plan["inventory_sha256"]
+    result["verified_file_count"] = len(verified)
+    result["missing_file_count"] = len(missing)
+    result["production_switch_allowed"] = False
+    return result
