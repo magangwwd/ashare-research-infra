@@ -206,3 +206,34 @@ def build_verified_receipt_ledger(items, receipts, *, stage_id, source_run_id,
         stage_id=stage_id, source_run_id=source_run_id,
         pointer_sha256=pointer_sha256)
     return ledger
+
+
+def plan_resume_from_ledger(items, ledger, fresh_remote_receipts, *,
+                            stage_id, source_run_id, pointer_sha256,
+                            checkpoint, now_epoch, batch_size=500):
+    """Read-only fail-closed recovery: persisted receipts are NEVER proof.
+
+    Only fresh SHA-verified Drive media receipts may remove inventory entries
+    from the next upload plan. An expired checkpoint blocks recovery entirely.
+    """
+    inventory = plan_batches(items, batch_size=batch_size)
+    validate_resume_checkpoint(
+        checkpoint, inventory_sha256=inventory["inventory_sha256"],
+        stage_id=stage_id, source_run_id=source_run_id, now_epoch=now_epoch)
+    validate_persisted_receipt_ledger(
+        ledger, inventory_sha256=inventory["inventory_sha256"],
+        stage_id=stage_id, source_run_id=source_run_id,
+        pointer_sha256=pointer_sha256)
+    if not isinstance(fresh_remote_receipts, list):
+        raise BatchPlanError("fresh remote receipts required")
+    # A durable ledger is only a hint. Even its listed files must be read
+    # from Drive again; absent receipts are treated as missing.
+    result = reconcile_verified_batches(
+        items, fresh_remote_receipts,
+        expected_inventory_sha256=inventory["inventory_sha256"],
+        expected_stage_id=stage_id, expected_source_run_id=source_run_id,
+        batch_size=batch_size)
+    result["persisted_receipt_count_untrusted"] = len(ledger["receipts"])
+    result["fresh_remote_sha_verified_count"] = len(fresh_remote_receipts)
+    result["production_switch_allowed"] = False
+    return result
