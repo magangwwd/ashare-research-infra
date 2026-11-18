@@ -1,7 +1,7 @@
 import hashlib
 import unittest
 
-from data_pipeline.drive_batch_plan import BatchPlanError, plan_batches, reconcile_verified_batches
+from data_pipeline.drive_batch_plan import BatchPlanError, plan_batches, reconcile_verified_batches, validate_resume_checkpoint
 
 
 def item(n):
@@ -72,6 +72,25 @@ class BatchPlanTests(unittest.TestCase):
                 reconcile_verified_batches(inventory, [changed],
                     expected_inventory_sha256=fingerprint,
                     expected_stage_id="stage-1", expected_source_run_id="run-1")
+
+    def test_checkpoint_expiry_identity_and_pointer_gate(self):
+        checkpoint = {"schema_version": 1, "inventory_sha256": "a" * 64,
+                      "stage_id": "stage-1", "source_run_id": "run-1",
+                      "expires_at_epoch": 200, "production_switch_allowed": False}
+        kwargs = dict(inventory_sha256="a" * 64, stage_id="stage-1",
+                      source_run_id="run-1", now_epoch=100)
+        result = validate_resume_checkpoint(checkpoint, **kwargs)
+        self.assertTrue(result["remote_sha_revalidation_required"])
+        self.assertFalse(result["production_switch_allowed"])
+        for changed in (dict(checkpoint, stage_id="wrong"),
+                        dict(checkpoint, source_run_id="wrong"),
+                        dict(checkpoint, inventory_sha256="b" * 64),
+                        dict(checkpoint, expires_at_epoch=100),
+                        dict(checkpoint, production_switch_allowed=True)):
+            with self.subTest(changed=changed), self.assertRaises(BatchPlanError):
+                validate_resume_checkpoint(changed, **kwargs)
+        with self.assertRaises(BatchPlanError):
+            validate_resume_checkpoint(checkpoint, **dict(kwargs, now_epoch=200))
 
 
 if __name__ == "__main__":
