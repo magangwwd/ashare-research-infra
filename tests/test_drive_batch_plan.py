@@ -38,9 +38,9 @@ class BatchPlanTests(unittest.TestCase):
     def test_interrupted_500_and_resume_missing_only(self):
         inventory = [item(n) for n in range(8172)]
         fingerprint = plan_batches(inventory)["inventory_sha256"]
-        receipts = [dict(inventory[n], file_id=f"remote-{n}") for n in range(500)]
+        receipts = [dict(inventory[n], file_id=f"remote-{n}", stage_id="stage-1", source_run_id="run-1") for n in range(500)]
         resumed = reconcile_verified_batches(
-            inventory, receipts, expected_inventory_sha256=fingerprint)
+            inventory, receipts, expected_inventory_sha256=fingerprint, expected_stage_id="stage-1", expected_source_run_id="run-1")
         self.assertEqual(resumed["verified_file_count"], 500)
         self.assertEqual(resumed["missing_file_count"], 7672)
         self.assertEqual(resumed["batches"][0]["paths"][0], item(500)["path"])
@@ -49,18 +49,29 @@ class BatchPlanTests(unittest.TestCase):
     def test_corruption_and_inventory_change_fail_closed(self):
         inventory = [item(n) for n in range(3)]
         fingerprint = plan_batches(inventory)["inventory_sha256"]
-        good = dict(inventory[0], file_id="remote-0")
+        good = dict(inventory[0], file_id="remote-0", stage_id="stage-1", source_run_id="run-1")
         for bad in (dict(good, sha256="0" * 64), dict(good, bytes=999),
                     dict(good, file_id=""), dict(good, path="unknown")):
             with self.subTest(bad=bad), self.assertRaises(BatchPlanError):
                 reconcile_verified_batches(inventory, [bad],
-                                           expected_inventory_sha256=fingerprint)
+                                           expected_inventory_sha256=fingerprint, expected_stage_id="stage-1", expected_source_run_id="run-1")
         with self.assertRaises(BatchPlanError):
             reconcile_verified_batches(inventory, [good, good],
-                                       expected_inventory_sha256=fingerprint)
+                                       expected_inventory_sha256=fingerprint, expected_stage_id="stage-1", expected_source_run_id="run-1")
         with self.assertRaises(BatchPlanError):
             reconcile_verified_batches(inventory, [good],
-                                       expected_inventory_sha256="0" * 64)
+                                       expected_inventory_sha256="0" * 64, expected_stage_id="stage-1", expected_source_run_id="run-1")
+
+    def test_cross_stage_and_cross_run_receipts_rejected(self):
+        inventory = [item(1)]
+        fingerprint = plan_batches(inventory)["inventory_sha256"]
+        receipt = dict(inventory[0], file_id="remote", stage_id="stage-1", source_run_id="run-1")
+        for changed in (dict(receipt, stage_id="stage-2"),
+                        dict(receipt, source_run_id="run-2")):
+            with self.assertRaises(BatchPlanError):
+                reconcile_verified_batches(inventory, [changed],
+                    expected_inventory_sha256=fingerprint,
+                    expected_stage_id="stage-1", expected_source_run_id="run-1")
 
 
 if __name__ == "__main__":
