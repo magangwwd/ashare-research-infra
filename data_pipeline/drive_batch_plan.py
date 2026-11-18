@@ -81,10 +81,11 @@ def reconcile_verified_batches(items, receipts, *, expected_inventory_sha256,
         if (receipt.get("stage_id") != expected_stage_id or
                 receipt.get("source_run_id") != expected_source_run_id):
             raise BatchPlanError("receipt source or stage mismatch")
-        if path not in expected or path in verified:
+        if not isinstance(path, str) or path not in expected or path in verified:
             raise BatchPlanError("unknown or duplicate remote receipt")
         item = expected[path]
-        if (receipt.get("bytes") != item["bytes"] or
+        if (not isinstance(receipt.get("bytes"), int) or isinstance(receipt.get("bytes"), bool) or
+                receipt.get("bytes") != item["bytes"] or
                 receipt.get("sha256") != item["sha256"] or
                 not isinstance(receipt.get("file_id"), str) or
                 not receipt["file_id"]):
