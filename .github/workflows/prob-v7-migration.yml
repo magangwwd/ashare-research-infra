@@ -1,0 +1,132 @@
+name: Mainboard V7 migration checks (read-only)
+on:
+  push:
+    branches:
+      - chatgpt/mainboard-prob-migration-20261107
+  pull_request:
+    paths:
+      - 'astock-quant/mainboard_prob_selection/**'
+      - '.github/workflows/prob-v7-migration.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Read-only test (no Drive writes and no account orders)
+        required: true
+        type: choice
+        default: preflight
+        options:
+          - preflight
+          - replay
+permissions:
+  contents: read
+concurrency:
+  group: prob-v7-migration-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile migrated sources
+        run: python -m compileall -q astock-quant/mainboard_prob_selection
+      - name: Run source-only tests
+        run: |
+          python -m pip install pytest
+          python -m pytest -q astock-quant/mainboard_prob_selection/tests
+  drive-read:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chatgpt/mainboard-prob-migration-20261107')
+    needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PROB_GOLD_FOLDER_ID: '1vCz7H5aeePjFapg7xLPu44x-PUSQOX_8'
+      PROB_PROJECT_FOLDER_ID: '1ASvjYoIlejQH1uNiMeasofOHG4hkhvg7'
+      PIP_NO_CACHE_DIR: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install rclone
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+      - name: Install pinned research packages (replay only)
+        if: inputs.mode == 'replay'
+        run: python -m pip install -r astock-quant/mainboard_prob_selection/requirements.txt
+      - name: Verify authenticated source and optionally replay
+        working-directory: astock-quant/mainboard_prob_selection
+        env:
+          MODE: ${{ github.event_name == 'pull_request' && 'preflight' || inputs.mode }}
+        run: bash scripts/drive_readonly.sh "$MODE"
+      - name: Publish safe gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prob-v7-migration-evidence
+          path: ${{ runner.temp }}/prob-v7-evidence/
+          retention-days: 30
+          if-no-files-found: ignore
+
+  drive-write-probe:
+    # Only a trusted branch inside this repo. Writes one immutable probe, never production/current.json.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chatgpt/mainboard-prob-migration-20261107'
+    needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PROB_PROJECT_FOLDER_ID: '1ASvjYoIlejQH1uNiMeasofOHG4hkhvg7'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install rclone
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+      - name: Write immutable isolated probe and SHA256 verify via readback
+        run: bash astock-quant/mainboard_prob_selection/scripts/drive_write_probe.sh
+      - name: Publish sanitized receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prob-v7-drive-write-probe
+          path: ${{ runner.temp }}/prob-v7-write-probe/receipt.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+  forward-dryrun:
+    # Historical paper-only signal + ledger. No production writes or live orders.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'chatgpt/mainboard-prob-migration-20261107'
+    needs: [static, drive-read]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      GDRIVE_RCLONE_CONFIG_B64: ${{ secrets.GDRIVE_RCLONE_CONFIG_B64 }}
+      PROB_GOLD_FOLDER_ID: '1vCz7H5aeePjFapg7xLPu44x-PUSQOX_8'
+      PROB_PROJECT_FOLDER_ID: '1ASvjYoIlejQH1uNiMeasofOHG4hkhvg7'
+      PIP_NO_CACHE_DIR: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned research packages and rclone
+        run: |
+          python -m pip install -r astock-quant/mainboard_prob_selection/requirements.txt
+          sudo apt-get update -qq
+          sudo apt-get install -y rclone
+      - name: Historical frozen signal and four-paper-ledger dry-run
+        run: bash astock-quant/mainboard_prob_selection/scripts/forward_dryrun.sh
+      - name: Preserve safe dry-run evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prob-v7-forward-dryrun
+          path: ${{ runner.temp }}/prob-v7-forward-dryrun/receipt.json
+          retention-days: 30
+          if-no-files-found: ignore

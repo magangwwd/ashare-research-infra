@@ -1,0 +1,9 @@
+/cache/
+/live/
+/results/
+*.parquet
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+rclone.conf
