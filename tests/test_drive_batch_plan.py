@@ -62,6 +62,27 @@ class BatchPlanTests(unittest.TestCase):
             reconcile_verified_batches(inventory, [good],
                                        expected_inventory_sha256="0" * 64, expected_stage_id="stage-1", expected_source_run_id="run-1")
 
+    def test_reused_remote_file_id_fails_closed(self):
+        inventory = [item(1), item(2)]
+        receipts = [dict(row, file_id="same-drive-id",
+                         stage_id="stage-1", source_run_id="run-1")
+                    for row in inventory]
+        with self.assertRaises(BatchPlanError):
+            reconcile_verified_batches(
+                inventory, receipts,
+                expected_inventory_sha256=plan_batches(inventory)["inventory_sha256"],
+                expected_stage_id="stage-1", expected_source_run_id="run-1")
+        ledger = {"schema_version": 1,
+                  "inventory_sha256": plan_batches(inventory)["inventory_sha256"],
+                  "pointer_sha256": "a" * 64, "stage_id": "stage-1",
+                  "source_run_id": "run-1", "production_switch_allowed": False,
+                  "receipts": receipts}
+        with self.assertRaises(BatchPlanError):
+            validate_persisted_receipt_ledger(
+                ledger, inventory_sha256=ledger["inventory_sha256"],
+                pointer_sha256="a" * 64, stage_id="stage-1",
+                source_run_id="run-1")
+
     def test_cross_stage_and_cross_run_receipts_rejected(self):
         inventory = [item(1)]
         fingerprint = plan_batches(inventory)["inventory_sha256"]
@@ -97,7 +118,7 @@ class BatchPlanTests(unittest.TestCase):
                   "pointer_sha256": "b" * 64, "stage_id": "stage-1",
                   "source_run_id": "run-1", "production_switch_allowed": False,
                   "receipts": [{"path": "data/1", "stage_id": "stage-1",
-                                "source_run_id": "run-1"}]}
+                                "source_run_id": "run-1", "file_id": "drive-1"}]}
         kwargs = dict(inventory_sha256="a" * 64, pointer_sha256="b" * 64,
                       stage_id="stage-1", source_run_id="run-1")
         result = validate_persisted_receipt_ledger(ledger, **kwargs)
