@@ -1,7 +1,7 @@
 import hashlib
 import unittest
 
-from data_pipeline.drive_batch_plan import BatchPlanError, plan_batches, reconcile_verified_batches, validate_resume_checkpoint
+from data_pipeline.drive_batch_plan import BatchPlanError, plan_batches, reconcile_verified_batches, validate_persisted_receipt_ledger, validate_resume_checkpoint
 
 
 def item(n):
@@ -91,6 +91,26 @@ class BatchPlanTests(unittest.TestCase):
                 validate_resume_checkpoint(changed, **kwargs)
         with self.assertRaises(BatchPlanError):
             validate_resume_checkpoint(checkpoint, **dict(kwargs, now_epoch=200))
+
+    def test_persisted_ledger_requires_exact_pointer_and_remote_revalidation(self):
+        ledger = {"schema_version": 1, "inventory_sha256": "a" * 64,
+                  "pointer_sha256": "b" * 64, "stage_id": "stage-1",
+                  "source_run_id": "run-1", "production_switch_allowed": False,
+                  "receipts": [{"path": "data/1", "stage_id": "stage-1",
+                                "source_run_id": "run-1"}]}
+        kwargs = dict(inventory_sha256="a" * 64, pointer_sha256="b" * 64,
+                      stage_id="stage-1", source_run_id="run-1")
+        result = validate_persisted_receipt_ledger(ledger, **kwargs)
+        self.assertTrue(result["remote_sha_revalidation_required"])
+        self.assertFalse(result["production_switch_allowed"])
+        for changed in (dict(ledger, pointer_sha256="c" * 64),
+                        dict(ledger, source_run_id="run-2"),
+                        dict(ledger, production_switch_allowed=True),
+                        dict(ledger, receipts=ledger["receipts"] * 2),
+                        dict(ledger, receipts=[dict(ledger["receipts"][0],
+                                                     stage_id="stage-2")])):
+            with self.subTest(changed=changed), self.assertRaises(BatchPlanError):
+                validate_persisted_receipt_ledger(changed, **kwargs)
 
 
 if __name__ == "__main__":
