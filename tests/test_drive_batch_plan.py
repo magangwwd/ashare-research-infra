@@ -200,5 +200,33 @@ class BatchPlanTests(unittest.TestCase):
                                     [dict(persisted[0], sha256="0" * 64)], **args)
 
 
+    def test_local_snapshot_atomic_and_exclusive_lock(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        from data_pipeline.drive_batch_plan import persist_local_ledger_exclusive
+        inventory = [item(1)]
+        ledger = build_verified_receipt_ledger(
+            inventory, [], stage_id="stage-1", source_run_id="run-1",
+            pointer_sha256="a" * 64)
+        args = dict(inventory_sha256=ledger["inventory_sha256"],
+                    stage_id="stage-1", source_run_id="run-1",
+                    pointer_sha256="a" * 64)
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "ledger.json"
+            outcome = persist_local_ledger_exclusive(path, ledger, **args)
+            self.assertFalse(outcome["cross_run_durable"])
+            self.assertEqual(json.loads(path.read_text()), ledger)
+            lock = Path(folder) / "ledger.json.lock"
+            lock.write_text("another-writer")
+            with self.assertRaises(BatchPlanError):
+                persist_local_ledger_exclusive(path, ledger, **args)
+            self.assertEqual(json.loads(path.read_text()), ledger)
+            lock.unlink()
+            with self.assertRaises(BatchPlanError):
+                persist_local_ledger_exclusive(path, ledger, **dict(args, stage_id="wrong"))
+            self.assertEqual(json.loads(path.read_text()), ledger)
+
+
 if __name__ == "__main__":
     unittest.main()
