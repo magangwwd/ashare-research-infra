@@ -166,3 +166,34 @@ def validate_persisted_receipt_ledger(ledger, *, inventory_sha256, stage_id,
             "untrusted_receipt_count": len(receipts),
             "remote_sha_revalidation_required": True,
             "production_switch_allowed": False}
+
+
+def build_verified_receipt_ledger(items, receipts, *, stage_id, source_run_id,
+                                  pointer_sha256):
+    """Build a portable ledger snapshot, not an authorization to skip remote SHA reads.
+
+    A caller must persist this with a durable conditional write (CAS) and a
+    single-writer lease scoped to stage/source. A local runner file is NOT
+    durable across GitHub Actions jobs. Do not use this to switch production.
+    """
+    plan = plan_batches(items)
+    if (not isinstance(pointer_sha256, str) or len(pointer_sha256) != 64 or
+            any(c not in "0123456789abcdef" for c in pointer_sha256)):
+        raise BatchPlanError("invalid production pointer fingerprint")
+    reconcile_verified_batches(
+        items, receipts, expected_inventory_sha256=plan["inventory_sha256"],
+        expected_stage_id=stage_id, expected_source_run_id=source_run_id)
+    ledger = {
+        "schema_version": 1,
+        "inventory_sha256": plan["inventory_sha256"],
+        "pointer_sha256": pointer_sha256,
+        "stage_id": stage_id,
+        "source_run_id": source_run_id,
+        "production_switch_allowed": False,
+        "receipts": [dict(receipt) for receipt in receipts],
+    }
+    validate_persisted_receipt_ledger(
+        ledger, inventory_sha256=plan["inventory_sha256"],
+        stage_id=stage_id, source_run_id=source_run_id,
+        pointer_sha256=pointer_sha256)
+    return ledger
