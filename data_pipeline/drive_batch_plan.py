@@ -73,6 +73,7 @@ def reconcile_verified_batches(items, receipts, *, expected_inventory_sha256,
         raise BatchPlanError("remote receipts must be a list")
     expected = {i["path"]: i for i in items}
     verified = set()
+    verified_file_ids = set()
     for receipt in receipts:
         if not isinstance(receipt, dict):
             raise BatchPlanError("invalid remote receipt")
@@ -88,6 +89,9 @@ def reconcile_verified_batches(items, receipts, *, expected_inventory_sha256,
                 not isinstance(receipt.get("file_id"), str) or
                 not receipt["file_id"]):
             raise BatchPlanError("remote receipt mismatch; do not resume")
+        if receipt["file_id"] in verified_file_ids:
+            raise BatchPlanError("same remote file ID used for multiple paths")
+        verified_file_ids.add(receipt["file_id"])
         verified.add(path)
     missing = [i for i in items if i["path"] not in verified]
     result = plan_batches(missing, batch_size=batch_size)
@@ -152,6 +156,7 @@ def validate_persisted_receipt_ledger(ledger, *, inventory_sha256, stage_id,
     if not isinstance(receipts, list):
         raise BatchPlanError("ledger receipts must be a list")
     seen = set()
+    file_ids = set()
     for receipt in receipts:
         if not isinstance(receipt, dict):
             raise BatchPlanError("invalid persisted receipt")
@@ -161,6 +166,10 @@ def validate_persisted_receipt_ledger(ledger, *, inventory_sha256, stage_id,
         if (receipt.get("stage_id") != stage_id or
                 receipt.get("source_run_id") != source_run_id):
             raise BatchPlanError("persisted receipt identity mismatch")
+        file_id = receipt.get("file_id")
+        if not isinstance(file_id, str) or not file_id or file_id in file_ids:
+            raise BatchPlanError("missing or duplicate persisted remote file ID")
+        file_ids.add(file_id)
         seen.add(path)
     return {"ledger_identity_valid": True,
             "untrusted_receipt_count": len(receipts),
