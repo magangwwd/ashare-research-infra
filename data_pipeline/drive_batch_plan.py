@@ -125,3 +125,44 @@ def validate_resume_checkpoint(checkpoint, *, inventory_sha256, stage_id,
         raise BatchPlanError("checkpoint must prohibit production switch")
     return {"checkpoint_valid": True, "remote_sha_revalidation_required": True,
             "production_switch_allowed": False}
+
+
+def validate_persisted_receipt_ledger(ledger, *, inventory_sha256, stage_id,
+                                      source_run_id, pointer_sha256):
+    """Validate durable ledger identity only; receipts remain untrusted until remote re-read.
+
+    Never use ledger entries as verified remote receipts without fresh media SHA.
+    The immutable pointer snapshot prevents silent reuse after production moves.
+    """
+    if not isinstance(ledger, dict) or ledger.get("schema_version") != 1:
+        raise BatchPlanError("unsupported ledger schema")
+    for name, expected in (("inventory_sha256", inventory_sha256),
+                           ("stage_id", stage_id),
+                           ("source_run_id", source_run_id),
+                           ("pointer_sha256", pointer_sha256)):
+        if not isinstance(expected, str) or not expected or ledger.get(name) != expected:
+            raise BatchPlanError("ledger identity or pointer changed")
+    for name in ("inventory_sha256", "pointer_sha256"):
+        value = ledger[name]
+        if len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
+            raise BatchPlanError("invalid ledger SHA")
+    if ledger.get("production_switch_allowed") is not False:
+        raise BatchPlanError("ledger cannot authorize production")
+    receipts = ledger.get("receipts")
+    if not isinstance(receipts, list):
+        raise BatchPlanError("ledger receipts must be a list")
+    seen = set()
+    for receipt in receipts:
+        if not isinstance(receipt, dict):
+            raise BatchPlanError("invalid persisted receipt")
+        path = receipt.get("path")
+        if not isinstance(path, str) or not path or path in seen:
+            raise BatchPlanError("duplicate or invalid persisted path")
+        if (receipt.get("stage_id") != stage_id or
+                receipt.get("source_run_id") != source_run_id):
+            raise BatchPlanError("persisted receipt identity mismatch")
+        seen.add(path)
+    return {"ledger_identity_valid": True,
+            "untrusted_receipt_count": len(receipts),
+            "remote_sha_revalidation_required": True,
+            "production_switch_allowed": False}
