@@ -1,7 +1,7 @@
 import hashlib
 import unittest
 
-from data_pipeline.drive_batch_plan import build_verified_receipt_ledger, BatchPlanError, plan_batches, reconcile_verified_batches, validate_persisted_receipt_ledger, validate_resume_checkpoint
+from data_pipeline.drive_batch_plan import plan_resume_from_ledger, build_verified_receipt_ledger, BatchPlanError, plan_batches, reconcile_verified_batches, validate_persisted_receipt_ledger, validate_resume_checkpoint
 
 
 def item(n):
@@ -156,6 +156,35 @@ class BatchPlanTests(unittest.TestCase):
             build_verified_receipt_ledger(
                 inventory, ledger["receipts"], stage_id="stage-1",
                 source_run_id="run-1", pointer_sha256="invalid")
+
+    def test_resume_ledger_never_skips_files_without_fresh_remote_sha(self):
+        inventory = [item(n) for n in range(3)]
+        persisted = [dict(inventory[0], stage_id="stage-1",
+                          source_run_id="run-1", file_id="drive-0")]
+        ledger = build_verified_receipt_ledger(
+            inventory, persisted, stage_id="stage-1",
+            source_run_id="run-1", pointer_sha256="a" * 64)
+        checkpoint = {"schema_version": 1,
+                      "inventory_sha256": ledger["inventory_sha256"],
+                      "stage_id": "stage-1", "source_run_id": "run-1",
+                      "expires_at_epoch": 200, "production_switch_allowed": False}
+        args = dict(stage_id="stage-1", source_run_id="run-1",
+                    pointer_sha256="a" * 64, checkpoint=checkpoint, now_epoch=100)
+        missing_all = plan_resume_from_ledger(inventory, ledger, [], **args)
+        self.assertEqual(missing_all["missing_file_count"], 3)
+        self.assertEqual(missing_all["persisted_receipt_count_untrusted"], 1)
+        verified = plan_resume_from_ledger(inventory, ledger, persisted, **args)
+        self.assertEqual(verified["missing_file_count"], 2)
+        self.assertFalse(verified["production_switch_allowed"])
+        with self.assertRaises(BatchPlanError):
+            plan_resume_from_ledger(inventory, ledger, persisted,
+                                    **dict(args, now_epoch=200))
+        with self.assertRaises(BatchPlanError):
+            plan_resume_from_ledger(inventory, ledger, persisted,
+                                    **dict(args, pointer_sha256="b" * 64))
+        with self.assertRaises(BatchPlanError):
+            plan_resume_from_ledger(inventory, ledger,
+                                    [dict(persisted[0], sha256="0" * 64)], **args)
 
 
 if __name__ == "__main__":
