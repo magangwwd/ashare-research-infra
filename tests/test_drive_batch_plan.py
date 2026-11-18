@@ -1,7 +1,7 @@
 import hashlib
 import unittest
 
-from data_pipeline.drive_batch_plan import BatchPlanError, plan_batches, reconcile_verified_batches, validate_persisted_receipt_ledger, validate_resume_checkpoint
+from data_pipeline.drive_batch_plan import build_verified_receipt_ledger, BatchPlanError, plan_batches, reconcile_verified_batches, validate_persisted_receipt_ledger, validate_resume_checkpoint
 
 
 def item(n):
@@ -111,6 +111,30 @@ class BatchPlanTests(unittest.TestCase):
                                                      stage_id="stage-2")])):
             with self.subTest(changed=changed), self.assertRaises(BatchPlanError):
                 validate_persisted_receipt_ledger(changed, **kwargs)
+
+    def test_portable_ledger_snapshot_requires_verified_identity(self):
+        inventory = [item(n) for n in range(3)]
+        receipts = [dict(inventory[0], stage_id="stage-1",
+                         source_run_id="run-1", file_id="drive-1")]
+        ledger = build_verified_receipt_ledger(
+            inventory, receipts, stage_id="stage-1",
+            source_run_id="run-1", pointer_sha256="a" * 64)
+        self.assertEqual(ledger["inventory_sha256"],
+                         plan_batches(inventory)["inventory_sha256"])
+        self.assertEqual(len(ledger["receipts"]), 1)
+        self.assertFalse(ledger["production_switch_allowed"])
+        receipts[0]["file_id"] = "mutated"
+        self.assertEqual(ledger["receipts"][0]["file_id"], "drive-1")
+        for bad in (dict(ledger["receipts"][0], sha256="0" * 64),
+                    dict(ledger["receipts"][0], stage_id="wrong")):
+            with self.assertRaises(BatchPlanError):
+                build_verified_receipt_ledger(
+                    inventory, [bad], stage_id="stage-1",
+                    source_run_id="run-1", pointer_sha256="a" * 64)
+        with self.assertRaises(BatchPlanError):
+            build_verified_receipt_ledger(
+                inventory, ledger["receipts"], stage_id="stage-1",
+                source_run_id="run-1", pointer_sha256="invalid")
 
 
 if __name__ == "__main__":
