@@ -62,6 +62,19 @@ class BatchPlanTests(unittest.TestCase):
             reconcile_verified_batches(inventory, [good],
                                        expected_inventory_sha256="0" * 64, expected_stage_id="stage-1", expected_source_run_id="run-1")
 
+    def test_malformed_remote_receipt_types_fail_closed(self):
+        inventory = [item(1)]
+        receipt = dict(inventory[0], file_id="drive-1",
+                       stage_id="stage-1", source_run_id="run-1")
+        for bad in (dict(receipt, path=["data/1"]),
+                    dict(receipt, path={"unsafe": "value"}),
+                    dict(receipt, bytes=True)):
+            with self.subTest(bad=bad), self.assertRaises(BatchPlanError):
+                reconcile_verified_batches(
+                    inventory, [bad],
+                    expected_inventory_sha256=plan_batches(inventory)["inventory_sha256"],
+                    expected_stage_id="stage-1", expected_source_run_id="run-1")
+
     def test_reused_remote_file_id_fails_closed(self):
         inventory = [item(1), item(2)]
         receipts = [dict(row, file_id="same-drive-id",
