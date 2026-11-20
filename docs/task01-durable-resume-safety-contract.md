@@ -21,3 +21,9 @@ Exercise cancellation before upload, after upload but before receipt, after rece
 ## Publication gate
 
 A separate guarded publisher must prove all inventory bytes/SHA256, checkpoint provenance, zero missing files, no competing Task01 producer, stable original pointer and manifest identity, successful rollback rehearsal, and two independent readbacks of the new production pointer and manifest. Only then may it report a production release. The Gold downloader, frozen V1, existing Task01 crons, and 08:00 morning check remain unchanged. Five valid trading days of shadow comparison plus PIT membership and frozen candidate/ranking consistency are additional prerequisites for any later Gold deduplication switch.
+
+## Verified CI evidence (2026-11-20)
+
+PR #181 exact head `53b0d10e9bb8b00763d1c5b07d88ffefbf74e5a7`: [Pipeline CI run 44593972925](https://github.com/magangwwd/ashare-research-infra/actions/runs/44593972925) completed/success; test job 135807177886 completed/success, including offline test suite and workflow YAML validation. This verifies the current *read-only planner* tests only; it does not verify cross-run durable resume, remote leases, Drive media SHA, or publication. No production switch is authorized.
+
+Next READY engineering gate: implement a remote conditional-write/fencing lease adapter and durable receipt storage on an isolated draft branch, with fake remote race tests first. Before selecting any Drive backend for CAS, verify its actual API precondition semantics; if no atomic compare-and-swap is available, stop instead of treating a local lock or GitHub concurrency as distributed fencing. Keep production publisher unchanged pending staged integration tests.
