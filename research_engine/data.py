@@ -36,6 +36,23 @@ class CleanResearchData:
         keys = ["security_id", "trade_date"]
         if any(frame.empty for frame in (daily, factor, basic)):
             raise ValueError("daily, adj_factor and daily_basic must all be present")
+        # Fail closed: inner joins must not silently erase historical securities.
+        # A genuinely suspended day absent from all three sources is not fabricated;
+        # a day present in one source but missing in another is an integrity gap.
+        key_sets = {}
+        for name, source in (("daily", daily), ("adj_factor", factor), ("daily_basic", basic)):
+            if source.duplicated(keys).any():
+                raise ValueError(f"{name}: duplicate security/date keys in accepted Clean")
+            key_sets[name] = pd.MultiIndex.from_frame(source[keys])
+        if not (key_sets["daily"].equals(key_sets["adj_factor"]) and
+                key_sets["daily"].equals(key_sets["daily_basic"])):
+            # Index.equals depends on ordering; compare unique key sets instead.
+            missing = {name: len(key_sets["daily"].difference(index))
+                       for name, index in key_sets.items() if name != "daily"}
+            extra = {name: len(index.difference(key_sets["daily"]))
+                     for name, index in key_sets.items() if name != "daily"}
+            if any(missing.values()) or any(extra.values()):
+                raise ValueError(f"Clean core key coverage mismatch; missing={missing}, extra={extra}")
         frame = daily.merge(
             factor[keys + ["adj_factor"]],
             on=keys, how="inner", validate="one_to_one",
