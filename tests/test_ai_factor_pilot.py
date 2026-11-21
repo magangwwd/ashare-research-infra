@@ -49,3 +49,32 @@ def test_missing_exact_exit_open_must_not_shift_to_later_quote():
     row = panel.loc[panel["trade_date"] == dates[0]].iloc[0]
     assert pd.isna(row["forward_return_5s"])
     assert pd.isna(row["label_up_5s"])
+
+
+def test_clean_market_rejects_silent_key_loss():
+    from research_engine.data import CleanResearchData
+
+    dates = [date(2026, 1, 5), date(2026, 1, 6)]
+    daily = pd.DataFrame({"security_id": ["A", "A"], "trade_date": dates, "close": [10., 11.]})
+    factor = pd.DataFrame({"security_id": ["A"], "trade_date": [dates[0]], "adj_factor": [1.]})
+    basic = pd.DataFrame({"security_id": ["A", "A"], "trade_date": dates, "turnover_rate": [1., 1.]})
+    source = {"daily": daily, "adj_factor": factor, "daily_basic": basic}
+    data = object.__new__(CleanResearchData)
+    data.load = lambda name: source[name]
+
+    import pytest
+    with pytest.raises(ValueError, match="core key coverage mismatch"):
+        data.market()
+
+
+def test_clean_market_allows_matching_keys_even_without_suspended_day():
+    from research_engine.data import CleanResearchData
+
+    day = date(2026, 1, 5)
+    daily = pd.DataFrame({"security_id": ["A"], "trade_date": [day], "close": [10.]})
+    factor = pd.DataFrame({"security_id": ["A"], "trade_date": [day], "adj_factor": [1.]})
+    basic = pd.DataFrame({"security_id": ["A"], "trade_date": [day], "turnover_rate": [1.]})
+    source = {"daily": daily, "adj_factor": factor, "daily_basic": basic}
+    data = object.__new__(CleanResearchData)
+    data.load = lambda name: source[name]
+    assert len(data.market()) == 1
