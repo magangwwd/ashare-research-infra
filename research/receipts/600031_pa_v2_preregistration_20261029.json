@@ -1,0 +1,51 @@
+{
+  "schema_version": "600031-pa-v2-receipt/1.0",
+  "stage": "B_rule_preregistration",
+  "status": "protocol_frozen_only",
+  "evidence_stage": "E0",
+  "run_id": null,
+  "frozen_commit_sha": "1b88dc6f7db2a9341f2415667f494c351d8be33a",
+  "rule_path": "docs/600031-pa-v2-preregistration.md",
+  "rule_hash_git_blob_sha1": "9f4dba53d97000c23691ec014230c5a2dce47456",
+  "source_snapshot": "2026-10-24T211915.119571_0000-7c30e07d",
+  "source_validated": true,
+  "source_critical_history_complete": false,
+  "current_json_sha256": "5d712e4c30c5ccc9c70ebd6672ebc401df97ba14f5d46d07e877baf915482926",
+  "manifest_sha256": "118e6afb6febd3993656afce9b46452809e5a05bf412db7c87515a891bc3e9e8",
+  "production_file_sha256_audited_this_run": false,
+  "coverage": {
+    "historical_reference": "2023-09-06..2026-10-23, five stocks x 755 trading days (prior verified E1 only)",
+    "new_PA_v2_candidates": null,
+    "new_PA_v2_confirmations": null,
+    "forward_validated_snapshots": 0
+  },
+  "software_tests": {
+    "last_verified_prior_head": "be05229c99e6d4c89a404a4172aa723b6534987b",
+    "run_id": 40815230007,
+    "conclusion": "success",
+    "passed": 209,
+    "skipped": 2,
+    "scope": "existing offline tests only; doc-only change has no new CI"
+  },
+  "real_data_run_verified": false,
+  "runner_deployed": false,
+  "artifacts": [
+    {
+      "path": "docs/600031-pa-v2-preregistration.md",
+      "git_blob_sha1": "9f4dba53d97000c23691ec014230c5a2dce47456",
+      "drive_archived": true,
+      "drive_url": "https://docs.google.com/document/d/1n7zSKNAUKjegWtrmKfiwgPGc3aNMT7N3mH58xCX_pvY/edit",
+      "drive_parent_id": "1gJP_wVUsvBuFiK4LvnoT8z2132yBAQ_Y",
+      "drive_readback_verified": true,
+      "drive_content_check": "whitespace-normalized Google Docs extracted text contains complete frozen GitHub protocol"
+    }
+  ],
+  "error": null,
+  "next_action": "Implement deterministic causal PA-v2 state machine and synthetic regressions on research branch; audit full adjustment/limit/suspension before calling any event executable; run retrospective only as E1, then preregister first unseen validated future snapshot after freeze.",
+  "preserved": [
+    "four frozen old patterns",
+    "original 60 trades",
+    "draft PR #118",
+    "production current.json and raw data read-only"
+  ]
+}

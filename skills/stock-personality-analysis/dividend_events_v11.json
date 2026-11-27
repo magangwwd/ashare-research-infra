@@ -1,0 +1,26 @@
+[
+  {
+    "record_date": "2024-06-20",
+    "ex_date": "2024-06-21",
+    "cash_per_share_yuan": 0.22,
+    "reference": "https://stock.quote.stockstar.com/dividend_600031.shtml"
+  },
+  {
+    "record_date": "2025-06-10",
+    "ex_date": "2025-06-11",
+    "cash_per_share_yuan": 0.36,
+    "reference": "https://stock.quote.stockstar.com/dividend_600031.shtml"
+  },
+  {
+    "record_date": "2025-10-14",
+    "ex_date": "2025-10-15",
+    "cash_per_share_yuan": 0.31,
+    "reference": "https://big5.sse.com.cn/site/cht/www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2025-09-30/600031_20250930_OHZY.pdf"
+  },
+  {
+    "record_date": "2026-07-16",
+    "ex_date": "2026-07-17",
+    "cash_per_share_yuan": 0.18,
+    "reference": "https://stock.quote.stockstar.com/dividend_600031.shtml"
+  }
+]
